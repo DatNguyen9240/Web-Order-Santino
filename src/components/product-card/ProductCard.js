@@ -11,12 +11,23 @@ var ProductCard = (function() {
      * @param {String} addToCartFnName - Tên hàm JS sẽ gọi khi click (Mặc định: 'addToCart')
      */
     function render(product, index, formatMoneyFn, addToCartFnName = 'addToCart') {
+        const lang = localStorage.getItem('santino_lang') || 'vi';
+        const t = (typeof translations !== 'undefined' && translations[lang]) ? translations[lang] : {};
+        const getT = (key, defaultText) => t[key] || defaultText;
+
         const isOutOfStock = product.stock === 0;
         const stockBadge = isOutOfStock 
-            ? '<div class="stock-badge" style="color:#ef4444;">Hết hàng</div>' 
-            : `<div class="stock-badge">Còn ${product.stock}</div>`;
+            ? `<div class="stock-badge" style="color:#ef4444;">${getT('product.out_of_stock', 'Hết hàng')}</div>` 
+            : `<div class="stock-badge">${getT('product.in_stock', 'Còn')} ${product.stock}</div>`;
         
-        const btnState = isOutOfStock ? 'disabled' : `onclick="${addToCartFnName}(${index})"`;
+        // Pass 'this', 'product.sku' and 'event' for the new animation logic
+        let clickHandler = `${addToCartFnName}(${index})`;
+        if (addToCartFnName === 'addToCartFromGrid') {
+            const productCode = product.code2 || product.sku.replace(/\d{2}/, ''); // Fallback if code2 is missing
+            clickHandler = `addToCartFromGrid(this, '${productCode}', event)`;
+        }
+        
+        const btnState = isOutOfStock ? 'disabled' : `onclick="${clickHandler}"`;
         const formattedPrice = typeof formatMoneyFn === 'function' ? formatMoneyFn(product.price) : product.price + 'đ';
 
         return `
