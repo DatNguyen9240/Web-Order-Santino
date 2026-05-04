@@ -1,0 +1,3 @@
+[submodule "src/ui-core"]
+	path = src/ui-core
+	url = https://github.com/DatNguyen9240/ui-core.git
