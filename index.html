@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SANTINO VIP B2B</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    
+    <!-- Component CSS -->
+    <link rel="stylesheet" href="./src/components/product-card/product-card.css?v=2">
+    <link rel="stylesheet" href="./src/components/filter-bar/filter-bar.css?v=1">
+
+    <style>
+        :root {
+            --vip-bg: #f5f7fa;
+            --vip-surface: #ffffff;
+            --vip-text: #0f172a;
+            --vip-text-muted: #64748b;
+            --vip-primary: #000000;
+            --vip-accent: #cda434;
+            --vip-border: #e2e8f0;
+            --radius-xl: 24px;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.08);
+            --shadow-hover: 0 20px 40px -10px rgba(0,0,0,0.12);
+            --font-display: 'Outfit', sans-serif;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body.dark-theme {
+            --vip-bg: #09090b;
+            --vip-surface: #18181b;
+            --vip-text: #f8fafc;
+            --vip-text-muted: #a1a1aa;
+            --vip-primary: #ffffff;
+            --vip-accent: #eab308;
+            --vip-border: #27272a;
+            --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.5);
+            --shadow-hover: 0 20px 40px -10px rgba(0,0,0,0.8);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font-body); background-color: var(--vip-bg); color: var(--vip-text); overflow: hidden; transition: background-color 0.3s; }
+        
+        .layout { display: flex; height: 100vh; }
+        
+        /* SIDEBAR - VIP STYLE */
+        .sidebar { width: 260px; background: var(--vip-surface); display: flex; flex-direction: column; padding: 24px 20px; border-right: 1px solid var(--vip-border); z-index: 10; transition: all 0.3s; }
+        .logo { font-family: var(--font-display); font-size: 28px; font-weight: 800; letter-spacing: -1px; margin-bottom: 40px; display: flex; align-items: center; gap: 12px; }
+        .logo span { background: linear-gradient(135deg, var(--vip-primary), var(--vip-accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav-label { font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--vip-text-muted); margin: 24px 0 12px 12px; letter-spacing: 1px; }
+        .nav-item { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: var(--radius-md); color: var(--vip-text-muted); text-decoration: none; font-weight: 600; font-size: 14px; transition: all 0.3s; margin-bottom: 4px; }
+        .nav-item:hover { background: var(--vip-bg); color: var(--vip-text); transform: translateX(4px); }
+        .nav-item.active { background: var(--vip-primary); color: var(--vip-surface); box-shadow: 0 8px 16px -4px rgba(0,0,0,0.2); }
+        .nav-item.active .icon { color: var(--vip-surface); }
+        
+        /* MAIN CONTENT */
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        
+        /* HEADER */
+        .header { padding: 24px 40px; display: flex; justify-content: space-between; align-items: center; z-index: 5; }
+        .header-title { font-family: var(--font-display); font-size: 28px; font-weight: 700; }
+        .header-actions { display: flex; align-items: center; gap: 20px; }
+        .theme-toggle { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--vip-border); background: var(--vip-surface); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--vip-text); transition: all 0.2s; }
+        .theme-toggle:hover { background: var(--vip-bg); }
+        .user-profile { display: flex; align-items: center; gap: 12px; background: var(--vip-surface); padding: 6px 16px 6px 6px; border-radius: 30px; border: 1px solid var(--vip-border); box-shadow: var(--shadow-soft); }
+        .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--vip-accent), #f59e0b); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
+        .user-info { display: flex; flex-direction: column; }
+        .user-info span { font-size: 13px; font-weight: 700; }
+        .user-info small { font-size: 11px; color: var(--vip-accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* CONTENT WRAPPER */
+        .content { flex: 1; overflow-y: auto; padding: 0 40px 40px; display: grid; grid-template-columns: 1fr 380px; gap: 32px; }
+
+        /* STATS */
+        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 32px; grid-column: 1 / -1; }
+        .stat-card { background: var(--vip-surface); padding: 24px; border-radius: var(--radius-xl); border: 1px solid var(--vip-border); box-shadow: var(--shadow-soft); display: flex; align-items: center; justify-content: space-between; position: relative; overflow: hidden; }
+        .stat-card::after { content: ''; position: absolute; top: 0; right: 0; width: 100px; height: 100px; background: radial-gradient(circle, var(--vip-accent) 0%, transparent 70%); opacity: 0.05; border-radius: 50%; transform: translate(30%, -30%); }
+        .stat-val { font-family: var(--font-display); font-size: 28px; font-weight: 700; margin-top: 4px; }
+        .stat-label { font-size: 13px; color: var(--vip-text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* VIP CART */
+        .cart-panel { background: var(--vip-surface); border-radius: var(--radius-xl); border: 1px solid var(--vip-border); box-shadow: var(--shadow-soft); display: flex; flex-direction: column; height: calc(100vh - 220px); position: sticky; top: 0; overflow: hidden; }
+        .cart-header { padding: 24px; border-bottom: 1px solid var(--vip-border); display: flex; justify-content: space-between; align-items: center; }
+        .cart-title { font-family: var(--font-display); font-size: 20px; font-weight: 700; }
+        .cart-count { background: var(--vip-accent); color: #000; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+        
+        .cart-items { flex: 1; overflow-y: auto; padding: 24px; }
+        .cart-item { display: flex; gap: 16px; margin-bottom: 24px; }
+        .cart-item-img { width: 60px; height: 80px; border-radius: 8px; object-fit: cover; }
+        .cart-item-info { flex: 1; }
+        .cart-item-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+        .cart-item-price { font-weight: 700; font-size: 14px; color: var(--vip-primary); }
+        .cart-item-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+        .qty-control { display: flex; align-items: center; gap: 12px; background: var(--vip-bg); padding: 4px 8px; border-radius: 8px; }
+        .qty-btn { background: none; border: none; cursor: pointer; color: var(--vip-text); font-size: 16px; display: flex; }
+        .qty-val { font-weight: 600; font-size: 13px; }
+
+        .cart-footer { padding: 24px; background: var(--vip-bg); border-top: 1px solid var(--vip-border); }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; color: var(--vip-text-muted); font-weight: 500; }
+        .summary-row.discount { color: #10b981; }
+        .summary-total { display: flex; justify-content: space-between; margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--vip-border); font-family: var(--font-display); font-size: 24px; font-weight: 800; color: var(--vip-primary); }
+        
+        .btn-checkout { width: 100%; padding: 18px; border-radius: var(--radius-md); background: linear-gradient(135deg, var(--vip-primary), #222); color: var(--vip-surface); border: none; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.3s; margin-top: 24px; display: flex; justify-content: center; align-items: center; gap: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .dark-theme .btn-checkout { background: linear-gradient(135deg, var(--vip-primary), #ccc); color: #000; }
+        .btn-checkout:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 15px 25px rgba(0,0,0,0.2); }
+        .btn-checkout:disabled { background: var(--vip-border); color: var(--vip-text-muted); cursor: not-allowed; box-shadow: none; transform: none; }
+
+        /* CUSTOM SCROLLBAR */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--vip-border); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--vip-text-muted); }
+
+        /* TOAST */
+        .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--vip-primary); color: var(--vip-surface); padding: 16px 32px; border-radius: 30px; font-weight: 600; font-size: 14px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 9999; display: flex; align-items: center; gap: 12px; }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .dark-theme .toast { background: var(--vip-surface); color: var(--vip-text); border: 1px solid var(--vip-border); }
+
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="logo">
+                <span class="material-symbols-outlined" style="font-size: 32px; color: var(--vip-accent);">diamond</span>
+                <span>SANTINO</span>
+            </div>
+
+            <div class="nav-label">Nghiệp vụ Bán Sỉ</div>
+            <a href="#" class="nav-item active"><span class="material-symbols-outlined icon">shopping_bag</span> Tạo Đơn Hàng</a>
+            <a href="#" class="nav-item"><span class="material-symbols-outlined icon">receipt_long</span> Lịch Sử Đơn</a>
+
+            <div class="nav-label">Danh mục</div>
+            <a href="#" class="nav-item"><span class="material-symbols-outlined icon">style</span> Bộ Sưu Tập</a>
+            <a href="#" class="nav-item"><span class="material-symbols-outlined icon">workspace_premium</span> Hạng VIP & TLDL</a>
+
+            <div style="margin-top: auto;">
+                <div class="nav-label">Cài đặt</div>
+                <a href="#" class="nav-item"><span class="material-symbols-outlined icon">api</span> Kết nối ERP</a>
+                <a href="#" class="nav-item" onclick="logout()"><span class="material-symbols-outlined icon">logout</span> Đăng xuất</a>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="main">
+            <!-- HEADER -->
+            <header class="header">
+                <div class="header-title">Đặt Hàng Sỉ</div>
+                <div class="header-actions">
+                    <button class="theme-toggle" onclick="toggleTheme()">
+                        <span class="material-symbols-outlined">dark_mode</span>
+                    </button>
+                    <div class="user-profile">
+                        <div class="user-avatar" id="display-avatar">DL</div>
+                        <div class="user-info">
+                            <span id="display-user">Đại Lý VIP</span>
+                            <small>Chiết khấu 35%</small>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- CONTENT -->
+            <div class="content">
+                
+                <!-- STATS -->
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div>
+                            <div class="stat-label">Hạn mức công nợ</div>
+                            <div class="stat-val">500.000.000đ</div>
+                        </div>
+                        <span class="material-symbols-outlined" style="font-size: 40px; color: var(--vip-border);">account_balance_wallet</span>
+                    </div>
+                    <div class="stat-card">
+                        <div>
+                            <div class="stat-label">Chiết khấu (CKCB)</div>
+                            <div class="stat-val" style="color: #10b981;">35%</div>
+                        </div>
+                        <span class="material-symbols-outlined" style="font-size: 40px; color: var(--vip-border);">local_offer</span>
+                    </div>
+                    <div class="stat-card">
+                        <div>
+                            <div class="stat-label">Điểm Loyalty (TLDL)</div>
+                            <div class="stat-val" style="color: var(--vip-accent);" id="display-tldl">2,450</div>
+                        </div>
+                        <span class="material-symbols-outlined" style="font-size: 40px; color: var(--vip-border);">stars</span>
+                    </div>
+                </div>
+
+                <!-- PRODUCT GRID HEADER -->
+                <div>
+                    <!-- COMPONENT FILTER BAR RENDERED HERE -->
+                    <div id="filter-container"></div>
+
+                    <div class="products-grid" id="product-list">
+                        <!-- Component ProductCard sẽ render vào đây -->
+                    </div>
+                </div>
+
+                <!-- CART PANEL -->
+                <div class="cart-panel">
+                    <div class="cart-header">
+                        <div class="cart-title">Giỏ Hàng</div>
+                        <div class="cart-count" id="cart-count">0 SP</div>
+                    </div>
+                    
+                    <div class="cart-items" id="cart-items">
+                        <div style="text-align: center; color: var(--vip-text-muted); margin-top: 40px;">
+                            <span class="material-symbols-outlined" style="font-size: 64px; opacity: 0.2; margin-bottom: 16px;">shopping_bag</span>
+                            <p>Chưa có sản phẩm nào</p>
+                        </div>
+                    </div>
+
+                    <div class="cart-footer">
+                        <div class="summary-row"><span>Tạm tính</span><strong id="val-subtotal">0đ</strong></div>
+                        <div class="summary-row discount"><span>Chiết khấu (35%)</span><strong id="val-discount">-0đ</strong></div>
+                        <div class="summary-total"><span>Tổng cộng</span><span id="val-total">0đ</span></div>
+                        <div style="text-align: right; margin-top: 8px; font-size: 12px; color: var(--vip-text-muted);">
+                            +<span id="val-earn-tldl" style="color: var(--vip-accent); font-weight: 700;">0</span> điểm TLDL
+                        </div>
+                        
+                        <button class="btn-checkout" id="btn-sync-order" disabled onclick="syncOrder()">
+                            ĐẶT HÀNG NGAY <span class="material-symbols-outlined">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast">
+        <span class="material-symbols-outlined" style="color: var(--vip-accent);">check_circle</span>
+        <span id="toast-msg">Thành công!</span>
+    </div>
+
+    <!-- Tải script Components -->
+    <script src="./src/components/product-card/ProductCard.js"></script>
+    <script src="./src/components/filter-bar/FilterBar.js"></script>
+    <script src="./src/data/products_data.js?v=1"></script>
+
+    <script>
+        // Init Theme
+        (function() {
+            if (localStorage.getItem('santino_theme') === 'dark') document.body.classList.add('dark-theme');
+        })();
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            localStorage.setItem('santino_theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+        }
+
+        function logout() {
+            window.location.href = 'login.html';
+        }
+
+        const formatMoney = (n) => new Intl.NumberFormat('vi-VN').format(n) + 'đ';
+        let cart = [];
+        let currentCategory = 'Tất cả';
+        
+        let filteredProducts = [...products];
+
+        function renderProducts(listToRender = filteredProducts) {
+            const container = document.getElementById('product-list');
+            let html = '';
+            if (listToRender.length === 0) {
+                container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--vip-text-muted);">Không tìm thấy sản phẩm nào phù hợp.</div>';
+                return;
+            }
+            listToRender.forEach((p) => {
+                // Sử dụng global index của mảng products gốc để addToCart hoạt động đúng
+                const originalIndex = products.findIndex(op => op.sku === p.sku);
+                html += ProductCard.render(p, originalIndex, formatMoney, 'addToCart');
+            });
+            container.innerHTML = html;
+        }
+
+        // Logic lọc sản phẩm (Filter & Sort)
+        function setCategory(category, el) {
+            currentCategory = category;
+            document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+            if(el) el.classList.add('active');
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const sortVal = document.getElementById('sortSelect').value;
+            const colorVal = document.getElementById('colorSelect').value;
+            const minPrice = parseInt(document.getElementById('priceMin').value) || 0;
+            const maxPrice = parseInt(document.getElementById('priceMax').value) || 999999999;
+
+            filteredProducts = products.filter(p => {
+                if (currentCategory !== 'Tất cả' && p.category !== currentCategory) return false;
+                if (searchTerm && !p.name.toLowerCase().includes(searchTerm) && !p.sku.toLowerCase().includes(searchTerm)) return false;
+                if (colorVal !== 'all' && p.color !== colorVal) return false;
+                if (p.price < minPrice || p.price > maxPrice) return false;
+                return true;
+            });
+
+            if (sortVal === 'price_asc') {
+                filteredProducts.sort((a, b) => a.price - b.price);
+            } else if (sortVal === 'price_desc') {
+                filteredProducts.sort((a, b) => b.price - a.price);
+            } else if (sortVal === 'stock_desc') {
+                filteredProducts.sort((a, b) => b.stock - a.stock);
+            }
+
+            renderProducts();
+        }
+
+        function addToCart(index) {
+            const p = products[index];
+            const existing = cart.find(i => i.sku === p.sku);
+            if (existing) {
+                if (existing.qty < p.stock) existing.qty++;
+            } else {
+                cart.push({ ...p, qty: 1 });
+            }
+            updateCart();
+            showToast(`Đã thêm ${p.name}`);
+        }
+
+        function updateQty(sku, delta) {
+            const item = cart.find(i => i.sku === sku);
+            if(item) {
+                item.qty += delta;
+                if(item.qty <= 0) cart = cart.filter(i => i.sku !== sku);
+                updateCart();
+            }
+        }
+
+        function updateCart() {
+            const cartEl = document.getElementById('cart-items');
+            if (cart.length === 0) {
+                cartEl.innerHTML = `<div style="text-align: center; color: var(--vip-text-muted); margin-top: 40px;"><span class="material-symbols-outlined" style="font-size: 64px; opacity: 0.2; margin-bottom: 16px;">shopping_bag</span><p>Chưa có sản phẩm nào</p></div>`;
+                document.getElementById('cart-count').innerText = '0 SP';
+                document.getElementById('val-subtotal').innerText = '0đ';
+                document.getElementById('val-discount').innerText = '- 0đ';
+                document.getElementById('val-total').innerText = '0đ';
+                document.getElementById('val-earn-tldl').innerText = '0';
+                document.getElementById('btn-sync-order').disabled = true;
+                return;
+            }
+
+            let html = '';
+            let subtotal = 0; let totalItems = 0;
+
+            cart.forEach(item => {
+                const itemTotal = item.price * item.qty;
+                subtotal += itemTotal; totalItems += item.qty;
+                html += `
+                    <div class="cart-item">
+                        <img src="${item.img}" class="cart-item-img">
+                        <div class="cart-item-info">
+                            <div class="cart-item-name">${item.name}</div>
+                            <div class="cart-item-price">${formatMoney(itemTotal)}</div>
+                            <div class="cart-item-meta">
+                                <div class="qty-control">
+                                    <button class="qty-btn" onclick="updateQty('${item.sku}', -1)"><span class="material-symbols-outlined" style="font-size:16px;">remove</span></button>
+                                    <span class="qty-val">${item.qty}</span>
+                                    <button class="qty-btn" onclick="updateQty('${item.sku}', 1)"><span class="material-symbols-outlined" style="font-size:16px;">add</span></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            cartEl.innerHTML = html;
+            document.getElementById('cart-count').innerText = `${totalItems} SP`;
+
+            const discount = subtotal * 0.35;
+            const total = subtotal - discount;
+            const earnTldl = Math.floor(total / 10000);
+
+            document.getElementById('val-subtotal').innerText = formatMoney(subtotal);
+            document.getElementById('val-discount').innerText = '- ' + formatMoney(discount);
+            document.getElementById('val-total').innerText = formatMoney(total);
+            document.getElementById('val-earn-tldl').innerText = new Intl.NumberFormat('vi-VN').format(earnTldl);
+            document.getElementById('btn-sync-order').disabled = false;
+        }
+
+        async function syncOrder() {
+            if (cart.length === 0) return;
+            const btn = document.getElementById('btn-sync-order');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined" style="animation: spin 1s linear infinite;">sync</span> ĐANG XỬ LÝ...';
+            
+            // Giả lập độ trễ mạng (Mock API Call)
+            setTimeout(() => {
+                let subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+                let discount = subtotal * 0.35;
+                let total = subtotal - discount;
+                let tldl = Math.floor(total / 10000);
+                
+                // Cập nhật giao diện sau khi đặt hàng thành công
+                showToast('Thành công! Mã đơn: ORD-' + Math.floor(1000 + Math.random() * 9000));
+                cart = [];
+                updateCart();
+                
+                let current = parseInt(document.getElementById('display-tldl').innerText.replace(/,/g, ''));
+                document.getElementById('display-tldl').innerText = new Intl.NumberFormat('vi-VN').format(current + tldl);
+                
+                btn.innerHTML = 'ĐẶT HÀNG NGAY <span class="material-symbols-outlined">arrow_forward</span>';
+            }, 1500);
+        }
+
+        let toastTimeout;
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.add('show');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Render filter
+        document.getElementById('filter-container').innerHTML = FilterBar.render();
+        renderProducts();
+    </script>
+</body>
+</html>

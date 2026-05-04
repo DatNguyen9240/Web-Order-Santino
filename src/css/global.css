@@ -1,0 +1,338 @@
+/* ═══════════════════════════════════════════
+   Global Styles — Reset & Core Layout (TailAdmin Clone)
+   ═══════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+  background-color: var(--color-background);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.01em;
+  /* Modern tighten */
+  overflow: hidden;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+  /* Tighter headers */
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* ═══════════════════════════════════════════
+   APP SHELL LAYOUT
+   ═══════════════════════════════════════════ */
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+
+
+/* ════ SCROLLABLE CONTENT ════ */
+.app-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px var(--spacing-xl);
+  background: var(--color-background);
+}
+
+/* Fix width form container if needed */
+.content-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-title-bar {
+  margin-bottom: var(--spacing-xl);
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.3;
+}
+
+
+
+
+
+/* ════ RESPONSIVE QUERIES ════ */
+/* Desktop / Tablet (1024px) */
+@media (max-width: 1024px) {
+  /* no sidebar overrides needed — navbar handles mobile internally */
+}
+
+/* Tablet Small / Mobile (768px) */
+@media (max-width: 768px) {
+  :root {
+    --header-height: 64px;
+    --sidebar-width: 260px;
+    /* Scale down typography on mobile screens */
+    --font-size-xs: 11px;
+    --font-size-sm: 13px;
+    --font-size-md: 14px;
+    --font-size-lg: 16px;
+    --font-size-xl: 20px;
+    --font-size-2xl: 24px;
+  }
+
+  .search-box {
+    display: none;
+  }
+
+  .user-text {
+    display: none;
+  }
+
+  .app-header {
+    padding: 0 16px;
+    gap: 8px;
+  }
+
+  .app-content {
+    padding: 16px;
+  }
+
+  .header-left {
+    gap: 12px;
+  }
+
+  .header-right {
+    gap: 14px;
+  }
+
+  .btn-hamburger {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+  }
+
+  .btn-hamburger .material-symbols-outlined {
+    font-size: 20px;
+  }
+
+  .icon-btn {
+    width: 34px;
+    height: 34px;
+  }
+
+  .user-avatar {
+    width: 34px;
+    height: 34px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    padding: 12px;
+    gap: 12px;
+    border-radius: var(--radius-md);
+  }
+
+  .stat-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .stat-icon .material-symbols-outlined {
+    font-size: 22px;
+  }
+
+  .stat-info h3 {
+    font-size: 20px;
+    margin-bottom: 2px;
+  }
+
+  .stat-info p {
+    font-size: 13px;
+    margin-bottom: 0;
+  }
+
+  .card-header {
+    padding: 16px;
+    font-size: 16px;
+  }
+
+  .card-body {
+    padding: 16px;
+  }
+
+  .table-wrapper {
+    width: 100%;
+    border-radius: var(--radius-sm);
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 10px 12px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+}
+
+/* Extremely Small Mobile (e.g. 320px - iPhone SE) */
+@media (max-width: 480px) {
+  :root {
+    --header-height: 56px;
+    --sidebar-width: 240px;
+    --font-size-2xl: 20px;
+    --font-size-xl: 18px;
+    --spacing-xl: 16px;
+  }
+
+  .btn-hamburger {
+    width: 34px;
+    height: 34px;
+    border-radius: 6px;
+  }
+
+  .icon-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .icon-btn .material-symbols-outlined {
+    font-size: 18px !important;
+  }
+
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+  }
+
+  .sidebar-header {
+    padding: 0 12px;
+    font-size: 15px;
+  }
+
+  .sidebar-header>div>.material-symbols-outlined {
+    font-size: 22px !important;
+    margin-right: 4px !important;
+  }
+
+  .btn-close-sidebar {
+    width: 28px;
+    height: 28px;
+  }
+
+  .nav-group-title {
+    font-size: 10px;
+    padding: 4px 12px;
+    margin-top: 12px;
+  }
+
+  .nav-item {
+    padding: 8px 12px;
+    font-size: 13px;
+    gap: 8px;
+    margin: 2px 8px;
+  }
+
+  .nav-item span.icon {
+    font-size: 18px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .stat-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+  }
+
+  .stat-icon .material-symbols-outlined {
+    font-size: 20px;
+  }
+
+  .stat-info h3 {
+    font-size: 18px;
+  }
+
+  .stat-info p {
+    font-size: 12px;
+  }
+
+  .card-header {
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .card-body {
+    padding: 12px;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+}
+
+/* ════ GLOBAL COMPONENTS ════ */
+.panel-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 10004;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+.panel-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ════ ANIMATIONS ════ */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
