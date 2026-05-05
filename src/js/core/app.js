@@ -18,7 +18,11 @@ document.addEventListener('DOMContentLoaded', function () {
   if(font) document.documentElement.style.setProperty('--font', '"' + font + '", sans-serif');
 
   var color = localStorage.getItem('santino_color');
-  if(color) document.documentElement.style.setProperty('--accent', color);
+  if(color) {
+    document.documentElement.style.setProperty('--accent', color);
+    var colorFg = localStorage.getItem('santino_color_fg');
+    if(colorFg) document.documentElement.style.setProperty('--accent-fg', colorFg);
+  }
   Router.init();
 
   // Ẩn splash nếu có

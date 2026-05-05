@@ -30,8 +30,21 @@ var SettingsPage = (function () {
 
     // Đánh dấu Color
     document.querySelectorAll('.color-circle').forEach(function(c) { c.classList.remove('active'); });
+    // Dùng querySelector với fallback nếu không tìm thấy color preset
     var colorCard = document.querySelector('.color-circle[data-color="' + color + '"]');
-    if(colorCard) colorCard.classList.add('active');
+    if(colorCard) {
+        colorCard.classList.add('active');
+    } else {
+        // Nếu chọn tự do, active vào picker
+        var pickerWrapper = document.querySelector('.color-picker-wrapper');
+        if(pickerWrapper) {
+            pickerWrapper.style.outline = '2px solid ' + color;
+            pickerWrapper.style.outlineOffset = '2px';
+        }
+    }
+
+    // LUÔN áp dụng màu cho document khi init settings
+    document.documentElement.style.setProperty('--accent', color);
   }
 
   function setMode(mode) {
@@ -49,8 +62,13 @@ var SettingsPage = (function () {
           document.documentElement.classList.remove('dark-theme');
       }
     }
+    
+    // Đảm bảo màu accent không bị đè bởi class dark-theme
+    var color = localStorage.getItem('santino_color') || '#FBBF24';
+    document.documentElement.style.setProperty('--accent', color);
+    
     _init();
-    showToast('Đã đổi chủ đề');
+    showToast('Đã đổi chế độ');
   }
 
   function setFont(fontName) {
@@ -67,22 +85,45 @@ var SettingsPage = (function () {
     showToast('Đã đổi ngôn ngữ');
   }
 
+  function _calculateFg(hex) {
+    if (!hex || hex === 'auto') return '#000000';
+    var c = hex.replace('#', '');
+    if (c.length === 3) c = c.split('').map(function(x) { return x + x; }).join('');
+    if (c.length !== 6) return '#000000';
+    var r = parseInt(c.substr(0, 2), 16);
+    var g = parseInt(c.substr(2, 2), 16);
+    var b = parseInt(c.substr(4, 2), 16);
+    var yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    return (yiq >= 150) ? '#000000' : '#ffffff';
+  }
+
   function setColor(hex) {
     document.documentElement.style.setProperty('--accent', hex);
+    var fg = _calculateFg(hex);
+    document.documentElement.style.setProperty('--accent-fg', fg);
     localStorage.setItem('santino_color', hex);
+    localStorage.setItem('santino_color_fg', fg);
+    
+    // Xóa màu outline cũ của picker nếu có
+    var pickerWrapper = document.querySelector('.color-picker-wrapper');
+    if (pickerWrapper) {
+        pickerWrapper.style.outline = 'none';
+    }
+    
     _init();
+    showToast('Đã đổi màu chủ đạo');
   }
 
   function resetData() {
     ConfirmModal.show({
       title: 'Xóa dữ liệu',
-      message: 'Reset toàn bộ về dữ liệu mặc định? Đơn hàng và các cài đặt sẽ bị xóa!',
+      message: 'Reset toàn bộ về dữ liệu mặc định? Đơn hàng và cài đặt sẽ bị xóa!',
       confirmText: 'Reset',
       confirmClass: 'btn-danger',
       onConfirm: function() {
         ['santino_products','santino_sizes','santino_promotions','santino_orders', 'santino_theme', 'santino_font', 'santino_color', 'santino_lang'].forEach(function(k){localStorage.removeItem(k);});
         DB.initSeed();
-        showToast('Đã reset dữ liệu về mặc định. Vui lòng tải lại trang.');
+        showToast('Đã reset dữ liệu về mặc định. Vui lòng đợi...');
         setTimeout(function() { window.location.reload(); }, 1500);
       }
     });
