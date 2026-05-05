@@ -7,7 +7,7 @@ var PromosPage = (function () {
   function _render() {
     var promos = DB.getAll('promotions');
     var tbody = document.getElementById('promos-body');
-    if (!promos.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><span class="material-symbols-outlined">local_offer</span>Chưa có CTKM</td></tr>'; return; }
+    if (!promos.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><span class="material-symbols-outlined">local_offer</span><span data-i18n="table.empty">' + t('table.empty') + '</span></td></tr>'; return; }
     tbody.innerHTML = promos.map(function (p) {
       return '<tr><td><strong style="font-family:monospace">' + p.ma_ctbh + '</strong></td>' +
         '<td>' + p.ten_ctbh + '</td>' +

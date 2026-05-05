@@ -7,7 +7,7 @@ var SizesPage = (function () {
   function _render() {
     var sizes = DB.getAll('sizes').sort(function (a, b) { return a.nhom_size.localeCompare(b.nhom_size) || a.size - b.size; });
     var tbody = document.getElementById('sizes-body');
-    if (!sizes.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><span class="material-symbols-outlined">straighten</span>Chưa có size</td></tr>'; return; }
+    if (!sizes.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><span class="material-symbols-outlined">straighten</span><span data-i18n="table.empty">' + t('table.empty') + '</span></td></tr>'; return; }
     tbody.innerHTML = sizes.map(function (s) {
       return '<tr><td style="font-weight:700;font-size:16px">' + s.size + '</td>' +
         '<td>' + (s.ten_size || s.size) + '</td>' +

@@ -1,21 +1,21 @@
 <div class="page-hdr">
   <div>
-    <h2><span class="material-symbols-outlined" style="color:var(--primary);">local_offer</span> Quản Lý CTKM</h2>
-    <p>Chương trình khuyến mãi / bán hàng</p>
+    <h2><span data-i18n="hdr.promos">Quản Lý CTKM</span></h2>
+    <p data-i18n="hdr.promos.desc">Chương trình khuyến mãi / bán hàng</p>
   </div>
   <button class="btn btn-primary" onclick="PromosPage.openModal()">
-    <span class="material-symbols-outlined" style="font-size:16px">add</span>Thêm CTKM
+    <span class="material-symbols-outlined" style="font-size:16px">add</span><span data-i18n="btn.add">Thêm CTKM</span>
   </button>
 </div>
 <div class="tbl-wrap">
   <table>
     <thead>
       <tr>
-        <th>Mã CTBH</th>
-        <th>Tên CTBH</th>
-        <th>Mô tả</th>
-        <th>Trạng thái</th>
-        <th>Thao tác</th>
+        <th data-i18n="table.col.promo_code">Mã CTBH</th>
+        <th data-i18n="table.col.promo_name">Tên CTBH</th>
+        <th data-i18n="table.col.desc">Mô tả</th>
+        <th data-i18n="table.col.status">Trạng thái</th>
+        <th data-i18n="table.col.action">Thao tác</th>
       </tr>
     </thead>
     <tbody id="promos-body"></tbody>

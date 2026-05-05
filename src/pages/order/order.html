@@ -1,14 +1,14 @@
 <div class="page-hdr">
   <div>
-    <h2>🛒 Đặt Hàng</h2>
-    <p>Tạo đơn hàng sỉ theo ma trận size</p>
+    <h2 data-i18n="hdr.order">🛒 Đặt Hàng</h2>
+    <p data-i18n="hdr.order.desc">Tạo đơn hàng sỉ theo ma trận size</p>
   </div>
   <div style="display:flex;gap:8px">
     <button class="btn btn-ghost btn-sm" onclick="OrderPage.clearOrder()">
-      <span class="material-symbols-outlined" style="font-size:16px">delete</span>Hủy đơn
+      <span class="material-symbols-outlined" style="font-size:16px">delete</span><span data-i18n="btn.cancel">Hủy đơn</span>
     </button>
     <button class="btn btn-accent" onclick="OrderPage.saveOrder()">
-      <span class="material-symbols-outlined" style="font-size:16px">save</span>Lưu đơn
+      <span class="material-symbols-outlined" style="font-size:16px">save</span><span data-i18n="btn.save">Lưu đơn</span>
     </button>
   </div>
 </div>
@@ -16,20 +16,20 @@
 <!-- Header đơn -->
 <div class="card">
   <div class="form-grid">
-    <div class="form-group"><label>Số CT</label><input id="o-so-ct" class="locked" readonly></div>
-    <div class="form-group"><label>Ngày CT</label><input id="o-ngay" type="date"></div>
-    <div class="form-group"><label>Chi nhánh</label>
+    <div class="form-group"><label data-i18n="order.no">Số CT</label><input id="o-so-ct" class="locked" readonly></div>
+    <div class="form-group"><label data-i18n="order.date">Ngày CT</label><input id="o-ngay" type="date"></div>
+    <div class="form-group"><label data-i18n="order.branch">Chi nhánh</label>
       <select id="o-chi-nhanh">
-        <option>Trụ sở Hà Nội</option>
-        <option>Chi nhánh HCM</option>
+        <option data-i18n="order.branch.hn">Trụ sở Hà Nội</option>
+        <option data-i18n="order.branch.hcm">Chi nhánh HCM</option>
       </select>
     </div>
-    <div class="form-group"><label>Nhân viên KD</label><input id="o-nv" placeholder="Tên nhân viên..."></div>
-    <div class="form-group"><label>CTKM <span style="color:var(--accent)">*</span></label>
+    <div class="form-group"><label data-i18n="order.staff">Nhân viên KD</label><input id="o-nv" placeholder="Tên nhân viên..." data-i18n-placeholder="order.staff.placeholder"></div>
+    <div class="form-group"><label><span data-i18n="order.promo">CTKM</span> <span style="color:var(--accent)">*</span></label>
       <select id="o-ctbh"></select>
     </div>
-    <div class="form-group span2"><label>Ghi chú chung</label>
-      <input id="o-note" placeholder="Ghi chú áp dụng toàn đơn...">
+    <div class="form-group span2"><label data-i18n="order.note">Ghi chú chung</label>
+      <input id="o-note" placeholder="Ghi chú áp dụng toàn đơn..." data-i18n-placeholder="order.note.placeholder">
     </div>
   </div>
 </div>
@@ -40,13 +40,13 @@
     <div class="autocomplete-wrap" style="flex:1">
       <div class="search-wrapper" style="width: 100%;">
         <span class="material-symbols-outlined">search</span>
-        <input id="ac-input" placeholder="Nhập Tên hàng 2 (VD: AMC545S659)..." autocomplete="off"
+        <input id="ac-input" placeholder="Nhập Tên hàng 2 (VD: AMC545S659)..." data-i18n-placeholder="order.search.placeholder" autocomplete="off"
           oninput="OrderPage.acSearch(this.value)" onkeydown="if(event.key==='Enter')OrderPage.addProductRow()">
       </div>
       <div class="autocomplete-dropdown" id="ac-list"></div>
     </div>
     <button class="btn btn-primary" onclick="OrderPage.addProductRow()">
-      <span class="material-symbols-outlined" style="font-size:16px">add</span>Thêm
+      <span class="material-symbols-outlined" style="font-size:16px">add</span><span data-i18n="btn.add">Thêm</span>
     </button>
   </div>
   <div class="tbl-wrap">
@@ -56,7 +56,7 @@
         <tr>
           <td colspan="20" class="empty-state">
             <span class="material-symbols-outlined">table_chart</span>
-            Tìm và thêm sản phẩm để bắt đầu nhập số lượng
+            <span data-i18n="order.search.empty">Tìm và thêm sản phẩm để bắt đầu nhập số lượng</span>
           </td>
         </tr>
       </tbody>
@@ -64,10 +64,10 @@
   </div>
   <div class="matrix-footer">
     <div class="total-info">
-      Tổng: <span id="total-qty">0</span> SP &nbsp;·&nbsp; <span id="total-money">0đ</span>
+      <span data-i18n="order.total.qty">Tổng SP</span>: <span id="total-qty" style="color: var(--primary);">0</span> &nbsp;·&nbsp; <span id="total-money" style="color: var(--primary);">0đ</span>
     </div>
     <button class="btn btn-accent" onclick="OrderPage.previewOrder()">
-      <span class="material-symbols-outlined" style="font-size:16px">visibility</span>Xem trước
+      <span class="material-symbols-outlined" style="font-size:16px">visibility</span><span data-i18n="btn.preview">Xem trước</span>
     </button>
   </div>
 </div>
@@ -76,7 +76,7 @@
 <div class="modal-overlay" id="modal-preview">
   <div class="modal" style="width:min(800px,95vw)">
     <div class="modal-hdr">
-      <h3>👁 Xem Trước Đơn Hàng</h3>
+      <h3 data-i18n="order.preview.title">👁 Xem Trước Đơn Hàng</h3>
       <button class="btn-icon" onclick="closeModal('modal-preview')"><span
           class="material-symbols-outlined">close</span></button>
     </div>
@@ -86,20 +86,20 @@
       <table>
         <thead>
           <tr>
-            <th>Tên hàng 2</th>
+            <th data-i18n="order.col.name">Tên hàng 2</th>
             <th>SKU</th>
-            <th>Size</th>
-            <th>SL</th>
-            <th>Đơn giá</th>
-            <th>Thành tiền</th>
-            <th>CTBH</th>
-            <th>Ghi chú</th>
+            <th data-i18n="nav.sizes">Size</th>
+            <th data-i18n="order.col.qty">SL</th>
+            <th data-i18n="order.col.price">Đơn giá</th>
+            <th data-i18n="order.total.money">Thành tiền</th>
+            <th data-i18n="order.col.promo">CTBH</th>
+            <th data-i18n="order.note">Ghi chú</th>
           </tr>
         </thead>
         <tbody id="preview-body"></tbody>
         <tfoot>
           <tr style="font-weight:700;background:var(--bg)">
-            <td colspan="3" style="padding:10px 12px">Tổng cộng</td>
+            <td colspan="3" style="padding:10px 12px" data-i18n="order.total.label">Tổng cộng</td>
             <td id="pv-qty" style="padding:10px 12px"></td>
             <td></td>
             <td id="pv-money" style="padding:10px 12px;color:var(--accent)"></td>
@@ -109,9 +109,9 @@
       </table>
     </div>
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('modal-preview')">Đóng</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-preview')" data-i18n="btn.close">Đóng</button>
       <button class="btn btn-accent" onclick="OrderPage.saveOrder()">
-        <span class="material-symbols-outlined" style="font-size:16px">save</span>Lưu đơn
+        <span class="material-symbols-outlined" style="font-size:16px">save</span><span data-i18n="btn.save">Lưu đơn</span>
       </button>
     </div>
   </div>

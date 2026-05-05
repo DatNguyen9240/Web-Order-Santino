@@ -1,16 +1,16 @@
 <div class="page-hdr">
   <div>
-    <h2><span class="material-symbols-outlined" style="color:var(--primary);">inventory_2</span> Quản Lý Sản Phẩm</h2>
-    <p>CRUD Tên hàng 2 — nguồn sinh SKU</p>
+    <h2><span data-i18n="hdr.products">Quản Lý Sản Phẩm</span></h2>
+    <p data-i18n="hdr.products.desc">CRUD Tên hàng 2 — nguồn sinh SKU</p>
   </div>
   <button class="btn btn-primary" onclick="ProductsPage.openModal()">
-    <span class="material-symbols-outlined" style="font-size:16px">add</span>Thêm sản phẩm
+    <span class="material-symbols-outlined" style="font-size:16px">add</span><span data-i18n="btn.add">Thêm sản phẩm</span>
   </button>
 </div>
 <div style="display:flex;gap:12px;margin-bottom:12px">
   <div class="search-wrapper" style="flex:1; width:auto;">
     <span class="material-symbols-outlined">search</span>
-    <input id="product-search" placeholder="Tìm tên hàng 2..." oninput="ProductsPage.render()">
+    <input id="product-search" placeholder="Tìm tên hàng 2..." data-i18n-placeholder="products.search.placeholder" oninput="ProductsPage.render()">
   </div>
   <select id="product-filter-form" style="padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);outline:none;font-weight:500;box-shadow:var(--shadow-sm);" onchange="ProductsPage.render()">
     <option value="">Tất cả Form</option>
@@ -22,15 +22,15 @@
   <table>
     <thead>
       <tr>
-        <th>Tên hàng 2</th>
-        <th>Nhóm hàng</th>
-        <th>Form</th>
-        <th>Design/Màu</th>
-        <th>Nhóm size</th>
-        <th>Đơn giá</th>
-        <th>Tên hàng hóa</th>
-        <th>Trạng thái</th>
-        <th>Thao tác</th>
+        <th data-i18n="table.col.name2">Tên hàng 2</th>
+        <th data-i18n="table.col.product_group">Nhóm hàng</th>
+        <th data-i18n="table.col.form">Form</th>
+        <th data-i18n="table.col.design_color">Design/Màu</th>
+        <th data-i18n="table.col.size_group">Nhóm size</th>
+        <th data-i18n="table.col.price">Đơn giá</th>
+        <th data-i18n="table.col.product_name">Tên hàng hóa</th>
+        <th data-i18n="table.col.status">Trạng thái</th>
+        <th data-i18n="table.col.action">Thao tác</th>
       </tr>
     </thead>
     <tbody id="products-body"></tbody>
