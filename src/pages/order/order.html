@@ -1,6 +1,6 @@
 <div class="page-hdr">
   <div>
-    <h2 data-i18n="hdr.order">🛒 Đặt Hàng</h2>
+    <h2 data-i18n="hdr.order">Đặt Hàng</h2>
     <p data-i18n="hdr.order.desc">Tạo đơn hàng sỉ theo ma trận size</p>
   </div>
   <div style="display:flex;gap:8px">
@@ -41,12 +41,12 @@
       <div class="search-wrapper" style="width: 100%;">
         <span class="material-symbols-outlined">search</span>
         <input id="ac-input" placeholder="Nhập Tên hàng 2 (VD: AMC545S659)..." data-i18n-placeholder="order.search.placeholder" autocomplete="off"
-          oninput="OrderPage.acSearch(this.value)" onkeydown="if(event.key==='Enter')OrderPage.addProductRow()">
+          oninput="OrderPage.acSearch(this.value)" onfocus="OrderPage.acSearch(this.value)" onclick="OrderPage.acSearch(this.value)" onkeydown="if(event.key==='Enter')OrderPage.addProductRow()">
       </div>
       <div class="autocomplete-dropdown" id="ac-list"></div>
     </div>
-    <button class="btn btn-primary" onclick="OrderPage.addProductRow()">
-      <span class="material-symbols-outlined" style="font-size:16px">add</span><span data-i18n="btn.add">Thêm</span>
+    <button id="btn-multi-mode" class="btn btn-ghost" onclick="OrderPage.toggleMultiMode()" title="Chế độ chọn nhiều" style="padding:0 12px; border: 1px solid var(--border)">
+      <span class="material-symbols-outlined" id="icon-multi-mode" style="font-size:20px; color:var(--muted)">checklist</span>
     </button>
   </div>
   <div class="tbl-wrap">

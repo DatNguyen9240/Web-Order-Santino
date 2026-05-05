@@ -1,5 +1,7 @@
 var OrderPage = (function () {
   var orderRows = [];
+  var isMultiMode = false;
+  var multiSelectedCodes = {};
 
   function render($el) {
     return Router.fetchTemplate('src/pages/order/order.html')
@@ -17,8 +19,31 @@ var OrderPage = (function () {
       .map(function (p) { return '<option value="' + p.ma_ctbh + '">' + p.ma_ctbh + ' - ' + p.ten_ctbh + '</option>'; }).join('');
     renderMatrix();
     document.addEventListener('click', function (e) {
-      if (!e.target.closest('.autocomplete-wrap')) document.getElementById('ac-list').classList.remove('show');
+      if (!e.target.closest('.autocomplete-wrap') && !e.target.closest('#btn-multi-mode')) {
+        var acList = document.getElementById('ac-list');
+        if (acList) acList.classList.remove('show');
+      }
     });
+  }
+
+  function toggleMultiMode() {
+    isMultiMode = !isMultiMode;
+    var btn = document.getElementById('btn-multi-mode');
+    var icon = document.getElementById('icon-multi-mode');
+    if (isMultiMode) {
+      btn.classList.add('btn-primary');
+      btn.classList.remove('btn-ghost');
+      btn.style.borderColor = 'transparent';
+      icon.style.color = '#fff';
+    } else {
+      btn.classList.remove('btn-primary');
+      btn.classList.add('btn-ghost');
+      btn.style.borderColor = 'var(--border)';
+      icon.style.color = 'var(--muted)';
+      multiSelectedCodes = {};
+    }
+    var val = document.getElementById('ac-input').value;
+    if (val) acSearch(val);
   }
 
   function acSearch(val) {
@@ -28,15 +53,78 @@ var OrderPage = (function () {
       return !p.ngung_su_dung && (p.ten_hang_2.toLowerCase().includes(val.toLowerCase()) || p.mau.toLowerCase().includes(val.toLowerCase()));
     });
     if (!prods.length) { list.innerHTML = '<div class="ac-item"><small>' + t('order.ac.not_found') + '</small></div>'; list.classList.add('show'); return; }
-    list.innerHTML = prods.slice(0, 8).map(function (p) {
-      return '<div class="ac-item" onclick="OrderPage.selectAc(\'' + p.ten_hang_2 + '\')"><strong>' + p.ten_hang_2 + '</strong><small>' + p.mau + ' · ' + Utils.formatMoney(p.don_gia) + '</small></div>';
-    }).join('');
+    
+    var html = '';
+    if (isMultiMode) {
+      html = prods.slice(0, 8).map(function (p) {
+        var isChecked = multiSelectedCodes[p.ten_hang_2] ? 'checked' : '';
+        return '<div class="ac-item" style="flex-direction:row;align-items:center;justify-content:flex-start;text-align:left;gap:12px;cursor:pointer" onclick="OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
+               '<input type="checkbox" ' + isChecked + ' style="cursor:pointer;flex-shrink:0" id="chk-'+p.ten_hang_2+'" value="'+p.ten_hang_2+'" onclick="event.stopPropagation(); OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
+               '<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:4px"><div style="display:flex;align-items:baseline;gap:6px"><strong>' + p.ten_hang_2 + '</strong><span style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.ten_hang_hoa + '</span></div><small style="color:var(--muted)">' + p.mau + ' · ' + Utils.formatMoney(p.don_gia) + '</small></div></div>';
+      }).join('');
+
+      html += '<div class="ac-actions" style="display:flex;gap:8px;padding:12px;border-top:1px solid var(--border);background:var(--surface);position:sticky;bottom:-8px;margin:8px -8px -8px -8px;z-index:10">' +
+              '<button class="btn btn-ghost btn-sm" style="flex:1" onclick="OrderPage.closeAc()">' + (typeof t === 'function' ? t('btn.cancel') : 'Hủy bỏ') + '</button>' +
+              '<button class="btn btn-primary btn-sm" style="flex:1" onclick="OrderPage.addSelectedProds()">' + (typeof t === 'function' ? t('btn.add') : 'Thêm') + '</button>' +
+              '</div>';
+    } else {
+      html = prods.slice(0, 8).map(function (p) {
+        return '<div class="ac-item" style="text-align:left" onclick="OrderPage.selectAcSingle(\'' + p.ten_hang_2 + '\')">' +
+               '<div style="display:flex;align-items:baseline;gap:6px"><strong>' + p.ten_hang_2 + '</strong><span style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.ten_hang_hoa + '</span></div><small style="color:var(--muted);align-self:flex-start">' + p.mau + ' · ' + Utils.formatMoney(p.don_gia) + '</small></div>';
+      }).join('');
+    }
+
+    list.innerHTML = html;
     list.classList.add('show');
   }
 
-  function selectAc(code) {
+  function selectAcSingle(code) {
     document.getElementById('ac-input').value = code;
     document.getElementById('ac-list').classList.remove('show');
+    addProductRow();
+  }
+
+  function toggleAcSelect(e, code) {
+    var chk = document.getElementById('chk-' + code);
+    if (e && e.target.tagName !== 'INPUT') {
+      if (chk) chk.checked = !chk.checked;
+    }
+    if (chk) {
+      if (chk.checked) multiSelectedCodes[code] = true;
+      else delete multiSelectedCodes[code];
+    }
+  }
+
+  function closeAc() {
+    multiSelectedCodes = {};
+    document.getElementById('ac-list').classList.remove('show');
+  }
+
+  function addSelectedProds() {
+    var codes = Object.keys(multiSelectedCodes);
+    if (codes.length === 0) {
+      showToast(typeof t === 'function' ? t('toast.enter_product') : 'Vui lòng chọn sản phẩm', false);
+      return;
+    }
+    var added = 0;
+    codes.forEach(function(code) {
+      var prod = DB.getAll('products').find(function (p) { return p.ten_hang_2 === code; });
+      if (prod && !orderRows.find(function (r) { return r.ten_hang_2 === code; })) {
+        var sizes = DB.getAll('sizes').filter(function (s) { return s.nhom_size === prod.nhom_size; }).sort(function (a, b) { return a.size - b.size; });
+        orderRows.push({ ten_hang_2: code, product: prod, sizes: sizes, quantities: {} });
+        added++;
+      }
+    });
+    
+    if (added > 0) {
+      renderMatrix();
+      showToast('Đã thêm ' + added + ' sản phẩm');
+    } else {
+      showToast('Sản phẩm đã tồn tại trong đơn', false);
+    }
+    
+    document.getElementById('ac-input').value = '';
+    closeAc();
   }
 
   function addProductRow() {
@@ -163,7 +251,9 @@ var OrderPage = (function () {
   }
 
   return {
-    render: render, acSearch: acSearch, selectAc: selectAc, addProductRow: addProductRow,
+    render: render, acSearch: acSearch, toggleAcSelect: toggleAcSelect, closeAc: closeAc,
+    addSelectedProds: addSelectedProds, addProductRow: addProductRow, selectAcSingle: selectAcSingle,
+    toggleMultiMode: toggleMultiMode,
     updateQty: updateQty, removeRow: removeRow, previewOrder: previewOrder,
     saveOrder: saveOrder, clearOrder: clearOrder
   };
