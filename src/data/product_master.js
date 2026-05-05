@@ -1,0 +1,33 @@
+// Product Master — Tên hàng 2 (nguồn sinh SKU)
+// Dữ liệu từ hình 4 requirement
+const productMaster = [
+  // AMC — Modern Fit
+  { ten_hang_2:"AMC395M201", nhom_hang:"SKU102", don_gia:395000, design:"M201", mau:"M201-Trắng", form:"AMC", ten_form:"Modern Fit", ten_hang_hoa:"Áo sơ mi-AMC395M201", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  { ten_hang_2:"AMC525M102", nhom_hang:"SKU102", don_gia:525000, design:"M102", mau:"M102",        form:"AMC", ten_form:"Modern Fit", ten_hang_hoa:"Áo sơ mi-AMC525M102", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  { ten_hang_2:"AMC545S659", nhom_hang:"SKU102", don_gia:545000, design:"S659", mau:"S659",        form:"AMC", ten_form:"Modern Fit", ten_hang_hoa:"Áo sơ mi-AMC545S659", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  { ten_hang_2:"AMC545S660", nhom_hang:"SKU102", don_gia:545000, design:"S660", mau:"S660",        form:"AMC", ten_form:"Modern Fit", ten_hang_hoa:"Áo sơ mi-AMC545S660", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  { ten_hang_2:"AMC545S661", nhom_hang:"SKU102", don_gia:545000, design:"S661", mau:"S661",        form:"AMC", ten_form:"Modern Fit", ten_hang_hoa:"Áo sơ mi-AMC545S661", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  { ten_hang_2:"AMC565S655", nhom_hang:"SKU102", don_gia:565000, design:"S655", mau:"S655",        form:"AMC", ten_form:"Modern Fit", ten_hang_hoa:"Áo sơ mi-AMC565S655", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  { ten_hang_2:"AMC565S656", nhom_hang:"SKU102", don_gia:565000, design:"S656", mau:"S656",        form:"AMC", ten_form:"Modern Fit", ten_hang_hoa:"Áo sơ mi-AMC565S656", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  { ten_hang_2:"AMC565S657", nhom_hang:"SKU102", don_gia:565000, design:"S657", mau:"S657",        form:"AMC", ten_form:"Modern Fit", ten_hang_hoa:"Áo sơ mi-AMC565S657", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  { ten_hang_2:"AMC565S658", nhom_hang:"SKU102", don_gia:565000, design:"S658", mau:"S658",        form:"AMC", ten_form:"Modern Fit", ten_hang_hoa:"Áo sơ mi-AMC565S658", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  { ten_hang_2:"AMC695S810", nhom_hang:"SKU102", don_gia:695000, design:"S810", mau:"S810-Kẻ xanh",form:"AMC", ten_form:"Modern Fit", ten_hang_hoa:"Áo sơ mi-AMC695S810", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  { ten_hang_2:"AMC695S811", nhom_hang:"SKU102", don_gia:695000, design:"S811", mau:"S811-Kẻ chỉ",form:"AMC", ten_form:"Modern Fit", ten_hang_hoa:"Áo sơ mi-AMC695S811", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  { ten_hang_2:"AMC695S812", nhom_hang:"SKU102", don_gia:695000, design:"S812", mau:"S812-Navy",   form:"AMC", ten_form:"Modern Fit", ten_hang_hoa:"Áo sơ mi-AMC695S812", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  { ten_hang_2:"AMC745S750", nhom_hang:"SKU102", don_gia:745000, design:"S750", mau:"S750-Kẻ",    form:"AMC", ten_form:"Modern Fit", ten_hang_hoa:"Áo sơ mi-AMC745S750", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  { ten_hang_2:"AMC745S751", nhom_hang:"SKU102", don_gia:745000, design:"S751", mau:"S751-Kẻ",    form:"AMC", ten_form:"Modern Fit", ten_hang_hoa:"Áo sơ mi-AMC745S751", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  { ten_hang_2:"AMC745S752", nhom_hang:"SKU102", don_gia:745000, design:"S752", mau:"S752-Kẻ",    form:"AMC", ten_form:"Modern Fit", ten_hang_hoa:"Áo sơ mi-AMC745S752", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  { ten_hang_2:"AMC745S753", nhom_hang:"SKU102", don_gia:745000, design:"S753", mau:"S753-Kẻ",    form:"AMC", ten_form:"Modern Fit", ten_hang_hoa:"Áo sơ mi-AMC745S753", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  { ten_hang_2:"AMC745S754", nhom_hang:"SKU102", don_gia:745000, design:"S754", mau:"S754-Kẻ",    form:"AMC", ten_form:"Modern Fit", ten_hang_hoa:"Áo sơ mi-AMC745S754", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  // ARC — Regular
+  { ten_hang_2:"ARC355S101", nhom_hang:"SKU102", don_gia:355000, design:"S101", mau:"S101",        form:"ARC", ten_form:"Regular", ten_hang_hoa:"Áo sơ mi-ARC355S101", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  { ten_hang_2:"ARC370M101", nhom_hang:"SKU102", don_gia:370000, design:"M101", mau:"M101",        form:"ARC", ten_form:"Regular", ten_hang_hoa:"Áo sơ mi-ARC370M101", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  { ten_hang_2:"ARC380M105", nhom_hang:"SKU102", don_gia:380000, design:"M105", mau:"M105",        form:"ARC", ten_form:"Regular", ten_hang_hoa:"Áo sơ mi-ARC380M105", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  { ten_hang_2:"ARC395M101", nhom_hang:"SKU102", don_gia:395000, design:"M101", mau:"M101",        form:"ARC", ten_form:"Regular", ten_hang_hoa:"Áo sơ mi-ARC395M101", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  { ten_hang_2:"ARC445S537", nhom_hang:"SKU102", don_gia:445000, design:"S537", mau:"S537",        form:"ARC", ten_form:"Regular", ten_hang_hoa:"Áo sơ mi-ARC445S537", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  { ten_hang_2:"ARC445S538", nhom_hang:"SKU102", don_gia:445000, design:"S538", mau:"S538",        form:"ARC", ten_form:"Regular", ten_hang_hoa:"Áo sơ mi-ARC445S538", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  { ten_hang_2:"ARC445S553", nhom_hang:"SKU102", don_gia:445000, design:"S553", mau:"S553",        form:"ARC", ten_form:"Regular", ten_hang_hoa:"Áo sơ mi-ARC445S553", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  { ten_hang_2:"ARC470S391", nhom_hang:"SKU102", don_gia:470000, design:"S391", mau:"S391",        form:"ARC", ten_form:"Regular", ten_hang_hoa:"Áo sơ mi-ARC470S391", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  { ten_hang_2:"ARC470S468", nhom_hang:"SKU102", don_gia:470000, design:"S468", mau:"S468",        form:"ARC", ten_form:"Regular", ten_hang_hoa:"Áo sơ mi-ARC470S468", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+  { ten_hang_2:"ARC470S469", nhom_hang:"SKU102", don_gia:470000, design:"S469", mau:"S469",        form:"ARC", ten_form:"Regular", ten_hang_hoa:"Áo sơ mi-ARC470S469", ngung_su_dung:false, ten_nhom_hang:"SỔ MI NGẮN TAY", nhom_size:"Nhóm 3" },
+];

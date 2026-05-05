@@ -1,0 +1,27 @@
+<div class="page-hdr"><div><h2>⚙️ Cài Đặt Hệ Thống</h2></div></div>
+<div class="card settings-section">
+  <h4>Giao diện</h4>
+  <div class="theme-btns">
+    <button class="btn btn-ghost" onclick="SettingsPage.setTheme('light')">
+      <span class="material-symbols-outlined" style="font-size:16px">light_mode</span>Sáng
+    </button>
+    <button class="btn btn-ghost" onclick="SettingsPage.setTheme('dark')">
+      <span class="material-symbols-outlined" style="font-size:16px">dark_mode</span>Tối
+    </button>
+  </div>
+</div>
+<div class="card settings-section">
+  <h4>Rule sinh SKU</h4>
+  <p style="color:var(--muted);margin-top:4px">Công thức:
+    <code style="background:var(--bg);padding:2px 8px;border-radius:4px;font-family:monospace">{BRAND} + {SIZE} + {REST}</code>
+  </p>
+  <p style="color:var(--muted);margin-top:4px">Ví dụ:
+    <code style="background:var(--bg);padding:2px 8px;border-radius:4px;font-family:monospace">AMC + 40 + 545S659 = AMC40545S659</code>
+  </p>
+</div>
+<div class="card settings-section">
+  <h4>Reset dữ liệu về mặc định</h4>
+  <button class="btn btn-danger btn-sm" onclick="SettingsPage.resetData()">
+    <span class="material-symbols-outlined" style="font-size:16px">restore</span>Reset về mặc định
+  </button>
+</div>

@@ -1,0 +1,18 @@
+<div class="page-hdr">
+  <div><h2>📄 Danh Sách Đơn Hàng</h2><p>Lịch sử và trạng thái đơn</p></div>
+  <input id="orders-search" style="padding:9px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);width:240px;outline:none"
+    placeholder="🔍 Tìm số CT..." oninput="OrdersPage.filter(this.value)">
+</div>
+<div class="tbl-wrap">
+  <table>
+    <thead><tr>
+      <th>Số CT</th><th>Ngày CT</th><th>Chi nhánh</th><th>CTKM</th>
+      <th>Tổng SP</th><th>Tổng tiền</th><th>Ghi chú</th><th>Thao tác</th>
+    </tr></thead>
+    <tbody id="orders-body">
+      <tr><td colspan="8" class="empty-state">
+        <span class="material-symbols-outlined">receipt_long</span>Chưa có đơn hàng nào
+      </td></tr>
+    </tbody>
+  </table>
+</div>

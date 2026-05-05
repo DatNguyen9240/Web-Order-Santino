@@ -1,0 +1,11 @@
+<div class="page-hdr">
+  <div><h2>🔗 Cấu Hình SKU</h2><p>Xem mapping: Tên hàng 2 → SKU theo size</p></div>
+  <input id="sku-search" style="padding:9px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);width:260px;outline:none"
+    placeholder="🔍 Tìm tên hàng 2..." oninput="SkuPage.render()">
+</div>
+<div class="tbl-wrap">
+  <table>
+    <thead><tr><th>Tên hàng 2</th><th>Form</th><th>Design</th><th>Nhóm size</th><th>Đơn giá</th><th>SKUs sinh ra</th></tr></thead>
+    <tbody id="sku-body"></tbody>
+  </table>
+</div>

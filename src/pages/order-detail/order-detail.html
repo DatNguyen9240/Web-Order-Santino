@@ -1,0 +1,16 @@
+<div class="page-hdr">
+  <div><h2 id="detail-title">Chi Tiết Đơn</h2></div>
+  <button class="btn btn-ghost btn-sm" onclick="Router.go('/orders')">
+    <span class="material-symbols-outlined" style="font-size:16px">arrow_back</span>Quay lại
+  </button>
+</div>
+<div class="card" id="detail-info" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px"></div>
+<div class="tbl-wrap">
+  <table>
+    <thead><tr>
+      <th>Tên hàng 2</th><th>SKU</th><th>Tên hàng hóa</th><th>Size</th>
+      <th>SL</th><th>Đơn giá</th><th>Thành tiền</th><th>CTBH</th><th>Ghi chú</th>
+    </tr></thead>
+    <tbody id="detail-body"></tbody>
+  </table>
+</div>
