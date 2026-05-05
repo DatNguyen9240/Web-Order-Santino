@@ -16,8 +16,8 @@
   --primary:     #18181b; /* Zinc 900 - Sleek Black */
   --primary-fg:  #ffffff; /* White text on primary */
   
-  --accent:      #C89E5B; /* Elegant Fashion Gold */
-  --accent-dim:  rgba(200, 158, 91, 0.15);
+  --accent:      #FBBF24; /* Bright Radiant Gold */
+  --accent-dim:  rgba(251, 191, 36, 0.15);
   
   --danger:      #e11d48; /* Rose 600 */
   --success:     #059669; /* Emerald 600 */
@@ -52,8 +52,8 @@
   --primary:     #fafafa; /* Zinc 50 - Sleek White */
   --primary-fg:  #18181b; /* Dark text on white primary */
   
-  --accent:      #E2C285; /* Champagne Gold for Dark Mode */
-  --accent-dim:  rgba(226, 194, 133, 0.15);
+  --accent:      #FBBF24; /* Bright Radiant Gold for Dark Mode */
+  --accent-dim:  rgba(251, 191, 36, 0.15);
   
   --shadow-sm:   0 2px 8px rgba(0, 0, 0, 0.3);
   --shadow:      0 4px 16px rgba(0, 0, 0, 0.4);
