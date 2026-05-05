@@ -3,7 +3,7 @@
 .setting-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 .setting-card.active {
     border-color: var(--accent) !important;
-    background-color: var(--accent-dim) !important;
+    background-color: color-mix(in srgb, var(--accent) 12%, transparent) !important;
 }
 
 .color-circle {
@@ -22,15 +22,41 @@
 
 <div class="page-hdr" style="margin-bottom: 32px;">
     <div>
-        <h2 style="font-family: var(--font-display, var(--font)); font-size: 32px; font-weight: 800;" data-i18n="settings.title">Cài đặt Giao diện & Hiển thị</h2>
+        <h2 style="font-family: var(--font-display, var(--font)); font-size: 32px; font-weight: 800;" data-i18n="settings.title">Cài Đặt Giao diện & Hiển thị</h2>
         <p style="color: var(--muted); margin-top: 8px;" data-i18n="settings.desc">Cá nhân hóa trải nghiệm sử dụng hệ thống B2B của bạn.</p>
     </div>
 </div>
 
 <div style="display: flex; flex-direction: column; gap: 40px; max-width: 900px;">
     
-    <!-- FONT SETTINGS -->
+    <!-- THEME SETTINGS -->
     <div>
+        <h3 style="font-family: var(--font-display, var(--font)); font-size: 20px; margin-bottom: 8px;" data-i18n="settings.theme">Chế độ Hệ thống (Theme)</h3>
+        <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px;">Chuyển đổi giao diện sáng tối phù hợp với môi trường làm việc.</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;">
+            <div class="card setting-card theme-card" onclick="SettingsPage.setMode('auto')" data-theme="auto" style="cursor: pointer;">
+                <div style="margin-bottom: 12px;"><span class="material-symbols-outlined" style="color: var(--muted);">hdr_auto</span></div>
+                <div style="font-weight: 700; margin-bottom: 4px;">Theo hệ thống</div>
+                <div style="font-size: 12px; color: var(--muted);">Tự động Sáng/Tối theo thiết bị.</div>
+            </div>
+            
+            <div class="card setting-card theme-card" onclick="SettingsPage.setMode('light')" data-theme="light" style="cursor: pointer;">
+                <div style="margin-bottom: 12px;"><span class="material-symbols-outlined" style="color: #f59e0b;">light_mode</span></div>
+                <div style="font-weight: 700; margin-bottom: 4px;">Bản Phát triển (Sáng)</div>
+                <div style="font-size: 12px; color: var(--muted);">Giao diện hiện đại, tươi sáng.</div>
+            </div>
+            
+            <div class="card setting-card theme-card" onclick="SettingsPage.setMode('dark')" data-theme="dark" style="cursor: pointer;">
+                <div style="margin-bottom: 12px;"><span class="material-symbols-outlined" style="color: #a1a1aa;">dark_mode</span></div>
+                <div style="font-weight: 700; margin-bottom: 4px;">Bản Phát triển (Tối)</div>
+                <div style="font-size: 12px; color: var(--muted);">Giao diện hiện đại, nền tối dịu mắt.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FONT SETTINGS -->
+    <div style="border-top: 1px solid var(--border); padding-top: 40px;">
         <h3 style="font-family: var(--font-display, var(--font)); font-size: 20px; margin-bottom: 8px;" data-i18n="settings.font">Phông chữ (Typography)</h3>
         <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px;">Tùy chỉnh phông chữ hiển thị cho toàn bộ ứng dụng để có trải nghiệm tốt nhất.</p>
         
@@ -51,32 +77,6 @@
                 <div style="font-family: 'Nunito', sans-serif; font-size: 20px; margin-bottom: 12px;">Aa Bb Cc</div>
                 <div style="font-weight: 700; margin-bottom: 4px;">Nunito</div>
                 <div style="font-size: 12px; color: var(--muted);">Bo tròn, thân thiện</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- THEME SETTINGS -->
-    <div>
-        <h3 style="font-family: var(--font-display, var(--font)); font-size: 20px; margin-bottom: 8px;" data-i18n="settings.theme">Chủ đề Hệ thống (Theme)</h3>
-        <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px;">Chuyển đổi giao diện sáng tối phù hợp với môi trường làm việc.</p>
-        
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;">
-            <div class="card setting-card theme-card" onclick="SettingsPage.setMode('auto')" data-theme="auto" style="cursor: pointer;">
-                <div style="margin-bottom: 12px;"><span class="material-symbols-outlined" style="color: var(--muted);">hdr_auto</span></div>
-                <div style="font-weight: 700; margin-bottom: 4px;">Theo hệ thống</div>
-                <div style="font-size: 12px; color: var(--muted);">Tự động Sáng/Tối theo thiết bị.</div>
-            </div>
-            
-            <div class="card setting-card theme-card" onclick="SettingsPage.setMode('light')" data-theme="light" style="cursor: pointer;">
-                <div style="margin-bottom: 12px;"><span class="material-symbols-outlined" style="color: #f59e0b;">light_mode</span></div>
-                <div style="font-weight: 700; margin-bottom: 4px;">Bản Phát triển (Sáng)</div>
-                <div style="font-size: 12px; color: var(--muted);">Giao diện hiện đại, tươi sáng.</div>
-            </div>
-            
-            <div class="card setting-card theme-card" onclick="SettingsPage.setMode('dark')" data-theme="dark" style="cursor: pointer;">
-                <div style="margin-bottom: 12px;"><span class="material-symbols-outlined" style="color: #a1a1aa;">dark_mode</span></div>
-                <div style="font-weight: 700; margin-bottom: 4px;">Bản Phát triển (Tối)</div>
-                <div style="font-size: 12px; color: var(--muted);">Giao diện hiện đại, nền tối dịu mắt.</div>
             </div>
         </div>
     </div>
@@ -130,7 +130,7 @@
     </div>
 </div>
 
-<div class="card settings-section" style="margin-top: 40px; max-width: 900px;">
+<div class="card settings-section" style="margin-top: 40px; max-width: 900px; border: 1px solid var(--danger); background: rgba(225, 29, 72, 0.05);">
   <h4 style="color: var(--danger);" data-i18n="settings.reset">Reset dữ liệu</h4>
   <p style="color:var(--muted); font-size:14px; margin-bottom: 12px;">Thao tác này sẽ xóa toàn bộ đơn hàng và cài đặt hiện tại của bạn.</p>
   <button class="btn btn-danger btn-sm" onclick="SettingsPage.resetData()" style="width: max-content;">
