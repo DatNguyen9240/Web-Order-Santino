@@ -13,8 +13,8 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
     rel="stylesheet">
-  <link rel="stylesheet" href="src/css/design-tokens.css">
-  <link rel="stylesheet" href="src/css/global.css">
+  <!-- BUNDLED CSS -->
+  <link rel="stylesheet" href="src/css/styles.bundle.css">
   <script>(function () { if (localStorage.getItem('santino_theme') === 'dark') document.documentElement.classList.add('dark-theme') })();</script>
 </head>
 
@@ -85,18 +85,8 @@
     <span id="toast-msg"></span>
   </div>
 
-  <!-- DATA -->
-  <script src="src/data/product_master.js"></script>
-  <script src="src/data/size_groups.js"></script>
-  <script src="src/data/promotions.js"></script>
-  <script src="src/data/translations.js"></script>
-  <!-- CORE -->
-  <script src="src/js/db.js"></script>
-  <script src="src/js/utils.js"></script>
-  <script src="src/components/confirm-modal/ConfirmModal.js"></script>
-  <script src="src/components/modal/Modal.js"></script>
-  <script src="src/js/core/router.js"></script>
-  <script src="src/js/core/app.js"></script>
+  <!-- BUNDLED JS (Core + Data + Components) -->
+  <script src="src/js/app.bundle.js"></script>
 </body>
 
 </html>
