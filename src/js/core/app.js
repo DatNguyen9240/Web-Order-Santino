@@ -6,11 +6,19 @@ document.addEventListener('DOMContentLoaded', function () {
   // 1. Seed data vào localStorage lần đầu
   DB.initSeed();
 
-  // 2. Khôi phục theme
-  var savedTheme = localStorage.getItem('santino_theme') || 'light';
-  if (savedTheme === 'dark') document.documentElement.classList.add('dark-theme');
+  // 2. Khôi phục Cài đặt
+  var theme = localStorage.getItem('santino_theme') || 'auto';
+  if (theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.documentElement.classList.add('dark-theme');
+  } else {
+    document.documentElement.classList.remove('dark-theme');
+  }
 
-  // 3. Khởi động Router
+  var font = localStorage.getItem('santino_font');
+  if(font) document.documentElement.style.setProperty('--font', '"' + font + '", sans-serif');
+
+  var color = localStorage.getItem('santino_color');
+  if(color) document.documentElement.style.setProperty('--accent', color);
   Router.init();
 
   // Ẩn splash nếu có
