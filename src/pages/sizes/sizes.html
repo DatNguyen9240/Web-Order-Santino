@@ -1,12 +1,22 @@
 <div class="page-hdr">
-  <div><h2>📏 Quản Lý Size</h2><p>CRUD size và nhóm size</p></div>
+  <div>
+    <h2><span class="material-symbols-outlined" style="color:var(--primary);">straighten</span> Quản Lý Size</h2>
+    <p>CRUD size và nhóm size</p>
+  </div>
   <button class="btn btn-primary" onclick="SizesPage.openModal()">
     <span class="material-symbols-outlined" style="font-size:16px">add</span>Thêm size
   </button>
 </div>
 <div class="tbl-wrap">
   <table>
-    <thead><tr><th>Size</th><th>Tên size</th><th>Nhóm size</th><th>Thao tác</th></tr></thead>
+    <thead>
+      <tr>
+        <th>Size</th>
+        <th>Tên size</th>
+        <th>Nhóm size</th>
+        <th>Thao tác</th>
+      </tr>
+    </thead>
     <tbody id="sizes-body"></tbody>
   </table>
 </div>
@@ -16,7 +26,8 @@
   <div class="modal">
     <div class="modal-hdr">
       <h3 id="sm-title">Thêm Size</h3>
-      <button class="btn-icon" onclick="closeModal('modal-size')"><span class="material-symbols-outlined">close</span></button>
+      <button class="btn-icon" onclick="closeModal('modal-size')"><span
+          class="material-symbols-outlined">close</span></button>
     </div>
     <input type="hidden" id="sm-id">
     <div class="form-grid">

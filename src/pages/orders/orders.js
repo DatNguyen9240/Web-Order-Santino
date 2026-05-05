@@ -1,4 +1,4 @@
-﻿var OrdersPage = (function () {
+var OrdersPage = (function () {
   function render($el) {
     return Router.fetchTemplate('src/pages/orders/orders.html').then(function(html){
       $el.innerHTML = html; _render();
@@ -23,8 +23,17 @@
   }
   function filter(q) { _render(q); }
   function del(id) {
-    if(!confirm('Xóa đơn này?'))return;
-    DB.remove('orders',id); _render(); showToast('Đã xóa đơn hàng');
+    ConfirmModal.show({
+      title: 'Xóa đơn hàng',
+      message: 'Xóa đơn này?',
+      confirmText: 'Xóa',
+      confirmClass: 'btn-danger',
+      onConfirm: function() {
+        DB.remove('orders', id);
+        _render();
+        showToast('Đã xóa đơn hàng');
+      }
+    });
   }
   function view(id) {
     window._viewOrderId = id;

@@ -97,7 +97,11 @@ var Router = (function () {
         }
         throw new Error('Module not found: ' + route.pageFn);
       })
-      .then(function () { _fadeIn($el); _isNavigating = false; })
+      .then(function () { 
+        if (typeof applyLanguage === 'function') applyLanguage();
+        _fadeIn($el); 
+        _isNavigating = false; 
+      })
       .catch(function (err) {
         console.error('[Router]', err);
         $el.innerHTML = '<div class="card" style="color:var(--danger)"><span class="material-symbols-outlined" style="vertical-align:middle">error</span> ' + err.message + '</div>';

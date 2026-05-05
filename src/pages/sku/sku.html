@@ -1,7 +1,9 @@
 <div class="page-hdr">
-  <div><h2>🔗 Cấu Hình SKU</h2><p>Xem mapping: Tên hàng 2 → SKU theo size</p></div>
-  <input id="sku-search" style="padding:9px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);width:260px;outline:none"
-    placeholder="🔍 Tìm tên hàng 2..." oninput="SkuPage.render()">
+  <div><h2><span class="material-symbols-outlined" style="color:var(--primary);">qr_code</span> Cấu Hình SKU</h2><p>Xem mapping: Tên hàng 2 → SKU theo size</p></div>
+  <div class="search-wrapper">
+    <span class="material-symbols-outlined">search</span>
+    <input id="sku-search" placeholder="Tìm tên hàng 2..." oninput="SkuPage.render()">
+  </div>
 </div>
 <div class="tbl-wrap">
   <table>

@@ -1,121 +1,139 @@
-<div class="page-hdr"><div><h2>⚙️ Cài Đặt Hệ Thống</h2><p>Tùy chỉnh giao diện và dữ liệu hệ thống</p></div></div>
+<style>
+.setting-card { position: relative; overflow: hidden; transition: all 0.2s; }
+.setting-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.setting-card.active {
+    border-color: var(--accent) !important;
+    background-color: var(--accent-dim) !important;
+}
 
-<!-- GIAO DIỆN (THEME) -->
-<div class="card settings-section">
-  <h4>Giao diện (Theme)</h4>
-  <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px">Chuyển đổi giao diện sáng tối phù hợp với môi trường làm việc.</p>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:16px">
-    <div class="setting-card theme-card" id="theme-light" onclick="SettingsPage.setTheme('light', this)" style="padding:20px;border-radius:12px;border:2px solid transparent;background:var(--bg);cursor:pointer;position:relative;box-shadow:var(--shadow-sm);transition:0.2s">
-      <span class="material-symbols-outlined check-icon" style="position:absolute;top:12px;right:12px;color:var(--accent);display:none">check_circle</span>
-      <div style="margin-bottom:12px"><span class="material-symbols-outlined" style="color:#f59e0b">light_mode</span></div>
-      <div style="font-weight:700;margin-bottom:4px">Sáng (Light)</div>
-      <div style="font-size:12px;color:var(--text-muted)">Giao diện hiện đại, tươi sáng.</div>
+.color-circle {
+    width: 36px; height: 36px; border-radius: 50%; background: var(--c); cursor: pointer; position: relative; transition: transform 0.2s;
+}
+.color-circle:hover { transform: scale(1.1); }
+.color-circle.active { outline: 2px solid var(--c); outline-offset: 3px; }
+.color-circle.active::after {
+    content: '\e86c';
+    font-family: 'Material Symbols Outlined';
+    position: absolute; top: -8px; right: -8px;
+    color: var(--c); background: var(--surface); border-radius: 50%;
+    font-size: 16px; width: 16px; height: 16px; line-height: 16px; text-align: center;
+}
+</style>
+
+<div class="page-hdr" style="margin-bottom: 32px;">
+    <div>
+        <h2 style="font-family: var(--font-display, var(--font)); font-size: 32px; font-weight: 800;" data-i18n="settings.title">Cài đặt Giao diện & Hiển thị</h2>
+        <p style="color: var(--muted); margin-top: 8px;" data-i18n="settings.desc">Cá nhân hóa trải nghiệm sử dụng hệ thống B2B của bạn.</p>
     </div>
-    
-    <div class="setting-card theme-card" id="theme-dark" onclick="SettingsPage.setTheme('dark', this)" style="padding:20px;border-radius:12px;border:2px solid transparent;background:var(--bg);cursor:pointer;position:relative;box-shadow:var(--shadow-sm);transition:0.2s">
-      <span class="material-symbols-outlined check-icon" style="position:absolute;top:12px;right:12px;color:var(--accent);display:none">check_circle</span>
-      <div style="margin-bottom:12px"><span class="material-symbols-outlined" style="color:#a1a1aa">dark_mode</span></div>
-      <div style="font-weight:700;margin-bottom:4px">Tối (Dark)</div>
-      <div style="font-size:12px;color:var(--text-muted)">Nền tối dịu mắt, tiết kiệm pin.</div>
-    </div>
-  </div>
 </div>
 
-<!-- FONT CHỮ -->
-<div class="card settings-section">
-  <h4>Phông chữ (Typography)</h4>
-  <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px">Tùy chỉnh phông chữ hiển thị cho toàn bộ hệ thống.</p>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:16px">
-    <div class="setting-card font-card" id="font-plus" onclick="SettingsPage.setFont('Plus Jakarta Sans', this)" style="padding:20px;border-radius:12px;border:2px solid transparent;background:var(--bg);cursor:pointer;position:relative;box-shadow:var(--shadow-sm);transition:0.2s">
-      <span class="material-symbols-outlined check-icon" style="position:absolute;top:12px;right:12px;color:var(--accent);display:none">check_circle</span>
-      <div style="font-family:'Plus Jakarta Sans', sans-serif;font-size:20px;margin-bottom:12px">Aa Bb Cc</div>
-      <div style="font-weight:700;margin-bottom:4px">Plus Jakarta Sans</div>
-      <div style="font-size:12px;color:var(--text-muted)">Sắc nét (Mặc định)</div>
-    </div>
+<div style="display: flex; flex-direction: column; gap: 40px; max-width: 900px;">
     
-    <div class="setting-card font-card" id="font-inter" onclick="SettingsPage.setFont('Inter', this)" style="padding:20px;border-radius:12px;border:2px solid transparent;background:var(--bg);cursor:pointer;position:relative;box-shadow:var(--shadow-sm);transition:0.2s">
-      <span class="material-symbols-outlined check-icon" style="position:absolute;top:12px;right:12px;color:var(--accent);display:none">check_circle</span>
-      <div style="font-family:'Inter', sans-serif;font-size:20px;margin-bottom:12px">Aa Bb Cc</div>
-      <div style="font-weight:700;margin-bottom:4px">Inter</div>
-      <div style="font-size:12px;color:var(--text-muted)">Hiện đại, dễ đọc</div>
+    <!-- FONT SETTINGS -->
+    <div>
+        <h3 style="font-family: var(--font-display, var(--font)); font-size: 20px; margin-bottom: 8px;" data-i18n="settings.font">Phông chữ (Typography)</h3>
+        <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px;">Tùy chỉnh phông chữ hiển thị cho toàn bộ ứng dụng để có trải nghiệm tốt nhất.</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;">
+            <div class="card setting-card font-card" onclick="SettingsPage.setFont('Plus Jakarta Sans')" data-font="Plus Jakarta Sans" style="cursor: pointer;">
+                <div style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 20px; margin-bottom: 12px;">Aa Bb Cc</div>
+                <div style="font-weight: 700; margin-bottom: 4px;">Plus Jakarta Sans</div>
+                <div style="font-size: 12px; color: var(--muted);">Sang trọng, sắc nét (Mặc định)</div>
+            </div>
+            
+            <div class="card setting-card font-card" onclick="SettingsPage.setFont('Inter')" data-font="Inter" style="cursor: pointer;">
+                <div style="font-family: 'Inter', sans-serif; font-size: 20px; margin-bottom: 12px;">Aa Bb Cc</div>
+                <div style="font-weight: 700; margin-bottom: 4px;">Inter</div>
+                <div style="font-size: 12px; color: var(--muted);">Hiện đại, dễ đọc</div>
+            </div>
+
+            <div class="card setting-card font-card" onclick="SettingsPage.setFont('Nunito')" data-font="Nunito" style="cursor: pointer;">
+                <div style="font-family: 'Nunito', sans-serif; font-size: 20px; margin-bottom: 12px;">Aa Bb Cc</div>
+                <div style="font-weight: 700; margin-bottom: 4px;">Nunito</div>
+                <div style="font-size: 12px; color: var(--muted);">Bo tròn, thân thiện</div>
+            </div>
+        </div>
     </div>
 
-    <div class="setting-card font-card" id="font-nunito" onclick="SettingsPage.setFont('Nunito', this)" style="padding:20px;border-radius:12px;border:2px solid transparent;background:var(--bg);cursor:pointer;position:relative;box-shadow:var(--shadow-sm);transition:0.2s">
-      <span class="material-symbols-outlined check-icon" style="position:absolute;top:12px;right:12px;color:var(--accent);display:none">check_circle</span>
-      <div style="font-family:'Nunito', sans-serif;font-size:20px;margin-bottom:12px">Aa Bb Cc</div>
-      <div style="font-weight:700;margin-bottom:4px">Nunito</div>
-      <div style="font-size:12px;color:var(--text-muted)">Bo tròn, thân thiện</div>
+    <!-- THEME SETTINGS -->
+    <div>
+        <h3 style="font-family: var(--font-display, var(--font)); font-size: 20px; margin-bottom: 8px;" data-i18n="settings.theme">Chủ đề Hệ thống (Theme)</h3>
+        <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px;">Chuyển đổi giao diện sáng tối phù hợp với môi trường làm việc.</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;">
+            <div class="card setting-card theme-card" onclick="SettingsPage.setMode('auto')" data-theme="auto" style="cursor: pointer;">
+                <div style="margin-bottom: 12px;"><span class="material-symbols-outlined" style="color: var(--muted);">hdr_auto</span></div>
+                <div style="font-weight: 700; margin-bottom: 4px;">Theo hệ thống</div>
+                <div style="font-size: 12px; color: var(--muted);">Tự động Sáng/Tối theo thiết bị.</div>
+            </div>
+            
+            <div class="card setting-card theme-card" onclick="SettingsPage.setMode('light')" data-theme="light" style="cursor: pointer;">
+                <div style="margin-bottom: 12px;"><span class="material-symbols-outlined" style="color: #f59e0b;">light_mode</span></div>
+                <div style="font-weight: 700; margin-bottom: 4px;">Bản Phát triển (Sáng)</div>
+                <div style="font-size: 12px; color: var(--muted);">Giao diện hiện đại, tươi sáng.</div>
+            </div>
+            
+            <div class="card setting-card theme-card" onclick="SettingsPage.setMode('dark')" data-theme="dark" style="cursor: pointer;">
+                <div style="margin-bottom: 12px;"><span class="material-symbols-outlined" style="color: #a1a1aa;">dark_mode</span></div>
+                <div style="font-weight: 700; margin-bottom: 4px;">Bản Phát triển (Tối)</div>
+                <div style="font-size: 12px; color: var(--muted);">Giao diện hiện đại, nền tối dịu mắt.</div>
+            </div>
+        </div>
     </div>
-  </div>
+    
+    <!-- LANGUAGE SETTINGS -->
+    <div style="border-top: 1px solid var(--border); padding-top: 40px;">
+        <h3 style="font-family: var(--font-display, var(--font)); font-size: 20px; margin-bottom: 8px;" data-i18n="settings.lang">Ngôn ngữ (Language)</h3>
+        <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px;">Tùy chọn ngôn ngữ hiển thị trên toàn hệ thống.</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;">
+            <div class="card setting-card lang-card" onclick="SettingsPage.setLanguage('vi')" data-lang="vi" style="cursor: pointer;">
+                <div style="font-size: 24px; margin-bottom: 12px;">🇻🇳</div>
+                <div style="font-weight: 700; margin-bottom: 4px;">Tiếng Việt</div>
+                <div style="font-size: 12px; color: var(--muted);">Mặc định</div>
+            </div>
+            
+            <div class="card setting-card lang-card" onclick="SettingsPage.setLanguage('en')" data-lang="en" style="cursor: pointer;">
+                <div style="font-size: 24px; margin-bottom: 12px;">🇺🇸</div>
+                <div style="font-weight: 700; margin-bottom: 4px;">English</div>
+                <div style="font-size: 12px; color: var(--muted);">Tiếng Anh</div>
+            </div>
+            
+            <div class="card setting-card lang-card" onclick="SettingsPage.setLanguage('zh')" data-lang="zh" style="cursor: pointer;">
+                <div style="font-size: 24px; margin-bottom: 12px;">🇨🇳</div>
+                <div style="font-weight: 700; margin-bottom: 4px;">中文</div>
+                <div style="font-size: 12px; color: var(--muted);">Tiếng Trung</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- COLOR SETTINGS -->
+    <div style="border-top: 1px solid var(--border); padding-top: 40px;">
+        <h3 style="font-family: var(--font-display, var(--font)); font-size: 20px; margin-bottom: 8px;" data-i18n="settings.color">Màu sắc Chủ đạo (Color)</h3>
+        <p style="color: var(--muted); font-size: 14px; margin-bottom: 24px;">Thay đổi màu sắc nổi bật chính của ứng dụng.</p>
+        
+        <div style="display: flex; gap: 20px; align-items: center;">
+            <div class="color-circle" onclick="SettingsPage.setColor('#FBBF24')" style="--c: #FBBF24;" data-color="#FBBF24" title="Bright Radiant Gold"></div>
+            <div class="color-circle" onclick="SettingsPage.setColor('#b76e79')" style="--c: #b76e79;" data-color="#b76e79" title="Rose Gold"></div>
+            <div class="color-circle" onclick="SettingsPage.setColor('#94a3b8')" style="--c: #94a3b8;" data-color="#94a3b8" title="Platinum"></div>
+            <div class="color-circle" onclick="SettingsPage.setColor('#059669')" style="--c: #059669;" data-color="#059669" title="Emerald"></div>
+            <div class="color-circle" onclick="SettingsPage.setColor('#2563eb')" style="--c: #2563eb;" data-color="#2563eb" title="Royal Blue"></div>
+            <div class="color-circle" onclick="SettingsPage.setColor('#e11d48')" style="--c: #e11d48;" data-color="#e11d48" title="Ruby Red"></div>
+            
+            <!-- BỘ CHỌN MÀU TỰ DO -->
+            <div style="width: 1px; height: 36px; background: var(--border); margin: 0 4px;"></div>
+            <label class="color-picker-wrapper" style="position: relative; width: 36px; height: 36px; border-radius: 50%; background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                <span class="material-symbols-outlined" style="color: white; font-size: 18px; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">colorize</span>
+                <input type="color" oninput="SettingsPage.setColor(this.value)" style="opacity: 0; position: absolute; width: 100%; height: 100%; cursor: pointer;">
+            </label>
+        </div>
+    </div>
 </div>
 
-<!-- MÀU SẮC CHỦ ĐẠO -->
-<div class="card settings-section">
-  <h4>Màu sắc Chủ đạo (Accent Color)</h4>
-  <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px">Thay đổi màu sắc nổi bật chính của ứng dụng.</p>
-  <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
-    <div class="color-circle" onclick="SettingsPage.setColor('#2563eb', this)" style="--c:#2563eb;width:36px;height:36px;border-radius:50%;background:var(--c);cursor:pointer;box-shadow:var(--shadow-sm);border:3px solid transparent;transition:transform 0.2s"></div>
-    <div class="color-circle" onclick="SettingsPage.setColor('#10b981', this)" style="--c:#10b981;width:36px;height:36px;border-radius:50%;background:var(--c);cursor:pointer;box-shadow:var(--shadow-sm);border:3px solid transparent;transition:transform 0.2s"></div>
-    <div class="color-circle" onclick="SettingsPage.setColor('#f59e0b', this)" style="--c:#f59e0b;width:36px;height:36px;border-radius:50%;background:var(--c);cursor:pointer;box-shadow:var(--shadow-sm);border:3px solid transparent;transition:transform 0.2s"></div>
-    <div class="color-circle" onclick="SettingsPage.setColor('#ef4444', this)" style="--c:#ef4444;width:36px;height:36px;border-radius:50%;background:var(--c);cursor:pointer;box-shadow:var(--shadow-sm);border:3px solid transparent;transition:transform 0.2s"></div>
-    <div class="color-circle" onclick="SettingsPage.setColor('#8b5cf6', this)" style="--c:#8b5cf6;width:36px;height:36px;border-radius:50%;background:var(--c);cursor:pointer;box-shadow:var(--shadow-sm);border:3px solid transparent;transition:transform 0.2s"></div>
-    
-    <div style="width:1px;height:24px;background:var(--border);margin:0 8px"></div>
-    
-    <label style="position:relative;width:36px;height:36px;border-radius:50%;background:conic-gradient(red, yellow, lime, aqua, blue, magenta, red);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-sm)">
-      <span class="material-symbols-outlined" style="color:white;font-size:16px;text-shadow:0 1px 2px rgba(0,0,0,0.5)">colorize</span>
-      <input type="color" oninput="SettingsPage.setColor(this.value, this.parentElement)" style="opacity:0;position:absolute;width:100%;height:100%;cursor:pointer">
-    </label>
-  </div>
-</div>
-
-<!-- NGÔN NGỮ -->
-<div class="card settings-section">
-  <h4>Ngôn ngữ (Language)</h4>
-  <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px">Tùy chọn ngôn ngữ hệ thống.</p>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));gap:16px">
-    <div class="setting-card lang-card" id="lang-vi" onclick="SettingsPage.setLanguage('vi', this)" style="padding:20px;border-radius:12px;border:2px solid transparent;background:var(--bg);cursor:pointer;position:relative;box-shadow:var(--shadow-sm);transition:0.2s">
-      <span class="material-symbols-outlined check-icon" style="position:absolute;top:12px;right:12px;color:var(--accent);display:none">check_circle</span>
-      <div style="font-size:24px;margin-bottom:8px">🇻🇳</div>
-      <div style="font-weight:700">Tiếng Việt</div>
-    </div>
-    
-    <div class="setting-card lang-card" id="lang-en" onclick="SettingsPage.setLanguage('en', this)" style="padding:20px;border-radius:12px;border:2px solid transparent;background:var(--bg);cursor:pointer;position:relative;box-shadow:var(--shadow-sm);transition:0.2s">
-      <span class="material-symbols-outlined check-icon" style="position:absolute;top:12px;right:12px;color:var(--accent);display:none">check_circle</span>
-      <div style="font-size:24px;margin-bottom:8px">🇺🇸</div>
-      <div style="font-weight:700">English</div>
-    </div>
-    
-    <div class="setting-card lang-card" id="lang-zh" onclick="SettingsPage.setLanguage('zh', this)" style="padding:20px;border-radius:12px;border:2px solid transparent;background:var(--bg);cursor:pointer;position:relative;box-shadow:var(--shadow-sm);transition:0.2s">
-      <span class="material-symbols-outlined check-icon" style="position:absolute;top:12px;right:12px;color:var(--accent);display:none">check_circle</span>
-      <div style="font-size:24px;margin-bottom:8px">🇨🇳</div>
-      <div style="font-weight:700">中文</div>
-    </div>
-  </div>
-</div>
-
-<!-- CẤU HÌNH HỆ THỐNG -->
-<div class="card settings-section">
-  <h4>Rule sinh SKU</h4>
-  <p style="color:var(--text-muted);margin-top:4px">Công thức:
-    <code style="background:var(--bg);padding:4px 8px;border-radius:4px;font-family:monospace">{BRAND} + {SIZE} + {REST}</code>
-  </p>
-  <p style="color:var(--text-muted);margin-top:8px">Ví dụ:
-    <code style="background:var(--bg);padding:4px 8px;border-radius:4px;font-family:monospace">AMC + 40 + 545S659 = AMC40545S659</code>
-  </p>
-</div>
-<div class="card settings-section" style="border: 1px solid var(--danger); background: rgba(239, 68, 68, 0.05)">
-  <h4 style="color: var(--danger)">Reset dữ liệu về mặc định</h4>
-  <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px">Hành động này sẽ xóa toàn bộ đơn hàng và khôi phục hệ thống về trạng thái ban đầu.</p>
-  <button class="btn btn-danger btn-sm" onclick="SettingsPage.resetData()">
-    <span class="material-symbols-outlined" style="font-size:16px">restore</span>Tiến hành Reset
+<div class="card settings-section" style="margin-top: 40px; max-width: 900px;">
+  <h4 style="color: var(--danger);" data-i18n="settings.reset">Reset dữ liệu</h4>
+  <p style="color:var(--muted); font-size:14px; margin-bottom: 12px;">Thao tác này sẽ xóa toàn bộ đơn hàng và cài đặt hiện tại của bạn.</p>
+  <button class="btn btn-danger btn-sm" onclick="SettingsPage.resetData()" style="width: max-content;">
+    <span class="material-symbols-outlined" style="font-size:16px">restore</span><span data-i18n="settings.reset">Khôi phục mặc định</span>
   </button>
 </div>
-
-<style>
-  .setting-card:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(0,0,0,0.08) !important; }
-  .setting-card.active { border-color: var(--accent) !important; background: color-mix(in srgb, var(--accent) 5%, var(--bg)) !important; }
-  .setting-card.active .check-icon { display: block !important; }
-  .color-circle:hover { transform: scale(1.15) !important; }
-  .color-circle.active { border-color: var(--bg) !important; outline: 2px solid var(--c); outline-offset: 2px; }
-</style>
