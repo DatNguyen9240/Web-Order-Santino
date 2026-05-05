@@ -1,4 +1,4 @@
-﻿var SkuPage = (function () {
+var SkuPage = (function () {
   function render($el) {
     return Router.fetchTemplate('src/pages/sku/sku.html').then(function(html){
       $el.innerHTML = html; _render();
@@ -8,7 +8,7 @@
     var q=(document.getElementById('sku-search')||{}).value||'';
     var prods=DB.getAll('products').filter(function(p){return !q||p.ten_hang_2.toLowerCase().includes(q.toLowerCase());});
     var tbody=document.getElementById('sku-body');
-    if(!prods.length){tbody.innerHTML='<tr><td colspan="6" class="empty-state"><span class="material-symbols-outlined">qr_code</span>Không có sản phẩm</td></tr>';return;}
+    if(!prods.length){tbody.innerHTML='<tr><td colspan="6" class="empty-state"><span class="material-symbols-outlined">qr_code</span><span data-i18n="table.empty">' + t('table.empty') + '</span></td></tr>';return;}
     tbody.innerHTML=prods.map(function(p){
       var sizes=DB.getAll('sizes').filter(function(s){return s.nhom_size===p.nhom_size;}).sort(function(a,b){return a.size-b.size;});
       var skus=sizes.map(function(s){return Utils.buildSKU(p.ten_hang_2,s.size);}).join(', ');

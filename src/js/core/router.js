@@ -5,14 +5,14 @@
 var Router = (function () {
 
   var ROUTES = [
-    { path: '/order',        script: 'src/pages/order/order.js',               pageFn: 'OrderPage',        title: 'Đặt Hàng' },
-    { path: '/orders',       script: 'src/pages/orders/orders.js',             pageFn: 'OrdersPage',       title: 'Danh Sách Đơn' },
-    { path: '/order-detail', script: 'src/pages/order-detail/order-detail.js', pageFn: 'OrderDetailPage',  title: 'Chi Tiết Đơn' },
-    { path: '/products',     script: 'src/pages/products/products.js',         pageFn: 'ProductsPage',     title: 'Sản Phẩm' },
-    { path: '/sizes',        script: 'src/pages/sizes/sizes.js',               pageFn: 'SizesPage',        title: 'Quản Lý Size' },
-    { path: '/sku',          script: 'src/pages/sku/sku.js',                   pageFn: 'SkuPage',          title: 'Cấu Hình SKU' },
-    { path: '/promos',       script: 'src/pages/promos/promos.js',             pageFn: 'PromosPage',       title: 'CTKM' },
-    { path: '/settings',     script: 'src/pages/settings/settings.js',        pageFn: 'SettingsPage',     title: 'Cài Đặt' },
+    { path: '/order',        script: 'src/pages/order/order.js',               pageFn: 'OrderPage',        title: 'nav.order' },
+    { path: '/orders',       script: 'src/pages/orders/orders.js',             pageFn: 'OrdersPage',       title: 'nav.orders' },
+    { path: '/order-detail', script: 'src/pages/order-detail/order-detail.js', pageFn: 'OrderDetailPage',  title: 'nav.order_detail' },
+    { path: '/products',     script: 'src/pages/products/products.js',         pageFn: 'ProductsPage',     title: 'nav.products' },
+    { path: '/sizes',        script: 'src/pages/sizes/sizes.js',               pageFn: 'SizesPage',        title: 'nav.sizes' },
+    { path: '/sku',          script: 'src/pages/sku/sku.js',                   pageFn: 'SkuPage',          title: 'nav.sku' },
+    { path: '/promos',       script: 'src/pages/promos/promos.js',             pageFn: 'PromosPage',       title: 'nav.promos' },
+    { path: '/settings',     script: 'src/pages/settings/settings.js',        pageFn: 'SettingsPage',     title: 'nav.settings' },
   ];
 
   var _routeMap = {};
@@ -66,8 +66,11 @@ var Router = (function () {
     });
     var hdr = document.getElementById('hdr-title');
     var route = _routeMap[hash];
-    if (hdr && route) hdr.textContent = route.title;
-    if (route) document.title = route.title + ' | SANTINO B2B';
+    if (hdr && route) {
+      hdr.setAttribute('data-i18n', route.title);
+      hdr.textContent = typeof t === 'function' ? t(route.title) : route.title;
+    }
+    if (route) document.title = (typeof t === 'function' ? t(route.title) : route.title) + ' | SANTINO B2B';
   }
 
   // ── Main handler ──────────────────────────────────────────────────────

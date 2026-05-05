@@ -58,6 +58,12 @@ document.addEventListener('click', function (e) {
 });
 
 // Chuyển đổi ngôn ngữ
+function t(key) {
+  var lang = localStorage.getItem('santino_lang') || 'vi';
+  var dict = typeof TRANSLATIONS !== 'undefined' ? (TRANSLATIONS[lang] || TRANSLATIONS['vi']) : {};
+  return dict[key] || key;
+}
+
 function applyLanguage() {
   var lang = localStorage.getItem('santino_lang') || 'vi';
   var dict = typeof TRANSLATIONS !== 'undefined' ? TRANSLATIONS[lang] || TRANSLATIONS['vi'] : {};

@@ -51,6 +51,8 @@ var ConfirmModal = (function () {
 
     var btnCancel = document.getElementById('confirm-modal-btn-cancel');
     var btnClose = document.getElementById('confirm-modal-btn-close');
+    
+    btnCancel.innerText = options.cancelText || (typeof t === 'function' ? t('btn.cancel') : 'Hủy bỏ');
 
     // Remove old listeners using clone node trick
     var newBtnConfirm = btnConfirm.cloneNode(true);

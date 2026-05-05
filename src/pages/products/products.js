@@ -11,7 +11,7 @@ var ProductsPage = (function () {
       return (!q || p.ten_hang_2.toLowerCase().includes(q.toLowerCase()) || p.mau.toLowerCase().includes(q.toLowerCase())) && (!form || p.form === form);
     });
     var tbody = document.getElementById('products-body');
-    if (!prods.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><span class="material-symbols-outlined">inventory_2</span>Không có sản phẩm</td></tr>'; return; }
+    if (!prods.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><span class="material-symbols-outlined">inventory_2</span><span data-i18n="table.empty">' + t('table.empty') + '</span></td></tr>'; return; }
     tbody.innerHTML = prods.map(function (p) {
       return '<tr><td><strong>' + p.ten_hang_2 + '</strong></td><td>' + p.nhom_hang + '</td>' +
         '<td><span class="badge badge-blue">' + p.form + '</span></td>' +

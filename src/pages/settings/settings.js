@@ -68,21 +68,21 @@ var SettingsPage = (function () {
     document.documentElement.style.setProperty('--accent', color);
     
     _init();
-    showToast('Đã đổi chế độ');
+    showToast(t('toast.theme_changed'));
   }
 
   function setFont(fontName) {
     document.documentElement.style.setProperty('--font', '"' + fontName + '", sans-serif');
     localStorage.setItem('santino_font', fontName);
     _init();
-    showToast('Đã đổi phông chữ');
+    showToast(t('toast.font_changed'));
   }
 
   function setLanguage(lang) {
     localStorage.setItem('santino_lang', lang);
     _init();
     if (typeof applyLanguage === 'function') applyLanguage();
-    showToast('Đã đổi ngôn ngữ');
+    showToast(t('toast.lang_changed'));
   }
 
   function _calculateFg(hex) {
@@ -111,19 +111,19 @@ var SettingsPage = (function () {
     }
     
     _init();
-    showToast('Đã đổi màu chủ đạo');
+    showToast(t('toast.color_changed'));
   }
 
   function resetData() {
     ConfirmModal.show({
-      title: 'Xóa dữ liệu',
-      message: 'Reset toàn bộ về dữ liệu mặc định? Đơn hàng và cài đặt sẽ bị xóa!',
-      confirmText: 'Reset',
+      title: t('settings.reset.confirm.title'),
+      message: t('settings.reset.confirm.msg'),
+      confirmText: t('settings.reset.confirm.btn'),
       confirmClass: 'btn-danger',
       onConfirm: function() {
         ['santino_products','santino_sizes','santino_promotions','santino_orders', 'santino_theme', 'santino_font', 'santino_color', 'santino_lang'].forEach(function(k){localStorage.removeItem(k);});
         DB.initSeed();
-        showToast('Đã reset dữ liệu về mặc định. Vui lòng đợi...');
+        showToast(t('toast.reset_done'));
         setTimeout(function() { window.location.reload(); }, 1500);
       }
     });

@@ -1,19 +1,19 @@
 <div class="page-hdr">
-  <div><h2><span class="material-symbols-outlined" style="color:var(--primary);">receipt_long</span> Danh Sách Đơn Hàng</h2><p>Lịch sử và trạng thái đơn</p></div>
+  <div><h2><span data-i18n="hdr.orders">Danh Sách Đơn Hàng</span></h2><p data-i18n="hdr.orders.desc">Lịch sử và trạng thái đơn</p></div>
   <div class="search-wrapper">
     <span class="material-symbols-outlined">search</span>
-    <input id="orders-search" placeholder="Tìm số CT..." oninput="OrdersPage.filter(this.value)">
+    <input id="orders-search" placeholder="Tìm số CT..." data-i18n-placeholder="orders.search.placeholder" oninput="OrdersPage.filter(this.value)">
   </div>
 </div>
 <div class="tbl-wrap">
   <table>
     <thead><tr>
-      <th>Số CT</th><th>Ngày CT</th><th>Chi nhánh</th><th>CTKM</th>
-      <th>Tổng SP</th><th>Tổng tiền</th><th>Ghi chú</th><th>Thao tác</th>
+      <th data-i18n="table.col.no">Số CT</th><th data-i18n="table.col.date">Ngày CT</th><th data-i18n="table.col.branch">Chi nhánh</th><th data-i18n="table.col.promo">CTKM</th>
+      <th data-i18n="table.col.total_qty">Tổng SP</th><th data-i18n="table.col.total_money">Tổng tiền</th><th data-i18n="table.col.note">Ghi chú</th><th data-i18n="table.col.action">Thao tác</th>
     </tr></thead>
     <tbody id="orders-body">
       <tr><td colspan="8" class="empty-state">
-        <span class="material-symbols-outlined">receipt_long</span>Chưa có đơn hàng nào
+        <span class="material-symbols-outlined">receipt_long</span><span data-i18n="orders.search.empty">Chưa có đơn hàng nào</span>
       </td></tr>
     </tbody>
   </table>

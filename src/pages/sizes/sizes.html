@@ -1,20 +1,20 @@
 <div class="page-hdr">
   <div>
-    <h2><span class="material-symbols-outlined" style="color:var(--primary);">straighten</span> Quản Lý Size</h2>
-    <p>CRUD size và nhóm size</p>
+    <h2><span data-i18n="hdr.sizes">Quản Lý Size</span></h2>
+    <p data-i18n="hdr.sizes.desc">CRUD size và nhóm size</p>
   </div>
   <button class="btn btn-primary" onclick="SizesPage.openModal()">
-    <span class="material-symbols-outlined" style="font-size:16px">add</span>Thêm size
+    <span class="material-symbols-outlined" style="font-size:16px">add</span><span data-i18n="btn.add">Thêm size</span>
   </button>
 </div>
 <div class="tbl-wrap">
   <table>
     <thead>
       <tr>
-        <th>Size</th>
-        <th>Tên size</th>
-        <th>Nhóm size</th>
-        <th>Thao tác</th>
+        <th data-i18n="table.col.size">Size</th>
+        <th data-i18n="table.col.size_name">Tên size</th>
+        <th data-i18n="table.col.size_group">Nhóm size</th>
+        <th data-i18n="table.col.action">Thao tác</th>
       </tr>
     </thead>
     <tbody id="sizes-body"></tbody>
