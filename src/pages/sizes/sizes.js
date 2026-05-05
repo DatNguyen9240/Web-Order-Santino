@@ -1,4 +1,4 @@
-﻿var SizesPage = (function () {
+var SizesPage = (function () {
   function render($el) {
     return Router.fetchTemplate('src/pages/sizes/sizes.html').then(function(html){
       $el.innerHTML = html; _render();
@@ -18,14 +18,36 @@
         '</td></tr>';
     }).join('');
   }
+  var _currentModal = null;
   function openModal(id) {
-    var s=id?DB.find('sizes',id):null;
-    document.getElementById('sm-title').textContent=s?'Sửa Size':'Thêm Size';
-    document.getElementById('sm-id').value=s?s.id:'';
-    document.getElementById('sm-size').value=s?s.size:'';
-    document.getElementById('sm-ten').value=s?s.ten_size:'';
-    document.getElementById('sm-nhom').value=s?s.nhom_size:'Nhóm 3';
-    openModal('modal-size');
+    var s = id ? DB.find('sizes', id) : null;
+    
+    var contentHtml = `
+      <input type="hidden" id="sm-id" value="${s ? s.id : ''}">
+      <div class="form-grid">
+        <div class="form-group"><label>Size (số) *</label><input id="sm-size" type="number" placeholder="40" value="${s ? s.size : ''}"></div>
+        <div class="form-group"><label>Tên size</label><input id="sm-ten" placeholder="40" value="${s ? (s.ten_size || '') : ''}"></div>
+        <div class="form-group"><label>Nhóm size *</label><input id="sm-nhom" placeholder="Nhóm 3" value="${s ? (s.nhom_size || '') : 'Nhóm 3'}"></div>
+      </div>
+    `;
+
+    var footerHtml = document.createElement('div');
+    footerHtml.innerHTML = `
+      <button class="btn btn-ghost" onclick="SizesPage.closeModal()">Hủy</button>
+      <button class="btn btn-primary" onclick="SizesPage.save()">Lưu</button>
+    `;
+
+    _currentModal = UIModal.show({
+      id: 'modal-size',
+      title: s ? 'Sửa Size' : 'Thêm Size',
+      width: '500px',
+      content: contentHtml,
+      footer: footerHtml
+    });
+  }
+  function closeModal() {
+    if (_currentModal) _currentModal.close();
+    _currentModal = null;
   }
   function save() {
     var id=document.getElementById('sm-id').value;
@@ -33,8 +55,8 @@
     if(!sz){showToast('Vui lòng nhập size!',false);return;}
     var data={size:sz,ten_size:document.getElementById('sm-ten').value||String(sz),nhom_size:document.getElementById('sm-nhom').value.trim()||'Nhóm 3'};
     if(id) DB.update('sizes',id,data); else DB.add('sizes',{...data,id:data.nhom_size+'_'+sz});
-    closeModal('modal-size'); _render(); showToast('Đã lưu size');
+    closeModal(); _render(); showToast('Đã lưu size');
   }
   function del(id){if(!confirm('Xóa size này?'))return;DB.remove('sizes',id);_render();showToast('Đã xóa size');}
-  return { render:render, openModal:openModal, save:save, del:del };
+  return { render:render, openModal:openModal, closeModal:closeModal, save:save, del:del };
 })();

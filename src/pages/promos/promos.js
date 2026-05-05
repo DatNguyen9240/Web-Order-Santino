@@ -1,4 +1,4 @@
-﻿var PromosPage = (function () {
+var PromosPage = (function () {
   function render($el) {
     return Router.fetchTemplate('src/pages/promos/promos.html').then(function(html){
       $el.innerHTML = html; _render();
@@ -19,16 +19,45 @@
         '</td></tr>';
     }).join('');
   }
+  var _currentModal = null;
   function openModal(id) {
-    var p=id?DB.find('promotions',id):null;
-    document.getElementById('prom-title').textContent=p?'Sửa CTKM':'Thêm CTKM';
-    document.getElementById('prom-id').value=p?p.id:'';
-    document.getElementById('prom-ma').value=p?p.ma_ctbh:'';
-    document.getElementById('prom-ten').value=p?p.ten_ctbh:'';
-    document.getElementById('prom-mota').value=p?p.mo_ta||'':'';
-    document.getElementById('prom-active').value=p?String(p.active!==false):'true';
-    openModal('modal-promo');
+    var p = id ? DB.find('promotions', id) : null;
+    
+    var contentHtml = `
+      <input type="hidden" id="prom-id" value="${p ? p.id : ''}">
+      <div class="form-grid">
+        <div class="form-group"><label>Mã CTBH *</label><input id="prom-ma" placeholder="CKCB" value="${p ? p.ma_ctbh : ''}"></div>
+        <div class="form-group"><label>Tên CTBH *</label><input id="prom-ten" placeholder="Chiết khấu cơ bản" value="${p ? p.ten_ctbh : ''}"></div>
+        <div class="form-group span2"><label>Mô tả</label><input id="prom-mota" placeholder="Mô tả ngắn..." value="${p ? (p.mo_ta || '') : ''}"></div>
+        <div class="form-group"><label>Trạng thái</label>
+          <select id="prom-active">
+            <option value="true" ${(!p || p.active !== false) ? 'selected' : ''}>Đang áp dụng</option>
+            <option value="false" ${(p && p.active === false) ? 'selected' : ''}>Tạm dừng</option>
+          </select>
+        </div>
+      </div>
+    `;
+
+    var footerHtml = document.createElement('div');
+    footerHtml.innerHTML = `
+      <button class="btn btn-ghost" onclick="PromosPage.closeModal()">Hủy</button>
+      <button class="btn btn-primary" onclick="PromosPage.save()">Lưu</button>
+    `;
+
+    _currentModal = UIModal.show({
+      id: 'modal-promo',
+      title: p ? 'Sửa CTKM' : 'Thêm CTKM',
+      width: '500px',
+      content: contentHtml,
+      footer: footerHtml
+    });
   }
+
+  function closeModal() {
+    if (_currentModal) _currentModal.close();
+    _currentModal = null;
+  }
+
   function save() {
     var id=document.getElementById('prom-id').value;
     var data={ma_ctbh:document.getElementById('prom-ma').value.trim(),
@@ -37,8 +66,8 @@
       active:document.getElementById('prom-active').value==='true'};
     if(!data.ma_ctbh||!data.ten_ctbh){showToast('Vui lòng nhập Mã và Tên CTBH!',false);return;}
     if(id) DB.update('promotions',id,data); else DB.add('promotions',{...data,id:data.ma_ctbh});
-    closeModal('modal-promo'); _render(); showToast('Đã lưu CTKM');
+    closeModal(); _render(); showToast('Đã lưu CTKM');
   }
   function del(id){if(!confirm('Xóa CTKM này?'))return;DB.remove('promotions',id);_render();showToast('Đã xóa CTKM');}
-  return { render:render, openModal:openModal, save:save, del:del };
+  return { render:render, openModal:openModal, closeModal:closeModal, save:save, del:del };
 })();

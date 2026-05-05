@@ -1,4 +1,4 @@
-﻿var OrderPage = (function () {
+var OrderPage = (function () {
   var orderRows = [];
 
   function render($el) {
@@ -104,26 +104,64 @@
     return lines;
   }
 
+  var _currentModal = null;
   function previewOrder() {
     var lines=_buildLines();
     if(!lines.length){showToast('Chưa nhập số lượng!',false);return;}
-    var info=document.getElementById('preview-info');
-    info.innerHTML=[
+    
+    var infoHtml = [
       '<div><small style="color:var(--muted)">Số CT</small><div style="font-weight:700">'+document.getElementById('o-so-ct').value+'</div></div>',
       '<div><small style="color:var(--muted)">Ngày</small><div>'+document.getElementById('o-ngay').value+'</div></div>',
       '<div><small style="color:var(--muted)">CTKM</small><div style="font-weight:700">'+document.getElementById('o-ctbh').value+'</div></div>',
     ].join('');
-    document.getElementById('preview-body').innerHTML=lines.map(function(l){
+    
+    var tbodyHtml = lines.map(function(l){
       return '<tr><td>'+l.ten_hang_2+'</td><td style="font-family:monospace">'+l.sku+'</td><td>'+l.size+'</td>'+
         '<td style="font-weight:700;color:var(--accent)">'+l.so_luong+'</td><td>'+Utils.formatMoney(l.don_gia)+'</td>'+
         '<td style="font-weight:700">'+Utils.formatMoney(l.thanh_tien)+'</td>'+
         '<td><span class="badge badge-yellow">'+l.ma_ctbh+'</span></td><td>'+l.ghi_chu+'</td></tr>';
     }).join('');
+    
     var tq=lines.reduce(function(s,l){return s+l.so_luong;},0);
     var tm=lines.reduce(function(s,l){return s+l.thanh_tien;},0);
-    document.getElementById('pv-qty').textContent=tq+' SP';
-    document.getElementById('pv-money').textContent=Utils.formatMoney(tm);
-    openModal('modal-preview');
+
+    var contentHtml = `
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:13px;margin-bottom:12px">${infoHtml}</div>
+      <div class="tbl-wrap" style="max-height:360px;overflow-y:auto">
+        <table>
+          <thead><tr><th>Tên hàng 2</th><th>SKU</th><th>Size</th><th>SL</th><th>Đơn giá</th><th>Thành tiền</th><th>CTBH</th><th>Ghi chú</th></tr></thead>
+          <tbody>${tbodyHtml}</tbody>
+          <tfoot><tr style="font-weight:700;background:var(--bg)">
+            <td colspan="3" style="padding:10px 12px">Tổng cộng</td>
+            <td style="padding:10px 12px">${tq} SP</td>
+            <td></td>
+            <td style="padding:10px 12px;color:var(--accent)">${Utils.formatMoney(tm)}</td>
+            <td colspan="2"></td>
+          </tr></tfoot>
+        </table>
+      </div>
+    `;
+
+    var footerHtml = document.createElement('div');
+    footerHtml.innerHTML = `
+      <button class="btn btn-ghost" onclick="OrderPage.closeModal()">Đóng</button>
+      <button class="btn btn-accent" onclick="OrderPage.saveOrder()">
+        <span class="material-symbols-outlined" style="font-size:16px">save</span>Lưu đơn
+      </button>
+    `;
+
+    _currentModal = UIModal.show({
+      id: 'modal-preview',
+      title: '👁 Xem Trước Đơn Hàng',
+      width: 'min(800px, 95vw)',
+      content: contentHtml,
+      footer: footerHtml
+    });
+  }
+
+  function closeModal() {
+    if (_currentModal) _currentModal.close();
+    _currentModal = null;
   }
 
   function saveOrder() {
@@ -141,7 +179,8 @@
       lines:lines, created_at:new Date().toISOString()
     };
     DB.add('orders',order);
-    closeModal('modal-preview');
+    closeModal();
+
     showToast('Đã lưu đơn: '+order.so_ct);
     orderRows=[];
     _init();
@@ -151,5 +190,5 @@
 
   return { render:render, acSearch:acSearch, selectAc:selectAc, addProductRow:addProductRow,
            updateQty:updateQty, removeRow:removeRow, previewOrder:previewOrder,
-           saveOrder:saveOrder, clearOrder:clearOrder };
+           closeModal:closeModal, saveOrder:saveOrder, clearOrder:clearOrder };
 })();

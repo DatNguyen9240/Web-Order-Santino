@@ -22,37 +22,4 @@
   </table>
 </div>
 
-<!-- Modal: Sản phẩm -->
-<div class="modal-overlay" id="modal-product">
-  <div class="modal">
-    <div class="modal-hdr">
-      <h3 id="pm-title">Thêm Sản Phẩm</h3>
-      <button class="btn-icon" onclick="closeModal('modal-product')"><span class="material-symbols-outlined">close</span></button>
-    </div>
-    <input type="hidden" id="pm-id">
-    <div class="form-grid">
-      <div class="form-group span2"><label>Tên hàng 2 *</label><input id="pm-ten" placeholder="VD: AMC545S659"></div>
-      <div class="form-group"><label>Nhóm hàng</label>
-        <select id="pm-nhom"><option>SKU101</option><option>SKU102</option></select>
-      </div>
-      <div class="form-group"><label>Form</label>
-        <select id="pm-form"><option>AMC</option><option>ARC</option><option>AMD</option></select>
-      </div>
-      <div class="form-group"><label>Design</label><input id="pm-design" placeholder="S659"></div>
-      <div class="form-group"><label>Màu</label><input id="pm-mau" placeholder="S659-Xanh navy"></div>
-      <div class="form-group"><label>Nhóm size</label><select id="pm-nhom-size"></select></div>
-      <div class="form-group"><label>Đơn giá</label><input id="pm-gia" type="number" placeholder="545000"></div>
-      <div class="form-group span2"><label>Tên hàng hóa</label><input id="pm-tenhh" placeholder="Áo sơ mi-AMC545S659"></div>
-      <div class="form-group"><label>Tên nhóm hàng</label>
-        <select id="pm-tennhom"><option>SỔ MI NGẮN TAY</option><option>SỔ MI DÀI TAY</option><option>QUẦN ÂU</option></select>
-      </div>
-      <div class="form-group"><label>Trạng thái</label>
-        <select id="pm-ngung"><option value="false">Đang bán</option><option value="true">Ngừng bán</option></select>
-      </div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('modal-product')">Hủy</button>
-      <button class="btn btn-primary" onclick="ProductsPage.save()">Lưu</button>
-    </div>
-  </div>
-</div>
+
