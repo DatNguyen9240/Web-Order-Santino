@@ -20,6 +20,7 @@ var OrderPage = (function () {
     renderMatrix();
     document.addEventListener('click', function (e) {
       if (!e.target.closest('.autocomplete-wrap') && !e.target.closest('#btn-multi-mode')) {
+        if (isMultiMode) return; // Keep dropdown open if user is selecting multiple items
         var acList = document.getElementById('ac-list');
         if (acList) acList.classList.remove('show');
       }
@@ -34,7 +35,7 @@ var OrderPage = (function () {
       btn.classList.add('btn-primary');
       btn.classList.remove('btn-ghost');
       btn.style.borderColor = 'transparent';
-      icon.style.color = '#fff';
+      icon.style.color = 'var(--primary-fg)';
     } else {
       btn.classList.remove('btn-primary');
       btn.classList.add('btn-ghost');
@@ -63,7 +64,7 @@ var OrderPage = (function () {
                '<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:4px"><div style="display:flex;align-items:baseline;gap:6px"><strong>' + p.ten_hang_2 + '</strong><span style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.ten_hang_hoa + '</span></div><small style="color:var(--muted)">' + p.mau + ' · ' + Utils.formatMoney(p.don_gia) + '</small></div></div>';
       }).join('');
 
-      html += '<div class="ac-actions" style="display:flex;gap:8px;padding:12px;border-top:1px solid var(--border);background:var(--surface);position:sticky;bottom:-8px;margin:8px -8px -8px -8px;z-index:10">' +
+      html += '<div class="ac-actions" style="display:flex;gap:8px;padding:12px;border-top:1px solid var(--border);background:var(--surface);position:sticky;bottom:0;margin:0;z-index:10;border-radius:0 0 12px 12px">' +
               '<button class="btn btn-ghost btn-sm" style="flex:1" onclick="OrderPage.closeAc()">' + (typeof t === 'function' ? t('btn.cancel') : 'Hủy bỏ') + '</button>' +
               '<button class="btn btn-primary btn-sm" style="flex:1" onclick="OrderPage.addSelectedProds()">' + (typeof t === 'function' ? t('btn.add') : 'Thêm') + '</button>' +
               '</div>';
