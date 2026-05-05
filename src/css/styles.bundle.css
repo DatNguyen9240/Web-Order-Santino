@@ -739,7 +739,7 @@ tbody tr:hover td {
   }
 }
 
-@media (min-width: 375px) and (max-width: 768px) {
+@media (min-width: 340px) and (max-width: 768px) {
   .ac-title-row {
     flex-direction: row;
     align-items: baseline;
