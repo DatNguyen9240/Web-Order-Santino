@@ -136,6 +136,7 @@ var OrderPage = (function () {
     }
     
     document.getElementById('ac-input').value = '';
+    acSearch('');
     closeAc();
   }
 
@@ -148,6 +149,7 @@ var OrderPage = (function () {
     var sizes = DB.getAll('sizes').filter(function (s) { return s.nhom_size === prod.nhom_size; }).sort(function (a, b) { return a.size - b.size; });
     orderRows.push({ ten_hang_2: code, product: prod, sizes: sizes, quantities: {} });
     document.getElementById('ac-input').value = '';
+    acSearch('');
     renderMatrix();
     showToast(t('toast.added') + code);
   }
