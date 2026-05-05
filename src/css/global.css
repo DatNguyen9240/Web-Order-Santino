@@ -196,3 +196,6 @@ tbody tr:hover td { background: var(--bg); }
   .search-wrapper input { padding: 8px 12px 8px 36px; }
   .search-wrapper .material-symbols-outlined { font-size: 18px; left: 10px; }
 }
+
+.app-logo { filter: brightness(0); transition: filter 0.3s ease; }
+.dark-theme .app-logo { filter: none; }

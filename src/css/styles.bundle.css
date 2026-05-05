@@ -262,4 +262,7 @@ tbody tr:hover td { background: var(--bg); }
   .search-wrapper .material-symbols-outlined { font-size: 18px; left: 10px; }
 }
 
+.app-logo { filter: brightness(0); transition: filter 0.3s ease; }
+.dark-theme .app-logo { filter: none; }
+
 
