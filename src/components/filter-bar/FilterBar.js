@@ -4,6 +4,39 @@ const FilterBar = {
         const t = (typeof translations !== 'undefined' && translations[lang]) ? translations[lang] : {};
         const getT = (key, defaultText) => t[key] || defaultText;
 
+        let categoriesHtml = `<span class="filter-pill active" onclick="setCategory('Tất cả', this)">${getT("filter.cat.all", "Tất cả")}</span>`;
+        let colorsHtml = `<option value="all">${getT("filter.color.all", "Tất cả màu")}</option>`;
+
+        try {
+            // DYNAMIC EXTRACTION using DB API (New Architecture)
+            const allProducts = typeof DB !== 'undefined' ? DB.getAll('products') : [];
+            
+            if (allProducts && allProducts.length > 0) {
+                // Extract unique categories (using ten_nhom_hang as category)
+                const uniqueCategories = [...new Set(allProducts.map(p => p.ten_nhom_hang).filter(Boolean))];
+                uniqueCategories.forEach(cat => {
+                    // Format category name nicely (Title Case)
+                    const displayCat = cat.toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase());
+                    categoriesHtml += `<span class="filter-pill" onclick="setCategory('${cat}', this)">${displayCat}</span>`;
+                });
+
+                // Extract unique colors
+                // mau is usually "M201-Trắng", we can split by "-" to get the actual color name, or just use the full string
+                let allColors = allProducts.map(p => {
+                    if (!p.mau) return null;
+                    const parts = p.mau.split('-');
+                    return parts.length > 1 ? parts[1].trim() : parts[0].trim();
+                }).filter(Boolean);
+                
+                const uniqueColors = [...new Set(allColors)];
+                uniqueColors.forEach(color => {
+                    colorsHtml += `<option value="${color}">${color}</option>`;
+                });
+            }
+        } catch (e) {
+            console.error("FilterBar Data Extraction Error:", e);
+        }
+
         return `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
             <h2 style="font-family: var(--font-display); font-size: 20px;">${getT("filter.title", "Sản Phẩm Nổi Bật")}</h2>
@@ -22,9 +55,7 @@ const FilterBar = {
                 <div style="width: 1px; height: 16px; background: var(--vip-border);"></div>
 
                 <div style="display: flex; gap: 8px;">
-                    <span class="filter-pill active" onclick="setCategory('Tất cả', this)">${getT("filter.cat.all", "Tất cả")}</span>
-                    <span class="filter-pill" onclick="setCategory('Sơ mi', this)">${getT("filter.cat.shirt", "Sơ mi")}</span>
-                    <span class="filter-pill" onclick="setCategory('Quần âu', this)">${getT("filter.cat.pants", "Quần âu")}</span>
+                    ${categoriesHtml}
                 </div>
             </div>
         </div>
@@ -43,12 +74,7 @@ const FilterBar = {
             <div style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
                 <label class="filter-label">${getT("filter.color.label", "Màu sắc")}</label>
                 <select id="colorSelect" onchange="applyFilters()" class="filter-select">
-                    <option value="all">${getT("filter.color.all", "Tất cả màu")}</option>
-                    <option value="Trắng">${getT("filter.color.white", "Trắng")}</option>
-                    <option value="Đen">${getT("filter.color.black", "Đen")}</option>
-                    <option value="Xanh Navy">${getT("filter.color.navy", "Xanh Navy")}</option>
-                    <option value="Xám">${getT("filter.color.gray", "Xám")}</option>
-                    <option value="Đỏ đô">${getT("filter.color.red", "Đỏ đô")}</option>
+                    ${colorsHtml}
                 </select>
             </div>
             <div style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
