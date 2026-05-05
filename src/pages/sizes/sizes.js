@@ -25,7 +25,7 @@ var SizesPage = (function () {
     document.getElementById('sm-size').value = s ? s.size : '';
     document.getElementById('sm-ten').value = s ? s.ten_size : '';
     document.getElementById('sm-nhom').value = s ? s.nhom_size : 'Nhóm 3';
-    openModal('modal-size');
+    window.openModal('modal-size');
   }
   function save() {
     var id = document.getElementById('sm-id').value;

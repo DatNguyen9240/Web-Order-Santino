@@ -45,7 +45,7 @@ var ProductsPage = (function () {
     } else {
       ['pm-ten', 'pm-design', 'pm-mau', 'pm-gia', 'pm-tenhh'].forEach(function (i) { document.getElementById(i).value = ''; });
     }
-    openModal('modal-product');
+    window.openModal('modal-product');
   }
   function save() {
     var id = document.getElementById('pm-id').value;

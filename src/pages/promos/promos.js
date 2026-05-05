@@ -27,7 +27,7 @@ var PromosPage = (function () {
     document.getElementById('prom-ten').value = p ? p.ten_ctbh : '';
     document.getElementById('prom-mota').value = p ? p.mo_ta || '' : '';
     document.getElementById('prom-active').value = p ? String(p.active !== false) : 'true';
-    openModal('modal-promo');
+    window.openModal('modal-promo');
   }
   function save() {
     var id = document.getElementById('prom-id').value;
