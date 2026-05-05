@@ -60,7 +60,12 @@
 
     <!-- HEADER -->
     <header class="header">
-      <div class="header-title" id="hdr-title">SANTINO B2B</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="icon-btn menu-btn" onclick="toggleMobileMenu()">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="header-title" id="hdr-title">SANTINO B2B</div>
+      </div>
       <div class="header-actions">
         <button class="icon-btn" onclick="toggleTheme()" title="Đổi giao diện">
           <span class="material-symbols-outlined">dark_mode</span>
@@ -79,6 +84,9 @@
 
   </div>
 
+  <!-- MOBILE SIDEBAR OVERLAY -->
+  <div class="sidebar-overlay" id="mobile-overlay" onclick="toggleMobileMenu()"></div>
+
   <!-- TOAST (dùng chung toàn app) -->
   <div class="toast" id="toast">
     <span class="material-symbols-outlined" style="color:var(--accent)">check_circle</span>
@@ -87,6 +95,21 @@
 
   <!-- BUNDLED JS (Core + Data + Components) -->
   <script src="src/js/app.bundle.js"></script>
+  <script>
+    function toggleMobileMenu() {
+      document.querySelector('.sidebar').classList.toggle('show');
+      document.getElementById('mobile-overlay').classList.toggle('show');
+    }
+    // Auto-close menu when clicking nav items on mobile
+    document.querySelectorAll('.nav-item').forEach(el => {
+      el.addEventListener('click', () => {
+        if(window.innerWidth <= 768) {
+          document.querySelector('.sidebar').classList.remove('show');
+          document.getElementById('mobile-overlay').classList.remove('show');
+        }
+      });
+    });
+  </script>
 </body>
 
 </html>
