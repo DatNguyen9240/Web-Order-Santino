@@ -245,9 +245,21 @@ tbody tr:hover td { background: var(--bg); }
   .main     { padding: 20px; }
   .form-grid { grid-template-columns: 1fr; }
   .span2, .span3 { grid-column: span 1; }
-  .header { padding: 0 20px; }
-  .page-hdr h2 { font-size: 22px; }
+  .header { padding: 0 16px; }
+  .page-hdr h2 { font-size: 20px; }
+  .page-hdr p { font-size: 13px; }
   .search-wrapper { width: 100%; max-width: 100%; }
+  body, input, select, textarea, button { font-size: 13px; }
+  .stat-val { font-size: 24px; }
+  .total-info { font-size: 14px; }
+  .total-info span { font-size: 20px; }
+  .modal-hdr h3 { font-size: 18px; }
+  thead th { font-size: 11px; padding: 10px 12px; }
+  tbody td { padding: 10px 12px; }
+  .btn { padding: 8px 16px; }
+  .form-group input, .form-group select, .form-group textarea { padding: 8px 12px; }
+  .search-wrapper input { padding: 8px 12px 8px 36px; }
+  .search-wrapper .material-symbols-outlined { font-size: 18px; left: 10px; }
 }
 
 
