@@ -20,7 +20,9 @@ var OrderPage = (function () {
     renderMatrix();
     document.addEventListener('click', function (e) {
       if (!e.target.closest('.autocomplete-wrap') && !e.target.closest('#btn-multi-mode')) {
-        if (isMultiMode) return; // Keep dropdown open if user is selecting multiple items
+        if (isMultiMode) return;
+        // On mobile (width < 768), don't close dropdown on outside click to avoid losing results when hiding keyboard
+        if (window.innerWidth < 768) return; 
         var acList = document.getElementById('ac-list');
         if (acList) acList.classList.remove('show');
       }
@@ -48,6 +50,9 @@ var OrderPage = (function () {
   }
 
   function acSearch(val) {
+    var btnClear = document.getElementById('ac-clear');
+    if (btnClear) btnClear.style.display = val ? 'block' : 'none';
+
     var list = document.getElementById('ac-list');
     if (!val || val.length < 2) { list.classList.remove('show'); return; }
     var prods = DB.getAll('products').filter(function (p) {
@@ -61,7 +66,10 @@ var OrderPage = (function () {
         var isChecked = multiSelectedCodes[p.ten_hang_2] ? 'checked' : '';
         return '<div class="ac-item" style="flex-direction:row;align-items:center;justify-content:flex-start;text-align:left;gap:12px;cursor:pointer" onclick="OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
                '<input type="checkbox" ' + isChecked + ' style="cursor:pointer;flex-shrink:0" id="chk-'+p.ten_hang_2+'" value="'+p.ten_hang_2+'" onclick="event.stopPropagation(); OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
-               '<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:4px"><div style="display:flex;align-items:baseline;gap:6px"><strong>' + p.ten_hang_2 + '</strong><span style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.ten_hang_hoa + '</span></div><small style="color:var(--muted)">' + p.mau + ' · ' + Utils.formatMoney(p.don_gia) + '</small></div></div>';
+               '<div class="ac-info" style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:2px">' +
+                 '<div class="ac-title-row"><strong>' + p.ten_hang_2 + '</strong><span class="ac-desc">' + p.ten_hang_hoa + '</span></div>' +
+                 '<small class="ac-sub">' + p.mau + ' · ' + Utils.formatMoney(p.don_gia) + '</small>' +
+               '</div></div>';
       }).join('');
 
       html += '<div class="ac-actions" style="display:flex;gap:8px;padding:12px;border-top:1px solid var(--border);background:var(--surface);position:sticky;bottom:0;margin:0;z-index:10;border-radius:0 0 12px 12px">' +
@@ -71,7 +79,10 @@ var OrderPage = (function () {
     } else {
       html = prods.slice(0, 8).map(function (p) {
         return '<div class="ac-item" style="text-align:left" onclick="OrderPage.selectAcSingle(\'' + p.ten_hang_2 + '\')">' +
-               '<div style="display:flex;align-items:baseline;gap:6px"><strong>' + p.ten_hang_2 + '</strong><span style="font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.ten_hang_hoa + '</span></div><small style="color:var(--muted);align-self:flex-start">' + p.mau + ' · ' + Utils.formatMoney(p.don_gia) + '</small></div>';
+               '<div class="ac-info" style="display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:2px">' +
+                 '<div class="ac-title-row"><strong>' + p.ten_hang_2 + '</strong><span class="ac-desc">' + p.ten_hang_hoa + '</span></div>' +
+                 '<small class="ac-sub">' + p.mau + ' · ' + Utils.formatMoney(p.don_gia) + '</small>' +
+               '</div></div>';
       }).join('');
     }
 
@@ -251,11 +262,20 @@ var OrderPage = (function () {
     });
   }
 
+  function clearSearch() {
+    var inp = document.getElementById('ac-input');
+    if (inp) {
+      inp.value = '';
+      inp.focus();
+      acSearch('');
+    }
+  }
+
   return {
     render: render, acSearch: acSearch, toggleAcSelect: toggleAcSelect, closeAc: closeAc,
     addSelectedProds: addSelectedProds, addProductRow: addProductRow, selectAcSingle: selectAcSingle,
     toggleMultiMode: toggleMultiMode,
     updateQty: updateQty, removeRow: removeRow, previewOrder: previewOrder,
-    saveOrder: saveOrder, clearOrder: clearOrder
+    saveOrder: saveOrder, clearOrder: clearOrder, clearSearch: clearSearch
   };
 })();
