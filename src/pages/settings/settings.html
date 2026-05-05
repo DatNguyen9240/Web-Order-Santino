@@ -22,8 +22,8 @@
 
 <div class="page-hdr" style="margin-bottom: 32px;">
     <div>
-        <h2 style="font-family: var(--font-display, var(--font)); font-size: 32px; font-weight: 800;">Cài đặt Giao diện & Hiển thị</h2>
-        <p style="color: var(--muted); margin-top: 8px;">Cá nhân hóa trải nghiệm sử dụng hệ thống B2B của bạn.</p>
+        <h2 style="font-family: var(--font-display, var(--font)); font-size: 32px; font-weight: 800;" data-i18n="settings.title">Cài đặt Giao diện & Hiển thị</h2>
+        <p style="color: var(--muted); margin-top: 8px;" data-i18n="settings.desc">Cá nhân hóa trải nghiệm sử dụng hệ thống B2B của bạn.</p>
     </div>
 </div>
 
@@ -31,7 +31,7 @@
     
     <!-- FONT SETTINGS -->
     <div>
-        <h3 style="font-family: var(--font-display, var(--font)); font-size: 20px; margin-bottom: 8px;">Phông chữ (Typography)</h3>
+        <h3 style="font-family: var(--font-display, var(--font)); font-size: 20px; margin-bottom: 8px;" data-i18n="settings.font">Phông chữ (Typography)</h3>
         <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px;">Tùy chỉnh phông chữ hiển thị cho toàn bộ ứng dụng để có trải nghiệm tốt nhất.</p>
         
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;">
@@ -57,7 +57,7 @@
 
     <!-- THEME SETTINGS -->
     <div>
-        <h3 style="font-family: var(--font-display, var(--font)); font-size: 20px; margin-bottom: 8px;">Chủ đề Hệ thống (Theme)</h3>
+        <h3 style="font-family: var(--font-display, var(--font)); font-size: 20px; margin-bottom: 8px;" data-i18n="settings.theme">Chủ đề Hệ thống (Theme)</h3>
         <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px;">Chuyển đổi giao diện sáng tối phù hợp với môi trường làm việc.</p>
         
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;">
@@ -83,7 +83,7 @@
     
     <!-- LANGUAGE SETTINGS -->
     <div style="border-top: 1px solid var(--border); padding-top: 40px;">
-        <h3 style="font-family: var(--font-display, var(--font)); font-size: 20px; margin-bottom: 8px;">Ngôn ngữ (Language)</h3>
+        <h3 style="font-family: var(--font-display, var(--font)); font-size: 20px; margin-bottom: 8px;" data-i18n="settings.lang">Ngôn ngữ (Language)</h3>
         <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px;">Tùy chọn ngôn ngữ hiển thị trên toàn hệ thống.</p>
         
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px;">
@@ -109,7 +109,7 @@
     
     <!-- COLOR SETTINGS -->
     <div style="border-top: 1px solid var(--border); padding-top: 40px;">
-        <h3 style="font-family: var(--font-display, var(--font)); font-size: 20px; margin-bottom: 8px;">Màu sắc Chủ đạo (Color)</h3>
+        <h3 style="font-family: var(--font-display, var(--font)); font-size: 20px; margin-bottom: 8px;" data-i18n="settings.color">Màu sắc Chủ đạo (Color)</h3>
         <p style="color: var(--muted); font-size: 14px; margin-bottom: 24px;">Thay đổi màu sắc nổi bật chính của ứng dụng.</p>
         
         <div style="display: flex; gap: 20px; align-items: center;">
@@ -131,9 +131,9 @@
 </div>
 
 <div class="card settings-section" style="margin-top: 40px; max-width: 900px;">
-  <h4 style="color: var(--danger);">Reset dữ liệu</h4>
+  <h4 style="color: var(--danger);" data-i18n="settings.reset">Reset dữ liệu</h4>
   <p style="color:var(--muted); font-size:14px; margin-bottom: 12px;">Thao tác này sẽ xóa toàn bộ đơn hàng và cài đặt hiện tại của bạn.</p>
   <button class="btn btn-danger btn-sm" onclick="SettingsPage.resetData()" style="width: max-content;">
-    <span class="material-symbols-outlined" style="font-size:16px">restore</span>Khôi phục mặc định
+    <span class="material-symbols-outlined" style="font-size:16px">restore</span><span data-i18n="settings.reset">Khôi phục mặc định</span>
   </button>
 </div>

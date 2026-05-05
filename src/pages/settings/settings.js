@@ -63,7 +63,8 @@ var SettingsPage = (function () {
   function setLanguage(lang) {
     localStorage.setItem('santino_lang', lang);
     _init();
-    showToast('Đã đổi ngôn ngữ (Tính năng đang phát triển)');
+    if (typeof applyLanguage === 'function') applyLanguage();
+    showToast('Đã đổi ngôn ngữ');
   }
 
   function setColor(hex) {

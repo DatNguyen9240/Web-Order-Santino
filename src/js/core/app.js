@@ -52,3 +52,26 @@ function closeModal(id) { var el = document.getElementById(id); if (el) el.class
 document.addEventListener('click', function (e) {
   if (e.target.classList.contains('modal-overlay')) e.target.classList.remove('show');
 });
+
+// Chuyển đổi ngôn ngữ
+function applyLanguage() {
+  var lang = localStorage.getItem('santino_lang') || 'vi';
+  var dict = typeof TRANSLATIONS !== 'undefined' ? TRANSLATIONS[lang] || TRANSLATIONS['vi'] : {};
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n');
+    if (dict[key]) {
+      // Dùng innerHTML hoặc textContent, tuỳ yêu cầu. Dùng textContent an toàn hơn.
+      el.textContent = dict[key];
+    }
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n-placeholder');
+    if (dict[key]) {
+      el.placeholder = dict[key];
+    }
+  });
+}
+
+// Chạy dịch ngôn ngữ khi tải trang và sau khi render xong Router
+document.addEventListener('DOMContentLoaded', applyLanguage);
+
