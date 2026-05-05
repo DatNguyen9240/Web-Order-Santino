@@ -1,19 +1,18 @@
 <div class="page-hdr">
   <div>
-    <h2>📦 Quản Lý Sản Phẩm</h2>
+    <h2><span class="material-symbols-outlined" style="color:var(--primary);">inventory_2</span> Quản Lý Sản Phẩm</h2>
     <p>CRUD Tên hàng 2 — nguồn sinh SKU</p>
   </div>
   <button class="btn btn-primary" onclick="ProductsPage.openModal()">
     <span class="material-symbols-outlined" style="font-size:16px">add</span>Thêm sản phẩm
   </button>
 </div>
-<div style="display:flex;gap:10px;margin-bottom:4px">
-  <input id="product-search"
-    style="flex:1;padding:9px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);outline:none"
-    placeholder="🔍 Tìm tên hàng 2..." oninput="ProductsPage.render()">
-  <select id="product-filter-form"
-    style="padding:9px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text)"
-    onchange="ProductsPage.render()">
+<div style="display:flex;gap:12px;margin-bottom:12px">
+  <div class="search-wrapper" style="flex:1; width:auto;">
+    <span class="material-symbols-outlined">search</span>
+    <input id="product-search" placeholder="Tìm tên hàng 2..." oninput="ProductsPage.render()">
+  </div>
+  <select id="product-filter-form" style="padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);outline:none;font-weight:500;box-shadow:var(--shadow-sm);" onchange="ProductsPage.render()">
     <option value="">Tất cả Form</option>
     <option>AMC</option>
     <option>ARC</option>

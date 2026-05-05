@@ -38,8 +38,11 @@
 <div class="card">
   <div class="matrix-search" style="margin-bottom:16px">
     <div class="autocomplete-wrap" style="flex:1">
-      <input id="ac-input" placeholder="🔍 Nhập Tên hàng 2 (VD: AMC545S659)..." autocomplete="off"
-        oninput="OrderPage.acSearch(this.value)" onkeydown="if(event.key==='Enter')OrderPage.addProductRow()">
+      <div class="search-wrapper" style="width: 100%;">
+        <span class="material-symbols-outlined">search</span>
+        <input id="ac-input" placeholder="Nhập Tên hàng 2 (VD: AMC545S659)..." autocomplete="off"
+          oninput="OrderPage.acSearch(this.value)" onkeydown="if(event.key==='Enter')OrderPage.addProductRow()">
+      </div>
       <div class="autocomplete-dropdown" id="ac-list"></div>
     </div>
     <button class="btn btn-primary" onclick="OrderPage.addProductRow()">
