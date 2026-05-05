@@ -14,17 +14,17 @@ var ConfirmModal = (function () {
     modalOverlay.style.display = 'none';
 
     var html = `
-      <div class="modal" style="width: 400px; animation: slideUp 0.2s ease;">
-        <div class="modal-hdr">
+      <div class="modal" style="width: 360px; padding: 24px; animation: slideUp 0.2s ease;">
+        <div class="modal-hdr" style="margin-bottom: 16px;">
           <h3 id="confirm-modal-title">Xác nhận</h3>
           <button class="btn-icon" id="confirm-modal-btn-close">
-            <span class="material-symbols-outlined">close</span>
+            <span class="material-symbols-outlined" style="font-size: 20px;">close</span>
           </button>
         </div>
-        <div style="padding: 4px 0;">
-          <p id="confirm-modal-message" style="margin-bottom: 24px; color: var(--muted);"></p>
+        <div>
+          <p id="confirm-modal-message" style="margin-bottom: 20px; color: var(--muted); font-size: 14px; line-height: 1.5;"></p>
         </div>
-        <div class="modal-actions">
+        <div class="modal-actions" style="margin-top: 16px; padding-top: 16px;">
           <button class="btn btn-ghost" id="confirm-modal-btn-cancel">Hủy bỏ</button>
           <button class="btn btn-primary" id="confirm-modal-btn-confirm">Đồng ý</button>
         </div>
