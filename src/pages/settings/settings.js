@@ -74,11 +74,18 @@ var SettingsPage = (function () {
   }
 
   function resetData() {
-    if(!confirm('Reset toàn bộ về dữ liệu mặc định? Đơn hàng và các cài đặt sẽ bị xóa!'))return;
-    ['santino_products','santino_sizes','santino_promotions','santino_orders', 'santino_theme', 'santino_font', 'santino_color', 'santino_lang'].forEach(function(k){localStorage.removeItem(k);});
-    DB.initSeed();
-    showToast('Đã reset dữ liệu về mặc định. Vui lòng tải lại trang.');
-    setTimeout(function() { window.location.reload(); }, 1500);
+    ConfirmModal.show({
+      title: 'Xóa dữ liệu',
+      message: 'Reset toàn bộ về dữ liệu mặc định? Đơn hàng và các cài đặt sẽ bị xóa!',
+      confirmText: 'Reset',
+      confirmClass: 'btn-danger',
+      onConfirm: function() {
+        ['santino_products','santino_sizes','santino_promotions','santino_orders', 'santino_theme', 'santino_font', 'santino_color', 'santino_lang'].forEach(function(k){localStorage.removeItem(k);});
+        DB.initSeed();
+        showToast('Đã reset dữ liệu về mặc định. Vui lòng tải lại trang.');
+        setTimeout(function() { window.location.reload(); }, 1500);
+      }
+    });
   }
 
   return { render:render, setMode:setMode, setFont:setFont, setLanguage:setLanguage, setColor:setColor, resetData:resetData };

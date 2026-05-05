@@ -3,7 +3,7 @@
  * Mở các Pop-up Window Nhập liệu / Báo cáo không cần code cứng HTML
  */
 var UIModal = (function () {
-  
+
   /**
    * Mở một form Modal bất kỳ
    * @param {Object} config - { id, title, width, content (Node/String), footer (Node), onClose }
