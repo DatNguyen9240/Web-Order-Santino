@@ -170,8 +170,6 @@ tbody tr:hover td { background: var(--bg); }
 
 /* ---- Order Matrix ---- */
 .matrix-search           { display: flex; gap: 12px; align-items: center; }
-.matrix-search input     { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; color: var(--text); outline: none; transition: 0.2s; font-weight: 500; }
-.matrix-search input:focus { border-color: var(--primary); background: var(--surface); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
 .matrix-table th.size-col      { min-width: 64px; text-align: center; }
 .matrix-table td.size-cell     { text-align: center; padding: 8px 6px; }
 .matrix-table td.size-cell input { width: 56px; text-align: center; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 8px; color: var(--text); outline: none; transition: 0.2s; font-weight: 600; }
