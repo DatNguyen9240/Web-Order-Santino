@@ -20,8 +20,8 @@ var ProductsPage = (function () {
         '<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + p.ten_hang_hoa + '</td>' +
         '<td><span class="badge ' + (p.ngung_su_dung ? 'badge-red' : 'badge-green') + '">' + (p.ngung_su_dung ? 'Ngừng bán' : 'Đang bán') + '</span></td>' +
         '<td style="display:flex;gap:6px">' +
-        '<button class="btn-icon" onclick="ProductsPage.openModal(\'' + p.id + '\')"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button>' +
-        '<button class="btn-icon" onclick="ProductsPage.del(\'' + p.id + '\')"><span class="material-symbols-outlined" style="font-size:16px;color:var(--danger)">delete</span></button>' +
+        '<button class="btn-icon" onclick="ProductsPage.openModal(\'' + p.id + '\')"><span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">edit</span></button>' +
+        '<button class="btn-icon" onclick="ProductsPage.del(\'' + p.id + '\')"><span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1));color:var(--danger)">delete</span></button>' +
         '</td></tr>';
     }).join('');
   }

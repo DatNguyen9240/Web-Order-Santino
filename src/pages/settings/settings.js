@@ -23,6 +23,14 @@ var SettingsPage = (function () {
     var fontCard = document.querySelector('.font-card[data-font="' + font + '"]');
     if(fontCard) fontCard.classList.add('active');
 
+    // Đánh dấu Zoom
+    var zoom = localStorage.getItem('santino_zoom');
+    if (zoom === null) zoom = '115';
+    var zoomValue = document.getElementById('zoom-value');
+    if (zoomValue) zoomValue.textContent = zoom + '%';
+    var slider = document.getElementById('zoom-slider');
+    if (slider) slider.value = zoom;
+
     // Đánh dấu Lang
     document.querySelectorAll('.lang-card').forEach(function(c) { c.classList.remove('active'); });
     var langCard = document.querySelector('.lang-card[data-lang="' + lang + '"]');
@@ -85,6 +93,22 @@ var SettingsPage = (function () {
     showToast(t('toast.lang_changed'));
   }
 
+  function changeZoom(val, isAbsolute) {
+    var zoom = localStorage.getItem('santino_zoom');
+    if (zoom === null) zoom = 115;
+    
+    var newZoom = isAbsolute ? parseInt(val) : (parseInt(zoom) + val);
+    if (newZoom < 50) newZoom = 50;
+    if (newZoom > 200) newZoom = 200;
+    
+    document.getElementById('zoom-value').textContent = newZoom + '%';
+    var slider = document.getElementById('zoom-slider');
+    if (slider && slider.value != newZoom) slider.value = newZoom;
+
+    document.documentElement.style.setProperty('--text-scale', (newZoom/100).toString());
+    localStorage.setItem('santino_zoom', newZoom);
+  }
+
   function _calculateFg(hex) {
     if (!hex || hex === 'auto') return '#000000';
     var c = hex.replace('#', '');
@@ -129,5 +153,5 @@ var SettingsPage = (function () {
     });
   }
 
-  return { render:render, setMode:setMode, setFont:setFont, setLanguage:setLanguage, setColor:setColor, resetData:resetData };
+  return { render:render, setMode:setMode, setFont:setFont, setLanguage:setLanguage, setColor:setColor, changeZoom:changeZoom, resetData:resetData };
 })();

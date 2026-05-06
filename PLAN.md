@@ -326,3 +326,39 @@ Web-Order-Santino/
 
 > [!WARNING]
 > Luôn filter `ngung_su_dung = false` trước khi hiển thị sản phẩm trong autocomplete.
+
+---
+
+## 7. KIẾN TRÚC TỐI ƯU UI/UX & DATA PIPELINE (TECHNICAL BLUEPRINT v2.0)
+> *Cập nhật dựa trên phiên phản biện giữa Architect và User (Mr. Đăng).*
+
+### 7.1. Visual Cue cho Auto-fill (UX)
+- **Vấn đề:** Ẩn dữ liệu auto-fill (CTKM, Ghi chú) khỏi từng dòng để nhẹ DOM, nhưng user sẽ hoang mang.
+- **Giải pháp:** Khi Header có dữ liệu, hiển thị một `badge` nhỏ ở góc Card sản phẩm: `<span class="badge badge-success"><span class="icon">check</span> Đã áp dụng CTKM</span>`.
+
+### 7.2. Incremental Update cho Preview Data (Performance)
+- **Vấn đề:** Duyệt `reduce` toàn bộ hàng trăm ô input khi bấm Preview sẽ gây treo (freeze) điện thoại.
+- **Giải pháp:** Quản lý state `OrderState.previewData` dạng Object Map. Update ngay lập tức (real-time) tại sự kiện `oninput` của ô số lượng. Bấm Preview chỉ việc render thẳng Data có sẵn ra Table.
+
+### 7.3. Strict Validation cho SKU Builder
+- **Vấn đề:** Các mã hàng dị (hàng mẫu, hàng km) không bắt đầu bằng AMC/ARC sẽ bị lỗi cắt chuỗi.
+- **Giải pháp:** 
+  ```javascript
+  function buildSKU(ten_hang_2, size) {
+      const match = ten_hang_2.match(/^[A-Z]+/);
+      if (!match) return `INVALID_${ten_hang_2}_${size}`; // Tránh crash
+      const brand = match[0];
+      return `${brand}${size}${ten_hang_2.slice(brand.length)}`;
+  }
+  ```
+
+### 7.4. Data Integrity Check trước khi gửi ERP
+- **Logic:** So sánh `Tổng số lượng hiển thị trên UI` === `Tổng số lượng các dòng SKU đã sinh ra trong Array gửi đi`.
+- **Hành động:** Nếu lệch (sai khác dù chỉ 1 đơn vị), block submit và báo lỗi. Tránh đền tiền cho công ty!
+
+### 7.5. Chạm khắc UX tinh tế (Micro-interactions)
+- **Nút "Quick Clear":** Thêm một icon X nhỏ cạnh tên sản phẩm. Khi click, reset toàn bộ số lượng các ô size của mã hàng đó về 0 ngay lập tức.
+- **Tooltip Giải thích SKU:** Tại bảng Preview, bôi đậm mã SKU sinh ra (VD: **AMC40545S659**). Hover vào sẽ hiện tooltip giải thích công thức: `[Brand: AMC] + [Size: 40] + [Code: 545S659]`.
+
+---
+> 🚀 **KẾT LUẬN TỪ ARCHITECT & USER:** Bản Blueprint v2.0 đã đạt mức độ hoàn hảo ("Không tì vết"). Sẵn sàng chuyển giao cho Developer thi công!
