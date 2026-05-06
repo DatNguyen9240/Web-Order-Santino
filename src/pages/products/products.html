@@ -4,21 +4,19 @@
     <p data-i18n="hdr.products.desc">CRUD Tên hàng 2 — nguồn sinh SKU</p>
   </div>
 </div>
-<div style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px;">
-  <div class="search-wrapper" style="width:100%; max-width:100%;">
+<div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:16px; align-items:center;">
+  <div class="search-wrapper" style="flex:1; min-width: 250px;">
     <span class="material-symbols-outlined">search</span>
     <input id="product-search" placeholder="Tìm tên hàng 2..." data-i18n-placeholder="products.search.placeholder" oninput="ProductsPage.render()">
   </div>
-  <div style="display:flex; gap:12px; justify-content:space-between; align-items:center;">
-    <select id="product-filter-form" style="padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);outline:none;font-weight:500;box-shadow:var(--shadow-sm);flex:1" onchange="ProductsPage.render()">
-      <option value="">Tất cả Form</option>
-      <option>AMC</option>
-      <option>ARC</option>
-    </select>
-    <button class="btn btn-primary" onclick="ProductsPage.openModal()" style="white-space: nowrap;">
-      <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">add</span><span data-i18n="btn.add">Thêm</span>
-    </button>
-  </div>
+  <select id="product-filter-form" style="min-width:140px; padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);outline:none;font-weight:500;box-shadow:var(--shadow-sm);" onchange="ProductsPage.render()">
+    <option value="">Tất cả Form</option>
+    <option>AMC</option>
+    <option>ARC</option>
+  </select>
+  <button class="btn btn-primary" onclick="ProductsPage.openModal()" style="white-space: nowrap; height: 42px;">
+    <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">add</span><span data-i18n="btn.add">Thêm</span>
+  </button>
 </div>
 <div class="tbl-wrap">
   <table>
