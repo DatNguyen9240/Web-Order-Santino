@@ -14,14 +14,21 @@
 </div>
 
 <!-- Header đơn -->
-<div class="card">
-  <div class="form-grid">
+<div class="card" style="margin-bottom: 24px">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; cursor: pointer;" onclick="document.getElementById('header-info-body').style.display = document.getElementById('header-info-body').style.display === 'none' ? 'grid' : 'none'; this.querySelector('.icon-toggle').textContent = document.getElementById('header-info-body').style.display === 'none' ? 'expand_more' : 'expand_less';">
+    <div style="font-weight: 700; font-size: 16px; color: var(--primary);">
+      <span class="material-symbols-outlined" style="vertical-align: bottom; font-size: 20px; margin-right: 4px;">receipt_long</span>
+      <span data-i18n="order.info">Thông tin chung</span>
+    </div>
+    <span class="material-symbols-outlined icon-toggle" style="color:var(--muted)">expand_less</span>
+  </div>
+  <div class="form-grid" id="header-info-body">
     <div class="form-group"><label data-i18n="order.no">Số CT</label><input id="o-so-ct" class="locked" readonly></div>
     <div class="form-group"><label data-i18n="order.date">Ngày CT</label><input id="o-ngay" type="date"></div>
     <div class="form-group"><label data-i18n="order.branch">Chi nhánh</label>
       <select id="o-chi-nhanh">
-        <option data-i18n="order.branch.hn">Trụ sở Hà Nội</option>
-        <option data-i18n="order.branch.hcm">Chi nhánh HCM</option>
+        <option value="Trụ sở Hà Nội" data-i18n="order.branch.hn">Trụ sở Hà Nội</option>
+        <option value="Chi nhánh HCM" data-i18n="order.branch.hcm">Chi nhánh HCM</option>
       </select>
     </div>
     <div class="form-group"><label data-i18n="order.staff">Nhân viên KD</label><input id="o-nv" placeholder="Tên nhân viên..." data-i18n-placeholder="order.staff.placeholder"></div>
@@ -31,6 +38,21 @@
     <div class="form-group span2"><label data-i18n="order.note">Ghi chú chung</label>
       <input id="o-note" placeholder="Ghi chú áp dụng toàn đơn..." data-i18n-placeholder="order.note.placeholder">
     </div>
+  </div>
+</div>
+<!-- Thông tin khách hàng -->
+<div class="card" style="margin-bottom: 24px">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; cursor: pointer;" onclick="document.getElementById('customer-info-body').style.display = document.getElementById('customer-info-body').style.display === 'none' ? 'grid' : 'none'; this.querySelector('.icon-toggle').textContent = document.getElementById('customer-info-body').style.display === 'none' ? 'expand_more' : 'expand_less';">
+    <div style="font-weight: 700; font-size: 16px; color: var(--primary);">
+      <span class="material-symbols-outlined" style="vertical-align: bottom; font-size: 20px; margin-right: 4px;">person</span>
+      <span data-i18n="order.customer_info">Thông tin Khách hàng</span>
+    </div>
+    <span class="material-symbols-outlined icon-toggle" style="color:var(--muted)">expand_less</span>
+  </div>
+  <div class="form-grid" id="customer-info-body">
+    <div class="form-group span2"><label><span data-i18n="order.customer_name">Tên khách hàng / Đại lý</span> <span style="color:var(--accent)">*</span></label><input id="o-kh-ten" placeholder="Nhập tên khách hàng..." data-i18n-placeholder="order.customer_name.placeholder"></div>
+    <div class="form-group"><label data-i18n="order.customer_phone">Số điện thoại</label><input id="o-kh-sdt" placeholder="Nhập số điện thoại..." data-i18n-placeholder="order.customer_phone.placeholder"></div>
+    <div class="form-group span3"><label data-i18n="order.customer_address">Địa chỉ giao hàng</label><input id="o-kh-dc" placeholder="Nhập địa chỉ giao hàng..." data-i18n-placeholder="order.customer_address.placeholder"></div>
   </div>
 </div>
 
@@ -84,27 +106,10 @@
       style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:13px;margin-bottom:12px"></div>
     <div class="tbl-wrap" style="max-height:360px;overflow-y:auto">
       <table>
-        <thead>
-          <tr>
-            <th data-i18n="order.col.name">Tên hàng 2</th>
-            <th>SKU</th>
-            <th data-i18n="nav.sizes">Size</th>
-            <th data-i18n="order.col.qty">SL</th>
-            <th data-i18n="order.col.price">Đơn giá</th>
-            <th data-i18n="order.total.money">Thành tiền</th>
-            <th data-i18n="order.col.promo">CTBH</th>
-            <th data-i18n="order.note">Ghi chú</th>
-          </tr>
+        <thead id="preview-head">
         </thead>
         <tbody id="preview-body"></tbody>
-        <tfoot>
-          <tr style="font-weight:700;background:var(--bg)">
-            <td colspan="3" style="padding:10px 12px" data-i18n="order.total.label">Tổng cộng</td>
-            <td id="pv-qty" style="padding:10px 12px"></td>
-            <td></td>
-            <td id="pv-money" style="padding:10px 12px;color:var(--accent)"></td>
-            <td colspan="2"></td>
-          </tr>
+        <tfoot id="preview-foot">
         </tfoot>
       </table>
     </div>

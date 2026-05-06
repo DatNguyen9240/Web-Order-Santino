@@ -112,9 +112,8 @@ input, select, textarea, button { font-family: inherit; font-size: 14px; }
 .page-section.active { display: flex; }
 
 /* ---- Page Header ---- */
-.page-hdr    { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 8px; }
-.page-hdr h2 { font-size: 26px; font-weight: 800; color: var(--text); letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px; }
-.page-hdr p  { color: var(--muted); font-size: 14px; margin-top: 4px; }
+.page-hdr    { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 16px; margin-bottom: 8px; }
+.page-hdr h2, .page-hdr p { display: none !important; }
 
 /* ---- Buttons ---- */
 .btn           { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; border-radius: var(--radius); border: 1px solid transparent; font-weight: 600; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); outline: none; }
@@ -161,7 +160,7 @@ input, select, textarea, button { font-family: inherit; font-size: 14px; }
 .tbl-wrap     { overflow-x: auto; border-radius: var(--radius-lg); border: 1px solid var(--border); background: var(--surface); box-shadow: var(--shadow-sm); }
 table         { width: 100%; border-collapse: separate; border-spacing: 0; }
 thead th      { background: var(--bg); padding: 14px 16px; text-align: left; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); white-space: nowrap; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 2; }
-tbody td      { padding: 14px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; transition: background 0.15s; }
+tbody td      { padding: 14px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; transition: background 0.15s; white-space: nowrap; }
 tbody tr:last-child td { border-bottom: none; }
 tbody tr:hover td { background: var(--bg); }
 .badge        { display: inline-flex; align-items: center; justify-content: center; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; letter-spacing: 0.3px; }
@@ -196,7 +195,7 @@ tbody tr:hover td { background: var(--bg); }
 /* ---- Modal ---- */
 .modal-overlay      { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); z-index: 1000; display: none; align-items: center; justify-content: center; }
 .modal-overlay.show { display: flex; animation: fadeIn 0.2s ease; }
-.modal              { background: var(--surface); border-radius: 24px; padding: 32px; width: min(520px, 92vw); box-shadow: var(--shadow-lg); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid var(--border); }
+.modal              { background: var(--surface); border-radius: 24px; padding: 32px; width: min(520px, 92vw); max-height: 90dvh; overflow-y: auto; box-shadow: var(--shadow-lg); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid var(--border); }
 @keyframes slideUp  { from { transform: translateY(30px) scale(0.98); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
 .modal-hdr          { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
 .modal-hdr h3       { font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: -0.02em; }
@@ -242,7 +241,8 @@ tbody tr:hover td { background: var(--bg); }
   .sidebar-overlay.show { opacity: 1; visibility: visible; }
   .menu-btn { display: flex !important; border: none; background: transparent; box-shadow: none; padding: 4px; }
   .layout   { grid-template-columns: 1fr; }
-  .main     { padding: 20px; }
+  .main     { padding: 12px; }
+  .card     { padding: 12px; }
   .form-grid { grid-template-columns: 1fr; }
   .span2, .span3 { grid-column: span 1; }
   .header { padding: 0 16px; }
@@ -254,12 +254,15 @@ tbody tr:hover td { background: var(--bg); }
   .total-info { font-size: 14px; }
   .total-info span { font-size: 20px; }
   .modal-hdr h3 { font-size: 18px; }
-  thead th { font-size: 11px; padding: 10px 12px; }
-  tbody td { padding: 10px 12px; }
-  .btn { padding: 8px 16px; }
-  .form-group input, .form-group select, .form-group textarea { padding: 8px 12px; }
-  .search-wrapper input { padding: 8px 12px 8px 36px; }
-  .search-wrapper .material-symbols-outlined { font-size: 18px; left: 10px; }
+  thead th { font-size: 11px; padding: 12px 12px; }
+  tbody td { padding: 14px 12px; }
+  .btn { padding: 12px 20px; font-size: 14px; min-height: 44px; }
+  .form-group input, .form-group select, .form-group textarea { padding: 12px 14px; font-size: 14px; min-height: 44px; }
+  .search-wrapper input { padding: 12px 14px 12px 36px; min-height: 44px; }
+  .search-wrapper .material-symbols-outlined { font-size: 20px; left: 10px; }
+  .autocomplete-dropdown { max-height: 45vh; }
+  .ac-item { padding: 16px; }
+  .matrix-table td.size-cell input { width: 64px; padding: 12px 8px; font-size: 16px; min-height: 44px; }
 }
 
 .app-logo { filter: brightness(0); transition: filter 0.3s ease; }

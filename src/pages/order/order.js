@@ -14,6 +14,9 @@ var OrderPage = (function () {
   function _init() {
     document.getElementById('o-so-ct').value = Utils.genOrderNo();
     document.getElementById('o-ngay').value = Utils.today();
+    document.getElementById('o-kh-ten').value = '';
+    document.getElementById('o-kh-sdt').value = '';
+    document.getElementById('o-kh-dc').value = '';
     var sel = document.getElementById('o-ctbh');
     sel.innerHTML = DB.getAll('promotions').filter(function (p) { return p.active !== false; })
       .map(function (p) { return '<option value="' + p.ma_ctbh + '">' + p.ma_ctbh + ' - ' + p.ten_ctbh + '</option>'; }).join('');
@@ -145,22 +148,25 @@ var OrderPage = (function () {
     var body = document.getElementById('matrix-body');
     if (!orderRows.length) {
       head.innerHTML = '';
-      body.innerHTML = '<tr><td colspan="20" class="empty-state"><span class="material-symbols-outlined">table_chart</span><span data-i18n="order.search.empty">' + t('order.search.empty') + '</span></td></tr>';
+      body.innerHTML = '<tr><td colspan="7" class="empty-state"><span class="material-symbols-outlined">table_chart</span><span data-i18n="order.search.empty">' + t('order.search.empty') + '</span></td></tr>';
       _updateTotal(); return;
     }
-    var allSizes = [...new Set(orderRows.flatMap(function (r) { return r.sizes.map(function (s) { return s.size; }); }))].sort(function (a, b) { return a - b; });
-    head.innerHTML = '<tr><th><span data-i18n="order.col.name">' + t('order.col.name') + '</span></th><th><span data-i18n="order.col.form">' + t('order.col.form') + '</span></th><th><span data-i18n="order.col.price">' + t('order.col.price') + '</span></th><th><span data-i18n="order.col.sizegroup">' + t('order.col.sizegroup') + '</span></th>' + allSizes.map(function (s) { return '<th class="size-col">' + s + '</th>'; }).join('') + '<th></th></tr>';
-    body.innerHTML = orderRows.map(function (row, ri) {
-      var rowSizes = row.sizes.map(function (s) { return s.size; });
-      return '<tr><td><strong>' + row.ten_hang_2 + '</strong><br><small style="color:var(--muted)">' + row.product.mau + '</small></td>' +
-        '<td><span class="badge badge-blue">' + row.product.form + '</span></td>' +
-        '<td style="font-weight:700;color:var(--accent)">' + Utils.formatMoney(row.product.don_gia) + '</td>' +
-        '<td>' + row.product.nhom_size + '</td>' +
-        allSizes.map(function (s) {
-          if (!rowSizes.includes(s)) return '<td class="size-cell"><span style="color:var(--muted)">—</span></td>';
-          return '<td class="size-cell"><input type="number" min="0" placeholder="-" value="' + (row.quantities[s] || '') + '" oninput="OrderPage.updateQty(' + ri + ',' + s + ',this.value)" style="width:50px;text-align:center;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px;color:var(--text);outline:none"></td>';
-        }).join('') +
-        '<td><button class="btn-icon" onclick="OrderPage.removeRow(' + ri + ')"><span class="material-symbols-outlined" style="font-size:16px;color:var(--danger)">delete</span></button></td></tr>';
+    
+    head.innerHTML = '<tr><th style="white-space:nowrap; text-align:left;">Tên hàng 2</th><th style="white-space:nowrap; text-align:left;">Mã CTB</th><th style="white-space:nowrap; text-align:left;">Tên CTBH</th><th style="white-space:nowrap; text-align:left;">Nhóm size</th><th style="white-space:nowrap; text-align:center;">Số lượng</th><th style="white-space:nowrap; text-align:center;">Size</th><th style="width:50px;"></th></tr>';
+    
+    body.innerHTML = orderRows.flatMap(function (row, ri) {
+      return row.sizes.map(function(s) {
+        var qty = row.quantities[s.size] || '';
+        return '<tr>' +
+          '<td style="white-space:nowrap; font-weight:600; color:var(--primary);">' + row.ten_hang_2 + '</td>' +
+          '<td style="white-space:nowrap; color:var(--text);">CKCB</td>' +
+          '<td style="white-space:nowrap; color:var(--text);">Chiết khấu cơ bản</td>' +
+          '<td style="white-space:nowrap; color:var(--text);">' + row.product.nhom_size + '</td>' +
+          '<td style="text-align:center;"><input type="number" min="0" placeholder="-" value="' + qty + '" oninput="OrderPage.updateQty(' + ri + ',' + s.size + ',this.value)" style="width:70px; text-align:center; background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:8px; font-size:15px; font-weight:600; outline:none; transition:all 0.2s"></td>' +
+          '<td style="text-align:center; font-weight:700; font-size:16px;">' + s.size + '</td>' +
+          '<td style="text-align:center;"><button class="btn-icon" onclick="OrderPage.removeRow(' + ri + ')"><span class="material-symbols-outlined" style="font-size:18px; color:var(--danger)">delete</span></button></td>' +
+          '</tr>';
+      });
     }).join('');
     _updateTotal();
   }
@@ -197,33 +203,75 @@ var OrderPage = (function () {
   function previewOrder() {
     var lines = _buildLines();
     if (!lines.length) { showToast(t('toast.empty_qty'), false); return; }
+    
     var info = document.getElementById('preview-info');
     info.innerHTML = [
       '<div><small style="color:var(--muted)"><span data-i18n="order.no">' + t('order.no') + '</span></small><div style="font-weight:700">' + document.getElementById('o-so-ct').value + '</div></div>',
-      '<div><small style="color:var(--muted)"><span data-i18n="order.preview.date">' + t('order.preview.date') + '</span></small><div>' + document.getElementById('o-ngay').value + '</div></div>',
+      '<div><small style="color:var(--muted)"><span data-i18n="order.customer_name">Khách hàng</span></small><div style="font-weight:700;color:var(--primary)">' + (document.getElementById('o-kh-ten').value || '—') + '</div></div>',
       '<div><small style="color:var(--muted)"><span data-i18n="order.promo">' + t('order.promo') + '</span></small><div style="font-weight:700">' + document.getElementById('o-ctbh').value + '</div></div>',
     ].join('');
-    document.getElementById('preview-body').innerHTML = lines.map(function (l) {
-      return '<tr><td>' + l.ten_hang_2 + '</td><td style="font-family:monospace">' + l.sku + '</td><td>' + l.size + '</td>' +
-        '<td style="font-weight:700;color:var(--accent)">' + l.so_luong + '</td><td>' + Utils.formatMoney(l.don_gia) + '</td>' +
-        '<td style="font-weight:700">' + Utils.formatMoney(l.thanh_tien) + '</td>' +
-        '<td><span class="badge badge-yellow">' + l.ma_ctbh + '</span></td><td>' + l.ghi_chu + '</td></tr>';
+    
+    // Xếp theo hàng ngang (Ma trận) cho Preview
+    var orderedSizes = [...new Set(lines.map(function(l) { return l.size; }))].sort(function(a,b) { return a-b; });
+    var headHtml = '<tr><th>Tên hàng 2</th><th>Màu</th><th>Nhóm size</th>' + 
+                   orderedSizes.map(function(s) { return '<th style="text-align:center">' + s + '</th>'; }).join('') + 
+                   '<th style="text-align:center">Tổng SL</th><th style="text-align:right">Thành tiền</th></tr>';
+    
+    var totalQtyAll = 0;
+    var totalMoneyAll = 0;
+    var bodyHtml = orderRows.map(function(row) {
+      var rowTotalQty = 0;
+      var rowTotalMoney = 0;
+      Object.values(row.quantities).forEach(function(q) { 
+        if (q > 0) { rowTotalQty += q; rowTotalMoney += q * row.product.don_gia; } 
+      });
+      if (rowTotalQty === 0) return '';
+      
+      totalQtyAll += rowTotalQty;
+      totalMoneyAll += rowTotalMoney;
+      
+      var tr = '<tr><td><strong>' + row.ten_hang_2 + '</strong></td>' +
+               '<td><small style="color:var(--muted)">' + row.product.mau + '</small></td>' +
+               '<td>' + row.product.nhom_size + '</td>';
+      orderedSizes.forEach(function(s) {
+        var qty = row.quantities[s] || 0;
+        if (qty > 0) {
+          tr += '<td style="text-align:center;font-weight:bold;color:var(--primary)">' + qty + '</td>';
+        } else {
+          tr += '<td style="text-align:center;color:var(--muted)">-</td>';
+        }
+      });
+      tr += '<td style="text-align:center;font-weight:bold">' + rowTotalQty + '</td>' +
+            '<td style="text-align:right;font-weight:bold;color:var(--accent)">' + Utils.formatMoney(rowTotalMoney) + '</td></tr>';
+      return tr;
     }).join('');
-    var tq = lines.reduce(function (s, l) { return s + l.so_luong; }, 0);
-    var tm = lines.reduce(function (s, l) { return s + l.thanh_tien; }, 0);
-    document.getElementById('pv-qty').textContent = tq + ' ' + t('order.preview.sp');
-    document.getElementById('pv-money').textContent = Utils.formatMoney(tm);
+    
+    var footHtml = '<tr style="font-weight:700;background:var(--bg)">' +
+                   '<td colspan="3" style="padding:10px 12px;text-align:right">Tổng cộng:</td>' +
+                   orderedSizes.map(function() { return '<td></td>'; }).join('') +
+                   '<td style="padding:10px 12px;text-align:center">' + totalQtyAll + '</td>' +
+                   '<td style="padding:10px 12px;color:var(--accent);text-align:right">' + Utils.formatMoney(totalMoneyAll) + '</td></tr>';
+
+    document.getElementById('preview-head').innerHTML = headHtml;
+    document.getElementById('preview-body').innerHTML = bodyHtml;
+    document.getElementById('preview-foot').innerHTML = footHtml;
     openModal('modal-preview');
   }
 
   function saveOrder() {
     var lines = _buildLines();
     if (!lines.length) { showToast(t('toast.empty_lines'), false); return; }
+    var kh_ten = document.getElementById('o-kh-ten').value.trim();
+    if (!kh_ten) { showToast(typeof t === 'function' ? t('toast.enter_customer') || 'Vui lòng nhập tên khách hàng' : 'Vui lòng nhập tên khách hàng', false); return; }
+    
     var order = {
       so_ct: document.getElementById('o-so-ct').value,
       ngay_ct: document.getElementById('o-ngay').value,
       chi_nhanh: document.getElementById('o-chi-nhanh').value,
       nhan_vien: document.getElementById('o-nv').value,
+      kh_ten: kh_ten,
+      kh_sdt: document.getElementById('o-kh-sdt').value,
+      kh_dc: document.getElementById('o-kh-dc').value,
       ma_ctbh: document.getElementById('o-ctbh').value,
       ghi_chu: document.getElementById('o-note').value,
       total_qty: lines.reduce(function (s, l) { return s + l.so_luong; }, 0),
