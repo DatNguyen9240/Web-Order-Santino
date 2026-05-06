@@ -1,6 +1,5 @@
 var OrderPage = (function () {
   var orderRows = [];
-  var isMultiMode = false;
   var multiSelectedCodes = {};
 
   function render($el) {
@@ -53,25 +52,7 @@ var OrderPage = (function () {
     renderMatrix(); // re-render to update badge if needed
   }
 
-  function toggleMultiMode() {
-    isMultiMode = !isMultiMode;
-    var btn = document.getElementById('btn-multi-mode');
-    var icon = document.getElementById('icon-multi-mode');
-    if (isMultiMode) {
-      btn.classList.add('btn-primary');
-      btn.classList.remove('btn-ghost');
-      btn.style.borderColor = 'transparent';
-      icon.style.color = '#fff';
-    } else {
-      btn.classList.remove('btn-primary');
-      btn.classList.add('btn-ghost');
-      btn.style.borderColor = 'var(--border)';
-      icon.style.color = 'var(--muted)';
-      multiSelectedCodes = {};
-    }
-    var val = document.getElementById('ac-input').value;
-    if (val) acSearch(val);
-  }
+
 
   function acSearch(val) {
     var list = document.getElementById('ac-list');
@@ -81,39 +62,23 @@ var OrderPage = (function () {
     });
     if (!prods.length) { list.innerHTML = '<div class="ac-item"><small>' + t('order.ac.not_found') + '</small></div>'; list.classList.add('show'); return; }
 
-    var html = '<div class="ac-header"><div class="ac-col-1">TÊN HÀNG 2</div><div class="ac-col-2">FORM</div><div class="ac-col-3" style="text-align:center">TỒN</div><div class="ac-col-3">ĐƠN GIÁ</div></div>';
-    if (isMultiMode) {
-      html += prods.slice(0, 8).map(function (p) {
-        var isChecked = multiSelectedCodes[p.ten_hang_2] ? 'checked' : '';
-        var brand = p.ten_hang_2.match(/^[A-Z]+/); brand = brand ? brand[0] : '';
-        var stock = p.ton_kho !== undefined ? p.ton_kho : (Math.floor(Math.random() * 50) + 10); // Mock stock if undefined
-        var stockColor = stock > 20 ? 'var(--success)' : 'var(--accent)';
-        return '<div class="ac-table-row" onclick="OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
-          '<input type="checkbox" ' + isChecked + ' style="margin-right:12px; cursor:pointer;" id="chk-' + p.ten_hang_2 + '" value="' + p.ten_hang_2 + '" onclick="event.stopPropagation(); OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
-          '<div class="ac-col-1"><strong>' + p.ten_hang_2 + '</strong><div style="font-size:calc(12px * var(--text-scale,1)); color:var(--muted);"><small>' + p.mau + '</small></div></div>' +
-          '<div class="ac-col-2"><span class="ac-form-badge">' + brand + '</span></div>' +
-          '<div class="ac-col-3" style="text-align:center; font-weight:700; color:' + stockColor + '">' + stock + '</div>' +
-          '<div class="ac-col-3">' + Utils.formatMoney(p.don_gia) + '</div>' +
-          '</div>';
-      }).join('');
-
-      html += '<div class="ac-actions" style="display:flex;gap:8px;padding:12px;border-top:1px solid var(--border);background:var(--surface);position:sticky;bottom:-8px;margin:0 -8px -8px -8px;z-index:10">' +
-        '<button class="btn btn-ghost btn-sm" style="flex:1" onclick="OrderPage.closeAc()">' + (typeof t === 'function' ? t('btn.cancel') : 'Hủy bỏ') + '</button>' +
-        '<button id="btn-add-multi" class="btn btn-primary btn-sm" style="flex:1" onclick="OrderPage.addSelectedProds()">' + (typeof t === 'function' ? t('btn.add') : 'Thêm đã chọn') + '</button>' +
+    var html = '<div class="ac-header"><div class="ac-col-1">TÊN HÀNG 2</div><div class="ac-col-color">MÀU/THIẾT KẾ</div><div class="ac-col-2" style="text-align:center">FORM</div><div class="ac-col-3">ĐƠN GIÁ</div></div>';
+    html += prods.slice(0, 8).map(function (p) {
+      var isChecked = multiSelectedCodes[p.ten_hang_2] ? 'checked' : '';
+      var brand = p.ten_hang_2.match(/^[A-Z]+/); brand = brand ? brand[0] : '';
+      return '<div class="ac-table-row" onclick="OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
+        '<input type="checkbox" ' + isChecked + ' style="margin-right:12px; cursor:pointer;" id="chk-' + p.ten_hang_2 + '" value="' + p.ten_hang_2 + '" onclick="event.stopPropagation(); OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
+        '<div class="ac-col-1"><strong>' + p.ten_hang_2 + '</strong></div>' +
+        '<div class="ac-col-color">' + (p.design || p.mau || '') + '</div>' +
+        '<div class="ac-col-2" style="text-align:center"><span class="ac-form-badge">' + brand + '</span></div>' +
+        '<div class="ac-col-3">' + Utils.formatMoney(p.don_gia) + '</div>' +
         '</div>';
-    } else {
-      html += prods.slice(0, 8).map(function (p) {
-        var brand = p.ten_hang_2.match(/^[A-Z]+/); brand = brand ? brand[0] : '';
-        var stock = p.ton_kho !== undefined ? p.ton_kho : (Math.floor(Math.random() * 50) + 10);
-        var stockColor = stock > 20 ? 'var(--success)' : 'var(--accent)';
-        return '<div class="ac-table-row" onclick="OrderPage.selectAcSingle(\'' + p.ten_hang_2 + '\')">' +
-          '<div class="ac-col-1"><strong>' + p.ten_hang_2 + '</strong><div style="font-size:calc(12px * var(--text-scale,1)); color:var(--muted);"><small>' + p.mau + '</small></div></div>' +
-          '<div class="ac-col-2"><span class="ac-form-badge">' + brand + '</span></div>' +
-          '<div class="ac-col-3" style="text-align:center; font-weight:700; color:' + stockColor + '">' + stock + '</div>' +
-          '<div class="ac-col-3">' + Utils.formatMoney(p.don_gia) + '</div>' +
-          '</div>';
-      }).join('');
-    }
+    }).join('');
+
+    html += '<div class="ac-actions" style="display:flex;gap:8px;padding:8px 12px;border-top:1px solid var(--border);background:var(--surface);position:sticky;bottom:0;z-index:10;">' +
+      '<button class="btn btn-ghost" style="flex:1; padding:6px; font-size:13px; min-height:32px;" onclick="OrderPage.closeAc()">' + (typeof t === 'function' ? t('btn.cancel') : 'Hủy bỏ') + '</button>' +
+      '<button id="btn-add-multi" class="btn btn-primary" style="flex:2; padding:6px; font-size:13px; min-height:32px;" onclick="OrderPage.addSelectedProds()">' + (typeof t === 'function' ? t('btn.add') : 'Thêm đã chọn') + '</button>' +
+      '</div>';
     list.innerHTML = html;
     list.classList.add('show');
   }
@@ -430,7 +395,7 @@ var OrderPage = (function () {
   return {
     render: render, acSearch: acSearch, toggleAcSelect: toggleAcSelect, closeAc: closeAc,
     addSelectedProds: addSelectedProds, addProductRow: addProductRow, selectAcSingle: selectAcSingle,
-    toggleMultiMode: toggleMultiMode,
+
     updateQty: updateQty, quickClear: quickClear, removeRow: removeRow, previewOrder: previewOrder,
     toggleDetails: toggleDetails,
     saveOrder: saveOrder, clearOrder: clearOrder

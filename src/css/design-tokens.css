@@ -8,6 +8,7 @@
   /* Colors */
   --bg:          #f4f4f5; /* Zinc 100 */
   --surface:     #ffffff;
+  --surface-glass: rgba(255, 255, 255, 0.7);
   --border:      #e4e4e7; /* Zinc 200 */
   --text:        #09090b; /* Zinc 950 */
   --muted:       #71717a; /* Zinc 500 */
@@ -19,12 +20,12 @@
   --accent-dim:  rgba(251, 191, 36, 0.15);
   
   --danger:      #e11d48; /* Rose 600 */
-  --success:     #059669; /* Emerald 600 */
+  --success:     #10b981; /* Emerald 500 - More vibrant */
   --info:        #2563eb; /* Blue 600 */
 
   /* Radius */
-  --radius:      12px;
-  --radius-lg:   20px;
+  --radius:      16px;
+  --radius-lg:   24px;
 
   /* Shadow - Premium crisp apple-like shadows */
   --shadow-sm:   0 2px 8px rgba(0, 0, 0, 0.04);
@@ -44,6 +45,7 @@
 .dark-theme {
   --bg:          #09090b; /* Zinc 950 */
   --surface:     #18181b; /* Zinc 900 */
+  --surface-glass: rgba(24, 24, 27, 0.7);
   --border:      #27272a; /* Zinc 800 */
   --text:        #fafafa; /* Zinc 50 */
   --muted:       #a1a1aa; /* Zinc 400 */
@@ -58,4 +60,5 @@
   --shadow:      0 4px 16px rgba(0, 0, 0, 0.4);
   --shadow-md:   0 8px 24px rgba(0, 0, 0, 0.5);
   --shadow-lg:   0 16px 32px rgba(0, 0, 0, 0.6);
+  --success:     #34d399; /* Emerald 400 - Super vibrant for Dark mode */
 }

@@ -703,10 +703,9 @@ const DB = (function () {
 
   // Init seed data (chỉ chạy lần đầu nếu chưa có data)
   function initSeed() {
-    if (!localStorage.getItem(_key('products'))) {
-      const seeded = productMaster.map((p, i) => ({ ...p, id: 'p' + i }));
-      setAll('products', seeded);
-    }
+    // Luôn ghi đè products từ product_master.js (tránh bị kẹt cache cũ thiếu field design)
+    const seeded = productMaster.map((p, i) => ({ ...p, id: 'p' + i }));
+    setAll('products', seeded);
     if (!localStorage.getItem(_key('sizes'))) {
       const seeded = [];
       Object.entries(sizeGroups).forEach(([group, sizes]) => {
