@@ -6,6 +6,10 @@ var OrderPage = (function () {
     return Router.fetchTemplate('src/pages/order/order.html')
       .then(function (html) {
         $el.innerHTML = html;
+        var footer = document.getElementById('global-footer');
+        if (footer) footer.style.display = 'flex';
+        var saveBtn = document.getElementById('btn-save-draft');
+        if (saveBtn) saveBtn.style.display = 'inline-flex';
         _init();
       });
   }
@@ -258,8 +262,12 @@ var OrderPage = (function () {
   function _updateTotal() {
     var qty = 0, money = 0;
     orderRows.forEach(function (r) { Object.entries(r.quantities).forEach(function (e) { if (e[1] > 0) { qty += e[1]; money += e[1] * r.product.don_gia; } }); });
-    document.getElementById('total-qty').textContent = qty;
-    document.getElementById('total-money').textContent = Utils.formatMoney(money);
+    
+    // Update Global Footer
+    var gQty = document.getElementById('f-total-qty');
+    var gMoney = document.getElementById('f-total-money');
+    if (gQty) gQty.textContent = qty;
+    if (gMoney) gMoney.textContent = Utils.formatMoney(money);
   }
 
   function _buildLines() {

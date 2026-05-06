@@ -18,6 +18,8 @@
   
   --accent:      #FBBF24; /* Bright Radiant Gold */
   --accent-dim:  rgba(251, 191, 36, 0.15);
+  --tertiary:    #1A1A1D;
+  --neutral:     #F3F4F6;
   
   --danger:      #e11d48; /* Rose 600 */
   --success:     #10b981; /* Emerald 500 - More vibrant */

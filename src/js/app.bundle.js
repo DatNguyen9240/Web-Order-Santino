@@ -993,7 +993,7 @@ var Router = (function () {
 
   // ── Nav highlight ─────────────────────────────────────────────────────
   function _updateNav(hash) {
-    document.querySelectorAll('.nav-item').forEach(function (el) {
+    document.querySelectorAll('.nav-item, .bn-item').forEach(function (el) {
       el.classList.remove('active');
       if (el.getAttribute('data-route') === hash) el.classList.add('active');
     });
