@@ -15,45 +15,45 @@ var OrderPage = (function () {
     document.getElementById('o-so-ct').value = Utils.genOrderNo();
     document.getElementById('o-ngay').value = Utils.today();
     document.getElementById('o-kh-ten').value = '';
-    document.getElementById('o-kh-sdt').value = '';
+    document.getElementById('o-ma-kh').value = '';
+    document.getElementById('o-ma-dl').value = '';
+    document.getElementById('o-ngay-tt').value = Utils.today();
     document.getElementById('o-kh-dc').value = '';
+
     var sel = document.getElementById('o-ctbh');
     sel.innerHTML = DB.getAll('promotions').filter(function (p) { return p.active !== false; })
       .map(function (p) { return '<option value="' + p.ma_ctbh + '">' + p.ma_ctbh + ' - ' + p.ten_ctbh + '</option>'; }).join('');
-    
-    // Header Persistence
-    var savedCtkm = localStorage.getItem('santino_order_ctkm');
-    var savedNote = localStorage.getItem('santino_order_note');
-    if (savedCtkm) sel.value = savedCtkm;
-    if (savedNote) document.getElementById('o-note').value = savedNote;
 
-    sel.addEventListener('change', function() {
-      localStorage.setItem('santino_order_ctkm', this.value);
-      _flashCards();
-    });
-    document.getElementById('o-note').addEventListener('input', function() {
-      localStorage.setItem('santino_order_note', this.value);
-    });
+    if (sel.options.length > 0) sel.selectedIndex = 0;
 
     renderMatrix();
     document.addEventListener('click', function (e) {
       if (!e.target.closest('.autocomplete-wrap') && !e.target.closest('#btn-multi-mode')) {
         if (isMultiMode) return;
-        // On mobile (width < 768), don't close dropdown on outside click to avoid losing results when hiding keyboard
-        if (window.innerWidth < 768) return; 
+        if (window.innerWidth <= 1024) return; // Prevent closing on outside click for mobile
         var acList = document.getElementById('ac-list');
         if (acList) acList.classList.remove('show');
       }
     });
   }
 
-  function _flashCards() {
-    document.querySelectorAll('.card.product-card').forEach(function(c) {
-      c.classList.remove('flash-effect');
-      void c.offsetWidth; // trigger reflow
-      c.classList.add('flash-effect');
-    });
-    renderMatrix(); // re-render to update badge if needed
+  function updateInfoSummary() {
+    var name = document.getElementById('o-kh-ten').value.trim();
+    var maKH = document.getElementById('o-ma-kh').value.trim();
+    var ptGiao = document.getElementById('o-pt-giao').value;
+    var summary = document.getElementById('info-summary-display');
+    if (!summary) return;
+
+    if (!name && !maKH) {
+      summary.innerHTML = 'Cháº¡m Ä‘á»ƒ khai bÃ¡o thÃ´ng tin...';
+      summary.style.color = 'var(--text)';
+    } else {
+      var displayName = (maKH ? maKH + ' - ' : '') + (name || 'KhÃ¡ch láº»');
+      var parts = [displayName];
+      if (ptGiao) parts.push(ptGiao);
+      summary.innerHTML = parts.join(' | ');
+      summary.style.color = 'var(--primary)';
+    }
   }
 
   function toggleMultiMode() {
@@ -85,9 +85,13 @@ var OrderPage = (function () {
     var prods = DB.getAll('products').filter(function (p) {
       return !p.ngung_su_dung && (p.ten_hang_2.toLowerCase().includes(val.toLowerCase()) || p.mau.toLowerCase().includes(val.toLowerCase()));
     });
-    if (!prods.length) { list.innerHTML = '<div class="ac-item"><small>' + t('order.ac.not_found') + '</small></div>'; list.classList.add('show'); return; }
+    if (!prods.length) {
+      list.innerHTML = '<div class="ac-item"><small>KhÃ´ng tÃ¬m tháº¥y sáº£n pháº©m</small></div>';
+      list.classList.add('show');
+      return;
+    }
 
-    var html = '<div class="ac-header"><div class="ac-col-1">TÊN HÀNG 2</div><div class="ac-col-2">FORM</div><div class="ac-col-3" style="text-align:center">TỒN</div><div class="ac-col-3">ĐƠN GIÁ</div></div>';
+    var html = '<div class="ac-header"><div class="ac-col-1">Sáº¢N PHáº¨M</div><div class="ac-col-2">FORM</div><div class="ac-col-3" style="text-align:center">Tá»’N</div><div class="ac-col-3">ÄÆ N GIÃ</div></div>';
     if (isMultiMode) {
       html += prods.slice(0, 8).map(function (p) {
         var isChecked = multiSelectedCodes[p.ten_hang_2] ? 'checked' : '';
@@ -95,29 +99,29 @@ var OrderPage = (function () {
         var stock = p.ton_kho !== undefined ? p.ton_kho : (Math.floor(Math.random() * 50) + 10);
         var stockColor = stock > 20 ? 'var(--success)' : 'var(--accent)';
         return '<div class="ac-table-row" onclick="OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
-               '<input type="checkbox" ' + isChecked + ' style="margin-right:12px; cursor:pointer; flex-shrink:0" id="chk-'+p.ten_hang_2+'" value="'+p.ten_hang_2+'" onclick="event.stopPropagation(); OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
-               '<div class="ac-col-1"><strong>' + p.ten_hang_2 + '</strong><div style="font-size:calc(12px * var(--text-scale,1)); color:var(--muted);"><span class="ac-desc">' + p.ten_hang_hoa + '</span><br><small>' + p.mau + '</small></div></div>' +
-               '<div class="ac-col-2"><span class="ac-form-badge">' + brand + '</span></div>' +
-               '<div class="ac-col-3" style="text-align:center; font-weight:700; color:' + stockColor + '">' + stock + '</div>' +
-               '<div class="ac-col-3">' + Utils.formatMoney(p.don_gia) + '</div>' +
-               '</div>';
+          '<input type="checkbox" ' + isChecked + ' style="margin-right:12px; cursor:pointer; flex-shrink:0" id="chk-' + p.ten_hang_2 + '" value="' + p.ten_hang_2 + '" onclick="event.stopPropagation(); OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
+          '<div class="ac-col-1"><strong>' + p.ten_hang_2 + '</strong><div style="font-size:calc(12px * var(--text-scale,1)); color:var(--muted);"><span class="ac-desc">' + p.ten_hang_hoa + '</span> - <small>' + p.mau + '</small></div></div>' +
+          '<div class="ac-col-2"><span class="ac-form-badge">' + brand + '</span></div>' +
+          '<div class="ac-col-3" style="text-align:center; font-weight:700; color:' + stockColor + '">' + stock + '</div>' +
+          '<div class="ac-col-3">' + Utils.formatMoney(p.don_gia) + '</div>' +
+          '</div>';
       }).join('');
 
       html += '<div class="ac-actions" style="display:flex;gap:8px;padding:12px;border-top:1px solid var(--border);background:var(--surface);position:sticky;bottom:-8px;margin:0 -8px -8px -8px;z-index:10;border-radius:0 0 12px 12px">' +
-              '<button class="btn btn-ghost btn-sm" style="flex:1" onclick="OrderPage.closeAc()">' + (typeof t === 'function' ? t('btn.cancel') : 'Hủy bỏ') + '</button>' +
-              '<button id="btn-add-multi" class="btn btn-primary btn-sm" style="flex:1" onclick="OrderPage.addSelectedProds()">' + (typeof t === 'function' ? t('btn.add') : 'Thêm đã chọn') + '</button>' +
-              '</div>';
+        '<button class="btn btn-ghost btn-sm" style="flex:1" onclick="OrderPage.closeAc()">Há»§y</button>' +
+        '<button id="btn-add-multi" class="btn btn-primary btn-sm" style="flex:1" onclick="OrderPage.addSelectedProds()">ThÃªm Ä‘Ã£ chá»n</button>' +
+        '</div>';
     } else {
       html += prods.slice(0, 8).map(function (p) {
         var brand = p.ten_hang_2.match(/^[A-Z]+/); brand = brand ? brand[0] : '';
         var stock = p.ton_kho !== undefined ? p.ton_kho : (Math.floor(Math.random() * 50) + 10);
         var stockColor = stock > 20 ? 'var(--success)' : 'var(--accent)';
         return '<div class="ac-table-row" onclick="OrderPage.selectAcSingle(\'' + p.ten_hang_2 + '\')">' +
-               '<div class="ac-col-1"><strong>' + p.ten_hang_2 + '</strong><div style="font-size:calc(12px * var(--text-scale,1)); color:var(--muted);"><span class="ac-desc">' + p.ten_hang_hoa + '</span><br><small>' + p.mau + '</small></div></div>' +
-               '<div class="ac-col-2"><span class="ac-form-badge">' + brand + '</span></div>' +
-               '<div class="ac-col-3" style="text-align:center; font-weight:700; color:' + stockColor + '">' + stock + '</div>' +
-               '<div class="ac-col-3">' + Utils.formatMoney(p.don_gia) + '</div>' +
-               '</div>';
+          '<div class="ac-col-1"><strong>' + p.ten_hang_2 + '</strong><div style="font-size:calc(12px * var(--text-scale,1)); color:var(--muted);"><span class="ac-desc">' + p.ten_hang_hoa + '</span> - <small>' + p.mau + '</small></div></div>' +
+          '<div class="ac-col-2"><span class="ac-form-badge">' + brand + '</span></div>' +
+          '<div class="ac-col-3" style="text-align:center; font-weight:700; color:' + stockColor + '">' + stock + '</div>' +
+          '<div class="ac-col-3">' + Utils.formatMoney(p.don_gia) + '</div>' +
+          '</div>';
       }).join('');
     }
     list.innerHTML = html;
@@ -146,7 +150,7 @@ var OrderPage = (function () {
     var count = Object.keys(multiSelectedCodes).length;
     var btn = document.getElementById('btn-add-multi');
     if (btn) {
-      btn.innerHTML = count > 0 ? ('Thêm ' + count + ' sản phẩm') : 'Thêm đã chọn';
+      btn.innerHTML = count > 0 ? ('ThÃªm ' + count + ' sáº£n pháº©m') : 'ThÃªm Ä‘Ã£ chá»n';
     }
   }
 
@@ -158,7 +162,7 @@ var OrderPage = (function () {
   function addSelectedProds() {
     var codes = Object.keys(multiSelectedCodes);
     if (codes.length === 0) {
-      showToast(typeof t === 'function' ? t('toast.enter_product') : 'Vui lòng chọn sản phẩm', false);
+      showToast('Vui lÃ²ng chá»n sáº£n pháº©m', false);
       return;
     }
     var added = 0;
@@ -170,14 +174,8 @@ var OrderPage = (function () {
         added++;
       }
     });
-
-    if (added > 0) {
-      renderMatrix();
-      showToast('Đã thêm ' + added + ' sản phẩm');
-    } else {
-      showToast('Sản phẩm đã tồn tại trong đơn', false);
-    }
-
+    if (added > 0) { renderMatrix(); showToast('ÄÃ£ thÃªm ' + added + ' sáº£n pháº©m'); }
+    else { showToast('Sáº£n pháº©m Ä‘Ã£ cÃ³ trong Ä‘Æ¡n', false); }
     document.getElementById('ac-input').value = '';
     acSearch('');
     closeAc();
@@ -185,117 +183,69 @@ var OrderPage = (function () {
 
   function addProductRow() {
     var code = document.getElementById('ac-input').value.trim();
-    if (!code) { showToast(t('toast.enter_product'), false); return; }
+    if (!code) { showToast('Vui lÃ²ng nháº­p sáº£n pháº©m', false); return; }
     var prod = DB.getAll('products').find(function (p) { return p.ten_hang_2 === code; });
-    if (!prod) { showToast(t('toast.not_found') + code, false); return; }
-    if (orderRows.find(function (r) { return r.ten_hang_2 === code; })) { showToast(t('toast.already_in_order'), false); return; }
+    if (!prod) { showToast('KhÃ´ng tÃ¬m tháº¥y ' + code, false); return; }
+    if (orderRows.find(function (r) { return r.ten_hang_2 === code; })) { showToast('ÄÃ£ cÃ³ trong Ä‘Æ¡n', false); return; }
     var sizes = DB.getAll('sizes').filter(function (s) { return s.nhom_size === prod.nhom_size; }).sort(function (a, b) { return a.size - b.size; });
     orderRows.push({ ten_hang_2: code, product: prod, sizes: sizes, quantities: {} });
     document.getElementById('ac-input').value = '';
     acSearch('');
     renderMatrix();
-    showToast(t('toast.added') + code);
+    showToast('ÄÃ£ thÃªm ' + code);
   }
 
   function renderMatrix() {
     var container = document.getElementById('matrix-container');
     if (!orderRows.length) {
-      container.innerHTML = '<div class="empty-state" style="background:var(--surface); border-radius:12px; padding:32px; border:1px solid var(--border);"><span class="material-symbols-outlined">table_chart</span><span data-i18n="order.search.empty">' + t('order.search.empty') + '</span></div>';
+      container.innerHTML = '<div class="empty-state" style="background:var(--surface); border-radius:12px; padding:32px; border:1px solid var(--border);"><span class="material-symbols-outlined">table_chart</span><span>TÃ¬m vÃ  thÃªm sáº£n pháº©m Ä‘á»ƒ báº¯t Ä‘áº§u nháº­p sá»‘ lÆ°á»£ng</span></div>';
       _updateTotal(); return;
     }
-    
-    container.innerHTML = orderRows.map(function (row, ri) {
-      var yeuTo1 = row.ten_hang_2.substring(0, 3) || ''; 
-      var yeuTo2 = row.ten_hang_2.substring(3) || '';
-      var ghiChu = document.getElementById('o-note') ? document.getElementById('o-note').value : '';
-      var ctbh = document.getElementById('o-ctbh') ? document.getElementById('o-ctbh').value : '';
-      var badgeHtml = ctbh ? '<span class="badge-success"><span class="material-symbols-outlined" style="font-size:12px">check</span> Đã áp CTKM</span>' : '';
 
-      var sizeRowsHtml = '<div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap:12px; margin-top: 12px;">';
-      sizeRowsHtml += row.sizes.map(function(s) {
+    container.innerHTML = orderRows.map(function (row, ri) {
+      var badgeHtml = '';
+      var ctbh = document.getElementById('o-ctbh') ? document.getElementById('o-ctbh').value : '';
+      if (ctbh) badgeHtml = '<span class="badge-success"><span class="material-symbols-outlined" style="font-size:12px">check</span> ÄÃ£ Ã¡p CTKM</span>';
+
+      var sizeRowsHtml = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 12px; margin-top: 16px;">';
+      sizeRowsHtml += row.sizes.map(function (s) {
         var qty = row.quantities[s.size] || '';
-        var cssClass = qty > 0 ? 'input-filled' : 'input-empty';
-        return '<div style="display:flex; flex-direction:column; align-items:center; gap:4px;">' +
-               '<div style="font-size: calc(13px * var(--text-scale, 1)); font-weight:600; color:var(--muted);">' + s.size + '</div>' +
-               '<input type="number" min="0" placeholder="0" value="' + qty + '" class="' + cssClass + '" oninput="OrderPage.updateQty(' + ri + ',' + s.size + ',this)" style="width:100%; text-align:center; border-radius:6px; padding:8px; font-size: calc(14px * var(--text-scale, 1)); outline:none;">' +
-               '</div>';
+        var isFilled = qty > 0;
+        var boxClass = isFilled ? 'size-box filled' : 'size-box';
+        return '<div class="' + boxClass + '">' +
+          '<div class="size-box-lbl">' + s.size + '</div>' +
+          '<input type="number" inputmode="numeric" min="0" placeholder="0" value="' + qty + '" oninput="OrderPage.updateQty(' + ri + ',' + s.size + ',this)">' +
+          '</div>';
       }).join('');
       sizeRowsHtml += '</div>';
-      
-      return '<div class="card product-card" style="margin-bottom:0; box-shadow:0 4px 12px rgba(0,0,0,0.05);">' +
-             '<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid var(--border-light);">' +
-             '<div>' +
-               '<div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">' +
-                 '<div style="font-size: calc(18px * var(--text-scale, 1)); font-weight:800; color:var(--primary);">' + row.ten_hang_2 + '</div>' +
-                 badgeHtml +
-               '</div>' +
-               '<div style="font-size: calc(14px * var(--text-scale, 1)); font-weight:500; color:var(--muted); margin-bottom:8px;">' + row.product.nhom_size + ' | ' + row.product.mau + ' | ' + Utils.formatMoney(row.product.don_gia) + '</div>' +
-               '<span id="badge-yeuto-' + ri + '" class="badge-brand" style="transition: all 0.2s;">YẾU TỐ: ' + yeuTo1 + '</span> ' +
-               '<span id="btn-details-' + ri + '" onclick="OrderPage.toggleDetails(' + ri + ')" style="color:#0056b3; cursor:pointer; text-decoration:underline; font-size: calc(13px * var(--text-scale, 1)); display:inline-block; margin-left: 8px;">Tùy chỉnh</span>' +
-             '</div>' +
-             '<div style="display:flex; gap:8px;">' +
-               '<button class="btn-icon" onclick="OrderPage.quickClear(' + ri + ')" title="Reset số lượng" style="background:#f1f3f5; color:var(--muted); padding:8px; border-radius:8px;"><span class="material-symbols-outlined" style="font-size: calc(20px * var(--text-scale, 1));">backspace</span></button>' +
-               '<button class="btn-icon" onclick="OrderPage.removeRow(' + ri + ')" title="Xóa dòng" style="background:#ffeeee; color:var(--danger); padding:8px; border-radius:8px;"><span class="material-symbols-outlined" style="font-size: calc(20px * var(--text-scale, 1));">delete</span></button>' +
-             '</div>' +
-             '</div>' +
-             
-             '<div id="details-' + ri + '" style="display:none; background:#f8f9fa; border-radius:8px; padding:16px; margin-bottom:16px; font-size: calc(13px * var(--text-scale, 1)); color:var(--text); border:1px solid var(--border-light);">' +
-               '<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">' +
-                 '<div><strong style="color:var(--muted)">Mã CTB:</strong><br><input type="text" value="' + (row.custom_ctb !== undefined ? row.custom_ctb : (ctbh || 'CKCB')) + '" oninput="OrderPage.updateCustomField(' + ri + ',\'custom_ctb\',this.value)" style="width:100%; margin-top:4px; padding:6px 8px; border:1px solid var(--border); border-radius:4px; outline:none;"></div>' +
-                 '<div><strong style="color:var(--muted)">Yếu tố 1:</strong><br><input type="text" value="' + (row.custom_yeuTo1 !== undefined ? row.custom_yeuTo1 : yeuTo1) + '" oninput="OrderPage.updateCustomField(' + ri + ',\'custom_yeuTo1\',this.value)" style="width:100%; margin-top:4px; padding:6px 8px; border:1px solid var(--border); border-radius:4px; outline:none;"></div>' +
-                 '<div><strong style="color:var(--muted)">Yếu tố 2:</strong><br><input type="text" value="' + (row.custom_yeuTo2 !== undefined ? row.custom_yeuTo2 : yeuTo2) + '" oninput="OrderPage.updateCustomField(' + ri + ',\'custom_yeuTo2\',this.value)" style="width:100%; margin-top:4px; padding:6px 8px; border:1px solid var(--border); border-radius:4px; outline:none;"></div>' +
-                 '<div><strong style="color:var(--muted)">Ghi chú:</strong><br><input type="text" value="' + (row.custom_ghiChu !== undefined ? row.custom_ghiChu : (ghiChu || '')) + '" oninput="OrderPage.updateCustomField(' + ri + ',\'custom_ghiChu\',this.value)" style="width:100%; margin-top:4px; padding:6px 8px; border:1px solid var(--border); border-radius:4px; outline:none;" placeholder="Nhập ghi chú..."></div>' +
-                 '<div style="grid-column: 1 / -1;"><strong style="color:var(--muted)">Tên hàng / dịch vụ:</strong><br><input type="text" value="' + (row.custom_tenHang !== undefined ? row.custom_tenHang : row.product.ten_hang_hoa) + '" oninput="OrderPage.updateCustomField(' + ri + ',\'custom_tenHang\',this.value)" style="width:100%; margin-top:4px; padding:6px 8px; border:1px solid var(--border); border-radius:4px; outline:none;"></div>' +
-               '</div>' +
-             '</div>' +
-             
-             sizeRowsHtml +
-             '</div>';
+
+      return '<div class="card product-card">' +
+        '<div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid var(--border-light); padding-bottom:12px; gap:8px;">' +
+        '<div style="flex:1; min-width:0;">' +
+        '<div style="display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; margin-bottom:4px;">' +
+        '<div style="font-size: 18px; font-weight:800; color:var(--primary); word-break: break-word;">' + row.ten_hang_2 + '</div>' +
+        badgeHtml +
+        '</div>' +
+        '<div style="font-size: 14px; color:var(--muted);">' + row.product.nhom_size + ' | ' + row.product.mau + ' | ' + Utils.formatMoney(row.product.don_gia) + '</div>' +
+        '</div>' +
+        '<div style="display:flex; gap:8px;">' +
+        '<button class="btn-icon" onclick="OrderPage.removeRow(' + ri + ')" title="Xóa sản phẩm" style="color:var(--danger)"><span class="material-symbols-outlined">delete</span></button>' +
+        '</div>' +
+        '</div>' +
+        sizeRowsHtml +
+        '</div>';
     }).join('');
-    
     _updateTotal();
   }
 
-  function toggleDetails(ri) {
-    var el = document.getElementById('details-' + ri);
-    var btn = document.getElementById('btn-details-' + ri);
-    var badge = document.getElementById('badge-yeuto-' + ri);
-    
-    if (el.style.display === 'none') {
-      el.style.display = 'block';
-      if(btn) btn.innerHTML = 'Thu gọn';
-      if(badge) badge.style.display = 'none';
-    } else {
-      el.style.display = 'none';
-      if(btn) btn.innerHTML = 'Tùy chỉnh';
-      if(badge) badge.style.display = 'inline-flex';
-    }
-  }
-
-  function updateCustomField(ri, field, val) {
-    if (orderRows[ri]) {
-      orderRows[ri][field] = val;
-    }
-  }
-
-  function updateQty(ri, size, inputEl) { 
+  function updateQty(ri, size, inputEl) {
     var val = parseInt(inputEl.value) || 0;
     orderRows[ri].quantities[size] = val;
-    if (val > 0) {
-      inputEl.classList.remove('input-empty');
-      inputEl.classList.add('input-filled');
-    } else {
-      inputEl.classList.remove('input-filled');
-      inputEl.classList.add('input-empty');
-    }
-    _updateTotal(); 
+    inputEl.className = val > 0 ? 'input-filled' : 'input-empty';
+    _updateTotal();
   }
-  
-  function quickClear(ri) {
-    orderRows[ri].quantities = {};
-    renderMatrix();
-  }
-  
+
+
   function removeRow(ri) { orderRows.splice(ri, 1); renderMatrix(); }
 
   function _updateTotal() {
@@ -303,11 +253,24 @@ var OrderPage = (function () {
     orderRows.forEach(function (r) { Object.entries(r.quantities).forEach(function (e) { if (e[1] > 0) { qty += e[1]; money += e[1] * r.product.don_gia; } }); });
     document.getElementById('total-qty').textContent = qty;
     document.getElementById('total-money').textContent = Utils.formatMoney(money);
+    var oTongTien = document.getElementById('o-tong-tien');
+    if (oTongTien) {
+      oTongTien.value = Utils.formatMoney(money);
+      oTongTien.dataset.value = money;
+      calcChange();
+    }
+  }
+
+  function calcChange() {
+    var total = parseInt(document.getElementById('o-tong-tien').dataset.value || 0);
+    var givenStr = document.getElementById('o-khach-dua').value;
+    var given = givenStr ? parseInt(givenStr) : 0;
+    var change = given - total;
+    document.getElementById('o-tra-lai').value = Utils.formatMoney(change > 0 ? change : 0);
   }
 
   function _buildLines() {
-    var ctbhEl = document.getElementById('o-ctbh');
-    var ma_ctbh = ctbhEl.value;
+    var ma_ctbh = document.getElementById('o-ctbh').value;
     var note = document.getElementById('o-note').value;
     var lines = [];
     orderRows.forEach(function (row) {
@@ -326,130 +289,95 @@ var OrderPage = (function () {
 
   function previewOrder() {
     var lines = _buildLines();
-    if (!lines.length) { showToast(t('toast.empty_qty'), false); return; }
-
+    if (!lines.length) { showToast('Vui lÃ²ng chá»n sáº£n pháº©m vÃ  nháº­p sá»‘ lÆ°á»£ng', false); return; }
     var info = document.getElementById('preview-info');
     info.innerHTML = [
-      '<div><small style="color:var(--muted)"><span data-i18n="order.no">' + t('order.no') + '</span></small><div style="font-weight:700">' + document.getElementById('o-so-ct').value + '</div></div>',
-      '<div><small style="color:var(--muted)"><span data-i18n="order.customer_name">Khách hàng</span></small><div style="font-weight:700;color:var(--primary)">' + (document.getElementById('o-kh-ten').value || '—') + '</div></div>',
-      '<div><small style="color:var(--muted)"><span data-i18n="order.promo">' + t('order.promo') + '</span></small><div style="font-weight:700">' + document.getElementById('o-ctbh').value + '</div></div>',
+      '<div><strong>NgÆ°á»i nháº­n:</strong> ' + (document.getElementById('o-kh-ten').value || 'â€”') + '</div>',
+      '<div><strong>SÄT:</strong> ' + (document.getElementById('o-kh-sdt').value || 'â€”') + '</div>',
+      '<div><strong>Äá»‹a chá»‰:</strong> ' + (document.getElementById('o-kh-dc').value || 'â€”') + '</div>',
+      '<div><strong>Ghi chÃº:</strong> ' + (document.getElementById('o-note').value || 'â€”') + '</div>',
     ].join('');
 
-    // Xếp theo hàng ngang (Ma trận) cho Preview
     var orderedSizes = [...new Set(lines.map(function (l) { return l.size; }))].sort(function (a, b) { return a - b; });
-    var headHtml = '<tr><th>Tên hàng 2</th><th>Màu</th><th>Nhóm size</th>' +
-      orderedSizes.map(function (s) { return '<th style="text-align:center">' + s + '</th>'; }).join('') +
-      '<th style="text-align:center">Tổng SL</th><th style="text-align:right">Thành tiền</th></tr>';
+    var headHtml = '<tr><th>Sáº£n pháº©m</th><th>MÃ u</th>' + orderedSizes.map(function (s) { return '<th style="text-align:center">' + s + '</th>'; }).join('') + '<th style="text-align:center">Tá»•ng</th><th style="text-align:right">ThÃ nh tiá»n</th></tr>';
 
-    var totalQtyAll = 0;
-    var totalMoneyAll = 0;
+    var totalQtyAll = 0, totalMoneyAll = 0;
     var bodyHtml = orderRows.map(function (row) {
-      var rowTotalQty = 0;
-      var rowTotalMoney = 0;
-      Object.values(row.quantities).forEach(function (q) {
-        if (q > 0) { rowTotalQty += q; rowTotalMoney += q * row.product.don_gia; }
-      });
-      if (rowTotalQty === 0) return '';
+      var rQty = 0, rMoney = 0;
+      Object.values(row.quantities).forEach(function (q) { if (q > 0) { rQty += q; rMoney += q * row.product.don_gia; } });
+      if (rQty === 0) return '';
+      totalQtyAll += rQty; totalMoneyAll += rMoney;
 
-      totalQtyAll += rowTotalQty;
-      totalMoneyAll += rowTotalMoney;
-
-      var tr = '<tr><td><strong>' + row.ten_hang_2 + '</strong></td>' +
-        '<td><small style="color:var(--muted)">' + row.product.mau + '</small></td>' +
-        '<td>' + row.product.nhom_size + '</td>';
+      var tr = '<tr><td><strong>' + row.ten_hang_2 + '</strong></td><td><small>' + row.product.mau + '</small></td>';
       orderedSizes.forEach(function (s) {
         var qty = row.quantities[s] || 0;
-        if (qty > 0) {
-          var brand = row.ten_hang_2.match(/^[A-Z]+/);
-          brand = brand ? brand[0] : '';
-          var code = brand ? row.ten_hang_2.slice(brand.length) : row.ten_hang_2;
-          var sku = Utils.buildSKU(row.ten_hang_2, s);
-          var tooltip = '[Brand: ' + brand + '] + [Size: ' + s + '] + [Code: ' + code + ']';
-          tr += '<td style="text-align:center;font-weight:bold;color:var(--primary);cursor:help" title="SKU: ' + sku + '\n' + tooltip + '">' + qty + '</td>';
-        } else {
-          tr += '<td style="text-align:center;color:var(--muted)">-</td>';
-        }
+        tr += '<td style="text-align:center">' + (qty || '-') + '</td>';
       });
-      tr += '<td style="text-align:center;font-weight:bold">' + rowTotalQty + '</td>' +
-        '<td style="text-align:right;font-weight:bold;color:var(--accent)">' + Utils.formatMoney(rowTotalMoney) + '</td></tr>';
+      tr += '<td style="text-align:center; font-weight:bold">' + rQty + '</td><td style="text-align:right; font-weight:bold">' + Utils.formatMoney(rMoney) + '</td></tr>';
       return tr;
     }).join('');
 
-    var footHtml = '<tr style="font-weight:700;background:var(--bg)">' +
-      '<td colspan="3" style="padding:10px 12px;text-align:right">Tổng cộng:</td>' +
-      orderedSizes.map(function () { return '<td></td>'; }).join('') +
-      '<td style="padding:10px 12px;text-align:center">' + totalQtyAll + '</td>' +
-      '<td style="padding:10px 12px;color:var(--accent);text-align:right">' + Utils.formatMoney(totalMoneyAll) + '</td></tr>';
-
     document.getElementById('preview-head').innerHTML = headHtml;
     document.getElementById('preview-body').innerHTML = bodyHtml;
-    document.getElementById('preview-foot').innerHTML = footHtml;
+    document.getElementById('preview-foot').innerHTML = '<tr style="font-weight:700; background:var(--bg)"><td colspan="2" style="text-align:right">Tá»•ng cá»™ng:</td>' + orderedSizes.map(() => '<td></td>').join('') + '<td style="text-align:center">' + totalQtyAll + '</td><td style="text-align:right; color:var(--accent)">' + Utils.formatMoney(totalMoneyAll) + '</td></tr>';
     openModal('modal-preview');
   }
 
   function saveOrder() {
     var lines = _buildLines();
-    if (!lines.length) { showToast(t('toast.empty_lines'), false); return; }
     var kh_ten = document.getElementById('o-kh-ten').value.trim();
-    if (!kh_ten) { showToast(typeof t === 'function' ? t('toast.enter_customer') || 'Vui lòng nhập tên khách hàng' : 'Vui lòng nhập tên khách hàng', false); return; }
-
-    // Data Integrity Check (Sprint 4)
-    var total_ui_qty = parseInt(document.getElementById('total-qty').textContent) || 0;
-    var total_array_qty = lines.reduce(function (s, l) { return s + l.so_luong; }, 0);
-    if (total_ui_qty !== total_array_qty) {
-      alert('⚠️ LỖI NGHIÊM TRỌNG: Dữ liệu giao diện (' + total_ui_qty + ') không khớp với lõi hệ thống (' + total_array_qty + '). Vui lòng tải lại trang để tránh lỗi!');
-      return;
-    }
-
+    var ma_kh = document.getElementById('o-ma-kh').value.trim();
+    if (!ma_kh) { showToast('Vui lÃ²ng nháº­p mÃ£ khÃ¡ch hÃ ng', false); return; }
     var order = {
       so_ct: document.getElementById('o-so-ct').value,
       ngay_ct: document.getElementById('o-ngay').value,
       chi_nhanh: document.getElementById('o-chi-nhanh').value,
-      nhan_vien: document.getElementById('o-nv').value,
-      kh_ten: kh_ten,
-      kh_sdt: document.getElementById('o-kh-sdt').value,
+      nvkd: document.getElementById('o-nvkd').value,
+      nguoi_tao: document.getElementById('o-nguoi-tao').value,
+      ma_kh: ma_kh,
+      ma_dl: document.getElementById('o-ma-dl').value,
+      kh_ten: document.getElementById('o-kh-ten').value.trim(),
       kh_dc: document.getElementById('o-kh-dc').value,
-      ma_ctbh: document.getElementById('o-ctbh').value,
+      nguon_don: document.getElementById('o-nguon-don').value,
+      dien_giai: document.getElementById('o-dien-giai').value,
       ghi_chu: document.getElementById('o-note').value,
-      total_qty: lines.reduce(function (s, l) { return s + l.so_luong; }, 0),
-      total_money: lines.reduce(function (s, l) { return s + l.thanh_tien; }, 0),
+      pt_giao: document.getElementById('o-pt-giao').value,
+      nguoi_giao: document.getElementById('o-nguoi-giao').value,
+      dieu_khoan: document.getElementById('o-dieu-khoan').value,
+      ht_thanh_toan: document.getElementById('o-ht-thanh-toan').value,
+      ngay_tt: document.getElementById('o-ngay-tt').value,
+      khach_dua: document.getElementById('o-khach-dua').value,
+      ma_ctbh: document.getElementById('o-ctbh').value,
+      total_qty: lines.reduce((s, l) => s + l.so_luong, 0),
+      total_money: lines.reduce((s, l) => s + l.thanh_tien, 0),
       lines: lines, created_at: new Date().toISOString()
     };
     DB.add('orders', order);
     closeModal('modal-preview');
-    showToast(t('toast.order_saved') + order.so_ct);
-    orderRows = [];
-    _init();
+    showToast('ÄÃ£ lÆ°u Ä‘Æ¡n: ' + order.so_ct);
+    orderRows = []; _init();
   }
 
   function clearOrder() {
     ConfirmModal.show({
-      title: t('order.cancel.title'),
-      message: t('order.cancel.msg'),
-      confirmText: t('order.cancel.btn'),
+      title: 'Há»§y Ä‘Æ¡n hÃ ng',
+      message: 'Báº¡n cÃ³ cháº¯c muá»‘n xÃ³a toÃ n bá»™ sáº£n pháº©m Ä‘Ã£ chá»n?',
+      confirmText: 'XÃ¡c nháº­n xÃ³a',
       confirmClass: 'btn-danger',
-      onConfirm: function () {
-        orderRows = [];
-        _init();
-      }
+      onConfirm: function () { orderRows = []; _init(); }
     });
   }
 
   function clearSearch() {
     var inp = document.getElementById('ac-input');
-    if (inp) {
-      inp.value = '';
-      inp.focus();
-      acSearch('');
-    }
+    if (inp) { inp.value = ''; inp.focus(); acSearch(''); }
   }
 
   return {
     render: render, acSearch: acSearch, toggleAcSelect: toggleAcSelect, closeAc: closeAc,
     addSelectedProds: addSelectedProds, addProductRow: addProductRow, selectAcSingle: selectAcSingle,
-    toggleMultiMode: toggleMultiMode,
-    updateQty: updateQty, removeRow: removeRow, previewOrder: previewOrder,
+    toggleMultiMode: toggleMultiMode, updateQty: updateQty, removeRow: removeRow, previewOrder: previewOrder,
     saveOrder: saveOrder, clearOrder: clearOrder, clearSearch: clearSearch,
-    quickClear: quickClear, toggleDetails: toggleDetails, updateCustomField: updateCustomField
+    updateInfoSummary: updateInfoSummary, calcChange: calcChange
   };
 })();

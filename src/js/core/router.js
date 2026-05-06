@@ -5,14 +5,14 @@
 var Router = (function () {
 
   var ROUTES = [
-    { path: '/order', script: 'src/pages/order/order.js', pageFn: 'OrderPage', title: 'nav.order' },
-    { path: '/orders', script: 'src/pages/orders/orders.js', pageFn: 'OrdersPage', title: 'nav.orders' },
-    { path: '/order-detail', script: 'src/pages/order-detail/order-detail.js', pageFn: 'OrderDetailPage', title: 'nav.order_detail' },
-    { path: '/products', script: 'src/pages/products/products.js', pageFn: 'ProductsPage', title: 'nav.products' },
-    { path: '/sizes', script: 'src/pages/sizes/sizes.js', pageFn: 'SizesPage', title: 'nav.sizes' },
-    { path: '/sku', script: 'src/pages/sku/sku.js', pageFn: 'SkuPage', title: 'nav.sku' },
-    { path: '/promos', script: 'src/pages/promos/promos.js', pageFn: 'PromosPage', title: 'nav.promos' },
-    { path: '/settings', script: 'src/pages/settings/settings.js', pageFn: 'SettingsPage', title: 'nav.settings' },
+    { path: '/order',        script: 'src/pages/order/order.js',               pageFn: 'OrderPage',        title: 'nav.order' },
+    { path: '/orders',       script: 'src/pages/orders/orders.js',             pageFn: 'OrdersPage',       title: 'nav.orders' },
+    { path: '/order-detail', script: 'src/pages/order-detail/order-detail.js', pageFn: 'OrderDetailPage',  title: 'nav.order_detail' },
+    { path: '/products',     script: 'src/pages/products/products.js',         pageFn: 'ProductsPage',     title: 'nav.products' },
+    { path: '/sizes',        script: 'src/pages/sizes/sizes.js',               pageFn: 'SizesPage',        title: 'nav.sizes' },
+    { path: '/sku',          script: 'src/pages/sku/sku.js',                   pageFn: 'SkuPage',          title: 'nav.sku' },
+    { path: '/promos',       script: 'src/pages/promos/promos.js',             pageFn: 'PromosPage',       title: 'nav.promos' },
+    { path: '/settings',     script: 'src/pages/settings/settings.js',        pageFn: 'SettingsPage',     title: 'nav.settings' },
   ];
 
   var _routeMap = {};
@@ -100,10 +100,10 @@ var Router = (function () {
         }
         throw new Error('Module not found: ' + route.pageFn);
       })
-      .then(function () {
+      .then(function () { 
         if (typeof applyLanguage === 'function') applyLanguage();
-        _fadeIn($el);
-        _isNavigating = false;
+        _fadeIn($el); 
+        _isNavigating = false; 
       })
       .catch(function (err) {
         console.error('[Router]', err);

@@ -2114,11 +2114,6 @@ tbody tr:hover td {
     font-size: calc(22px * var(--text-scale, 1));
   }
 
-  .modal {
-    width: 98vw !important;
-    padding: 20px 12px;
-  }
-
   .modal-hdr h3 {
     font-size: calc(18px * var(--text-scale, 1));
   }
