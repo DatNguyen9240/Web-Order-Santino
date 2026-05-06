@@ -5,66 +5,164 @@
   </div>
   <div style="display:flex;gap:8px">
     <button class="btn btn-ghost btn-sm" onclick="OrderPage.clearOrder()">
-      <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">delete</span><span data-i18n="btn.cancel">Hủy
+      <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">delete</span><span
+        data-i18n="btn.cancel">Hủy
         đơn</span>
     </button>
     <button class="btn btn-accent" onclick="OrderPage.saveOrder()">
-      <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">save</span><span data-i18n="btn.save">Lưu
+      <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">save</span><span
+        data-i18n="btn.save">Lưu
         đơn</span>
     </button>
   </div>
 </div>
 
-<!-- Header đơn -->
-<div class="card">
-  <div style="display:flex; justify-content:space-between; align-items:center; cursor: pointer;"
-    onclick="var body = document.getElementById('header-info-body'); body.style.display = body.style.display === 'none' ? 'grid' : 'none'; this.querySelector('.icon-toggle').textContent = body.style.display === 'none' ? 'expand_more' : 'expand_less';">
-    <div style="font-weight: 800; font-size: calc(18px * var(--text-scale, 1)); color: var(--primary);">
-      <span class="material-symbols-outlined"
-        style="vertical-align: bottom; font-size: calc(22px * var(--text-scale, 1)); margin-right: 6px;">receipt_long</span>
-      <span data-i18n="order.info">Thông tin chung</span>
+<!-- Thông tin giao hàng (Summary Card) -->
+<div class="card summary-card" onclick="openModal('modal-order-info')"
+  style="margin-top: -8px; margin-bottom: 12px; cursor: pointer; border: 1px dashed var(--primary); background: var(--primary-light);">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div style="display:flex; align-items:center; gap:16px;">
+      <div
+        style="background:var(--primary); color:white; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+        <span class="material-symbols-outlined">person_add</span>
+      </div>
+      <div>
+        <h3 style="margin:0; font-size:14px; color:var(--primary); font-weight:600;">Thông tin đơn hàng</h3>
+        <div id="info-summary-display" style="font-size:16px; font-weight:700; color:var(--text); margin-top:4px;">Chạm
+          để khai báo thông tin...</div>
+      </div>
     </div>
-    <span class="material-symbols-outlined icon-toggle" style="color:var(--muted)">expand_less</span>
-  </div>
-  <div class="form-grid" id="header-info-body" style="margin-top: 16px;">
-    <div class="form-group"><label data-i18n="order.no">Số CT</label><input id="o-so-ct" class="locked" readonly></div>
-    <div class="form-group"><label data-i18n="order.date">Ngày CT</label><input id="o-ngay" type="date"></div>
-    <div class="form-group"><label data-i18n="order.branch">Chi nhánh</label>
-      <select id="o-chi-nhanh">
-        <option value="Trụ sở Hà Nội" data-i18n="order.branch.hn">Trụ sở Hà Nội</option>
-        <option value="Chi nhánh HCM" data-i18n="order.branch.hcm">Chi nhánh HCM</option>
-      </select>
-    </div>
-    <div class="form-group"><label data-i18n="order.staff">Nhân viên KD</label><input id="o-nv"
-        placeholder="Tên nhân viên..." data-i18n-placeholder="order.staff.placeholder"></div>
-    <div class="form-group"><label><span data-i18n="order.promo">CTKM</span> <span
-          style="color:var(--accent)">*</span></label>
-      <select id="o-ctbh"></select>
-    </div>
-    <div class="form-group span2"><label data-i18n="order.note">Ghi chú chung</label>
-      <input id="o-note" placeholder="Ghi chú áp dụng toàn đơn..." data-i18n-placeholder="order.note.placeholder">
-    </div>
+    <span class="material-symbols-outlined" style="color:var(--primary)">edit_document</span>
   </div>
 </div>
-<!-- Thông tin khách hàng -->
-<div class="card">
-  <div style="display:flex; justify-content:space-between; align-items:center; cursor: pointer;"
-    onclick="var body = document.getElementById('customer-info-body'); body.style.display = body.style.display === 'none' ? 'grid' : 'none'; this.querySelector('.icon-toggle').textContent = body.style.display === 'none' ? 'expand_more' : 'expand_less';">
-    <div style="font-weight: 800; font-size: calc(18px * var(--text-scale, 1)); color: var(--primary);">
-      <span class="material-symbols-outlined"
-        style="vertical-align: bottom; font-size: calc(22px * var(--text-scale, 1)); margin-right: 6px;">person</span>
-      <span data-i18n="order.customer_info">Thông tin Khách hàng</span>
+
+<!-- Modal: Thông tin khách hàng (Bottom Sheet) -->
+<div class="modal-overlay" id="modal-order-info">
+  <div class="modal bottom-sheet-modal">
+    <div class="modal-hdr">
+      <h3 style="display:flex; align-items:center; gap:8px;"><span class="material-symbols-outlined"
+          style="color:var(--primary)">assignment</span> Khai báo thông tin</h3>
+      <button class="btn-icon" onclick="closeModal('modal-order-info'); OrderPage.updateInfoSummary()"><span
+          class="material-symbols-outlined">close</span></button>
     </div>
-    <span class="material-symbols-outlined icon-toggle" style="color:var(--muted)">expand_less</span>
-  </div>
-  <div class="form-grid" id="customer-info-body" style="margin-top: 16px;">
-    <div class="form-group span2"><label><span data-i18n="order.customer_name">Tên khách hàng / Đại lý</span> <span
-          style="color:var(--accent)">*</span></label><input id="o-kh-ten" placeholder="Nhập tên khách hàng..."
-        data-i18n-placeholder="order.customer_name.placeholder"></div>
-    <div class="form-group"><label data-i18n="order.customer_phone">Số điện thoại</label><input id="o-kh-sdt"
-        placeholder="Nhập số điện thoại..." data-i18n-placeholder="order.customer_phone.placeholder"></div>
-    <div class="form-group span3"><label data-i18n="order.customer_address">Địa chỉ giao hàng</label><input id="o-kh-dc"
-        placeholder="Nhập địa chỉ giao hàng..." data-i18n-placeholder="order.customer_address.placeholder"></div>
+    <div class="modal-content-scroll fat-finger">
+      <div class="form-grid">
+        <!-- Row 1 -->
+        <div class="form-group"><label>Số CT</label><input id="o-so-ct" class="locked" readonly
+            style="background:var(--bg)"></div>
+        <div class="form-group"><label>Ngày CT <span style="color:var(--accent)">*</span></label><input id="o-ngay"
+            type="date"></div>
+        <div class="form-group">
+          <label>Chi nhánh <span style="color:var(--accent)">*</span></label>
+          <select id="o-chi-nhanh">
+            <option value="Trụ sở Hà Nội">Trụ sở Hà Nội</option>
+            <option value="Chi nhánh HCM">Chi nhánh HCM</option>
+          </select>
+        </div>
+
+        <!-- Row 2 -->
+        <div class="form-group">
+          <label>Nhân viên KD</label>
+          <select id="o-nvkd">
+            <option value="">-- Chọn nhân viên --</option>
+            <option value="NV01">Nguyễn Văn A</option>
+            <option value="NV02">Trần Thị B</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Người tạo</label><input id="o-nguoi-tao" class="locked" readonly value="Admin"
+            style="background:var(--bg)"></div>
+        <div class="form-group"><label>Tên CTKM</label><select id="o-ctbh"
+            onchange="OrderPage.updateInfoSummary()"></select></div>
+
+        <!-- Row 3 -->
+        <div class="form-group"><label>Mã khách hàng <span style="color:var(--accent)">*</span></label><input
+            id="o-ma-kh" placeholder="Nhập mã KH..." oninput="OrderPage.updateInfoSummary()"></div>
+        <div class="form-group"><label>Mã đại lý</label><input id="o-ma-dl" placeholder="Nhập mã đại lý..."></div>
+        <div class="form-group"><label>Tên kh/hàng</label><input id="o-kh-ten" placeholder="Nhập tên khách hàng..."
+            oninput="OrderPage.updateInfoSummary()"></div>
+
+        <!-- Row 4 -->
+        <div class="form-group span2"><label>Địa chỉ</label><input id="o-kh-dc" placeholder="Nhập địa chỉ chi tiết...">
+        </div>
+        <div class="form-group">
+          <label>Nguồn đơn</label>
+          <select id="o-nguon-don">
+            <option value="">-- Chọn nguồn --</option>
+            <option value="Zalo">Zalo</option>
+            <option value="Facebook">Facebook</option>
+            <option value="Trực tiếp">Trực tiếp</option>
+          </select>
+        </div>
+
+        <!-- Row 5 -->
+        <div class="form-group span2"><label>Diễn giải</label><input id="o-dien-giai" placeholder="Nhập diễn giải...">
+        </div>
+        <div class="form-group"><label>Ghi chú</label><input id="o-note" placeholder="Nhập ghi chú nội bộ..."></div>
+
+        <!-- Row 6 -->
+        <div class="form-group">
+          <label>PT Giao hàng</label>
+          <select id="o-pt-giao">
+            <option value="">-- Chọn phương thức --</option>
+            <option value="Giao tận nơi">Giao tận nơi</option>
+            <option value="Nhận tại cửa hàng">Nhận tại cửa hàng</option>
+            <option value="Chuyển phát nhanh">Chuyển phát nhanh</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Người giao</label>
+          <select id="o-nguoi-giao">
+            <option value="">-- Chọn người giao --</option>
+            <option value="Giao hàng tiết kiệm">Giao hàng tiết kiệm</option>
+            <option value="Nhân viên nội bộ">Nhân viên nội bộ</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Điều khoản TT</label>
+          <select id="o-dieu-khoan">
+            <option value="">-- Chọn điều khoản --</option>
+            <option value="Thanh toán ngay">Thanh toán ngay</option>
+            <option value="Công nợ 30 ngày">Công nợ 30 ngày</option>
+          </select>
+        </div>
+
+        <!-- Row 7 -->
+        <div class="form-group">
+          <label>Tổng tiền</label>
+          <input id="o-tong-tien" class="locked" readonly value="0"
+            style="background:var(--bg); font-weight:bold; color:var(--primary); text-align:right; font-size:18px;">
+        </div>
+        <div class="form-group">
+          <label>Khách đưa</label>
+          <input id="o-khach-dua" type="number" min="0" placeholder="0" oninput="OrderPage.calcChange()"
+            style="text-align:right; font-size:18px;">
+        </div>
+        <div class="form-group">
+          <label>Trả lại</label>
+          <input id="o-tra-lai" class="locked" readonly value="0"
+            style="background:var(--bg); text-align:right; font-weight:bold; color:var(--danger); font-size:18px;">
+        </div>
+
+        <!-- Row 8 -->
+        <div class="form-group">
+          <label>Hình thức thanh toán</label>
+          <select id="o-ht-thanh-toan">
+            <option value="">-- Chọn hình thức --</option>
+            <option value="Tiền mặt">Tiền mặt</option>
+            <option value="Chuyển khoản">Chuyển khoản</option>
+            <option value="Quẹt thẻ">Quẹt thẻ</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Ngày TT</label><input id="o-ngay-tt" type="date"></div>
+        <div class="form-group"></div>
+      </div>
+    </div>
+    <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border);">
+      <button class="btn btn-primary" style="width:100%; height:48px; font-size:16px; border-radius:12px;"
+        onclick="closeModal('modal-order-info'); OrderPage.updateInfoSummary()">
+        <span class="material-symbols-outlined">check_circle</span> Xong & Bắt đầu chọn hàng
+      </button>
+    </div>
   </div>
 </div>
 
@@ -74,9 +172,13 @@
     <div class="autocomplete-wrap" style="flex:1; position:relative;">
       <div class="search-wrapper" style="width: 100%; position: relative;">
         <span class="material-symbols-outlined">search</span>
-        <input id="ac-input" placeholder="Nhập Tên hàng 2 (VD: AMC545S659)..." data-i18n-placeholder="order.search.placeholder" autocomplete="off"
-          oninput="OrderPage.acSearch(this.value)" onfocus="OrderPage.acSearch(this.value)" onclick="OrderPage.acSearch(this.value)" onkeydown="if(event.key==='Enter')OrderPage.addProductRow()">
-        <span id="ac-clear" class="material-symbols-outlined" style="position:absolute; right:12px; left:auto !important; top:50%; transform:translateY(-50%); cursor:pointer; font-size:20px; color:var(--muted); display:none; pointer-events:auto !important" onclick="OrderPage.clearSearch()">close</span>
+        <input id="ac-input" placeholder="Nhập Tên hàng 2 (VD: AMC545S659)..."
+          data-i18n-placeholder="order.search.placeholder" autocomplete="off" oninput="OrderPage.acSearch(this.value)"
+          onfocus="OrderPage.acSearch(this.value)" onclick="OrderPage.acSearch(this.value)"
+          onkeydown="if(event.key==='Enter')OrderPage.addProductRow()">
+        <span id="ac-clear" class="material-symbols-outlined"
+          style="position:absolute; right:12px; left:auto !important; top:50%; transform:translateY(-50%); cursor:pointer; font-size:20px; color:var(--muted); display:none; pointer-events:auto !important"
+          onclick="OrderPage.clearSearch()">close</span>
       </div>
       <div class="autocomplete-dropdown" id="ac-list" style="z-index: 9999;"></div>
     </div>
@@ -87,20 +189,25 @@
     </button>
   </div>
   <div id="matrix-container" style="display:flex; flex-direction:column; gap:16px;">
-    <div class="empty-state" style="background:var(--surface); border-radius:12px; padding:24px; border:1px solid var(--border); display:flex; flex-direction:column; align-items:center; gap:8px;">
+    <div class="empty-state"
+      style="background:var(--surface); border-radius:12px; padding:24px; border:1px solid var(--border); display:flex; flex-direction:column; align-items:center; gap:8px;">
       <span class="material-symbols-outlined" style="font-size: 32px; color: var(--muted);">table_chart</span>
-      <span data-i18n="order.search.empty" style="font-size: calc(15px * var(--text-scale, 1)); font-weight: 600; color: var(--muted);">Tìm và thêm sản phẩm để bắt đầu nhập số lượng</span>
+      <span data-i18n="order.search.empty"
+        style="font-size: calc(15px * var(--text-scale, 1)); font-weight: 600; color: var(--muted);">Tìm và thêm sản
+        phẩm để bắt đầu nhập số lượng</span>
     </div>
   </div>
   <div class="matrix-footer">
     <div class="total-info">
-      <span data-i18n="order.total.qty">Tổng SP</span>: <span id="total-qty" style="color: var(--primary);">0</span>
+      <span>Số lượng</span>: <span id="total-qty" style="color: var(--primary);">0</span>
       <span style="margin: 0 12px; color: var(--border-strong);">|</span>
-      <span data-i18n="order.total.money">Thành tiền</span>: <span id="total-money" style="color: var(--accent); font-weight: 800; font-size: calc(22px * var(--text-scale, 1));">0đ</span>
+      <span>Tổng cộng</span>: <span id="total-money"
+        style="color: var(--accent); font-weight: 800; font-size: calc(22px * var(--text-scale, 1));">0đ</span>
     </div>
     <button class="btn btn-accent" onclick="OrderPage.previewOrder()">
-      <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">visibility</span><span data-i18n="btn.preview">Xem
-        trước</span>
+      <span class="material-symbols-outlined"
+        style="font-size: calc(16px * var(--text-scale, 1))">shopping_cart_checkout</span><span>Kiểm tra & Đặt
+        hàng</span>
     </button>
   </div>
 </div>
@@ -109,13 +216,15 @@
 <div class="modal-overlay" id="modal-preview">
   <div class="modal" style="width:min(800px,95vw)">
     <div class="modal-hdr">
-      <h3 data-i18n="order.preview.title">👁 Xem Trước Đơn Hàng</h3>
+      <h3 style="display:flex; align-items:center; gap:8px;"><span class="material-symbols-outlined">task_alt</span> Xác
+        nhận đơn hàng</h3>
       <button class="btn-icon" onclick="closeModal('modal-preview')"><span
           class="material-symbols-outlined">close</span></button>
     </div>
     <div id="preview-info"
-      style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size: calc(13px * var(--text-scale, 1));margin-bottom:12px"></div>
-    <div class="tbl-wrap" style="max-height:360px;overflow-y:auto">
+      style="display:flex; flex-direction:column; gap:4px; font-size: calc(14px * var(--text-scale, 1)); margin-bottom:16px; padding:12px; background:var(--bg); border-radius:8px; border-left:4px solid var(--primary);">
+    </div>
+    <div class="tbl-wrap" style="max-height:400px; overflow-y:auto; border-radius:12px;">
       <table>
         <thead id="preview-head">
         </thead>
@@ -125,10 +234,10 @@
       </table>
     </div>
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal('modal-preview')" data-i18n="btn.close">Đóng</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-preview')">Quay lại</button>
       <button class="btn btn-accent" onclick="OrderPage.saveOrder()">
-        <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">save</span><span data-i18n="btn.save">Lưu
-          đơn</span>
+        <span class="material-symbols-outlined"
+          style="font-size: calc(16px * var(--text-scale, 1))">check_circle</span><span>Gửi đơn hàng</span>
       </button>
     </div>
   </div>

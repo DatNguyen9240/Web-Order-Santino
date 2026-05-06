@@ -12,6 +12,12 @@ var SettingsPage = (function () {
     var font = localStorage.getItem('santino_font') || 'Plus Jakarta Sans';
     var lang = localStorage.getItem('santino_lang') || 'vi';
     var color = localStorage.getItem('santino_color') || '#eab308';
+    var layoutMode = localStorage.getItem('santino_layout') || 'navbar';
+
+    // Đánh dấu Layout
+    document.querySelectorAll('.layout-card').forEach(function(c) { c.classList.remove('active'); });
+    var layoutCard = document.querySelector('.layout-card[data-layout="' + layoutMode + '"]');
+    if(layoutCard) layoutCard.classList.add('active');
 
     // Đánh dấu Theme
     document.querySelectorAll('.theme-card').forEach(function(c) { c.classList.remove('active'); });
@@ -145,7 +151,7 @@ var SettingsPage = (function () {
       confirmText: t('settings.reset.confirm.btn'),
       confirmClass: 'btn-danger',
       onConfirm: function() {
-        ['santino_products','santino_sizes','santino_promotions','santino_orders', 'santino_theme', 'santino_font', 'santino_color', 'santino_lang'].forEach(function(k){localStorage.removeItem(k);});
+        ['santino_products','santino_sizes','santino_promotions','santino_orders', 'santino_theme', 'santino_font', 'santino_color', 'santino_lang', 'santino_layout'].forEach(function(k){localStorage.removeItem(k);});
         DB.initSeed();
         showToast(t('toast.reset_done'));
         setTimeout(function() { window.location.reload(); }, 1500);
@@ -153,5 +159,21 @@ var SettingsPage = (function () {
     });
   }
 
-  return { render:render, setMode:setMode, setFont:setFont, setLanguage:setLanguage, setColor:setColor, changeZoom:changeZoom, resetData:resetData };
+  function setLayout(mode) {
+    localStorage.setItem('santino_layout', mode);
+    var layout = document.getElementById('main-layout');
+    layout.classList.remove('mode-navbar', 'mode-sidebar');
+    layout.classList.add('mode-' + mode);
+    
+    // Toggle header visibility for sidebar mode
+    var sidebarHeader = document.getElementById('sidebar-header');
+    if (sidebarHeader) {
+      sidebarHeader.style.display = (mode === 'sidebar') ? 'flex' : 'none';
+    }
+
+    _init();
+    showToast('Đã đổi kiểu menu điều hướng');
+  }
+
+  return { render:render, setMode:setMode, setFont:setFont, setLanguage:setLanguage, setColor:setColor, changeZoom:changeZoom, resetData:resetData, setLayout:setLayout };
 })();

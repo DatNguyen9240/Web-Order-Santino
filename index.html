@@ -10,62 +10,92 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
     rel="stylesheet">
-  <link
-    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
-    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
   <!-- BUNDLED CSS -->
-  <link rel="stylesheet" href="src/css/styles.bundle.css?v=6">
+  <link rel="stylesheet" href="src/css/styles.bundle.css?v=18">
   <script>(function () { if (localStorage.getItem('santino_theme') === 'dark') document.documentElement.classList.add('dark-theme') })();</script>
 </head>
 
 <body>
-  <div class="layout">
+  <div class="layout" id="main-layout">
+
+    <!-- TOP NAVBAR -->
+    <header class="navbar">
+      <div class="nav-left">
+        <button class="icon-btn menu-btn" onclick="toggleSidebar()" style="margin-right: 8px;">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="logo">
+          <img src="images/logo.png" alt="SANTINO" class="app-logo">
+        </div>
+        <div class="nav-links">
+          <a class="nav-item" href="#/order" data-route="/order"><span
+              class="material-symbols-outlined icon">shopping_bag</span><span data-i18n="nav.order">Đặt Hàng</span></a>
+          <a class="nav-item" href="#/orders" data-route="/orders"><span
+              class="material-symbols-outlined icon">receipt_long</span><span data-i18n="nav.orders">Danh Sách
+              Đơn</span></a>
+          <a class="nav-item" href="#/products" data-route="/products"><span
+              class="material-symbols-outlined icon">inventory_2</span><span data-i18n="nav.products">Sản
+              Phẩm</span></a>
+          <a class="nav-item" href="#/sizes" data-route="/sizes"><span
+              class="material-symbols-outlined icon">straighten</span><span data-i18n="nav.sizes">Size</span></a>
+          <a class="nav-item" href="#/sku" data-route="/sku"><span
+              class="material-symbols-outlined icon">qr_code</span><span data-i18n="nav.sku">Cấu hình SKU</span></a>
+          <a class="nav-item promo-nav-btn" href="#/promos" data-route="/promos">
+            <span class="material-symbols-outlined icon">local_offer</span>
+            <span data-i18n="nav.promos">CTKM</span>
+          </a>
+        </div>
+      </div>
+      <div class="nav-right">
+        <button class="icon-btn" onclick="toggleTheme()" title="Đổi giao diện">
+          <span class="material-symbols-outlined">dark_mode</span>
+        </button>
+        <a class="icon-btn" href="#/settings" data-route="/settings" title="Cài đặt">
+          <span class="material-symbols-outlined">settings</span>
+        </a>
+        <div class="avatar" title="Tài khoản">DL</div>
+      </div>
+    </header>
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
-      <div class="logo" style="padding-top: 16px; justify-content: center;">
-        <img src="images/logo.png" alt="SANTINO" class="app-logo" style="height: 48px; object-fit: contain;">
+      <div class="logo">
+        <img src="images/logo.png" alt="SANTINO" class="app-logo" style="height: 40px;">
       </div>
-      <div class="nav-group" data-i18n="nav.group.business">Nghiệp vụ</div>
-      <a class="nav-item" href="#/order" data-route="/order">
-        <span class="material-symbols-outlined icon">shopping_bag</span><span data-i18n="nav.order">Đặt Hàng</span>
-      </a>
-      <a class="nav-item" href="#/orders" data-route="/orders">
-        <span class="material-symbols-outlined icon">receipt_long</span><span data-i18n="nav.orders">Danh Sách
-          Đơn</span>
-      </a>
-      <div class="nav-group" data-i18n="nav.group.catalog">Danh mục</div>
-      <a class="nav-item" href="#/products" data-route="/products">
-        <span class="material-symbols-outlined icon">inventory_2</span><span data-i18n="nav.products">Sản Phẩm</span>
-      </a>
-      <a class="nav-item" href="#/sizes" data-route="/sizes">
-        <span class="material-symbols-outlined icon">straighten</span><span data-i18n="nav.sizes">Size</span>
-      </a>
-      <a class="nav-item" href="#/sku" data-route="/sku">
-        <span class="material-symbols-outlined icon">qr_code</span><span data-i18n="nav.sku">Cấu hình SKU</span>
-      </a>
-      <a class="nav-item" href="#/promos" data-route="/promos">
-        <span class="material-symbols-outlined icon">local_offer</span><span data-i18n="nav.promos">CTKM</span>
-      </a>
+      <div class="nav-group" data-i18n="nav.group.order">Hệ thống đặt hàng</div>
+      <a class="nav-item" href="#/order" data-route="/order"><span
+          class="material-symbols-outlined icon">shopping_bag</span><span data-i18n="nav.order">Đặt Hàng</span></a>
+      <a class="nav-item" href="#/orders" data-route="/orders"><span
+          class="material-symbols-outlined icon">receipt_long</span><span data-i18n="nav.orders">Đơn Hàng</span></a>
+
+      <div class="nav-group" data-i18n="nav.group.catalog">Danh mục sản phẩm</div>
+      <a class="nav-item" href="#/products" data-route="/products"><span
+          class="material-symbols-outlined icon">inventory_2</span><span data-i18n="nav.products">Sản Phẩm</span></a>
+      <a class="nav-item" href="#/sizes" data-route="/sizes"><span
+          class="material-symbols-outlined icon">straighten</span><span data-i18n="nav.sizes">Thông số Size</span></a>
+      <a class="nav-item" href="#/sku" data-route="/sku"><span
+          class="material-symbols-outlined icon">qr_code</span><span data-i18n="nav.sku">Cấu hình SKU</span></a>
+      <a class="nav-item" href="#/promos" data-route="/promos"><span
+          class="material-symbols-outlined icon">local_offer</span><span data-i18n="nav.promos">Chương trình
+          KM</span></a>
+
       <div class="nav-bottom">
-        <div class="nav-group" data-i18n="nav.group.system">Hệ thống</div>
-        <a class="nav-item" href="#/settings" data-route="/settings">
-          <span class="material-symbols-outlined icon">settings</span><span data-i18n="nav.settings">Cài đặt</span>
-        </a>
-        <a class="nav-item" href="login.html">
-          <span class="material-symbols-outlined icon">logout</span><span data-i18n="nav.logout">Đăng xuất</span>
-        </a>
+        <a class="nav-item" href="#/settings" data-route="/settings"><span
+            class="material-symbols-outlined icon">settings</span><span data-i18n="nav.settings">Cài đặt hiển
+            thị</span></a>
+        <a class="nav-item" href="login.html"><span class="material-symbols-outlined icon">logout</span><span
+            data-i18n="nav.logout">Đăng xuất</span></a>
       </div>
     </aside>
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-    <!-- HEADER -->
-    <header class="header">
-      <div style="display:flex;align-items:center;gap:12px">
-        <button class="icon-btn menu-btn" onclick="toggleMobileMenu()">
-          <span class="material-symbols-outlined">menu</span>
-        </button>
-        <div class="header-title" id="hdr-title">SANTINO B2B</div>
-      </div>
+    <!-- HEADER (Cho Sidebar Mode) -->
+    <header class="header" id="sidebar-header" style="display:none; height: var(--header-h);">
+      <button class="icon-btn menu-btn" onclick="toggleSidebar()">
+        <span class="material-symbols-outlined">menu</span>
+      </button>
+      <div class="header-title" id="hdr-title"></div>
       <div class="header-actions">
         <button class="icon-btn" onclick="toggleTheme()" title="Đổi giao diện">
           <span class="material-symbols-outlined">dark_mode</span>
@@ -74,7 +104,7 @@
       </div>
     </header>
 
-    <!-- PAGE CONTENT (Router inject vào đây) -->
+    <!-- PAGE CONTENT -->
     <main class="main" id="app-content" style="opacity:0">
       <div class="empty-state">
         <span class="material-symbols-outlined">hourglass_top</span>
@@ -84,28 +114,37 @@
 
   </div>
 
-  <!-- MOBILE SIDEBAR OVERLAY -->
-  <div class="sidebar-overlay" id="mobile-overlay" onclick="toggleMobileMenu()"></div>
+  <script>
+    // LAYOUT INIT
+    (function () {
+      var mode = localStorage.getItem('santino_layout') || 'navbar';
+      var layout = document.getElementById('main-layout');
+      layout.classList.add('mode-' + mode);
+      if (mode === 'sidebar') {
+        document.getElementById('sidebar-header').style.display = 'flex';
+      }
+    })();
+  </script>
 
-  <!-- TOAST (dùng chung toàn app) -->
+  <!-- TOAST -->
   <div class="toast" id="toast">
     <span class="material-symbols-outlined" style="color:var(--accent)">check_circle</span>
     <span id="toast-msg"></span>
   </div>
 
-  <!-- BUNDLED JS (Core + Data + Components) -->
-  <script src="src/js/app.bundle.js"></script>
+  <!-- BUNDLED JS -->
+  <script src="src/js/app.bundle.js?v=18"></script>
   <script>
-    function toggleMobileMenu() {
+    function toggleSidebar() {
       document.querySelector('.sidebar').classList.toggle('show');
-      document.getElementById('mobile-overlay').classList.toggle('show');
+      document.querySelector('.sidebar-overlay').classList.toggle('show');
     }
     // Auto-close menu when clicking nav items on mobile
-    document.querySelectorAll('.nav-item').forEach(el => {
+    document.querySelectorAll('.sidebar .nav-item').forEach(el => {
       el.addEventListener('click', () => {
-        if (window.innerWidth <= 768) {
+        if (window.innerWidth <= 1024) {
           document.querySelector('.sidebar').classList.remove('show');
-          document.getElementById('mobile-overlay').classList.remove('show');
+          document.querySelector('.sidebar-overlay').classList.remove('show');
         }
       });
     });

@@ -120,6 +120,32 @@
         </div>
     </div>
     
+    <!-- LAYOUT SETTINGS -->
+    <div style="border-top: 1px solid var(--border); padding-top: 40px; margin-top: 40px;">
+        <h3 style="font-family: var(--font-display, var(--font)); font-size: calc(20px * var(--text-scale, 1)); margin-bottom: 8px;">Kiểu Menu Điều hướng (Layout)</h3>
+        <p style="color: var(--muted); font-size: calc(14px * var(--text-scale, 1)); margin-bottom: 20px;">Chọn kiểu hiển thị thanh menu phù hợp với thói quen sử dụng của bạn.</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px;">
+            <div class="card setting-card layout-card" onclick="SettingsPage.setLayout('navbar')" data-layout="navbar" style="cursor: pointer;">
+                <div style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 4px;">
+                    <div style="height: 12px; background: var(--primary); border-radius: 4px;"></div>
+                    <div style="height: 40px; background: var(--bg); border: 1px dashed var(--border); border-radius: 4px;"></div>
+                </div>
+                <div style="font-weight: 700; margin-bottom: 4px;">Thanh ngang (Navbar)</div>
+                <div style="font-size: calc(12px * var(--text-scale, 1)); color: var(--muted);">Tối ưu không gian nội dung chính, phù hợp xem ma trận sản phẩm.</div>
+            </div>
+            
+            <div class="card setting-card layout-card" onclick="SettingsPage.setLayout('sidebar')" data-layout="sidebar" style="cursor: pointer;">
+                <div style="margin-bottom: 12px; display: flex; gap: 4px; height: 56px;">
+                    <div style="width: 24px; background: var(--primary); border-radius: 4px;"></div>
+                    <div style="flex: 1; background: var(--bg); border: 1px dashed var(--border); border-radius: 4px;"></div>
+                </div>
+                <div style="font-weight: 700; margin-bottom: 4px;">Thanh dọc (Sidebar)</div>
+                <div style="font-size: calc(12px * var(--text-scale, 1)); color: var(--muted);">Dễ dàng truy cập các menu danh mục, phù hợp quản lý nhiều mục.</div>
+            </div>
+        </div>
+    </div>
+
     <!-- COLOR SETTINGS -->
     <div style="border-top: 1px solid var(--border); padding-top: 40px;">
         <h3 style="font-family: var(--font-display, var(--font)); font-size: calc(20px * var(--text-scale, 1)); margin-bottom: 8px;" data-i18n="settings.color">Màu sắc Chủ đạo (Color)</h3>
