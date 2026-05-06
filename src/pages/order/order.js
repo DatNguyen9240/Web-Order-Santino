@@ -214,7 +214,7 @@ var OrderPage = (function () {
       }).join('');
       sizeRowsHtml += '</div>';
       
-      return '<div class="card product-card" style="padding:20px; margin-bottom:0; box-shadow:0 4px 12px rgba(0,0,0,0.05); border:1px solid var(--border); border-radius:12px;">' +
+      return '<div class="card product-card" style="margin-bottom:0; box-shadow:0 4px 12px rgba(0,0,0,0.05);">' +
              '<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid var(--border-light);">' +
              '<div>' +
                '<div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">' +
@@ -223,7 +223,7 @@ var OrderPage = (function () {
                '</div>' +
                '<div style="font-size: calc(14px * var(--text-scale, 1)); font-weight:500; color:var(--muted); margin-bottom:8px;">' + row.product.nhom_size + ' | ' + row.product.mau + ' | ' + Utils.formatMoney(row.product.don_gia) + '</div>' +
                '<span id="badge-yeuto-' + ri + '" class="badge-brand" style="transition: all 0.2s;">YẾU TỐ: ' + yeuTo1 + '</span> ' +
-               '<span id="btn-details-' + ri + '" onclick="OrderPage.toggleDetails(' + ri + ')" style="color:#0056b3; cursor:pointer; text-decoration:underline; font-size: calc(13px * var(--text-scale, 1)); display:inline-block; margin-left: 8px;">Hiện phụ</span>' +
+               '<span id="btn-details-' + ri + '" onclick="OrderPage.toggleDetails(' + ri + ')" style="color:#0056b3; cursor:pointer; text-decoration:underline; font-size: calc(13px * var(--text-scale, 1)); display:inline-block; margin-left: 8px;">Tùy chỉnh</span>' +
              '</div>' +
              '<div style="display:flex; gap:8px;">' +
                '<button class="btn-icon" onclick="OrderPage.quickClear(' + ri + ')" title="Reset số lượng" style="background:#f1f3f5; color:var(--muted); padding:8px; border-radius:8px;"><span class="material-symbols-outlined" style="font-size: calc(20px * var(--text-scale, 1));">backspace</span></button>' +
@@ -233,11 +233,11 @@ var OrderPage = (function () {
              
              '<div id="details-' + ri + '" style="display:none; background:#f8f9fa; border-radius:8px; padding:16px; margin-bottom:16px; font-size: calc(13px * var(--text-scale, 1)); color:var(--text); border:1px solid var(--border-light);">' +
                '<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">' +
-                 '<div><strong style="color:var(--muted)">Mã CTB:</strong> <div style="font-weight:600; margin-top:4px;">' + (ctbh || 'CKCB') + '</div></div>' +
-                 '<div><strong style="color:var(--muted)">Yếu tố 1:</strong> <div style="font-weight:600; margin-top:4px;">' + yeuTo1 + '</div></div>' +
-                 '<div><strong style="color:var(--muted)">Yếu tố 2:</strong> <div style="font-weight:600; margin-top:4px;">' + yeuTo2 + '</div></div>' +
-                 '<div><strong style="color:var(--muted)">Ghi chú:</strong> <div style="font-weight:600; margin-top:4px;">' + (ghiChu || '—') + '</div></div>' +
-                 '<div style="grid-column: 1 / -1;"><strong style="color:var(--muted)">Tên hàng / dịch vụ:</strong> <div style="font-weight:600; margin-top:4px;">' + row.product.ten_hang_hoa + '</div></div>' +
+                 '<div><strong style="color:var(--muted)">Mã CTB:</strong><br><input type="text" value="' + (row.custom_ctb !== undefined ? row.custom_ctb : (ctbh || 'CKCB')) + '" oninput="OrderPage.updateCustomField(' + ri + ',\'custom_ctb\',this.value)" style="width:100%; margin-top:4px; padding:6px 8px; border:1px solid var(--border); border-radius:4px; outline:none;"></div>' +
+                 '<div><strong style="color:var(--muted)">Yếu tố 1:</strong><br><input type="text" value="' + (row.custom_yeuTo1 !== undefined ? row.custom_yeuTo1 : yeuTo1) + '" oninput="OrderPage.updateCustomField(' + ri + ',\'custom_yeuTo1\',this.value)" style="width:100%; margin-top:4px; padding:6px 8px; border:1px solid var(--border); border-radius:4px; outline:none;"></div>' +
+                 '<div><strong style="color:var(--muted)">Yếu tố 2:</strong><br><input type="text" value="' + (row.custom_yeuTo2 !== undefined ? row.custom_yeuTo2 : yeuTo2) + '" oninput="OrderPage.updateCustomField(' + ri + ',\'custom_yeuTo2\',this.value)" style="width:100%; margin-top:4px; padding:6px 8px; border:1px solid var(--border); border-radius:4px; outline:none;"></div>' +
+                 '<div><strong style="color:var(--muted)">Ghi chú:</strong><br><input type="text" value="' + (row.custom_ghiChu !== undefined ? row.custom_ghiChu : (ghiChu || '')) + '" oninput="OrderPage.updateCustomField(' + ri + ',\'custom_ghiChu\',this.value)" style="width:100%; margin-top:4px; padding:6px 8px; border:1px solid var(--border); border-radius:4px; outline:none;" placeholder="Nhập ghi chú..."></div>' +
+                 '<div style="grid-column: 1 / -1;"><strong style="color:var(--muted)">Tên hàng / dịch vụ:</strong><br><input type="text" value="' + (row.custom_tenHang !== undefined ? row.custom_tenHang : row.product.ten_hang_hoa) + '" oninput="OrderPage.updateCustomField(' + ri + ',\'custom_tenHang\',this.value)" style="width:100%; margin-top:4px; padding:6px 8px; border:1px solid var(--border); border-radius:4px; outline:none;"></div>' +
                '</div>' +
              '</div>' +
              
@@ -255,12 +255,18 @@ var OrderPage = (function () {
     
     if (el.style.display === 'none') {
       el.style.display = 'block';
-      if(btn) btn.innerHTML = 'Ẩn thông tin phụ';
+      if(btn) btn.innerHTML = 'Thu gọn';
       if(badge) badge.style.display = 'none';
     } else {
       el.style.display = 'none';
-      if(btn) btn.innerHTML = 'Hiện thông tin phụ';
+      if(btn) btn.innerHTML = 'Tùy chỉnh';
       if(badge) badge.style.display = 'inline-flex';
+    }
+  }
+
+  function updateCustomField(ri, field, val) {
+    if (orderRows[ri]) {
+      orderRows[ri][field] = val;
     }
   }
 
