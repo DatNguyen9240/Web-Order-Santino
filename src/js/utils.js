@@ -4,10 +4,14 @@ const Utils = (function () {
     return new Intl.NumberFormat('vi-VN').format(n) + 'đ';
   }
 
-  // AMC545S659 + 40 → AMC40545S659
+  // Cập nhật Blueprint v2.0: Validation an toàn
   function buildSKU(ten_hang_2, size) {
-    const brand = ten_hang_2.match(/^[A-Z]+/)[0];
-    const rest  = ten_hang_2.slice(brand.length);
+    if (!ten_hang_2) return 'INVALID_SKU';
+    const clean_ten = ten_hang_2.trim();
+    const match = clean_ten.match(/^[A-Z]+/);
+    if (!match) return `INVALID_${clean_ten}_${size}`;
+    const brand = match[0];
+    const rest = clean_ten.slice(brand.length);
     return `${brand}${size}${rest}`;
   }
 

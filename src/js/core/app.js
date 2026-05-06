@@ -13,6 +13,10 @@ document.addEventListener('DOMContentLoaded', function () {
   } else {
     document.documentElement.classList.remove('dark-theme');
   }
+  
+  var zoom = localStorage.getItem('santino_zoom');
+  if (zoom === null) zoom = '115';
+  document.documentElement.style.setProperty('--text-scale', (parseInt(zoom)/100).toString());
 
   var font = localStorage.getItem('santino_font');
   if(font) document.documentElement.style.setProperty('--font', '"' + font + '", sans-serif');
@@ -36,6 +40,7 @@ function toggleTheme() {
   var isDark = document.documentElement.classList.toggle('dark-theme');
   localStorage.setItem('santino_theme', isDark ? 'dark' : 'light');
 }
+
 
 function showToast(msg, ok) {
   if (ok === undefined) ok = true;

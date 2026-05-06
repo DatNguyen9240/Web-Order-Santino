@@ -16,7 +16,7 @@ var OrderDetailPage = (function () {
         '<div><small style="color:var(--muted)"><span data-i18n="order.note">' + t('order.note') + '</span></small><div>'+(o.ghi_chu||'—')+'</div></div>',
       ].join('');
       document.getElementById('detail-body').innerHTML = (o.lines||[]).map(function(l){
-        return '<tr><td>'+l.ten_hang_2+'</td><td style="font-family:monospace;font-size:12px">'+l.sku+'</td>'+
+        return '<tr><td>'+l.ten_hang_2+'</td><td style="font-family:monospace;font-size: calc(12px * var(--text-scale, 1))">'+l.sku+'</td>'+
           '<td>'+(l.ten_hang||'')+'</td><td>'+l.size+'</td>'+
           '<td style="font-weight:700;color:var(--accent)">'+l.so_luong+'</td>'+
           '<td>'+Utils.formatMoney(l.don_gia)+'</td>'+

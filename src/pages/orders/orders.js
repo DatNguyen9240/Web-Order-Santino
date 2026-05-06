@@ -17,7 +17,7 @@ var OrdersPage = (function () {
         '<td style="color:var(--muted)">'+(o.ghi_chu||'—')+'</td>'+
         '<td style="display:flex;gap:6px">'+
           '<button class="btn btn-ghost btn-sm" onclick="OrdersPage.view(\''+o.id+'\')">' + t('btn.detail') + '</button>'+
-          '<button class="btn-icon" onclick="OrdersPage.del(\''+o.id+'\')"><span class="material-symbols-outlined" style="font-size:16px;color:var(--danger)">delete</span></button>'+
+          '<button class="btn-icon" onclick="OrdersPage.del(\''+o.id+'\')"><span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1));color:var(--danger)">delete</span></button>'+
         '</td></tr>';
     }).join('');
   }

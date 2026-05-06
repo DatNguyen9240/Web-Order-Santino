@@ -9,12 +9,12 @@ var SizesPage = (function () {
     var tbody = document.getElementById('sizes-body');
     if (!sizes.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><span class="material-symbols-outlined">straighten</span><span data-i18n="table.empty">' + t('table.empty') + '</span></td></tr>'; return; }
     tbody.innerHTML = sizes.map(function (s) {
-      return '<tr><td style="font-weight:700;font-size:16px">' + s.size + '</td>' +
+      return '<tr><td style="font-weight:700;font-size: calc(16px * var(--text-scale, 1))">' + s.size + '</td>' +
         '<td>' + (s.ten_size || s.size) + '</td>' +
         '<td><span class="badge badge-blue">' + s.nhom_size + '</span></td>' +
         '<td style="display:flex;gap:6px">' +
-        '<button class="btn-icon" onclick="SizesPage.openModal(\'' + s.id + '\')"><span class="material-symbols-outlined" style="font-size:16px">edit</span></button>' +
-        '<button class="btn-icon" onclick="SizesPage.del(\'' + s.id + '\')"><span class="material-symbols-outlined" style="font-size:16px;color:var(--danger)">delete</span></button>' +
+        '<button class="btn-icon" onclick="SizesPage.openModal(\'' + s.id + '\')"><span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">edit</span></button>' +
+        '<button class="btn-icon" onclick="SizesPage.del(\'' + s.id + '\')"><span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1));color:var(--danger)">delete</span></button>' +
         '</td></tr>';
     }).join('');
   }

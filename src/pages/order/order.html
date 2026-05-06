@@ -5,19 +5,23 @@
   </div>
   <div style="display:flex;gap:8px">
     <button class="btn btn-ghost btn-sm" onclick="OrderPage.clearOrder()">
-      <span class="material-symbols-outlined" style="font-size:16px">delete</span><span data-i18n="btn.cancel">Hủy đơn</span>
+      <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">delete</span><span data-i18n="btn.cancel">Hủy
+        đơn</span>
     </button>
     <button class="btn btn-accent" onclick="OrderPage.saveOrder()">
-      <span class="material-symbols-outlined" style="font-size:16px">save</span><span data-i18n="btn.save">Lưu đơn</span>
+      <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">save</span><span data-i18n="btn.save">Lưu
+        đơn</span>
     </button>
   </div>
 </div>
 
 <!-- Header đơn -->
 <div class="card" style="margin-bottom: 24px">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; cursor: pointer;" onclick="document.getElementById('header-info-body').style.display = document.getElementById('header-info-body').style.display === 'none' ? 'grid' : 'none'; this.querySelector('.icon-toggle').textContent = document.getElementById('header-info-body').style.display === 'none' ? 'expand_more' : 'expand_less';">
-    <div style="font-weight: 700; font-size: 16px; color: var(--primary);">
-      <span class="material-symbols-outlined" style="vertical-align: bottom; font-size: 20px; margin-right: 4px;">receipt_long</span>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; cursor: pointer;"
+    onclick="document.getElementById('header-info-body').style.display = document.getElementById('header-info-body').style.display === 'none' ? 'grid' : 'none'; this.querySelector('.icon-toggle').textContent = document.getElementById('header-info-body').style.display === 'none' ? 'expand_more' : 'expand_less';">
+    <div style="font-weight: 700; font-size: calc(16px * var(--text-scale, 1)); color: var(--primary);">
+      <span class="material-symbols-outlined"
+        style="vertical-align: bottom; font-size: calc(20px * var(--text-scale, 1)); margin-right: 4px;">receipt_long</span>
       <span data-i18n="order.info">Thông tin chung</span>
     </div>
     <span class="material-symbols-outlined icon-toggle" style="color:var(--muted)">expand_less</span>
@@ -31,8 +35,10 @@
         <option value="Chi nhánh HCM" data-i18n="order.branch.hcm">Chi nhánh HCM</option>
       </select>
     </div>
-    <div class="form-group"><label data-i18n="order.staff">Nhân viên KD</label><input id="o-nv" placeholder="Tên nhân viên..." data-i18n-placeholder="order.staff.placeholder"></div>
-    <div class="form-group"><label><span data-i18n="order.promo">CTKM</span> <span style="color:var(--accent)">*</span></label>
+    <div class="form-group"><label data-i18n="order.staff">Nhân viên KD</label><input id="o-nv"
+        placeholder="Tên nhân viên..." data-i18n-placeholder="order.staff.placeholder"></div>
+    <div class="form-group"><label><span data-i18n="order.promo">CTKM</span> <span
+          style="color:var(--accent)">*</span></label>
       <select id="o-ctbh"></select>
     </div>
     <div class="form-group span2"><label data-i18n="order.note">Ghi chú chung</label>
@@ -42,54 +48,60 @@
 </div>
 <!-- Thông tin khách hàng -->
 <div class="card" style="margin-bottom: 24px">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; cursor: pointer;" onclick="document.getElementById('customer-info-body').style.display = document.getElementById('customer-info-body').style.display === 'none' ? 'grid' : 'none'; this.querySelector('.icon-toggle').textContent = document.getElementById('customer-info-body').style.display === 'none' ? 'expand_more' : 'expand_less';">
-    <div style="font-weight: 700; font-size: 16px; color: var(--primary);">
-      <span class="material-symbols-outlined" style="vertical-align: bottom; font-size: 20px; margin-right: 4px;">person</span>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; cursor: pointer;"
+    onclick="document.getElementById('customer-info-body').style.display = document.getElementById('customer-info-body').style.display === 'none' ? 'grid' : 'none'; this.querySelector('.icon-toggle').textContent = document.getElementById('customer-info-body').style.display === 'none' ? 'expand_more' : 'expand_less';">
+    <div style="font-weight: 700; font-size: calc(16px * var(--text-scale, 1)); color: var(--primary);">
+      <span class="material-symbols-outlined"
+        style="vertical-align: bottom; font-size: calc(20px * var(--text-scale, 1)); margin-right: 4px;">person</span>
       <span data-i18n="order.customer_info">Thông tin Khách hàng</span>
     </div>
     <span class="material-symbols-outlined icon-toggle" style="color:var(--muted)">expand_less</span>
   </div>
   <div class="form-grid" id="customer-info-body">
-    <div class="form-group span2"><label><span data-i18n="order.customer_name">Tên khách hàng / Đại lý</span> <span style="color:var(--accent)">*</span></label><input id="o-kh-ten" placeholder="Nhập tên khách hàng..." data-i18n-placeholder="order.customer_name.placeholder"></div>
-    <div class="form-group"><label data-i18n="order.customer_phone">Số điện thoại</label><input id="o-kh-sdt" placeholder="Nhập số điện thoại..." data-i18n-placeholder="order.customer_phone.placeholder"></div>
-    <div class="form-group span3"><label data-i18n="order.customer_address">Địa chỉ giao hàng</label><input id="o-kh-dc" placeholder="Nhập địa chỉ giao hàng..." data-i18n-placeholder="order.customer_address.placeholder"></div>
+    <div class="form-group span2"><label><span data-i18n="order.customer_name">Tên khách hàng / Đại lý</span> <span
+          style="color:var(--accent)">*</span></label><input id="o-kh-ten" placeholder="Nhập tên khách hàng..."
+        data-i18n-placeholder="order.customer_name.placeholder"></div>
+    <div class="form-group"><label data-i18n="order.customer_phone">Số điện thoại</label><input id="o-kh-sdt"
+        placeholder="Nhập số điện thoại..." data-i18n-placeholder="order.customer_phone.placeholder"></div>
+    <div class="form-group span3"><label data-i18n="order.customer_address">Địa chỉ giao hàng</label><input id="o-kh-dc"
+        placeholder="Nhập địa chỉ giao hàng..." data-i18n-placeholder="order.customer_address.placeholder"></div>
   </div>
 </div>
 
 <!-- Ma trận size -->
 <div class="card">
-  <div class="matrix-search" style="margin-bottom:16px">
-    <div class="autocomplete-wrap" style="flex:1">
+  <div class="matrix-search" style="margin-bottom:16px; display:flex; gap:8px;">
+    <div class="autocomplete-wrap" style="flex:1; position:relative;">
       <div class="search-wrapper" style="width: 100%;">
         <span class="material-symbols-outlined">search</span>
-        <input id="ac-input" placeholder="Nhập Tên hàng 2 (VD: AMC545S659)..." data-i18n-placeholder="order.search.placeholder" autocomplete="off"
-          oninput="OrderPage.acSearch(this.value)" onfocus="OrderPage.acSearch(this.value)" onclick="OrderPage.acSearch(this.value)" onkeydown="if(event.key==='Enter')OrderPage.addProductRow()">
+        <input id="ac-input" placeholder="Nhập Tên hàng 2 (VD: AMC545S659)..."
+          data-i18n-placeholder="order.search.placeholder" autocomplete="off" oninput="OrderPage.acSearch(this.value)"
+          onfocus="OrderPage.acSearch(this.value)" onclick="OrderPage.acSearch(this.value)"
+          onkeydown="if(event.key==='Enter')OrderPage.addProductRow()">
       </div>
-      <div class="autocomplete-dropdown" id="ac-list"></div>
+      <div class="autocomplete-dropdown" id="ac-list" style="z-index: 9999;"></div>
     </div>
-    <button id="btn-multi-mode" class="btn btn-ghost" onclick="OrderPage.toggleMultiMode()" title="Chế độ chọn nhiều" style="padding:0 12px; border: 1px solid var(--border)">
-      <span class="material-symbols-outlined" id="icon-multi-mode" style="font-size:20px; color:var(--muted)">checklist</span>
+    <button id="btn-multi-mode" class="btn btn-ghost" onclick="OrderPage.toggleMultiMode()" title="Chế độ chọn nhiều"
+      style="padding:0 12px; border: 1px solid var(--border); display:flex; align-items:center; justify-content:center;">
+      <span class="material-symbols-outlined" id="icon-multi-mode"
+        style="font-size: calc(20px * var(--text-scale, 1)); color:var(--muted)">checklist</span>
     </button>
   </div>
-  <div class="tbl-wrap">
-    <table id="matrix-table">
-      <thead id="matrix-head"></thead>
-      <tbody id="matrix-body">
-        <tr>
-          <td colspan="20" class="empty-state">
-            <span class="material-symbols-outlined">table_chart</span>
-            <span data-i18n="order.search.empty">Tìm và thêm sản phẩm để bắt đầu nhập số lượng</span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <div id="matrix-container" style="display:flex; flex-direction:column; gap:16px;">
+    <div class="empty-state" style="background:var(--surface); border-radius:12px; padding:32px; border:1px solid var(--border);">
+      <span class="material-symbols-outlined">table_chart</span>
+      <span data-i18n="order.search.empty">Tìm và thêm sản phẩm để bắt đầu nhập số lượng</span>
+    </div>
   </div>
   <div class="matrix-footer">
     <div class="total-info">
-      <span data-i18n="order.total.qty">Tổng SP</span>: <span id="total-qty" style="color: var(--primary);">0</span> &nbsp;·&nbsp; <span id="total-money" style="color: var(--primary);">0đ</span>
+      <span data-i18n="order.total.qty">Tổng SP</span>: <span id="total-qty" style="color: var(--primary);">0</span>
+      <span style="margin: 0 12px; color: var(--border-strong);">|</span>
+      <span data-i18n="order.total.money">Thành tiền</span>: <span id="total-money" style="color: var(--accent); font-weight: 800; font-size: calc(22px * var(--text-scale, 1));">0đ</span>
     </div>
     <button class="btn btn-accent" onclick="OrderPage.previewOrder()">
-      <span class="material-symbols-outlined" style="font-size:16px">visibility</span><span data-i18n="btn.preview">Xem trước</span>
+      <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">visibility</span><span data-i18n="btn.preview">Xem
+        trước</span>
     </button>
   </div>
 </div>
@@ -103,7 +115,7 @@
           class="material-symbols-outlined">close</span></button>
     </div>
     <div id="preview-info"
-      style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:13px;margin-bottom:12px"></div>
+      style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size: calc(13px * var(--text-scale, 1));margin-bottom:12px"></div>
     <div class="tbl-wrap" style="max-height:360px;overflow-y:auto">
       <table>
         <thead id="preview-head">
@@ -116,7 +128,8 @@
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('modal-preview')" data-i18n="btn.close">Đóng</button>
       <button class="btn btn-accent" onclick="OrderPage.saveOrder()">
-        <span class="material-symbols-outlined" style="font-size:16px">save</span><span data-i18n="btn.save">Lưu đơn</span>
+        <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">save</span><span data-i18n="btn.save">Lưu
+          đơn</span>
       </button>
     </div>
   </div>

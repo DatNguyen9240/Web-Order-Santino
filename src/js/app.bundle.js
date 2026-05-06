@@ -734,10 +734,14 @@ const Utils = (function () {
     return new Intl.NumberFormat('vi-VN').format(n) + 'đ';
   }
 
-  // AMC545S659 + 40 → AMC40545S659
+  // Cập nhật Blueprint v2.0: Validation an toàn
   function buildSKU(ten_hang_2, size) {
-    const brand = ten_hang_2.match(/^[A-Z]+/)[0];
-    const rest  = ten_hang_2.slice(brand.length);
+    if (!ten_hang_2) return 'INVALID_SKU';
+    const clean_ten = ten_hang_2.trim();
+    const match = clean_ten.match(/^[A-Z]+/);
+    if (!match) return `INVALID_${clean_ten}_${size}`;
+    const brand = match[0];
+    const rest = clean_ten.slice(brand.length);
     return `${brand}${size}${rest}`;
   }
 
@@ -1073,6 +1077,10 @@ document.addEventListener('DOMContentLoaded', function () {
   } else {
     document.documentElement.classList.remove('dark-theme');
   }
+  
+  var zoom = localStorage.getItem('santino_zoom');
+  if (zoom === null) zoom = '115';
+  document.documentElement.style.setProperty('--text-scale', (parseInt(zoom)/100).toString());
 
   var font = localStorage.getItem('santino_font');
   if(font) document.documentElement.style.setProperty('--font', '"' + font + '", sans-serif');
@@ -1096,6 +1104,7 @@ function toggleTheme() {
   var isDark = document.documentElement.classList.toggle('dark-theme');
   localStorage.setItem('santino_theme', isDark ? 'dark' : 'light');
 }
+
 
 function showToast(msg, ok) {
   if (ok === undefined) ok = true;
