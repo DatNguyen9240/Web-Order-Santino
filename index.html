@@ -12,7 +12,7 @@
     rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
   <!-- BUNDLED CSS -->
-  <link rel="stylesheet" href="src/css/styles.bundle.css?v=17">
+  <link rel="stylesheet" href="src/css/styles.bundle.css?v=25">
   <script>(function () { if (localStorage.getItem('santino_theme') === 'dark') document.documentElement.classList.add('dark-theme') })();</script>
 </head>
 
@@ -59,8 +59,8 @@
     </header>
 
     <!-- SIDEBAR -->
-    <aside class="sidebar">
-      <div class="logo" style="cursor:pointer;" onclick="location.hash='#/order'">
+    <aside class="sidebar" id="sidebar">
+      <div class="logo" onclick="location.hash='#/order'; if(window.innerWidth <= 1024) { document.querySelector('.sidebar').classList.remove('show'); document.querySelector('.sidebar-overlay').classList.remove('show'); }" style="cursor:pointer;">
         <img src="images/logo.png" alt="SANTINO" class="app-logo" style="height: 40px;">
       </div>
       <div class="nav-group" data-i18n="nav.group.order">Hệ thống đặt hàng</div>
@@ -133,7 +133,7 @@
   </div>
 
   <!-- BUNDLED JS -->
-  <script src="src/js/app.bundle.js?v=17"></script>
+  <script src="src/js/app.bundle.js?v=25"></script>
   <script>
     function toggleSidebar() {
       document.querySelector('.sidebar').classList.toggle('show');

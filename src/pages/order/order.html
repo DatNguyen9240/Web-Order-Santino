@@ -23,7 +23,7 @@
   <div style="display:flex; justify-content:space-between; align-items:center;">
     <div style="display:flex; align-items:center; gap:16px;">
       <div
-        style="background:var(--primary); color:white; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+        style="background:var(--primary); color:var(--primary-fg); width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center;">
         <span class="material-symbols-outlined">person_add</span>
       </div>
       <div>
@@ -182,11 +182,6 @@
       </div>
       <div class="autocomplete-dropdown" id="ac-list" style="z-index: 9999;"></div>
     </div>
-    <button id="btn-multi-mode" class="btn btn-ghost" onclick="OrderPage.toggleMultiMode()" title="Chế độ chọn nhiều"
-      style="padding:0 12px; border: 1px solid var(--border); display:flex; align-items:center; justify-content:center;">
-      <span class="material-symbols-outlined" id="icon-multi-mode"
-        style="font-size: calc(20px * var(--text-scale, 1)); color:var(--muted)">checklist</span>
-    </button>
   </div>
   <div id="matrix-container" style="display:flex; flex-direction:column; gap:16px;">
     <div class="empty-state"

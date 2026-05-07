@@ -1,6 +1,5 @@
 var OrderPage = (function () {
   var orderRows = [];
-  var isMultiMode = false;
   var multiSelectedCodes = {};
 
   function render($el) {
@@ -28,12 +27,7 @@ var OrderPage = (function () {
 
     renderMatrix();
     document.addEventListener('click', function (e) {
-      if (!e.target.closest('.autocomplete-wrap') && !e.target.closest('#btn-multi-mode')) {
-        if (isMultiMode) return;
-        if (window.innerWidth <= 1024) return; // Prevent closing on outside click for mobile
-        var acList = document.getElementById('ac-list');
-        if (acList) acList.classList.remove('show');
-      }
+      // In default multi-mode, user must explicitly click "Hủy" or "Thêm đã chọn"
     });
   }
 
@@ -56,26 +50,6 @@ var OrderPage = (function () {
     }
   }
 
-  function toggleMultiMode() {
-    isMultiMode = !isMultiMode;
-    var btn = document.getElementById('btn-multi-mode');
-    var icon = document.getElementById('icon-multi-mode');
-    if (isMultiMode) {
-      btn.classList.add('btn-primary');
-      btn.classList.remove('btn-ghost');
-      btn.style.borderColor = 'transparent';
-      icon.style.color = 'var(--primary-fg)';
-    } else {
-      btn.classList.remove('btn-primary');
-      btn.classList.add('btn-ghost');
-      btn.style.borderColor = 'var(--border)';
-      icon.style.color = 'var(--muted)';
-      multiSelectedCodes = {};
-    }
-    var val = document.getElementById('ac-input').value;
-    if (val) acSearch(val);
-  }
-
   function acSearch(val) {
     var btnClear = document.getElementById('ac-clear');
     if (btnClear) btnClear.style.display = val ? 'block' : 'none';
@@ -91,39 +65,26 @@ var OrderPage = (function () {
       return;
     }
 
-    var html = '<div class="ac-header"><div class="ac-col-1">SẢN PHẨM</div><div class="ac-col-2">FORM</div><div class="ac-col-3" style="text-align:center">TỒN</div><div class="ac-col-3">ĐƠN GIÁ</div></div>';
-    if (isMultiMode) {
-      html += prods.slice(0, 8).map(function (p) {
-        var isChecked = multiSelectedCodes[p.ten_hang_2] ? 'checked' : '';
-        var brand = p.ten_hang_2.match(/^[A-Z]+/); brand = brand ? brand[0] : '';
-        var stock = p.ton_kho !== undefined ? p.ton_kho : (Math.floor(Math.random() * 50) + 10);
-        var stockColor = stock > 20 ? 'var(--success)' : 'var(--accent)';
-        return '<div class="ac-table-row" onclick="OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
-          '<input type="checkbox" ' + isChecked + ' style="margin-right:12px; cursor:pointer; flex-shrink:0" id="chk-' + p.ten_hang_2 + '" value="' + p.ten_hang_2 + '" onclick="event.stopPropagation(); OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
-          '<div class="ac-col-1"><strong>' + p.ten_hang_2 + '</strong><div style="font-size:calc(12px * var(--text-scale,1)); color:var(--muted);"><span class="ac-desc">' + p.ten_hang_hoa + '</span> - <small>' + p.mau + '</small></div></div>' +
-          '<div class="ac-col-2"><span class="ac-form-badge">' + brand + '</span></div>' +
-          '<div class="ac-col-3" style="text-align:center; font-weight:700; color:' + stockColor + '">' + stock + '</div>' +
-          '<div class="ac-col-3">' + Utils.formatMoney(p.don_gia) + '</div>' +
-          '</div>';
-      }).join('');
+    var html = '<div class="ac-header"><div style="width:24px; margin-right:12px; flex-shrink:0"></div><div class="ac-col-1" style="flex:1; min-width:0">SẢN PHẨM</div><div class="ac-col-2" style="flex:none; width:45px">FORM</div><div class="ac-col-3" style="flex:none; width:26px; text-align:center">TỒN</div><div class="ac-col-3" style="flex:none; width:75px; text-align:right">ĐƠN GIÁ</div></div>';
 
-      html += '<div class="ac-actions" style="display:flex;gap:8px;padding:12px;border-top:1px solid var(--border);background:var(--surface);position:sticky;bottom:-8px;margin:0 -8px -8px -8px;z-index:10;border-radius:0 0 12px 12px">' +
-        '<button class="btn btn-ghost btn-sm" style="flex:1" onclick="OrderPage.closeAc()">Hủy</button>' +
-        '<button id="btn-add-multi" class="btn btn-primary btn-sm" style="flex:1" onclick="OrderPage.addSelectedProds()">Thêm đã chọn</button>' +
+    html += prods.slice(0, 8).map(function (p) {
+      var isChecked = multiSelectedCodes[p.ten_hang_2] ? 'checked' : '';
+      var brand = p.ten_hang_2.match(/^[A-Z]+/); brand = brand ? brand[0] : '';
+      var stock = p.ton_kho !== undefined ? p.ton_kho : (Math.floor(Math.random() * 50) + 10);
+      var stockColor = stock > 20 ? 'var(--success)' : 'var(--accent)';
+      return '<div class="ac-table-row" onclick="OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
+        '<input type="checkbox" ' + isChecked + ' style="margin-right:12px; cursor:pointer; flex-shrink:0" id="chk-' + p.ten_hang_2 + '" value="' + p.ten_hang_2 + '" onclick="event.stopPropagation(); OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
+        '<div class="ac-col-1" style="flex:1; min-width:0; padding-right:4px;"><strong>' + p.ten_hang_2 + '</strong><div style="font-size:calc(12px * var(--text-scale,1)); color:var(--muted); white-space:normal; line-height:1.2"><span class="ac-desc">' + p.ten_hang_hoa + '</span> - <small>' + p.mau + '</small></div></div>' +
+        '<div class="ac-col-2" style="flex:none; width:45px"><span class="ac-form-badge">' + brand + '</span></div>' +
+        '<div class="ac-col-3" style="flex:none; width:26px; text-align:center; font-weight:700; color:' + stockColor + '">' + stock + '</div>' +
+        '<div class="ac-col-3" style="flex:none; width:75px; text-align:right">' + Utils.formatMoney(p.don_gia) + '</div>' +
         '</div>';
-    } else {
-      html += prods.slice(0, 8).map(function (p) {
-        var brand = p.ten_hang_2.match(/^[A-Z]+/); brand = brand ? brand[0] : '';
-        var stock = p.ton_kho !== undefined ? p.ton_kho : (Math.floor(Math.random() * 50) + 10);
-        var stockColor = stock > 20 ? 'var(--success)' : 'var(--accent)';
-        return '<div class="ac-table-row" onclick="OrderPage.selectAcSingle(\'' + p.ten_hang_2 + '\')">' +
-          '<div class="ac-col-1"><strong>' + p.ten_hang_2 + '</strong><div style="font-size:calc(12px * var(--text-scale,1)); color:var(--muted);"><span class="ac-desc">' + p.ten_hang_hoa + '</span> - <small>' + p.mau + '</small></div></div>' +
-          '<div class="ac-col-2"><span class="ac-form-badge">' + brand + '</span></div>' +
-          '<div class="ac-col-3" style="text-align:center; font-weight:700; color:' + stockColor + '">' + stock + '</div>' +
-          '<div class="ac-col-3">' + Utils.formatMoney(p.don_gia) + '</div>' +
-          '</div>';
-      }).join('');
-    }
+    }).join('');
+
+    html += '<div class="ac-actions" style="display:flex;gap:8px;padding:12px;border-top:1px solid var(--border);background:var(--surface);position:sticky;bottom:-8px;margin:0 -8px -8px -8px;z-index:10;border-radius:0 0 12px 12px">' +
+      '<button class="btn btn-ghost btn-sm" style="flex:1" onclick="OrderPage.closeAc()">Hủy</button>' +
+      '<button id="btn-add-multi" class="btn btn-primary btn-sm" style="flex:1" onclick="OrderPage.addSelectedProds()">Thêm đã chọn</button>' +
+      '</div>';
     list.innerHTML = html;
     list.classList.add('show');
   }
@@ -379,7 +340,7 @@ var OrderPage = (function () {
   return {
     render: render, acSearch: acSearch, toggleAcSelect: toggleAcSelect, closeAc: closeAc,
     addSelectedProds: addSelectedProds, addProductRow: addProductRow, selectAcSingle: selectAcSingle,
-    toggleMultiMode: toggleMultiMode, updateQty: updateQty, removeRow: removeRow, previewOrder: previewOrder,
+    updateQty: updateQty, removeRow: removeRow, previewOrder: previewOrder,
     saveOrder: saveOrder, clearOrder: clearOrder, clearSearch: clearSearch,
     updateInfoSummary: updateInfoSummary, calcChange: calcChange
   };
