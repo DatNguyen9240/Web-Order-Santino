@@ -2700,4 +2700,19 @@ tbody tr:hover td {
   }
 }
 
+/* ---- Toast Mobile Centering ---- */
+@media (max-width: 768px) {
+  .toast {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    width: 90%;
+    max-width: 400px;
+    justify-content: center;
+  }
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
 
