@@ -2587,3 +2587,19 @@ tbody tr:hover td {
     grid-column: span 2 !important;
   }
 }
+
+/* Force native scroll on MOBILE ONLY */
+@media (max-width: 1024px) {
+  .layout {
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow: visible !important;
+  }
+  .main {
+    overflow: visible !important;
+    height: auto !important;
+  }
+  .navbar, #sidebar-header {
+    position: static !important;
+  }
+}
