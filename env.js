@@ -2,9 +2,11 @@
  * SANTINO B2B — CẤU HÌNH HỆ THỐNG
  * Chỉnh sửa file này khi cần thay đổi URL server (không cần build lại)
  */
+const isVercel = window.location.hostname.includes('vercel.app');
 const ENV_VARS = {
-    // Tạm thời để rỗng hoặc trỏ về localhost nếu đang dev
-    API_BASE: 'https://stntest.bms79.com/api',
+    // Nếu chạy trên Vercel, dùng Proxy (rewrites) để tránh lỗi HTTPS gọi HTTP (Mixed Content).
+    // Nếu chạy ở localhost, dùng trực tiếp IP/Domain HTTP.
+    API_BASE: isVercel ? '/api' : 'http://stntest.bms79.com/api',
 };
 
 window.API_CONFIG = {
