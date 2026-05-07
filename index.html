@@ -60,7 +60,7 @@
 
     <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
-      <div class="logo" onclick="location.hash='#/order'; if(window.innerWidth <= 1024) { document.querySelector('.sidebar').classList.remove('show'); document.querySelector('.sidebar-overlay').classList.remove('show'); }" style="cursor:pointer;">
+      <div class="logo" onclick="location.hash='#/order'; if(window.innerWidth <= 1024) { document.querySelector('.sidebar').classList.remove('show'); document.querySelector('.sidebar-overlay').classList.remove('show'); document.body.style.overflow=''; }" style="cursor:pointer;">
         <img src="images/logo.png" alt="SANTINO" class="app-logo" style="height: 40px;">
       </div>
       <div class="nav-group" data-i18n="nav.group.order">Hệ thống đặt hàng</div>
@@ -133,11 +133,15 @@
   </div>
 
   <!-- BUNDLED JS -->
-  <script src="src/js/app.bundle.js?v=28"></script>
+  <script src="src/js/app.bundle.js?v=29"></script>
   <script>
     function toggleSidebar() {
-      document.querySelector('.sidebar').classList.toggle('show');
+      var sidebar = document.querySelector('.sidebar');
+      sidebar.classList.toggle('show');
       document.querySelector('.sidebar-overlay').classList.toggle('show');
+      if (window.innerWidth <= 1024) {
+        document.body.style.overflow = sidebar.classList.contains('show') ? 'hidden' : '';
+      }
     }
     // Auto-close menu when clicking nav items on mobile
     document.querySelectorAll('.sidebar .nav-item').forEach(el => {
@@ -145,6 +149,7 @@
         if (window.innerWidth <= 1024) {
           document.querySelector('.sidebar').classList.remove('show');
           document.querySelector('.sidebar-overlay').classList.remove('show');
+          document.body.style.overflow = '';
         }
       });
     });
