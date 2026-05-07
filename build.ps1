@@ -11,6 +11,7 @@ $cssFiles = @(
 
 # ====== DANH SACH JS (Core + Components + Data) ======
 $jsFiles = @(
+  "data\translations.js",
   "js\http.js",
   "js\services\product.service.js",
   "js\services\order.service.js",

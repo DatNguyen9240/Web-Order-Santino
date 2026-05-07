@@ -1,6 +1,6 @@
 var OrderPage = (function () {
   var orderRows = [];
-  var multiSelectedCodes = {};
+  var multiSelectedCodes = [];
   var cachedProds = {};
   var cachedSizes = [];
 
@@ -75,12 +75,18 @@ var OrderPage = (function () {
     var html = '<div class="ac-header"><div style="width:24px; margin-right:12px; flex-shrink:0"></div><div class="ac-col-1">SẢN PHẨM</div><div class="ac-col-2" style="min-width:45px">FORM</div><div class="ac-col-3" style="min-width:26px; text-align:center">TỒN</div><div class="ac-col-3" style="min-width:75px">ĐƠN GIÁ</div></div>';
 
     html += prods.slice(0, 8).map(function (p) {
-      var isChecked = multiSelectedCodes[p.ten_hang_2] ? 'checked' : '';
+      var pos = multiSelectedCodes.indexOf(p.ten_hang_2);
+      var isChecked = pos !== -1 ? 'checked' : '';
+      var numDisplay = pos !== -1 ? 'flex' : 'none';
+      var numVal = pos !== -1 ? (pos + 1) : '';
       var brand = p.ten_hang_2.match(/^[A-Z]+/); brand = brand ? brand[0] : '';
       var stock = p.ton_kho !== undefined ? p.ton_kho : (Math.floor(Math.random() * 50) + 10);
       var stockColor = stock > 20 ? 'var(--success)' : 'var(--accent)';
       return '<div class="ac-table-row" onclick="OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
-        '<input type="checkbox" ' + isChecked + ' style="margin-right:12px; cursor:pointer; flex-shrink:0" id="chk-' + p.ten_hang_2 + '" value="' + p.ten_hang_2 + '" onclick="event.stopPropagation(); OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
+        '<div style="position:relative; margin-right:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">' +
+        '<input type="checkbox" class="chk-code" ' + isChecked + ' id="chk-' + p.ten_hang_2 + '" value="' + p.ten_hang_2 + '" onclick="event.stopPropagation(); OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')" style="margin:0; cursor:pointer;">' +
+        '<div class="chk-num" id="chk-num-' + p.ten_hang_2 + '" style="position:absolute; pointer-events:none; display:' + numDisplay + '; align-items:center; justify-content:center; width:100%; height:100%; background:var(--primary); color:white; font-size:11px; font-weight:bold; border-radius:3px;">' + numVal + '</div>' +
+        '</div>' +
         '<div class="ac-col-1" style="padding-right:4px;"><strong>' + p.ten_hang_2 + '</strong><div style="font-size:calc(12px * var(--text-scale,1)); color:var(--muted); white-space:normal; line-height:1.2"><span class="ac-desc">' + p.ten_hang_hoa + '</span> - <small>' + p.mau + '</small></div></div>' +
         '<div class="ac-col-2" style="min-width:45px"><span class="ac-form-badge">' + brand + '</span></div>' +
         '<div class="ac-col-3" style="min-width:26px; text-align:center; font-weight:700; color:' + stockColor + '">' + stock + '</div>' +
@@ -103,19 +109,42 @@ var OrderPage = (function () {
   }
 
   function toggleAcSelect(e, code) {
-    var chk = document.getElementById('chk-' + code);
     if (e && e.target.tagName !== 'INPUT') {
+      var chk = document.getElementById('chk-' + code);
       if (chk) chk.checked = !chk.checked;
     }
+    
+    var chk = document.getElementById('chk-' + code);
     if (chk) {
-      if (chk.checked) multiSelectedCodes[code] = true;
-      else delete multiSelectedCodes[code];
+      var idx = multiSelectedCodes.indexOf(code);
+      if (chk.checked && idx === -1) {
+        multiSelectedCodes.push(code);
+      } else if (!chk.checked && idx !== -1) {
+        multiSelectedCodes.splice(idx, 1);
+      }
     }
+    
+    document.querySelectorAll('.ac-table-row').forEach(function(row) {
+      var cCode = row.querySelector('.chk-code');
+      if (cCode) {
+        var cVal = cCode.value;
+        var numB = document.getElementById('chk-num-' + cVal);
+        var pos = multiSelectedCodes.indexOf(cVal);
+        if (pos !== -1) {
+          cCode.checked = true;
+          if(numB) { numB.textContent = (pos + 1); numB.style.display = 'flex'; }
+        } else {
+          cCode.checked = false;
+          if(numB) { numB.style.display = 'none'; }
+        }
+      }
+    });
+
     _updateMultiAddButton();
   }
 
   function _updateMultiAddButton() {
-    var count = Object.keys(multiSelectedCodes).length;
+    var count = multiSelectedCodes.length;
     var btn = document.getElementById('btn-add-multi');
     if (btn) {
       btn.innerHTML = count > 0 ? ('Thêm ' + count + ' sản phẩm') : 'Thêm đã chọn';
@@ -123,18 +152,19 @@ var OrderPage = (function () {
   }
 
   function closeAc() {
-    multiSelectedCodes = {};
+    multiSelectedCodes = [];
     document.getElementById('ac-list').classList.remove('show');
   }
 
   function addSelectedProds() {
-    var codes = Object.keys(multiSelectedCodes);
+    var codes = multiSelectedCodes;
     if (codes.length === 0) {
       showToast('Vui lòng chọn sản phẩm', false);
       return;
     }
     var added = 0;
-    codes.forEach(function (code) {
+    for (var i = codes.length - 1; i >= 0; i--) {
+      var code = codes[i];
       var prod = cachedProds[code];
       if (prod && !orderRows.find(function (r) { return r.ten_hang_2 === code; })) {
         var nhomSize = prod.nhom_size || prod.nhom_hang || prod.Nhom_hang || prod.NhomHang || 'Nhóm 1';
@@ -147,10 +177,10 @@ var OrderPage = (function () {
           return ns === nhomSize || ns === mappedNhomSize; 
         }).sort(function (a, b) { return (a.stt || a.STT || 0) - (b.stt || b.STT || 0); });
         
-        orderRows.push({ ten_hang_2: code, product: prod, sizes: sizes, quantities: {} });
+        orderRows.unshift({ ten_hang_2: code, product: prod, sizes: sizes, quantities: {} });
         added++;
       }
-    });
+    }
     if (added > 0) { renderMatrix(); showToast('Đã thêm ' + added + ' sản phẩm'); }
     else { showToast('Sản phẩm đã có trong đơn', false); }
     document.getElementById('ac-input').value = '';
@@ -173,7 +203,7 @@ var OrderPage = (function () {
       return ns === nhomSize || ns === mappedNhomSize; 
     }).sort(function (a, b) { return (a.stt || a.STT || 0) - (b.stt || b.STT || 0); });
     
-    orderRows.push({ ten_hang_2: code, product: prod, sizes: sizes, quantities: {} });
+    orderRows.unshift({ ten_hang_2: code, product: prod, sizes: sizes, quantities: {} });
     document.getElementById('ac-input').value = '';
     acSearch('');
     renderMatrix();

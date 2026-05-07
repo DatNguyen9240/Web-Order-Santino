@@ -4,7 +4,7 @@
  */
 const ENV_VARS = {
     // Tạm thời để rỗng hoặc trỏ về localhost nếu đang dev
-    API_BASE: 'http://stntest.bms79.com/api',
+    API_BASE: 'https://stntest.bms79.com/api',
 };
 
 window.API_CONFIG = {

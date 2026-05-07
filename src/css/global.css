@@ -1130,34 +1130,7 @@ tbody tr:hover td {
   letter-spacing: -0.02em;
 }
 
-/* ---- Modal ---- */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(8px);
-  z-index: 10000;
-  display: none;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal-overlay.show {
-  display: flex;
-  animation: fadeIn 0.2s ease;
-}
-
-.modal {
-  background: var(--surface);
-  border-radius: 24px;
-  padding: 32px;
-  width: min(520px, 92vw);
-  max-height: 90dvh;
-  overflow-y: auto;
-  box-shadow: var(--shadow-lg);
-  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  border: 1px solid var(--border);
-}
+/* Modal CSS removed to deduplicate, see line 1687 */
 
 @keyframes slideUp {
   from {
@@ -1703,9 +1676,11 @@ tbody tr:hover td {
 
 .modal {
   background: var(--surface);
-  border-radius: 24px;
-  padding: 32px;
-  width: min(520px, 92vw);
+  border-radius: 12px;
+  padding: 24px;
+  width: min(1000px, 98vw);
+  max-height: 90dvh;
+  overflow-y: auto;
   box-shadow: var(--shadow-lg);
   animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   border: 1px solid var(--border);
@@ -1788,7 +1763,7 @@ tbody tr:hover td {
 
   .bottom-sheet-modal {
     width: 100vw;
-    border-radius: 24px 24px 0 0;
+    border-radius: 16px 16px 0 0;
     margin: 0;
     padding: 24px 20px;
     padding-bottom: max(24px, env(safe-area-inset-bottom));
