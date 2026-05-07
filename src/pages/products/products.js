@@ -7,9 +7,8 @@ var ProductsPage = (function () {
   function _render() {
     var q = (document.getElementById('product-search') || {}).value || '';
     var form = (document.getElementById('product-filter-form') || {}).value || '';
-    var prods = DB.getAll('products').filter(function (p) {
-      return (!q || p.ten_hang_2.toLowerCase().includes(q.toLowerCase()) || p.mau.toLowerCase().includes(q.toLowerCase())) && (!form || p.form === form);
-    });
+    var prods = []; // API chưa hỗ trợ hiển thị kho sản phẩm
+
     var tbody = document.getElementById('products-body');
     if (!prods.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><span class="material-symbols-outlined">inventory_2</span><span data-i18n="table.empty">' + t('table.empty') + '</span></td></tr>'; return; }
     tbody.innerHTML = prods.map(function (p) {
@@ -26,7 +25,7 @@ var ProductsPage = (function () {
     }).join('');
   }
   function openModal(id) {
-    var p = id ? DB.find('products', id) : null;
+    var p = null;
     document.getElementById('pm-title').textContent = p ? 'Sửa Sản Phẩm' : 'Thêm Sản Phẩm';
     document.getElementById('pm-id').value = p ? p.id : '';
     var ns = document.getElementById('pm-nhom-size');
@@ -63,7 +62,7 @@ var ProductsPage = (function () {
       ten_form: document.getElementById('pm-form').value === 'AMC' ? 'Modern Fit' : 'Regular'
     };
     if (!data.ten_hang_2) { showToast('Vui lòng nhập Tên hàng 2!', false); return; }
-    if (id) DB.update('products', id, data); else DB.add('products', data);
+    showToast('Chức năng sửa sản phẩm đã vô hiệu hóa (chưa có API)');
     closeModal('modal-product'); _render();
     showToast(id ? 'Đã cập nhật' : 'Đã thêm sản phẩm');
   }
@@ -74,7 +73,7 @@ var ProductsPage = (function () {
       confirmText: 'Xóa',
       confirmClass: 'btn-danger',
       onConfirm: function() {
-        DB.remove('products', id);
+        showToast('Chức năng xóa đã vô hiệu hóa (chưa có API)');
         _render();
         showToast('Đã xóa');
       }

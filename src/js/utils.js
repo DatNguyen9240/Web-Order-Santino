@@ -17,12 +17,15 @@ const Utils = (function () {
 
   // DH{MMYY}/{seq:04}
   function genOrderNo() {
-    const orders = DB.getAll('orders');
     const d = new Date();
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     const yy = String(d.getFullYear()).slice(2);
-    const seq = String(orders.length + 1).padStart(4, '0');
+    const seq = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
     return `DH${mm}${yy}/${seq}`;
+  }
+
+  function uuid() {
+    return 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
   }
 
   function today() {
@@ -33,5 +36,5 @@ const Utils = (function () {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  return { formatMoney, buildSKU, genOrderNo, today, escHtml };
+  return { formatMoney, buildSKU, genOrderNo, today, escHtml, uuid };
 })();

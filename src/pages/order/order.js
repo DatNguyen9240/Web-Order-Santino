@@ -1,6 +1,8 @@
 var OrderPage = (function () {
   var orderRows = [];
   var multiSelectedCodes = {};
+  var cachedProds = {};
+  var cachedSizes = [];
 
   function render($el) {
     return Router.fetchTemplate('src/pages/order/order.html')
@@ -10,7 +12,11 @@ var OrderPage = (function () {
       });
   }
 
-  function _init() {
+  async function _init() {
+    var resSizes = await ProductService.getSizes();
+    if (Array.isArray(resSizes) && resSizes.length > 0) {
+      cachedSizes = resSizes;
+    }
     document.getElementById('o-so-ct').value = Utils.genOrderNo();
     document.getElementById('o-ngay').value = Utils.today();
     document.getElementById('o-kh-ten').value = '';
@@ -20,8 +26,7 @@ var OrderPage = (function () {
     document.getElementById('o-kh-dc').value = '';
 
     var sel = document.getElementById('o-ctbh');
-    sel.innerHTML = DB.getAll('promotions').filter(function (p) { return p.active !== false; })
-      .map(function (p) { return '<option value="' + p.ma_ctbh + '">' + p.ma_ctbh + ' - ' + p.ten_ctbh + '</option>'; }).join('');
+    sel.innerHTML = '<option value="">-- Không áp dụng CTKM --</option>';
 
     if (sel.options.length > 0) sel.selectedIndex = 0;
 
@@ -50,15 +55,17 @@ var OrderPage = (function () {
     }
   }
 
-  function acSearch(val) {
+  async function acSearch(val) {
     var btnClear = document.getElementById('ac-clear');
     if (btnClear) btnClear.style.display = val ? 'block' : 'none';
 
     var list = document.getElementById('ac-list');
     if (!val || val.length < 2) { list.classList.remove('show'); return; }
-    var prods = DB.getAll('products').filter(function (p) {
-      return !p.ngung_su_dung && (p.ten_hang_2.toLowerCase().includes(val.toLowerCase()) || p.mau.toLowerCase().includes(val.toLowerCase()));
-    });
+
+    // Gọi API qua Service lấy sản phẩm
+    var prods = await ProductService.getProducts(val);
+    prods.forEach(function(p) { cachedProds[p.ten_hang_2] = p; });
+
     if (!prods.length) {
       list.innerHTML = '<div class="ac-item"><small>Không tìm thấy sản phẩm</small></div>';
       list.classList.add('show');
@@ -128,9 +135,18 @@ var OrderPage = (function () {
     }
     var added = 0;
     codes.forEach(function (code) {
-      var prod = DB.getAll('products').find(function (p) { return p.ten_hang_2 === code; });
+      var prod = cachedProds[code];
       if (prod && !orderRows.find(function (r) { return r.ten_hang_2 === code; })) {
-        var sizes = DB.getAll('sizes').filter(function (s) { return s.nhom_size === prod.nhom_size; }).sort(function (a, b) { return a.size - b.size; });
+        var nhomSize = prod.nhom_size || prod.nhom_hang || prod.Nhom_hang || prod.NhomHang || 'Nhóm 1';
+        // Map tự động từ CategoryID (nhom_hang) sang NhomSize nếu API thiếu trường nhom_size
+        var mapNhom = { 'TL': 'Nhóm 1', 'QA': 'Nhóm 2', 'SKU101': 'Nhóm 1', 'SKU102': 'Nhóm 3' };
+        var mappedNhomSize = mapNhom[nhomSize] || mapNhom[nhomSize.toUpperCase()] || 'Nhóm 1';
+
+        var sizes = cachedSizes.filter(function (s) { 
+          var ns = s.nhom_size || s.Nhom_size || s.NhomSize || s.nhomSize;
+          return ns === nhomSize || ns === mappedNhomSize; 
+        }).sort(function (a, b) { return (a.stt || a.STT || 0) - (b.stt || b.STT || 0); });
+        
         orderRows.push({ ten_hang_2: code, product: prod, sizes: sizes, quantities: {} });
         added++;
       }
@@ -145,10 +161,18 @@ var OrderPage = (function () {
   function addProductRow() {
     var code = document.getElementById('ac-input').value.trim();
     if (!code) { showToast('Vui lòng nhập sản phẩm', false); return; }
-    var prod = DB.getAll('products').find(function (p) { return p.ten_hang_2 === code; });
+    var prod = cachedProds[code];
     if (!prod) { showToast('Không tìm thấy sản phẩm ' + code, false); return; }
     if (orderRows.find(function (r) { return r.ten_hang_2 === code; })) { showToast('Sản phẩm đã có trong đơn', false); return; }
-    var sizes = DB.getAll('sizes').filter(function (s) { return s.nhom_size === prod.nhom_size; }).sort(function (a, b) { return a.size - b.size; });
+    var nhomSize = prod.nhom_size || prod.nhom_hang || prod.Nhom_hang || prod.NhomHang || 'Nhóm 1';
+    var mapNhom = { 'TL': 'Nhóm 1', 'QA': 'Nhóm 2', 'SKU101': 'Nhóm 1', 'SKU102': 'Nhóm 3' };
+    var mappedNhomSize = mapNhom[nhomSize] || mapNhom[nhomSize.toUpperCase()] || 'Nhóm 1';
+
+    var sizes = cachedSizes.filter(function (s) { 
+      var ns = s.nhom_size || s.Nhom_size || s.NhomSize || s.nhomSize;
+      return ns === nhomSize || ns === mappedNhomSize; 
+    }).sort(function (a, b) { return (a.stt || a.STT || 0) - (b.stt || b.STT || 0); });
+    
     orderRows.push({ ten_hang_2: code, product: prod, sizes: sizes, quantities: {} });
     document.getElementById('ac-input').value = '';
     acSearch('');
@@ -170,12 +194,13 @@ var OrderPage = (function () {
 
       var sizeRowsHtml = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 12px; margin-top: 16px;">';
       sizeRowsHtml += row.sizes.map(function (s) {
-        var qty = row.quantities[s.size] || '';
+        var sz = s.size || s.Size || s.ten_size || s.Ten_size || s.TenSize || s.tenSize || '?';
+        var qty = row.quantities[sz] || '';
         var isFilled = qty > 0;
         var boxClass = isFilled ? 'size-box filled' : 'size-box';
         return '<div class="' + boxClass + '">' +
-          '<div class="size-box-lbl">' + s.size + '</div>' +
-          '<input type="number" inputmode="numeric" min="0" placeholder="0" value="' + qty + '" oninput="OrderPage.updateQty(' + ri + ',' + s.size + ',this)">' +
+          '<div class="size-box-lbl">' + sz + '</div>' +
+          '<input type="number" inputmode="numeric" min="0" placeholder="0" value="' + qty + '" oninput="OrderPage.updateQty(' + ri + ',\'' + sz + '\',this)">' +
           '</div>';
       }).join('');
       sizeRowsHtml += '</div>';
@@ -187,7 +212,7 @@ var OrderPage = (function () {
         '<div style="font-size: 18px; font-weight:800; color:var(--primary); word-break: break-word;">' + row.ten_hang_2 + '</div>' +
         badgeHtml +
         '</div>' +
-        '<div style="font-size: 14px; color:var(--muted);">' + row.product.nhom_size + ' | ' + row.product.mau + ' | ' + Utils.formatMoney(row.product.don_gia) + '</div>' +
+        '<div style="font-size: 14px; color:var(--muted);">' + (row.product.nhom_size || row.product.nhom_hang || 'TL') + ' | ' + (row.product.mau || 'Không màu') + ' | ' + Utils.formatMoney(row.product.don_gia || 0) + '</div>' +
         '</div>' +
         '<div style="display:flex; gap:8px;">' +
         '<button class="btn-icon" onclick="OrderPage.removeRow(' + ri + ')" title="Xóa sản phẩm" style="color:var(--danger)"><span class="material-symbols-outlined">delete</span></button>' +
@@ -270,7 +295,7 @@ var OrderPage = (function () {
     var bodyHtml = lines.map(function (line) {
       totalQtyAll += line.so_luong;
       totalMoneyAll += line.thanh_tien;
-      
+
       return '<tr>' +
         '<td><strong>' + line.ten_hang_2 + '</strong></td>' +
         '<td><small>' + line.mau + '</small></td>' +
@@ -287,12 +312,14 @@ var OrderPage = (function () {
     openModal('modal-preview');
   }
 
-  function saveOrder() {
+  async function saveOrder() {
     var lines = _buildLines();
     var kh_ten = document.getElementById('o-kh-ten').value.trim();
     var ma_kh = document.getElementById('o-ma-kh').value.trim();
     if (!ma_kh) { showToast('Vui lòng nhập mã khách hàng', false); return; }
+
     var order = {
+      id: Utils.uuid(), // Generate ID
       so_ct: document.getElementById('o-so-ct').value,
       ngay_ct: document.getElementById('o-ngay').value,
       chi_nhanh: document.getElementById('o-chi-nhanh').value,
@@ -312,14 +339,25 @@ var OrderPage = (function () {
       ngay_tt: document.getElementById('o-ngay-tt').value,
       khach_dua: document.getElementById('o-khach-dua').value,
       ma_ctbh: document.getElementById('o-ctbh').value,
-      total_qty: lines.reduce((s, l) => s + l.so_luong, 0),
-      total_money: lines.reduce((s, l) => s + l.thanh_tien, 0),
+      total_qty: lines.reduce(function (s, l) { return s + l.so_luong; }, 0),
+      total_money: lines.reduce(function (s, l) { return s + l.thanh_tien; }, 0),
       lines: lines, created_at: new Date().toISOString()
     };
-    DB.add('orders', order);
-    closeModal('modal-preview');
-    showToast('Đã lưu đơn: ' + order.so_ct);
-    orderRows = []; _init();
+
+    if (!API_CONFIG.BASE_URL) {
+      showToast('Hệ thống đang chạy offline, không thể lưu đơn.', false);
+      return;
+    }
+
+    try {
+      await OrderService.createOrder(order);
+      closeModal('modal-preview');
+      showToast('Đã lưu đơn: ' + order.so_ct, true);
+      orderRows = []; _init();
+    } catch (err) {
+      console.warn('[OrderService] Lỗi tạo đơn qua API:', err);
+      showToast('Lỗi tạo đơn qua API. Vui lòng thử lại.', false);
+    }
   }
 
   function clearOrder() {

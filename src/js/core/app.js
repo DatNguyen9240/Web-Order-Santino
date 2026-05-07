@@ -3,8 +3,8 @@
  * Chạy sau khi tất cả scripts đã load
  */
 document.addEventListener('DOMContentLoaded', function () {
-  // 1. Seed data vào localStorage lần đầu
-  DB.initSeed();
+  // Cài đặt khởi tạo
+
 
   // 2. Khôi phục Cài đặt
   var theme = localStorage.getItem('santino_theme') || 'auto';

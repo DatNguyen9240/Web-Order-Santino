@@ -11,11 +11,9 @@ $cssFiles = @(
 
 # ====== DANH SACH JS (Core + Components + Data) ======
 $jsFiles = @(
-  "data\product_master.js",
-  "data\size_groups.js",
-  "data\promotions.js",
-  "data\translations.js",
-  "js\db.js",
+  "js\http.js",
+  "js\services\product.service.js",
+  "js\services\order.service.js",
   "js\utils.js",
   "components\confirm-modal\ConfirmModal.js",
   "components\modal\Modal.js",

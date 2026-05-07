@@ -4,9 +4,10 @@ var OrdersPage = (function () {
       $el.innerHTML = html; _render();
     });
   }
-  function _render(q) {
+  async function _render(q) {
     q = q || '';
-    var orders = DB.getAll('orders').filter(function(o){return !q||o.so_ct.includes(q);}).reverse();
+    var orders = [];
+    orders = orders.filter(function(o){return !q||o.so_ct.includes(q);}).reverse();
     var tbody = document.getElementById('orders-body');
     if(!orders.length){tbody.innerHTML='<tr><td colspan="8" class="empty-state"><span class="material-symbols-outlined">receipt_long</span><span data-i18n="orders.search.empty">' + t('orders.search.empty') + '</span></td></tr>';return;}
     tbody.innerHTML = orders.map(function(o){
@@ -29,8 +30,7 @@ var OrdersPage = (function () {
       confirmText: t('btn.delete'),
       confirmClass: 'btn-danger',
       onConfirm: function() {
-        DB.remove('orders', id);
-        _render();
+        showToast('Chức năng xóa đã vô hiệu hóa (chưa có API)');
         showToast(t('toast.order_deleted'));
       }
     });

@@ -152,7 +152,6 @@ var SettingsPage = (function () {
       confirmClass: 'btn-danger',
       onConfirm: function() {
         ['santino_products','santino_sizes','santino_promotions','santino_orders', 'santino_theme', 'santino_font', 'santino_color', 'santino_lang', 'santino_layout'].forEach(function(k){localStorage.removeItem(k);});
-        DB.initSeed();
         showToast(t('toast.reset_done'));
         setTimeout(function() { window.location.reload(); }, 1500);
       }

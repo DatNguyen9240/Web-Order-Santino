@@ -1,6 +1,7 @@
-/* --- design-tokens.css --- */
+﻿/* --- design-tokens.css --- */
 /* ============================================================
-   SANTINO B2B  Design Tokens
+   SANTINO B2B — Design Tokens
+   Chứa toàn bộ CSS variables. Import file này đầu tiên.
    ============================================================ */
 
 /* ---- Light Theme (Premium) ---- */
@@ -80,7 +81,7 @@
 
 /* --- global.css --- */
 /* ============================================================
-   SANTINO B2B � Global Styles
+   SANTINO B2B — Global Styles
    Requires: design-tokens.css loaded before this file.
    ============================================================ */
 
@@ -203,7 +204,7 @@ button {
   height: var(--header-h);
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  position: sticky;
+  
   top: 0;
   z-index: 100;
   box-shadow: var(--shadow-sm);
@@ -319,9 +320,14 @@ button {
 }
 
 .header-title {
-  font-size: calc(18px * var(--text-scale, 1));
+  
   font-weight: 700;
   color: var(--text);
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: calc(15px * var(--text-scale, 1));
 }
 
 .header-actions {
@@ -656,6 +662,11 @@ button {
   font-size: 18px;
   font-weight: 700;
   color: var(--text);
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: calc(15px * var(--text-scale, 1));
 }
 
 .header-actions {
@@ -1178,7 +1189,14 @@ tbody tr:hover td {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
-  padding: 20px 0 0;
+  padding: 16px 20px;
+  margin: 20px -20px -20px -20px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  
+  z-index: 10;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
 }
 
 .total-info {
@@ -1602,7 +1620,7 @@ tbody tr:hover td {
   font-weight: 500;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .autocomplete-dropdown {
     width: 100%;
     min-width: 100%;
@@ -1725,7 +1743,14 @@ tbody tr:hover td {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
-  padding: 20px 0 0;
+  padding: 16px 20px;
+  margin: 20px -20px -20px -20px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  
+  z-index: 10;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
 }
 
 .total-info {
@@ -1830,6 +1855,15 @@ tbody tr:hover td {
 }
 
 @media (max-width: 600px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .span2,
+  .span3 {
+    grid-column: span 1;
+  }
+
   .modal-overlay {
     align-items: flex-end;
   }
@@ -2147,15 +2181,6 @@ tbody tr:hover td {
     border-right: none !important;
   }
 
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .span2,
-  .span3 {
-    grid-column: span 1;
-  }
-
   .header {
     padding: 0 16px;
     height: var(--header-h) !important;
@@ -2199,13 +2224,8 @@ tbody tr:hover td {
     font-size: calc(22px * var(--text-scale, 1));
   }
 
-  .modal {
-    width: 98vw !important;
-    padding: 20px 12px;
-  }
-
   .modal-hdr h3 {
-    font-size: calc(18px * var(--text-scale, 1));
+    
   }
 
   thead th {
@@ -2353,7 +2373,6 @@ tbody tr:hover td {
   color: var(--accent);
   font-weight: 600;
 }
-
 .ac-form-badge {
   background: #e3f2fd;
   color: #1976d2;
@@ -2361,6 +2380,85 @@ tbody tr:hover td {
   border-radius: 12px;
   font-size: calc(11px * var(--text-scale, 1));
   font-weight: 700;
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+@media (max-width: 480px) {
+  .ac-header { display: none; }
+  .ac-table-row {
+    display: grid !important;
+    grid-template-columns: 24px auto auto 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 4px 6px;
+    padding: 10px 12px;
+    align-items: center;
+  }
+  .ac-table-row > input[type="checkbox"] {
+    grid-column: 1;
+    grid-row: 1 / 3;
+    margin: 0 !important;
+  }
+  
+  .ac-col-1 { display: contents; }
+  
+  .ac-col-1 > strong {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  
+  .ac-col-1 > div {
+    grid-column: 2 / 5;
+    grid-row: 2;
+    font-size: 12px !important;
+    line-height: 1.3 !important;
+    color: var(--muted);
+  }
+  
+  .ac-col-2 {
+    grid-column: 3;
+    grid-row: 1;
+    margin: 0 !important;
+    text-align: left !important;
+    min-width: 0 !important;
+  }
+  .ac-col-2::before { content: none; }
+  .ac-form-badge {
+    padding: 2px 6px;
+    font-size: 10px;
+    max-width: 70px;
+  }
+  
+  .ac-col-3:nth-child(4) {
+    grid-column: 5;
+    grid-row: 1;
+    text-align: right !important;
+    min-width: 0 !important;
+    display: block;
+    font-size: 13px !important;
+  }
+  .ac-col-3:nth-child(4)::before {
+    content: "SL: ";
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: normal;
+  }
+  
+  .ac-col-3:last-child {
+    grid-column: 5;
+    grid-row: 2;
+    text-align: right !important;
+    min-width: 0 !important;
+    display: block;
+    font-size: 13px !important;
+  }
+  .ac-col-3:last-child::before { content: none; }
 }
 
 .autocomplete-dropdown {
@@ -2405,7 +2503,7 @@ tbody tr:hover td {
 }
 
 /* --- HEAD overrides --- */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   :root {
     --sidebar-w: 0px;
   }
@@ -2463,15 +2561,6 @@ tbody tr:hover td {
     border-radius: 0 !important;
     border-left: none !important;
     border-right: none !important;
-  }
-
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .span2,
-  .span3 {
-    grid-column: span 1;
   }
 
   .header {
@@ -2577,16 +2666,46 @@ tbody tr:hover td {
   }
 }
 
+
+
+
 @media (min-width: 601px) and (max-width: 1024px) {
   .form-grid {
     grid-template-columns: repeat(2, 1fr) !important;
   }
-
-  .span2,
-  .span3 {
+  .span2, .span3 {
     grid-column: span 2 !important;
   }
 }
+
+.size-box.filled .size-box-lbl {
+  color: var(--primary-fg) !important;
+  background: var(--primary) !important;
+}
+.size-box-lbl {
+  background: var(--bg) !important;
+}
+
+@media (max-width: 600px) {
+  .matrix-footer {
+    padding: 12px 16px !important;
+    margin: 16px -12px -16px -12px !important;
+    border-radius: 0 !important;
+  }
+}
+
+
+.header-title {
+  font-size: calc(15px * var(--text-scale, 1)) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+
+
+
+
 
 /* Force native scroll on MOBILE ONLY */
 @media (max-width: 1024px) {
@@ -2603,3 +2722,5 @@ tbody tr:hover td {
     position: static !important;
   }
 }
+
+
