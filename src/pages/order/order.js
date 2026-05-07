@@ -65,7 +65,7 @@ var OrderPage = (function () {
       return;
     }
 
-    var html = '<div class="ac-header"><div style="width:24px; margin-right:12px; flex-shrink:0"></div><div class="ac-col-1" style="flex:1; min-width:0">SẢN PHẨM</div><div class="ac-col-2" style="flex:none; width:45px">FORM</div><div class="ac-col-3" style="flex:none; width:26px; text-align:center">TỒN</div><div class="ac-col-3" style="flex:none; width:75px; text-align:right">ĐƠN GIÁ</div></div>';
+    var html = '<div class="ac-header"><div style="width:24px; margin-right:12px; flex-shrink:0"></div><div class="ac-col-1">SẢN PHẨM</div><div class="ac-col-2" style="min-width:45px">FORM</div><div class="ac-col-3" style="min-width:26px; text-align:center">TỒN</div><div class="ac-col-3" style="min-width:75px">ĐƠN GIÁ</div></div>';
 
     html += prods.slice(0, 8).map(function (p) {
       var isChecked = multiSelectedCodes[p.ten_hang_2] ? 'checked' : '';
@@ -74,10 +74,10 @@ var OrderPage = (function () {
       var stockColor = stock > 20 ? 'var(--success)' : 'var(--accent)';
       return '<div class="ac-table-row" onclick="OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
         '<input type="checkbox" ' + isChecked + ' style="margin-right:12px; cursor:pointer; flex-shrink:0" id="chk-' + p.ten_hang_2 + '" value="' + p.ten_hang_2 + '" onclick="event.stopPropagation(); OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
-        '<div class="ac-col-1" style="flex:1; min-width:0; padding-right:4px;"><strong>' + p.ten_hang_2 + '</strong><div style="font-size:calc(12px * var(--text-scale,1)); color:var(--muted); white-space:normal; line-height:1.2"><span class="ac-desc">' + p.ten_hang_hoa + '</span> - <small>' + p.mau + '</small></div></div>' +
-        '<div class="ac-col-2" style="flex:none; width:45px"><span class="ac-form-badge">' + brand + '</span></div>' +
-        '<div class="ac-col-3" style="flex:none; width:26px; text-align:center; font-weight:700; color:' + stockColor + '">' + stock + '</div>' +
-        '<div class="ac-col-3" style="flex:none; width:75px; text-align:right">' + Utils.formatMoney(p.don_gia) + '</div>' +
+        '<div class="ac-col-1" style="padding-right:4px;"><strong>' + p.ten_hang_2 + '</strong><div style="font-size:calc(12px * var(--text-scale,1)); color:var(--muted); white-space:normal; line-height:1.2"><span class="ac-desc">' + p.ten_hang_hoa + '</span> - <small>' + p.mau + '</small></div></div>' +
+        '<div class="ac-col-2" style="min-width:45px"><span class="ac-form-badge">' + brand + '</span></div>' +
+        '<div class="ac-col-3" style="min-width:26px; text-align:center; font-weight:700; color:' + stockColor + '">' + stock + '</div>' +
+        '<div class="ac-col-3" style="min-width:75px">' + Utils.formatMoney(p.don_gia) + '</div>' +
         '</div>';
     }).join('');
 

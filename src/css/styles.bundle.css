@@ -16,10 +16,10 @@
   --muted: #71717a;
   /* Zinc 500 */
 
-  --primary: #18181b;
-  /* Zinc 900 - Sleek Black */
-  --primary-fg: #ffffff;
-  /* White text on primary */
+  --primary: #FBBF24;
+  /* Radiant Gold */
+  --primary-fg: #18181b;
+  /* Dark text on gold */
 
   --accent: #FBBF24;
   /* Bright Radiant Gold */
@@ -63,10 +63,10 @@
   --muted: #a1a1aa;
   /* Zinc 400 */
 
-  --primary: #fafafa;
-  /* Zinc 50 - Sleek White */
+  --primary: #FBBF24;
+  /* Radiant Gold */
   --primary-fg: #18181b;
-  /* Dark text on white primary */
+  /* Dark text on gold */
 
   --accent: #FBBF24;
   /* Bright Radiant Gold for Dark Mode */
