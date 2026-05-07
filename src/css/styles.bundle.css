@@ -981,7 +981,7 @@ button {
 /* ---- Table ---- */
 .tbl-wrap {
   overflow-x: auto;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius);
   border: 1px solid var(--border);
   background: var(--surface);
   box-shadow: var(--shadow-sm);
@@ -1200,7 +1200,7 @@ tbody tr:hover td {
   inset: 0;
   background: rgba(15, 23, 42, 0.6);
   backdrop-filter: blur(8px);
-  z-index: 1000;
+  z-index: 10000;
   display: none;
   align-items: center;
   justify-content: center;
@@ -1444,7 +1444,7 @@ tbody tr:hover td {
 /* ---- Table ---- */
 .tbl-wrap {
   overflow-x: auto;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius);
   border: 1px solid var(--border);
   background: var(--surface);
   box-shadow: var(--shadow-sm);
@@ -1747,7 +1747,7 @@ tbody tr:hover td {
   inset: 0;
   background: rgba(15, 23, 42, 0.6);
   backdrop-filter: blur(8px);
-  z-index: 1000;
+  z-index: 10000;
   display: none;
   align-items: center;
   justify-content: center;
