@@ -1268,7 +1268,8 @@ tbody tr:hover td {
 /* ---- Toast ---- */
 .toast {
   position: fixed;
-  bottom: 32px;
+  top: 32px;
+  bottom: auto;
   right: 32px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1278,8 +1279,8 @@ tbody tr:hover td {
   align-items: center;
   gap: 12px;
   box-shadow: var(--shadow-lg);
-  z-index: 2000;
-  transform: translateY(100px);
+  z-index: 99999;
+  transform: translateY(-100px);
   opacity: 0;
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   font-weight: 600;
@@ -1943,7 +1944,8 @@ tbody tr:hover td {
 /* ---- Toast ---- */
 .toast {
   position: fixed;
-  bottom: 32px;
+  top: 32px;
+  bottom: auto;
   right: 32px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1953,8 +1955,8 @@ tbody tr:hover td {
   align-items: center;
   gap: 12px;
   box-shadow: var(--shadow-lg);
-  z-index: 2000;
-  transform: translateY(100px);
+  z-index: 99999;
+  transform: translateY(-100px);
   opacity: 0;
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   font-weight: 600;
