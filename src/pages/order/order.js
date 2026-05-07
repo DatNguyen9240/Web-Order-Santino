@@ -83,9 +83,9 @@ var OrderPage = (function () {
       var stock = p.ton_kho !== undefined ? p.ton_kho : (Math.floor(Math.random() * 50) + 10);
       var stockColor = stock > 20 ? 'var(--success)' : 'var(--accent)';
       return '<div class="ac-table-row" onclick="OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
-        '<div style="position:relative; margin-right:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">' +
-        '<input type="checkbox" class="chk-code" ' + isChecked + ' id="chk-' + p.ten_hang_2 + '" value="' + p.ten_hang_2 + '" onclick="event.stopPropagation(); OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')" style="margin:0; cursor:pointer;">' +
-        '<div class="chk-num" id="chk-num-' + p.ten_hang_2 + '" style="position:absolute; pointer-events:none; display:' + numDisplay + '; align-items:center; justify-content:center; width:100%; height:100%; background:var(--primary); color:white; font-size:11px; font-weight:bold; border-radius:3px;">' + numVal + '</div>' +
+        '<div style="position:relative; margin-right:12px; width:18px; height:18px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">' +
+        '<input type="checkbox" class="chk-code" ' + isChecked + ' id="chk-' + p.ten_hang_2 + '" value="' + p.ten_hang_2 + '" onclick="event.stopPropagation(); OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')" style="margin:0; width:16px; height:16px; cursor:pointer;">' +
+        '<div class="chk-num" id="chk-num-' + p.ten_hang_2 + '" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); pointer-events:none; display:' + numDisplay + '; align-items:center; justify-content:center; width:18px; height:18px; background:var(--primary); color:white; font-size:11px; font-weight:bold; border-radius:4px;">' + numVal + '</div>' +
         '</div>' +
         '<div class="ac-col-1" style="padding-right:4px;"><strong>' + p.ten_hang_2 + '</strong><div style="font-size:calc(12px * var(--text-scale,1)); color:var(--muted); white-space:normal; line-height:1.2"><span class="ac-desc">' + p.ten_hang_hoa + '</span> - <small>' + p.mau + '</small></div></div>' +
         '<div class="ac-col-2" style="min-width:45px"><span class="ac-form-badge">' + brand + '</span></div>' +
