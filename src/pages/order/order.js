@@ -1,8 +1,12 @@
 var OrderPage = (function () {
   var orderRows = [];
+<<<<<<< HEAD
+  var multiSelectedCodes = {};
+=======
   var multiSelectedCodes = [];
   var cachedProds = {};
   var cachedSizes = [];
+>>>>>>> feature/architect-updates
 
   function render($el) {
     return Router.fetchTemplate('src/pages/order/order.html')
@@ -59,7 +63,12 @@ var OrderPage = (function () {
     }
   }
 
+<<<<<<< HEAD
+
+  function acSearch(val) {
+=======
   async function acSearch(val) {
+>>>>>>> feature/architect-updates
     var btnClear = document.getElementById('ac-clear');
     if (btnClear) btnClear.style.display = val ? 'block' : 'none';
 
@@ -71,6 +80,25 @@ var OrderPage = (function () {
     prods.forEach(function(p) { cachedProds[p.ten_hang_2] = p; });
 
     if (!prods.length) {
+<<<<<<< HEAD
+      list.innerHTML = '<div class="ac-item"><small>KhÃ´ng tÃ¬m tháº¥y sáº£n pháº©m</small></div>';
+      list.classList.add('sh    var html = '<div class="ac-header"><div class="ac-col-1">TÊN HÀNG 2</div><div class="ac-col-color">MÀU/THIẾT KẾ</div><div class="ac-col-2" style="text-align:center">FORM</div><div class="ac-col-3">ĐƠN GIÁ</div></div>';
+    html += prods.slice(0, 8).map(function (p) {
+      var isChecked = multiSelectedCodes[p.ten_hang_2] ? 'checked' : '';
+      var brand = p.ten_hang_2.match(/^[A-Z]+/); brand = brand ? brand[0] : '';
+      return '<div class="ac-table-row" onclick="OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
+        '<input type="checkbox" ' + isChecked + ' style="margin-right:12px; cursor:pointer;" id="chk-' + p.ten_hang_2 + '" value="' + p.ten_hang_2 + '" onclick="event.stopPropagation(); OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
+        '<div class="ac-col-1"><strong>' + p.ten_hang_2 + '</strong></div>' +
+        '<div class="ac-col-color">' + (p.design || p.mau || '') + '</div>' +
+        '<div class="ac-col-2" style="text-align:center"><span class="ac-form-badge">' + brand + '</span></div>' +
+        '<div class="ac-col-3">' + Utils.formatMoney(p.don_gia) + '</div>' +
+        '</div>';
+    }).join('');
+
+    html += '<div class="ac-actions" style="display:flex;gap:8px;padding:8px 12px;border-top:1px solid var(--border);background:var(--surface);position:sticky;bottom:0;z-index:10;">' +
+      '<button class="btn btn-ghost" style="flex:1; padding:6px; font-size:13px; min-height:32px;" onclick="OrderPage.closeAc()">' + (typeof t === 'function' ? t('btn.cancel') : 'Hủy bỏ') + '</button>' +
+      '<button id="btn-add-multi" class="btn btn-primary" style="flex:2; padding:6px; font-size:13px; min-height:32px;" onclick="OrderPage.addSelectedProds()">' + (typeof t === 'function' ? t('btn.add') : 'Thêm đã chọn') + '</button>' +
+=======
       list.innerHTML = '<div class="ac-item"><small>Không tìm thấy sản phẩm</small></div>';
       list.classList.add('show');
       return;
@@ -101,6 +129,7 @@ var OrderPage = (function () {
     html += '<div class="ac-actions" style="display:flex;gap:8px;padding:12px;border-top:1px solid var(--border);background:var(--surface);position:sticky;bottom:-8px;margin:0 -8px -8px -8px;z-index:10;border-radius:0 0 12px 12px">' +
       '<button class="btn btn-ghost btn-sm" style="flex:1" onclick="OrderPage.closeAc()">Hủy</button>' +
       '<button id="btn-add-multi" class="btn btn-primary btn-sm" style="flex:1" onclick="OrderPage.addSelectedProds()">Thêm đã chọn</button>' +
+>>>>>>> feature/architect-updates
       '</div>';
     list.innerHTML = html;
     list.classList.add('show');
@@ -464,7 +493,12 @@ var OrderPage = (function () {
   return {
     render: render, acSearch: acSearch, toggleAcSelect: toggleAcSelect, closeAc: closeAc,
     addSelectedProds: addSelectedProds, addProductRow: addProductRow, selectAcSingle: selectAcSingle,
+<<<<<<< HEAD
+    updateQty: updateQty, quickClear: typeof quickClear !== 'undefined' ? quickClear : undefined, removeRow: removeRow, previewOrder: previewOrder,
+    toggleDetails: typeof toggleDetails !== 'undefined' ? toggleDetails : undefined,
+=======
     updateQty: updateQty, removeRow: removeRow, previewOrder: previewOrder,
+>>>>>>> feature/architect-updates
     saveOrder: saveOrder, clearOrder: clearOrder, clearSearch: clearSearch,
     updateInfoSummary: updateInfoSummary, calcChange: calcChange
   };

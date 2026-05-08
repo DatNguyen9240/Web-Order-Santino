@@ -75,11 +75,18 @@
     </header>
 
     <!-- SIDEBAR -->
+<<<<<<< HEAD
+    <aside class="sidebar">
+      <div class="logo" style="padding-top: 16px; margin-bottom: 24px;">
+        <img src="images/logo.png" alt="SANTINO" class="app-logo" style="height: 40px; object-fit: contain;">
+        <div style="font-size: 12px; opacity: 0.6; font-weight: 500; margin-top: 4px;">Wholesale Portal</div>
+=======
     <aside class="sidebar" id="sidebar">
       <div class="logo"
         onclick="location.hash='#/order'; if(window.innerWidth <= 1024) { document.querySelector('.sidebar').classList.remove('show'); document.querySelector('.sidebar-overlay').classList.remove('show'); document.body.style.overflow=''; }"
         style="cursor:pointer;">
         <img src="images/logo.png" alt="SANTINO" class="app-logo" style="height: 40px;">
+>>>>>>> feature/architect-updates
       </div>
       
       <button class="btn btn-primary" style="width: 100%; margin-bottom: 24px; justify-content: center; gap: 10px;" onclick="window.location.hash='#/order'">
@@ -185,9 +192,14 @@
     <span id="toast-msg"></span>
   </div>
 
+<<<<<<< HEAD
+  <!-- BUNDLED JS (Core + Data + Components) -->
+  <script src="src/js/app.bundle.js"></script>
+=======
   <!-- BUNDLED JS -->
   <script src="env.js?v=66"></script>
   <script src="src/js/app.bundle.js?v=66"></script>
+>>>>>>> feature/architect-updates
   <script>
     function toggleSidebar() {
       var sidebar = document.querySelector('.sidebar');

@@ -10,8 +10,14 @@ var ProductsPage = (function () {
   function _render() {
     var q = (document.getElementById('product-search') || {}).value || '';
     var form = (document.getElementById('product-filter-form') || {}).value || '';
+<<<<<<< HEAD
+    var prods = DB.getAll('products').filter(function (p) {
+      return (!q || p.ten_hang_2.toLowerCase().includes(q.toLowerCase()) || (p.mau && p.mau.toLowerCase().includes(q.toLowerCase()))) && (!form || p.form === form);
+    });
+=======
     var prods = []; // API chưa hỗ trợ hiển thị kho sản phẩm
 
+>>>>>>> feature/architect-updates
     var tbody = document.getElementById('products-body');
     
     // Giả lập Dữ liệu Phân trang từ API
