@@ -339,7 +339,7 @@ var OrderPage = (function () {
         var totalRowQty = 0;
         var totalRowMoney = 0;
         
-        var sizeBoxesHtml = '<div class="preview-size-grid">';
+        var sizeBoxesHtml = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 12px; margin-top: 16px;">';
         
         row.sizes.forEach(function(s) {
             var sz = s.size || s.Size || s.ten_size || s.Ten_size || s.TenSize || s.tenSize || '?';
@@ -347,9 +347,9 @@ var OrderPage = (function () {
             if (qty > 0) {
                 totalRowQty += qty;
                 totalRowMoney += qty * (row.product.don_gia || 0);
-                sizeBoxesHtml += '<div class="preview-size-pill">' + 
-                    '<span>Size ' + Utils.escHtml(sz) + '</span>' +
-                    '<span>' + qty + '</span>' +
+                sizeBoxesHtml += '<div class="size-box filled" style="pointer-events: none;">' + 
+                    '<div class="size-box-lbl">' + Utils.escHtml(sz) + '</div>' +
+                    '<div style="text-align:center; padding:8px 0; font-weight:bold; color:var(--primary); font-size:16px;">' + qty + '</div>' +
                 '</div>';
             }
         });
@@ -357,15 +357,15 @@ var OrderPage = (function () {
 
         if (totalRowQty === 0) return '';
 
-        return '<div class="preview-card">' +
-            '<div class="preview-card-header">' +
+        return '<div class="preview-card card" style="margin-bottom: 12px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface);">' +
+            '<div class="preview-card-header" style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom: 1px solid var(--border-light); padding-bottom: 12px;">' +
               '<div>' +
-                '<div style="font-size: 16px; font-weight:800; color:var(--primary);">' + Utils.escHtml(row.ten_hang_2) + '</div>' +
-                '<div style="font-size: 13px; color:var(--muted);">' + Utils.escHtml(row.product.mau || 'Không màu') + ' | ' + Utils.formatMoney(row.product.don_gia) + '</div>' +
+                '<div style="font-size: 18px; font-weight:800; color:var(--primary); margin-bottom: 4px;">' + Utils.escHtml(row.ten_hang_2) + '</div>' +
+                '<div style="font-size: 14px; color:var(--muted);">' + Utils.escHtml(row.product.mau || 'Không màu') + ' | ' + Utils.formatMoney(row.product.don_gia) + '</div>' +
               '</div>' +
               '<div style="text-align:right;">' +
-                '<div style="font-size: 13px; color:var(--muted);">SL: <strong>' + totalRowQty + '</strong></div>' +
-                '<div style="font-size: 14px; font-weight:bold; color:var(--accent);">' + Utils.formatMoney(totalRowMoney) + '</div>' +
+                '<div style="font-size: 14px; color:var(--muted);">Tổng SL: <strong style="font-size: 16px; color: var(--text);">' + totalRowQty + '</strong></div>' +
+                '<div style="font-size: 16px; font-weight:bold; color:var(--accent); margin-top: 4px;">' + Utils.formatMoney(totalRowMoney) + '</div>' +
               '</div>' +
             '</div>' +
             sizeBoxesHtml +
