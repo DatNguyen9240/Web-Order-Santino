@@ -1,6 +1,7 @@
 /** Utility functions */
 const Utils = (function () {
   function formatMoney(n) {
+    if (!n || n <= 0) return 'Liên hệ báo giá';
     return new Intl.NumberFormat('vi-VN').format(n) + 'đ';
   }
 

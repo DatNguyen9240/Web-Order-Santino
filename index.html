@@ -13,7 +13,23 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
   <!-- BUNDLED CSS -->
   <link rel="stylesheet" href="src/css/styles.bundle.css?v=66">
-  <script>(function () { if (localStorage.getItem('santino_theme') === 'dark') document.documentElement.classList.add('dark-theme') })();</script>
+  <script>
+    (function () {
+      // ⚡ ZERO-FLICKER INJECTION (Root Em Hybrid)
+      var theme = localStorage.getItem('santino_theme') || 'auto';
+      if (theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark-theme');
+      }
+      
+      var zoom = localStorage.getItem('santino_zoom');
+      var scale = zoom ? (parseInt(zoom) / 100) : 1;
+      // Mobile Guardrails (Max 1.15x on small screens)
+      if (window.innerWidth <= 480) {
+        scale = Math.min(scale, 1.15);
+      }
+      document.documentElement.style.setProperty('--text-scale', scale);
+    })();
+  </script>
 </head>
 
 <body>

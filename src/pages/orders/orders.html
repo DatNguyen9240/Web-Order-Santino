@@ -1,20 +1,42 @@
-<div class="page-hdr">
-  <div><h2><span data-i18n="hdr.orders">Danh Sách Đơn Hàng</span></h2><p data-i18n="hdr.orders.desc">Lịch sử và trạng thái đơn</p></div>
-  <div class="search-wrapper">
-    <span class="material-symbols-outlined">search</span>
-    <input id="orders-search" placeholder="Tìm số CT..." data-i18n-placeholder="orders.search.placeholder" oninput="OrdersPage.filter(this.value)">
+<div class="card" style="padding: 16px;">
+  <div style="display:flex; gap:12px; align-items:center; margin-bottom:20px;">
+    <div class="search-wrapper" style="flex:1;">
+      <span class="material-symbols-outlined">search</span>
+      <input id="orders-search" placeholder="Tìm kiếm Số CT..." data-i18n-placeholder="orders.search.placeholder" oninput="OrdersPage.filter(this.value)">
+    </div>
+    <button class="btn btn-ghost" style="border:1px solid var(--border); gap:8px;">
+        <span class="material-symbols-outlined" style="font-size:18px">filter_list</span> Lọc
+    </button>
+    <button class="btn btn-ghost" style="border:1px solid var(--border); gap:8px;">
+        <span class="material-symbols-outlined" style="font-size:18px">file_download</span> Xuất Excel
+    </button>
   </div>
-</div>
-<div class="tbl-wrap">
-  <table>
-    <thead><tr>
-      <th data-i18n="table.col.no">Số CT</th><th data-i18n="table.col.date">Ngày CT</th><th data-i18n="table.col.branch">Chi nhánh</th><th data-i18n="table.col.promo">CTKM</th>
-      <th data-i18n="table.col.total_qty">Tổng SP</th><th data-i18n="table.col.total_money">Tổng tiền</th><th data-i18n="table.col.note">Ghi chú</th><th data-i18n="table.col.action">Thao tác</th>
-    </tr></thead>
-    <tbody id="orders-body">
-      <tr><td colspan="8" class="empty-state">
-        <span class="material-symbols-outlined">receipt_long</span><span data-i18n="orders.search.empty">Chưa có đơn hàng nào</span>
-      </td></tr>
-    </tbody>
-  </table>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th data-i18n="table.col.no">SỐ CT</th>
+          <th data-i18n="table.col.date">NGÀY CT</th>
+          <th data-i18n="table.col.branch">CHI NHÁNH</th>
+          <th data-i18n="table.col.promo">CTKM</th>
+          <th style="text-align:right" data-i18n="table.col.total_qty">TỔNG SP</th>
+          <th style="text-align:right" data-i18n="table.col.total_money">TỔNG TIỀN</th>
+          <th data-i18n="table.col.note">GHI CHÚ</th>
+          <th style="text-align:center" data-i18n="table.col.action">THAO TÁC</th>
+        </tr>
+      </thead>
+      <tbody id="orders-body">
+        <!-- Rendered by JS -->
+      </tbody>
+    </table>
+  </div>
+
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:16px; border-top:1px solid var(--border-light); color:var(--muted); font-size:13px;">
+    <div id="pagination-info">Hiển thị 0 kết quả</div>
+    <div style="display:flex; gap:8px;">
+        <button class="icon-btn" style="border:1px solid var(--border); border-radius:4px;"><span class="material-symbols-outlined" style="font-size:18px">chevron_left</span></button>
+        <button class="icon-btn" style="border:1px solid var(--border); border-radius:4px;"><span class="material-symbols-outlined" style="font-size:18px">chevron_right</span></button>
+    </div>
+  </div>
 </div>

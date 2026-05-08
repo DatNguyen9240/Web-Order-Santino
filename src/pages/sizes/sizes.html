@@ -1,24 +1,23 @@
-<div class="page-hdr">
-  <div>
-    <h2><span data-i18n="hdr.sizes">Quản Lý Size</span></h2>
-    <p data-i18n="hdr.sizes.desc">CRUD size và nhóm size</p>
+<div class="card" style="padding: 16px;">
+  <div style="display:flex; justify-content:flex-end; margin-bottom:20px;">
+    <button class="btn btn-primary" onclick="SizesPage.openModal()" style="gap:8px;">
+      <span class="material-symbols-outlined" style="font-size:20px">add</span> Thêm size
+    </button>
   </div>
-  <button class="btn btn-primary" onclick="SizesPage.openModal()">
-    <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">add</span><span data-i18n="btn.add">Thêm size</span>
-  </button>
-</div>
-<div class="tbl-wrap">
-  <table>
-    <thead>
-      <tr>
-        <th data-i18n="table.col.size">Size</th>
-        <th data-i18n="table.col.size_name">Tên size</th>
-        <th data-i18n="table.col.size_group">Nhóm size</th>
-        <th data-i18n="table.col.action">Thao tác</th>
-      </tr>
-    </thead>
-    <tbody id="sizes-body"></tbody>
-  </table>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th data-i18n="table.col.size">MÃ KÍCH CỠ</th>
+          <th data-i18n="table.col.size_name">TÊN KÍCH CỠ</th>
+          <th style="text-align:center" data-i18n="table.col.size_group">NHÓM KÍCH CỠ</th>
+          <th style="text-align:center" data-i18n="table.col.action">THAO TÁC</th>
+        </tr>
+      </thead>
+      <tbody id="sizes-body"></tbody>
+    </table>
+  </div>
 </div>
 
 <!-- Modal: Size -->

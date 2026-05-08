@@ -108,7 +108,7 @@ var TRANSLATIONS = {
     "settings.color": "Màu sắc Chủ đạo (Color)",
     "settings.color.desc": "Thay đổi màu sắc nổi bật chính của ứng dụng.",
     "settings.reset": "Khôi phục mặc định",
-    "settings.reset.desc": "Thao tác này sẽ xóa toàn bộ đơn hàng và cài đặt hiện tại của bạn.",
+    "settings.reset.desc": "Thao tác này sẽ đưa các cấu hình giao diện về trạng thái ban đầu. Dữ liệu đơn hàng của bạn vẫn được giữ nguyên.",
     "settings.reset.btn": "Khôi phục mặc định",
     "settings.theme.auto.title": "Theo hệ thống",
     "settings.theme.auto.desc": "Tự động Sáng/Tối theo thiết bị.",
@@ -137,7 +137,7 @@ var TRANSLATIONS = {
     "toast.already_in_order": "Đã có trong đơn!",
     "toast.added": "Đã thêm: ",
     "settings.reset.confirm.title": "Xóa dữ liệu",
-    "settings.reset.confirm.msg": "Reset toàn bộ về dữ liệu mặc định? Đơn hàng và cài đặt sẽ bị xóa!",
+    "settings.reset.confirm.msg": "Reset cấu hình giao diện về mặc định? Đơn hàng sẽ không bị ảnh hưởng.",
     "settings.reset.confirm.btn": "Reset",
     "btn.cancel": "Hủy bỏ",
     "order.cancel.title": "Hủy đơn hàng",
@@ -259,7 +259,7 @@ var TRANSLATIONS = {
     "settings.color": "Primary Color",
     "settings.color.desc": "Change the main accent color of the application.",
     "settings.reset": "Reset to default data",
-    "settings.reset.desc": "This action will clear all your current orders and settings.",
+    "settings.reset.desc": "This action will reset the appearance settings to their default state. Your order data will remain intact.",
     "settings.reset.btn": "Reset to default",
     "settings.theme.auto.title": "System Default",
     "settings.theme.auto.desc": "Auto switch Light/Dark mode.",
@@ -288,7 +288,7 @@ var TRANSLATIONS = {
     "toast.already_in_order": "Already in order!",
     "toast.added": "Added: ",
     "settings.reset.confirm.title": "Clear Data",
-    "settings.reset.confirm.msg": "Reset all data to default? Orders and settings will be deleted!",
+    "settings.reset.confirm.msg": "Reset appearance settings to default? Orders will not be affected.",
     "settings.reset.confirm.btn": "Reset",
     "btn.cancel": "Cancel",
     "order.cancel.title": "Cancel Order",
@@ -410,7 +410,7 @@ var TRANSLATIONS = {
     "settings.color": "主题色 (Color)",
     "settings.color.desc": "更改应用程序的主要强调色。",
     "settings.reset": "重置为默认数据",
-    "settings.reset.desc": "此操作将清除您当前的所有订单和设置。",
+    "settings.reset.desc": "此操作将把外观设置重置为默认状态。您的订单数据将保持不变。",
     "settings.reset.btn": "重置为默认",
     "settings.theme.auto.title": "系统默认",
     "settings.theme.auto.desc": "自动切换明/暗模式。",
@@ -439,7 +439,7 @@ var TRANSLATIONS = {
     "toast.already_in_order": "已在订单中！",
     "toast.added": "已添加：",
     "settings.reset.confirm.title": "清除数据",
-    "settings.reset.confirm.msg": "将所有数据重置为默认值？订单和设置将被删除！",
+    "settings.reset.confirm.msg": "是否将外观设置重置为默认值？订单将不受影响。",
     "settings.reset.confirm.btn": "重置",
     "btn.cancel": "取消",
     "order.cancel.title": "取消订单",
@@ -749,6 +749,7 @@ const OrderService = (() => {
 /** Utility functions */
 const Utils = (function () {
   function formatMoney(n) {
+    if (!n || n <= 0) return 'Liên hệ báo giá';
     return new Intl.NumberFormat('vi-VN').format(n) + 'đ';
   }
 
@@ -1093,15 +1094,29 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // 2. Khôi phục Cài đặt
   var theme = localStorage.getItem('santino_theme') || 'auto';
+  var isDarkTheme = false;
   if (theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
     document.documentElement.classList.add('dark-theme');
+    isDarkTheme = true;
   } else {
     document.documentElement.classList.remove('dark-theme');
   }
+  updateThemeIcons(isDarkTheme);
   
-  var zoom = localStorage.getItem('santino_zoom');
-  if (zoom === null) zoom = '115';
-  document.documentElement.style.setProperty('--text-scale', (parseInt(zoom)/100).toString());
+  // ⚡ Cross-tab Synchronization (Storage Event)
+  window.addEventListener('storage', function(e) {
+    if (e.key === 'santino_zoom') {
+      var scale = e.newValue ? (parseInt(e.newValue) / 100) : 1;
+      if (window.innerWidth <= 480) scale = Math.min(scale, 1.15);
+      document.documentElement.style.setProperty('--text-scale', scale);
+    }
+    if (e.key === 'santino_theme') {
+      var isDark = e.newValue === 'dark' || (e.newValue === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      if (isDark) document.documentElement.classList.add('dark-theme');
+      else document.documentElement.classList.remove('dark-theme');
+      updateThemeIcons(isDark);
+    }
+  });
 
   var font = localStorage.getItem('santino_font');
   if(font) document.documentElement.style.setProperty('--font', '"' + font + '", sans-serif');
@@ -1109,8 +1124,12 @@ document.addEventListener('DOMContentLoaded', function () {
   var color = localStorage.getItem('santino_color');
   if(color) {
     document.documentElement.style.setProperty('--accent', color);
+    document.documentElement.style.setProperty('--primary', color);
     var colorFg = localStorage.getItem('santino_color_fg');
-    if(colorFg) document.documentElement.style.setProperty('--accent-fg', colorFg);
+    if(colorFg) {
+      document.documentElement.style.setProperty('--accent-fg', colorFg);
+      document.documentElement.style.setProperty('--primary-fg', colorFg);
+    }
   }
   Router.init();
 
@@ -1121,9 +1140,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // ── Global helpers (dùng được từ bất kỳ page nào) ─────────────────────
 
+function updateThemeIcons(isDark) {
+  var icons = document.querySelectorAll('.icon-btn[onclick="toggleTheme()"] .material-symbols-outlined');
+  icons.forEach(function(icon) {
+    icon.textContent = isDark ? 'light_mode' : 'dark_mode';
+  });
+}
+
 function toggleTheme() {
   var isDark = document.documentElement.classList.toggle('dark-theme');
   localStorage.setItem('santino_theme', isDark ? 'dark' : 'light');
+  updateThemeIcons(isDark);
 }
 
 
