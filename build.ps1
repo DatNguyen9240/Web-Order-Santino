@@ -6,7 +6,9 @@ $root = "$PSScriptRoot\src"
 # ====== DANH SACH CSS ======
 $cssFiles = @(
   "css\design-tokens.css",
-  "css\global.css"
+  "css\global.css",
+  "components\ui-utils\shared-dropdown.css",
+  "components\data-combobox\combobox.css"
 )
 
 # ====== DANH SACH JS (Core + Components + Data) ======
@@ -17,6 +19,8 @@ $jsFiles = @(
   "js\services\category.service.js",
   "js\services\order.service.js",
   "js\utils.js",
+  "components\ui-utils\UIUtils.js",
+  "components\data-combobox\DataComboBox.js",
   "components\confirm-modal\ConfirmModal.js",
   "components\modal\Modal.js",
   "js\core\router.js",

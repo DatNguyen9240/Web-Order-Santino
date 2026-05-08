@@ -4,29 +4,36 @@
  */
 const CategoryService = (() => {
   /**
-   * Lấy dữ liệu danh mục theo loại
-   * @param {string} loai - Loại danh mục (Branch, Employee, PaymentType, PaymentTerm)
+   * Lấy dữ liệu danh mục theo loại, có hỗ trợ tìm kiếm server-side
+   * @param {string} loai   - Loại: Branch | Employee | PaymentType | PaymentTerm
+   * @param {string} search - Từ khoá tìm kiếm (server-side LIKE filter)
    */
-  async function getCategories(loai = '') {
-    if (!API_CONFIG.BASE_URL) {
-      return [];
-    }
+  async function getCategories(loai = '', search = '') {
+    if (!API_CONFIG.BASE_URL) return [];
 
     try {
-      // Đổi sang pattern ?q={"Loai":"..."} giống ProductService
       const queryObj = { Loai: loai };
-      const res = await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, { q: JSON.stringify(queryObj) });
-      
+      if (search && search.trim()) queryObj.TimKiem = search.trim();
+
+      // Search requests không cache — dùng noCache param để URL luôn unique
+      const params = { q: JSON.stringify(queryObj) };
+      if (search && search.trim()) params._t = Date.now();
+
+      const res = await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, params);
       const data = res.records || res;
       if (!Array.isArray(data)) return [];
 
-      // Chuẩn hóa dữ liệu trả về để luôn có 'id' và 'name'
       return data.map(item => ({
-        id: item.id || item.Id || item.Loai || '',
-        name: item.name || item.Name || item.TenLoai || item.BranchName || item.EmployeeName || item.PaymentTypeName || item.PaymentTermName || ''
+        id:          item.id           || item.Id           || '',
+        name:        item.name         || item.Name         || '',
+        address:     item.address      || '',
+        phone:       item.phone        || '',
+        department:  item.department   || '',
+        due_days:    item.due_days     != null ? item.due_days : null,
+        is_default:  item.is_default   || false
       }));
-    } catch (error) {
-      console.warn(`[CategoryService] Lỗi gọi API lấy danh mục ${loai}:`, error);
+    } catch (err) {
+      console.warn(`[CategoryService] Lỗi lấy danh mục ${loai}:`, err);
       return [];
     }
   }

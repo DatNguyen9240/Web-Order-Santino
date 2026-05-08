@@ -4,6 +4,40 @@ var OrderPage = (function () {
   var cachedProds = {};
   var cachedSizes = [];
 
+  // Load script động nếu chưa có trong bundle
+  function _dynScript(src) {
+    return new Promise(function (resolve) {
+      if (document.querySelector('script[src*="' + src.split('/').pop() + '"]')) {
+        resolve(); return;
+      }
+      var el = document.createElement('script');
+      el.src = src + '?v=' + Date.now();
+      el.onload = resolve;
+      el.onerror = function () { console.warn('Could not load:', src); resolve(); };
+      document.body.appendChild(el);
+    });
+  }
+
+  function _dynCss(src) {
+    var id = 'dyn-css-' + src.split('/').pop().replace('.', '-');
+    if (document.getElementById(id)) return;
+    var el = document.createElement('link');
+    el.id = id;
+    el.rel = 'stylesheet';
+    el.href = src + '?v=' + Date.now();
+    document.head.appendChild(el);
+  }
+
+  async function _ensureComponents() {
+    if (window.UIControls && UIControls.createDataComboBox) return; // Đã có trong bundle
+    // Load CSS trước
+    _dynCss('src/components/ui-utils/shared-dropdown.css');
+    _dynCss('src/components/data-combobox/combobox.css');
+    // Load JS theo thứ tự
+    await _dynScript('src/components/ui-utils/UIUtils.js');
+    await _dynScript('src/components/data-combobox/DataComboBox.js');
+  }
+
   function render($el) {
     return Router.fetchTemplate('src/pages/order/order.html')
       .then(function (html) {
@@ -26,7 +60,8 @@ var OrderPage = (function () {
     document.getElementById('o-ngay-tt').value = Utils.today();
     document.getElementById('o-kh-dc').value = '';
 
-    // 2. Lấy Danh mục (Chi nhánh, Nhân viên, Thanh toán...)
+    // 2. Đảm bảo component đã load, rồi mới inject danh mục
+    await _ensureComponents();
     _loadCategories();
 
     var sel = document.getElementById('o-ctbh');
@@ -41,9 +76,41 @@ var OrderPage = (function () {
     });
   }
 
+  // Tìm kiếm danh mục server-side — gọi Http trực tiếp,
+  // tránh dùng CategoryService cũ có thể đang trong bundle cũ.
+  function _searchCategory(loai, timKiem) {
+    var q = { Loai: loai };
+    if (timKiem && timKiem.trim()) q.TimKiem = timKiem.trim();
+    var params = { q: JSON.stringify(q) };
+    if (timKiem && timKiem.trim()) params._t = Date.now();
+    return Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, params)
+      .then(function (res) {
+        var data = res.records || res;
+        if (!Array.isArray(data)) return [];
+        return data.map(function (item) {
+          return {
+            id: item.id || item.Id || '',
+            name: item.name || item.Name || '',
+            address: item.address || '',
+            phone: item.phone || '',
+            department: item.department || '',
+            due_days: item.due_days != null ? item.due_days : null,
+            is_default: item.is_default || false
+          };
+        });
+      })
+      .catch(function () { return []; });
+  }
+
+  var _catValues = {
+    chi_nhanh: { id: '', name: '' },
+    nvkd: { id: '', name: '' },
+    dieu_khoan: { id: '', name: '' },
+    ht_tt: { id: '', name: '' }
+  };
+
   async function _loadCategories() {
     try {
-      // Gọi song song các API danh mục
       const [branches, employees, payTypes, payTerms] = await Promise.all([
         CategoryService.getCategories('Branch'),
         CategoryService.getCategories('Employee'),
@@ -51,40 +118,107 @@ var OrderPage = (function () {
         CategoryService.getCategories('PaymentTerm')
       ]);
 
-      // Chi nhánh
-      const selBranch = document.getElementById('o-chi-nhanh');
-      if (selBranch && branches.length > 0) {
-        selBranch.innerHTML = branches.map(b => `<option value="${b.name}" ${b.is_default ? 'selected' : ''}>${b.name}</option>`).join('');
+      // ── Chi nhánh ─────────────────────────────────────────────
+      var wrapBranch = document.getElementById('wrap-chi-nhanh');
+      if (wrapBranch && UIControls && UIControls.createDataComboBox) {
+        var defaultBranch = branches.find(function (b) { return b.is_default; }) || branches[0] || {};
+        _catValues.chi_nhanh = { id: defaultBranch.id || '', name: defaultBranch.name || '' };
+
+        var cbBranch = UIControls.createDataComboBox({
+          id: 'o-chi-nhanh',
+          placeholder: '-- Chọn chi nhánh --',
+          headers: ['Mã', 'Chi nhánh', 'Địa chỉ'],
+          data: branches.map(function (b) { return [b.id, b.name, b.address || '']; }),
+          colFilterIndex: 1,
+          colHighlightIndex: 1,
+          onSearch: function (q) {
+            return _searchCategory('Branch', q).then(function (list) {
+              return list.map(function (b) { return [b.id, b.name, b.address || '']; });
+            });
+          },
+          onSelect: function (row) {
+            _catValues.chi_nhanh = { id: row[0], name: row[1] };
+          }
+        });
+        cbBranch.querySelector('input').value = defaultBranch.name || '';
+        wrapBranch.appendChild(cbBranch);
       }
 
-      // Nhân viên KD
-      const selEmp = document.getElementById('o-nvkd');
-      if (selEmp) {
-        selEmp.innerHTML = '<option value="">-- Chọn nhân viên --</option>' + 
-          employees.map(e => `<option value="${e.name}">${e.name} (${e.department || 'KD'})</option>`).join('');
+      // ── Nhân viên KD ──────────────────────────────────────────
+      var wrapNvkd = document.getElementById('wrap-nvkd');
+      if (wrapNvkd && UIControls && UIControls.createDataComboBox) {
+        var cbNvkd = UIControls.createDataComboBox({
+          id: 'o-nvkd',
+          placeholder: '-- Chọn nhân viên --',
+          headers: ['Mã NV', 'Tên nhân viên', 'Bộ phận', 'ĐT'],
+          data: employees.map(function (e) { return [e.id, e.name, e.department || '', e.phone || '']; }),
+          colFilterIndex: 1,
+          colHighlightIndex: 1,
+          onSearch: function (q) {
+            return _searchCategory('Employee', q).then(function (list) {
+              return list.map(function (e) { return [e.id, e.name, e.department || '', e.phone || '']; });
+            });
+          },
+          onSelect: function (row) {
+            _catValues.nvkd = { id: row[0], name: row[1] };
+          }
+        });
+        wrapNvkd.appendChild(cbNvkd);
       }
 
-      // Hình thức thanh toán
-      const selPayType = document.getElementById('o-ht-thanh-toan');
-      if (selPayType) {
-        selPayType.innerHTML = '<option value="">-- Chọn hình thức --</option>' + 
-          payTypes.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
-        // Mặc định chọn Tiền mặt nếu có
-        const cashOpt = Array.from(selPayType.options).find(o => o.text === 'Tiền mặt');
-        if (cashOpt) cashOpt.selected = true;
+      // ── Điều khoản TT ─────────────────────────────────────────
+      var wrapDK = document.getElementById('wrap-dieu-khoan');
+      if (wrapDK && UIControls && UIControls.createDataComboBox) {
+        var cbDK = UIControls.createDataComboBox({
+          id: 'o-dieu-khoan',
+          placeholder: '-- Chọn điều khoản --',
+          headers: ['Mã', 'Điều khoản', 'Số ngày'],
+          data: payTerms.map(function (p) { return [p.id, p.name, p.due_days != null ? p.due_days + ' ngày' : '']; }),
+          colFilterIndex: 1,
+          colHighlightIndex: 1,
+          onSearch: function (q) {
+            return _searchCategory('PaymentTerm', q).then(function (list) {
+              return list.map(function (p) { return [p.id, p.name, p.due_days != null ? p.due_days + ' ngày' : '']; });
+            });
+          },
+          onSelect: function (row) {
+            _catValues.dieu_khoan = { id: row[0], name: row[1] };
+          }
+        });
+        wrapDK.appendChild(cbDK);
       }
 
-      // Điều khoản thanh toán
-      const selPayTerm = document.getElementById('o-dieu-khoan');
-      if (selPayTerm) {
-        selPayTerm.innerHTML = '<option value="">-- Chọn điều khoản --</option>' + 
-          payTerms.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+      // ── Hình thức thanh toán ───────────────────────────────────
+      var wrapHT = document.getElementById('wrap-ht-thanh-toan');
+      if (wrapHT && UIControls && UIControls.createDataComboBox) {
+        var defaultPay = payTypes.find(function (p) { return /tiền mặt/i.test(p.name); }) || payTypes[0] || {};
+        _catValues.ht_tt = { id: defaultPay.id || '', name: defaultPay.name || '' };
+
+        var cbHT = UIControls.createDataComboBox({
+          id: 'o-ht-thanh-toan',
+          placeholder: '-- Chọn hình thức --',
+          headers: ['Mã', 'Hình thức'],
+          data: payTypes.map(function (p) { return [p.id, p.name]; }),
+          colFilterIndex: 1,
+          colHighlightIndex: 1,
+          onSearch: function (q) {
+            return _searchCategory('PaymentType', q).then(function (list) {
+              return list.map(function (p) { return [p.id, p.name]; });
+            });
+          },
+          onSelect: function (row) {
+            _catValues.ht_tt = { id: row[0], name: row[1] };
+          }
+        });
+        cbHT.querySelector('input').value = defaultPay.name || '';
+        wrapHT.appendChild(cbHT);
       }
 
     } catch (err) {
       console.warn('[OrderPage] Lỗi load danh mục:', err);
     }
   }
+
 
   function updateInfoSummary() {
     var name = document.getElementById('o-kh-ten').value.trim();
@@ -114,7 +248,7 @@ var OrderPage = (function () {
 
     // Gọi API qua Service lấy sản phẩm
     var prods = await ProductService.getProducts(val);
-    prods.forEach(function(p) { cachedProds[p.ten_hang_2] = p; });
+    prods.forEach(function (p) { cachedProds[p.ten_hang_2] = p; });
 
     if (!prods.length) {
       list.innerHTML = '<div class="ac-item"><small>Không tìm thấy sản phẩm</small></div>';
@@ -163,7 +297,7 @@ var OrderPage = (function () {
       var chk = document.getElementById('chk-' + code);
       if (chk) chk.checked = !chk.checked;
     }
-    
+
     var chk = document.getElementById('chk-' + code);
     if (chk) {
       var idx = multiSelectedCodes.indexOf(code);
@@ -173,8 +307,8 @@ var OrderPage = (function () {
         multiSelectedCodes.splice(idx, 1);
       }
     }
-    
-    document.querySelectorAll('.ac-table-row').forEach(function(row) {
+
+    document.querySelectorAll('.ac-table-row').forEach(function (row) {
       var cCode = row.querySelector('.chk-code');
       if (cCode) {
         var cVal = cCode.value;
@@ -182,10 +316,10 @@ var OrderPage = (function () {
         var pos = multiSelectedCodes.indexOf(cVal);
         if (pos !== -1) {
           cCode.checked = true;
-          if(numB) { numB.textContent = (pos + 1); numB.style.display = 'flex'; }
+          if (numB) { numB.textContent = (pos + 1); numB.style.display = 'flex'; }
         } else {
           cCode.checked = false;
-          if(numB) { numB.style.display = 'none'; }
+          if (numB) { numB.style.display = 'none'; }
         }
       }
     });
@@ -222,11 +356,11 @@ var OrderPage = (function () {
         var mapNhom = { 'TL': 'Nhóm 1', 'QA': 'Nhóm 2', 'SKU101': 'Nhóm 1', 'SKU102': 'Nhóm 3' };
         var mappedNhomSize = mapNhom[nhomSize] || mapNhom[nhomSize.toUpperCase()] || 'Nhóm 1';
 
-        var sizes = cachedSizes.filter(function (s) { 
+        var sizes = cachedSizes.filter(function (s) {
           var ns = s.nhom_size || s.Nhom_size || s.NhomSize || s.nhomSize;
-          return ns === nhomSize || ns === mappedNhomSize; 
+          return ns === nhomSize || ns === mappedNhomSize;
         }).sort(function (a, b) { return (a.stt || a.STT || 0) - (b.stt || b.STT || 0); });
-        
+
         orderRows.unshift({ ten_hang_2: code, product: prod, sizes: sizes, quantities: {} });
         added++;
       }
@@ -248,11 +382,11 @@ var OrderPage = (function () {
     var mapNhom = { 'TL': 'Nhóm 1', 'QA': 'Nhóm 2', 'SKU101': 'Nhóm 1', 'SKU102': 'Nhóm 3' };
     var mappedNhomSize = mapNhom[nhomSize] || mapNhom[nhomSize.toUpperCase()] || 'Nhóm 1';
 
-    var sizes = cachedSizes.filter(function (s) { 
+    var sizes = cachedSizes.filter(function (s) {
       var ns = s.nhom_size || s.Nhom_size || s.NhomSize || s.nhomSize;
-      return ns === nhomSize || ns === mappedNhomSize; 
+      return ns === nhomSize || ns === mappedNhomSize;
     }).sort(function (a, b) { return (a.stt || a.STT || 0) - (b.stt || b.STT || 0); });
-    
+
     orderRows.unshift({ ten_hang_2: code, product: prod, sizes: sizes, quantities: {} });
     document.getElementById('ac-input').value = '';
     acSearch('');
@@ -360,14 +494,14 @@ var OrderPage = (function () {
 
   function previewOrder() {
     if (!orderRows.length) { showToast('Vui lòng chọn sản phẩm và nhập số lượng', false); return; }
-    
+
     // 1. Thu thập tất cả các size có số lượng > 0
     var uniqueSizes = [];
     var sizeMap = {};
     var totalQtyAll = 0;
 
-    orderRows.forEach(function(row) {
-      Object.entries(row.quantities).forEach(function(e) {
+    orderRows.forEach(function (row) {
+      Object.entries(row.quantities).forEach(function (e) {
         var sz = e[0], q = parseInt(e[1]) || 0;
         if (q > 0) {
           totalQtyAll += q;
@@ -382,10 +516,10 @@ var OrderPage = (function () {
     if (totalQtyAll === 0) { showToast('Vui lòng nhập số lượng', false); return; }
 
     // 2. Sắp xếp uniqueSizes theo thứ tự trong cachedSizes
-    var allSizeNames = cachedSizes.map(function(s) { 
-      return s.size || s.Size || s.ten_size || s.Ten_size || s.TenSize || s.tenSize; 
+    var allSizeNames = cachedSizes.map(function (s) {
+      return s.size || s.Size || s.ten_size || s.Ten_size || s.TenSize || s.tenSize;
     });
-    uniqueSizes.sort(function(a, b) {
+    uniqueSizes.sort(function (a, b) {
       var idxA = allSizeNames.indexOf(a);
       var idxB = allSizeNames.indexOf(b);
       return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
@@ -393,7 +527,7 @@ var OrderPage = (function () {
 
     // 3. Xây dựng Header
     var headHtml = '<tr><th style="min-width:120px">Sản phẩm</th><th>Màu</th>';
-    uniqueSizes.forEach(function(sz) {
+    uniqueSizes.forEach(function (sz) {
       headHtml += '<th style="text-align:center; min-width:40px">' + sz + '</th>';
     });
     headHtml += '<th style="text-align:center">Tổng</th><th style="text-align:right">Thành tiền</th></tr>';
@@ -401,13 +535,13 @@ var OrderPage = (function () {
     // 4. Xây dựng Body
     var totalMoneyAll = 0;
     var sizeTotals = {};
-    uniqueSizes.forEach(function(sz) { sizeTotals[sz] = 0; });
+    uniqueSizes.forEach(function (sz) { sizeTotals[sz] = 0; });
 
-    var bodyHtml = orderRows.map(function(row) {
+    var bodyHtml = orderRows.map(function (row) {
       var rowQty = 0;
       var hasQty = false;
-      
-      var rowCells = uniqueSizes.map(function(sz) {
+
+      var rowCells = uniqueSizes.map(function (sz) {
         var q = row.quantities[sz] || 0;
         if (q > 0) {
           rowQty += q;
@@ -416,7 +550,7 @@ var OrderPage = (function () {
         }
         return '<td style="text-align:center">' + (q > 0 ? '<strong>' + q + '</strong>' : '-') + '</td>';
       }).join('');
-      
+
       if (!hasQty) return ''; // Bỏ qua sản phẩm không có số lượng
 
       var rowMoney = rowQty * (row.product.don_gia || 0);
@@ -433,7 +567,7 @@ var OrderPage = (function () {
 
     // 5. Xây dựng Footer
     var footHtml = '<tr style="font-weight:700; background:var(--bg)"><td colspan="2" style="text-align:right">Tổng cộng:</td>';
-    uniqueSizes.forEach(function(sz) {
+    uniqueSizes.forEach(function (sz) {
       footHtml += '<td style="text-align:center">' + sizeTotals[sz] + '</td>';
     });
     footHtml += '<td style="text-align:center; color:var(--primary)">' + totalQtyAll + '</td><td style="text-align:right; color:var(--accent)">' + Utils.formatMoney(totalMoneyAll) + '</td></tr>';
@@ -442,7 +576,7 @@ var OrderPage = (function () {
     document.getElementById('preview-head').innerHTML = headHtml;
     document.getElementById('preview-body').innerHTML = bodyHtml;
     document.getElementById('preview-foot').innerHTML = footHtml;
-    
+
     var info = document.getElementById('preview-info');
     info.innerHTML = [
       '<div><strong>Người nhận:</strong> ' + (document.getElementById('o-kh-ten')?.value || '—') + '</div>',
@@ -463,8 +597,8 @@ var OrderPage = (function () {
       id: Utils.uuid(), // Generate ID
       so_ct: document.getElementById('o-so-ct').value,
       ngay_ct: document.getElementById('o-ngay').value,
-      chi_nhanh: document.getElementById('o-chi-nhanh').value,
-      nvkd: document.getElementById('o-nvkd').value,
+      chi_nhanh: _catValues.chi_nhanh.name || _catValues.chi_nhanh.id,
+      nvkd: _catValues.nvkd.name || _catValues.nvkd.id,
       nguoi_tao: document.getElementById('o-nguoi-tao').value,
       ma_kh: ma_kh,
       ma_dl: document.getElementById('o-ma-dl').value,
@@ -475,8 +609,8 @@ var OrderPage = (function () {
       ghi_chu: document.getElementById('o-note').value,
       pt_giao: document.getElementById('o-pt-giao').value,
       nguoi_giao: document.getElementById('o-nguoi-giao').value,
-      dieu_khoan: document.getElementById('o-dieu-khoan').value,
-      ht_thanh_toan: document.getElementById('o-ht-thanh-toan').value,
+      dieu_khoan: _catValues.dieu_khoan.name || _catValues.dieu_khoan.id,
+      ht_thanh_toan: _catValues.ht_tt.name || _catValues.ht_tt.id,
       ngay_tt: document.getElementById('o-ngay-tt').value,
       khach_dua: document.getElementById('o-khach-dua').value,
       ma_ctbh: document.getElementById('o-ctbh').value,
