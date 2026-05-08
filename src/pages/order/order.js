@@ -13,6 +13,7 @@ var OrderPage = (function () {
   }
 
   async function _init() {
+    // 1. Lấy bảng size và thông tin cơ bản
     var resSizes = await ProductService.getSizes();
     if (Array.isArray(resSizes) && resSizes.length > 0) {
       cachedSizes = resSizes;
@@ -25,15 +26,64 @@ var OrderPage = (function () {
     document.getElementById('o-ngay-tt').value = Utils.today();
     document.getElementById('o-kh-dc').value = '';
 
-    var sel = document.getElementById('o-ctbh');
-    sel.innerHTML = '<option value="">-- Không áp dụng CTKM --</option>';
+    // 2. Lấy Danh mục (Chi nhánh, Nhân viên, Thanh toán...)
+    _loadCategories();
 
-    if (sel.options.length > 0) sel.selectedIndex = 0;
+    var sel = document.getElementById('o-ctbh');
+    if (sel) {
+      sel.innerHTML = '<option value="">-- Không áp dụng CTKM --</option>';
+      if (sel.options.length > 0) sel.selectedIndex = 0;
+    }
 
     renderMatrix();
     document.addEventListener('click', function (e) {
       // In default multi-mode, user must explicitly click "Hủy" or "Thêm đã chọn"
     });
+  }
+
+  async function _loadCategories() {
+    try {
+      // Gọi song song các API danh mục
+      const [branches, employees, payTypes, payTerms] = await Promise.all([
+        CategoryService.getCategories('Branch'),
+        CategoryService.getCategories('Employee'),
+        CategoryService.getCategories('PaymentType'),
+        CategoryService.getCategories('PaymentTerm')
+      ]);
+
+      // Chi nhánh
+      const selBranch = document.getElementById('o-chi-nhanh');
+      if (selBranch && branches.length > 0) {
+        selBranch.innerHTML = branches.map(b => `<option value="${b.name}" ${b.is_default ? 'selected' : ''}>${b.name}</option>`).join('');
+      }
+
+      // Nhân viên KD
+      const selEmp = document.getElementById('o-nvkd');
+      if (selEmp) {
+        selEmp.innerHTML = '<option value="">-- Chọn nhân viên --</option>' + 
+          employees.map(e => `<option value="${e.name}">${e.name} (${e.department || 'KD'})</option>`).join('');
+      }
+
+      // Hình thức thanh toán
+      const selPayType = document.getElementById('o-ht-thanh-toan');
+      if (selPayType) {
+        selPayType.innerHTML = '<option value="">-- Chọn hình thức --</option>' + 
+          payTypes.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+        // Mặc định chọn Tiền mặt nếu có
+        const cashOpt = Array.from(selPayType.options).find(o => o.text === 'Tiền mặt');
+        if (cashOpt) cashOpt.selected = true;
+      }
+
+      // Điều khoản thanh toán
+      const selPayTerm = document.getElementById('o-dieu-khoan');
+      if (selPayTerm) {
+        selPayTerm.innerHTML = '<option value="">-- Chọn điều khoản --</option>' + 
+          payTerms.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+      }
+
+    } catch (err) {
+      console.warn('[OrderPage] Lỗi load danh mục:', err);
+    }
   }
 
   function updateInfoSummary() {

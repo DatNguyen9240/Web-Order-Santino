@@ -14,6 +14,7 @@ $jsFiles = @(
   "data\translations.js",
   "js\http.js",
   "js\services\product.service.js",
+  "js\services\category.service.js",
   "js\services\order.service.js",
   "js\utils.js",
   "components\confirm-modal\ConfirmModal.js",
