@@ -3,7 +3,7 @@ var OrderDetailPage = (function () {
     return Router.fetchTemplate('src/pages/order-detail/order-detail.html').then(function(html){
       $el.innerHTML = html;
       var id = window._viewOrderId;
-      var o = id ? DB.find('orders', id) : null;
+      var o = null; // API lấy chi tiết đơn chưa hỗ trợ
       if(!o){$el.innerHTML='<div class="empty-state"><span class="material-symbols-outlined">search_off</span><p>' + t('order.not_found') + '</p></div>';return;}
       document.getElementById('detail-title').textContent = t('btn.detail') + ': '+o.so_ct;
       document.getElementById('detail-info').innerHTML = [

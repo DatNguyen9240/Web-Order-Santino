@@ -9,7 +9,7 @@ const FilterBar = {
 
         try {
             // DYNAMIC EXTRACTION using DB API (New Architecture)
-            const allProducts = typeof DB !== 'undefined' ? DB.getAll('products') : [];
+            const allProducts = [];
             
             if (allProducts && allProducts.length > 0) {
                 // Extract unique categories (using ten_nhom_hang as category)

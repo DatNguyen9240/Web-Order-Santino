@@ -59,6 +59,7 @@ var SettingsPage = (function () {
 
     // LUÔN áp dụng màu cho document khi init settings
     document.documentElement.style.setProperty('--accent', color);
+    document.documentElement.style.setProperty('--primary', color);
   }
 
   function setMode(mode) {
@@ -80,6 +81,7 @@ var SettingsPage = (function () {
     // Đảm bảo màu accent không bị đè bởi class dark-theme
     var color = localStorage.getItem('santino_color') || '#FBBF24';
     document.documentElement.style.setProperty('--accent', color);
+    document.documentElement.style.setProperty('--primary', color);
     
     _init();
     showToast(t('toast.theme_changed'));
@@ -129,8 +131,10 @@ var SettingsPage = (function () {
 
   function setColor(hex) {
     document.documentElement.style.setProperty('--accent', hex);
+    document.documentElement.style.setProperty('--primary', hex);
     var fg = _calculateFg(hex);
     document.documentElement.style.setProperty('--accent-fg', fg);
+    document.documentElement.style.setProperty('--primary-fg', fg);
     localStorage.setItem('santino_color', hex);
     localStorage.setItem('santino_color_fg', fg);
     
@@ -151,10 +155,8 @@ var SettingsPage = (function () {
       confirmText: t('settings.reset.confirm.btn'),
       confirmClass: 'btn-danger',
       onConfirm: function() {
-        ['santino_products','santino_sizes','santino_promotions','santino_orders', 'santino_theme', 'santino_font', 'santino_color', 'santino_lang', 'santino_layout'].forEach(function(k){localStorage.removeItem(k);});
-        DB.initSeed();
-        showToast(t('toast.reset_done'));
-        setTimeout(function() { window.location.reload(); }, 1500);
+        ['santino_products','santino_sizes','santino_promotions','santino_orders', 'santino_theme', 'santino_font', 'santino_color', 'santino_lang', 'santino_layout', 'santino_zoom'].forEach(function(k){localStorage.removeItem(k);});
+        window.location.reload();
       }
     });
   }

@@ -6,24 +6,31 @@
 /* ---- Light Theme (Premium) ---- */
 :root {
   /* Colors */
-  --bg:          #f4f4f5; /* Zinc 100 */
-  --surface:     #ffffff;
-  --surface-glass: rgba(255, 255, 255, 0.7);
-  --border:      #e4e4e7; /* Zinc 200 */
-  --text:        #09090b; /* Zinc 950 */
-  --muted:       #71717a; /* Zinc 500 */
-  
-  --primary:     #18181b; /* Zinc 900 - Sleek Black */
-  --primary-fg:  #ffffff; /* White text on primary */
-  
-  --accent:      #FBBF24; /* Bright Radiant Gold */
-  --accent-dim:  rgba(251, 191, 36, 0.15);
-  --tertiary:    #1A1A1D;
-  --neutral:     #F3F4F6;
-  
-  --danger:      #e11d48; /* Rose 600 */
-  --success:     #10b981; /* Emerald 500 - More vibrant */
-  --info:        #2563eb; /* Blue 600 */
+  --bg: #ffffff;
+  /* Zinc 100 */
+  --surface: #ffffff;
+  --border: #e4e4e7;
+  /* Zinc 200 */
+  --text: #09090b;
+  /* Zinc 950 */
+  --muted: #71717a;
+  /* Zinc 500 */
+
+  --primary: #FBBF24;
+  /* Radiant Gold */
+  --primary-fg: #18181b;
+  /* Dark text on gold */
+
+  --accent: #FBBF24;
+  /* Bright Radiant Gold */
+  --accent-dim: rgba(251, 191, 36, 0.15);
+
+  --danger: #e11d48;
+  /* Rose 600 */
+  --success: #059669;
+  /* Emerald 600 */
+  --info: #2563eb;
+  /* Blue 600 */
 
   /* Radius */
   --radius:      8px;
@@ -45,22 +52,28 @@
 
 /* ---- Dark Theme Overrides (Ultra Premium Dark) ---- */
 .dark-theme {
-  --bg:          #09090b; /* Zinc 950 */
-  --surface:     #18181b; /* Zinc 900 */
-  --surface-glass: rgba(24, 24, 27, 0.7);
-  --border:      #27272a; /* Zinc 800 */
-  --text:        #fafafa; /* Zinc 50 */
-  --muted:       #a1a1aa; /* Zinc 400 */
-  
-  --primary:     #fafafa; /* Zinc 50 - Sleek White */
-  --primary-fg:  #18181b; /* Dark text on white primary */
-  
-  --accent:      #FBBF24; /* Bright Radiant Gold for Dark Mode */
-  --accent-dim:  rgba(251, 191, 36, 0.15);
-  
-  --shadow-sm:   0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow:      0 4px 16px rgba(0, 0, 0, 0.4);
-  --shadow-md:   0 8px 24px rgba(0, 0, 0, 0.5);
-  --shadow-lg:   0 16px 32px rgba(0, 0, 0, 0.6);
-  --success:     #34d399; /* Emerald 400 - Super vibrant for Dark mode */
+  --bg: #09090b;
+  /* Zinc 950 */
+  --surface: #18181b;
+  /* Zinc 900 */
+  --border: #27272a;
+  /* Zinc 800 */
+  --text: #fafafa;
+  /* Zinc 50 */
+  --muted: #a1a1aa;
+  /* Zinc 400 */
+
+  --primary: #FBBF24;
+  /* Radiant Gold */
+  --primary-fg: #18181b;
+  /* Dark text on gold */
+
+  --accent: #FBBF24;
+  /* Bright Radiant Gold for Dark Mode */
+  --accent-dim: rgba(251, 191, 36, 0.15);
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 16px 32px rgba(0, 0, 0, 0.6);
 }
