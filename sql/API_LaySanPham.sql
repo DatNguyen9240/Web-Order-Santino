@@ -4,6 +4,12 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+    -- Nếu bị truyền nguyên cụm JSON {"SearchTerm":"..."} vào biến
+    IF @SearchTerm LIKE '{%"SearchTerm"%}'
+    BEGIN
+        SET @SearchTerm = JSON_VALUE(@SearchTerm, '$.SearchTerm');
+    END
+
     SELECT 
         [ItemName2]    AS [ten_hang_2],
         [TenHangHoa]   AS [ten_hang_hoa],
