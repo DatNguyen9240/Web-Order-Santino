@@ -5,7 +5,7 @@ var PromosPage = (function () {
     });
   }
   function _render() {
-    var promos = DB.getAll('promotions');
+    var promos = [];
     var tbody = document.getElementById('promos-body');
     if (!promos.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><span class="material-symbols-outlined">local_offer</span><span data-i18n="table.empty">' + t('table.empty') + '</span></td></tr>'; return; }
     tbody.innerHTML = promos.map(function (p) {
@@ -20,7 +20,7 @@ var PromosPage = (function () {
     }).join('');
   }
   function openModal(id) {
-    var p = id ? DB.find('promotions', id) : null;
+    var p = null;
     document.getElementById('prom-title').textContent = p ? 'Sửa CTKM' : 'Thêm CTKM';
     document.getElementById('prom-id').value = p ? p.id : '';
     document.getElementById('prom-ma').value = p ? p.ma_ctbh : '';
@@ -38,7 +38,7 @@ var PromosPage = (function () {
       active: document.getElementById('prom-active').value === 'true'
     };
     if (!data.ma_ctbh || !data.ten_ctbh) { showToast('Vui lòng nhập Mã và Tên CTBH!', false); return; }
-    if (id) DB.update('promotions', id, data); else DB.add('promotions', { ...data, id: data.ma_ctbh });
+    showToast('Chức năng thêm/sửa CTKM vô hiệu hóa (chưa có API)');
     closeModal('modal-promo'); _render(); showToast('Đã lưu CTKM');
   }
   function del(id) {
@@ -48,7 +48,7 @@ var PromosPage = (function () {
       confirmText: 'Xóa',
       confirmClass: 'btn-danger',
       onConfirm: function() {
-        DB.remove('promotions', id);
+        showToast('Chức năng xóa vô hiệu hóa (chưa có API)');
         _render();
         showToast('Đã xóa CTKM');
       }

@@ -9,9 +9,10 @@ var OrdersPage = (function () {
       _render();
     });
   }
-  function _render(q) {
+  async function _render(q) {
     q = q || '';
-    var orders = DB.getAll('orders').filter(function(o){return !q||o.so_ct.includes(q);}).reverse();
+    var orders = [];
+    orders = orders.filter(function(o){return !q||o.so_ct.includes(q);}).reverse();
     var tbody = document.getElementById('orders-body');
     var pInfo = document.getElementById('pagination-info');
     if (pInfo) pInfo.textContent = 'Hiển thị ' + orders.length + ' kết quả';
@@ -48,8 +49,7 @@ var OrdersPage = (function () {
       confirmText: t('btn.delete'),
       confirmClass: 'btn-danger',
       onConfirm: function() {
-        DB.remove('orders', id);
-        _render();
+        showToast('Chức năng xóa đã vô hiệu hóa (chưa có API)');
         showToast(t('toast.order_deleted'));
       }
     });

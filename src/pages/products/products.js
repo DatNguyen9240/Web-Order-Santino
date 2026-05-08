@@ -10,10 +10,22 @@ var ProductsPage = (function () {
   function _render() {
     var q = (document.getElementById('product-search') || {}).value || '';
     var form = (document.getElementById('product-filter-form') || {}).value || '';
+<<<<<<< HEAD
     var prods = DB.getAll('products').filter(function (p) {
       return (!q || p.ten_hang_2.toLowerCase().includes(q.toLowerCase()) || (p.mau && p.mau.toLowerCase().includes(q.toLowerCase()))) && (!form || p.form === form);
     });
+=======
+    var prods = []; // API chưa hỗ trợ hiển thị kho sản phẩm
+
+>>>>>>> feature/architect-updates
     var tbody = document.getElementById('products-body');
+    
+    // Giả lập Dữ liệu Phân trang từ API
+    var mockTotalEntries = prods.length;
+    var mockCurrentPage = window._productsCurrentPage || 1;
+    var mockPerPage = 6;
+    _renderPagination(mockTotalEntries, mockCurrentPage, mockPerPage);
+
     if (!prods.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><span class="material-symbols-outlined">inventory_2</span><span data-i18n="table.empty">' + t('table.empty') + '</span></td></tr>'; return; }
     tbody.innerHTML = prods.map(function (p) {
       return '<tr>' +
@@ -31,8 +43,48 @@ var ProductsPage = (function () {
         '</td></tr>';
     }).join('');
   }
+  
+  function _renderPagination(totalEntries, currentPage, perPage) {
+    var container = document.getElementById('products-pagination-container');
+    if (!container) return;
+
+    var totalPages = Math.ceil(totalEntries / perPage);
+    if (totalPages === 0) totalPages = 1;
+
+    var startItem = totalEntries === 0 ? 0 : (currentPage - 1) * perPage + 1;
+    var endItem = Math.min(currentPage * perPage, totalEntries);
+
+    var html = '<div class="pagination-footer" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-top: 1px solid var(--border-light); background: var(--surface); border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">' +
+      '<div class="pagination-info" style="color: var(--muted); font-size: 0.875rem;">' +
+        'Showing ' + startItem + ' to ' + endItem + ' of ' + totalEntries + ' entries' +
+      '</div>';
+
+    html += '<div class="pagination-controls" style="display: flex; gap: 0.25rem;">';
+    
+    html += '<button class="btn-icon" style="width: 32px; height: 32px; border-radius: 0.5rem; border: 1px solid var(--border); background: transparent; cursor: ' + (currentPage > 1 ? 'pointer' : 'not-allowed') + '; display: flex; justify-content: center; align-items: center;" ' + (currentPage > 1 ? 'onclick="ProductsPage.changePage(' + (currentPage - 1) + ')"' : 'disabled') + '><span class="material-symbols-outlined" style="font-size: 1rem;">chevron_left</span></button>';
+
+    for (var i = 1; i <= Math.max(totalPages, 1); i++) {
+        if (i === currentPage) {
+            html += '<button style="width: 32px; height: 32px; border-radius: 0.5rem; border: none; background: var(--primary); color: var(--primary-fg); font-weight: bold; cursor: default; display: flex; justify-content: center; align-items: center;">' + i + '</button>';
+        } else {
+            html += '<button style="width: 32px; height: 32px; border-radius: 0.5rem; border: 1px solid var(--border); background: transparent; color: var(--text); cursor: pointer; display: flex; justify-content: center; align-items: center;" onclick="ProductsPage.changePage(' + i + ')">' + i + '</button>';
+        }
+    }
+
+    html += '<button class="btn-icon" style="width: 32px; height: 32px; border-radius: 0.5rem; border: 1px solid var(--border); background: transparent; cursor: ' + (currentPage < totalPages ? 'pointer' : 'not-allowed') + '; display: flex; justify-content: center; align-items: center;" ' + (currentPage < totalPages ? 'onclick="ProductsPage.changePage(' + (currentPage + 1) + ')"' : 'disabled') + '><span class="material-symbols-outlined" style="font-size: 1rem;">chevron_right</span></button>';
+
+    html += '</div></div>';
+
+    container.innerHTML = html;
+  }
+
+  function changePage(page) {
+    window._productsCurrentPage = page;
+    _render();
+  }
+
   function openModal(id) {
-    var p = id ? DB.find('products', id) : null;
+    var p = null;
     document.getElementById('pm-title').textContent = p ? 'Sửa Sản Phẩm' : 'Thêm Sản Phẩm';
     document.getElementById('pm-id').value = p ? p.id : '';
     var ns = document.getElementById('pm-nhom-size');
@@ -69,7 +121,7 @@ var ProductsPage = (function () {
       ten_form: document.getElementById('pm-form').value === 'AMC' ? 'Modern Fit' : 'Regular'
     };
     if (!data.ten_hang_2) { showToast('Vui lòng nhập Tên hàng 2!', false); return; }
-    if (id) DB.update('products', id, data); else DB.add('products', data);
+    showToast('Chức năng sửa sản phẩm đã vô hiệu hóa (chưa có API)');
     closeModal('modal-product'); _render();
     showToast(id ? 'Đã cập nhật' : 'Đã thêm sản phẩm');
   }
@@ -80,11 +132,11 @@ var ProductsPage = (function () {
       confirmText: 'Xóa',
       confirmClass: 'btn-danger',
       onConfirm: function() {
-        DB.remove('products', id);
+        showToast('Chức năng xóa đã vô hiệu hóa (chưa có API)');
         _render();
         showToast('Đã xóa');
       }
     });
   }
-  return { render: render, openModal: openModal, save: save, del: del };
+  return { render: render, openModal: openModal, save: save, del: del, changePage: changePage };
 })();

@@ -112,40 +112,11 @@
         else { inputPw.type = 'password'; eyeOpen.style.display = 'block'; eyeOff.style.display = 'none'; }
       });
     })();
-
-    (function() {
-      const usernameInput = document.getElementById('login-username'), passwordInput = document.getElementById('login-password'), rememberCheckbox = document.getElementById('remember-me');
-      const b64Encode = (str) => btoa(unescape(encodeURIComponent(str)));
-      const b64Decode = (str) => { try { return decodeURIComponent(escape(atob(str))); } catch (e) { return ''; } };
-
-      setTimeout(() => {
-        const rememberedUser = localStorage.getItem('santino_remember_user'), rememberedPw = localStorage.getItem('santino_remember_pw');
-        if (rememberedUser && rememberedPw) { usernameInput.value = rememberedUser; passwordInput.value = b64Decode(rememberedPw); rememberCheckbox.checked = true; }
-      }, 100);
-
-      document.getElementById('login-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        var user = usernameInput.value.trim(), pass = passwordInput.value, errEl = document.getElementById('login-error'), btnText = document.getElementById('btn-login-text'), btnSpinner = document.getElementById('login-spinner'), btn = document.getElementById('btn-login');
-        errEl.style.display = 'none';
-        if (user && pass) {
-          btnText.innerText = 'Đang xác thực...'; btnSpinner.style.display = 'block'; btn.disabled = true;
-          setTimeout(() => {
-            if (user.length >= 3) {
-                if (rememberCheckbox.checked) { localStorage.setItem('santino_remember_user', user); localStorage.setItem('santino_remember_pw', b64Encode(pass)); }
-                else { localStorage.removeItem('santino_remember_user'); localStorage.removeItem('santino_remember_pw'); }
-                
-                // GIẢ LẬP AUTH ĐỂ VƯỢT QUA INDEX.JS CHECK (Dùng localStorage vì file:/// không hỗ trợ Cookie)
-                localStorage.setItem('auth_token', 'fake_demo_token_for_b2b');
-                localStorage.setItem('santino_user', JSON.stringify({ name: user, id: 'DL_VIP' }));
-                
-                window.location.href = 'index.html';
-            } else {
-                errEl.innerText = 'Tên đăng nhập / Mã đại lý không hợp lệ'; errEl.style.display = 'block'; btnText.innerText = 'Đăng nhập B2B'; btnSpinner.style.display = 'none'; btn.disabled = false;
-            }
-          }, 1000);
-        }
-      });
-    })();
   </script>
+
+  <!-- Load env.js để lấy API_BASE_URL -->
+  <script src="env.js?v=42"></script>
+  <!-- Load logic đăng nhập -->
+  <script src="src/js/login.js?v=42"></script>
 </body>
 </html>

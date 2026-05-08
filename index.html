@@ -12,8 +12,24 @@
     rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
   <!-- BUNDLED CSS -->
-  <link rel="stylesheet" href="src/css/styles.bundle.css?v=17">
-  <script>(function () { if (localStorage.getItem('santino_theme') === 'dark') document.documentElement.classList.add('dark-theme') })();</script>
+  <link rel="stylesheet" href="src/css/styles.bundle.css?v=66">
+  <script>
+    (function () {
+      // ⚡ ZERO-FLICKER INJECTION (Root Em Hybrid)
+      var theme = localStorage.getItem('santino_theme') || 'auto';
+      if (theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark-theme');
+      }
+      
+      var zoom = localStorage.getItem('santino_zoom');
+      var scale = zoom ? (parseInt(zoom) / 100) : 1;
+      // Mobile Guardrails (Max 1.15x on small screens)
+      if (window.innerWidth <= 480) {
+        scale = Math.min(scale, 1.15);
+      }
+      document.documentElement.style.setProperty('--text-scale', scale);
+    })();
+  </script>
 </head>
 
 <body>
@@ -25,7 +41,7 @@
         <button class="icon-btn menu-btn" onclick="toggleSidebar()" style="margin-right: 8px;">
           <span class="material-symbols-outlined">menu</span>
         </button>
-        <div class="logo">
+        <div class="logo" style="cursor:pointer;" onclick="location.hash='#/order'">
           <img src="images/logo.png" alt="SANTINO" class="app-logo">
         </div>
         <div class="nav-links">
@@ -59,10 +75,18 @@
     </header>
 
     <!-- SIDEBAR -->
+<<<<<<< HEAD
     <aside class="sidebar">
       <div class="logo" style="padding-top: 16px; margin-bottom: 24px;">
         <img src="images/logo.png" alt="SANTINO" class="app-logo" style="height: 40px; object-fit: contain;">
         <div style="font-size: 12px; opacity: 0.6; font-weight: 500; margin-top: 4px;">Wholesale Portal</div>
+=======
+    <aside class="sidebar" id="sidebar">
+      <div class="logo"
+        onclick="location.hash='#/order'; if(window.innerWidth <= 1024) { document.querySelector('.sidebar').classList.remove('show'); document.querySelector('.sidebar-overlay').classList.remove('show'); document.body.style.overflow=''; }"
+        style="cursor:pointer;">
+        <img src="images/logo.png" alt="SANTINO" class="app-logo" style="height: 40px;">
+>>>>>>> feature/architect-updates
       </div>
       
       <button class="btn btn-primary" style="width: 100%; margin-bottom: 24px; justify-content: center; gap: 10px;" onclick="window.location.hash='#/order'">
@@ -168,12 +192,22 @@
     <span id="toast-msg"></span>
   </div>
 
+<<<<<<< HEAD
   <!-- BUNDLED JS (Core + Data + Components) -->
   <script src="src/js/app.bundle.js"></script>
+=======
+  <!-- BUNDLED JS -->
+  <script src="env.js?v=66"></script>
+  <script src="src/js/app.bundle.js?v=66"></script>
+>>>>>>> feature/architect-updates
   <script>
     function toggleSidebar() {
-      document.querySelector('.sidebar').classList.toggle('show');
+      var sidebar = document.querySelector('.sidebar');
+      sidebar.classList.toggle('show');
       document.querySelector('.sidebar-overlay').classList.toggle('show');
+      if (window.innerWidth <= 1024) {
+        document.body.style.overflow = sidebar.classList.contains('show') ? 'hidden' : '';
+      }
     }
     // Auto-close menu when clicking nav items on mobile
     document.querySelectorAll('.sidebar .nav-item').forEach(el => {
@@ -181,6 +215,7 @@
         if (window.innerWidth <= 1024) {
           document.querySelector('.sidebar').classList.remove('show');
           document.querySelector('.sidebar-overlay').classList.remove('show');
+          document.body.style.overflow = '';
         }
       });
     });

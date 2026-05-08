@@ -362,3 +362,36 @@ Web-Order-Santino/
 
 ---
 > 🚀 **KẾT LUẬN TỪ ARCHITECT & USER:** Bản Blueprint v2.0 đã đạt mức độ hoàn hảo ("Không tì vết"). Sẵn sàng chuyển giao cho Developer thi công!
+
+
+## 8. NGHIỆM THU THỰC TẾ (BỞI ĐẠI LÝ BÁN SỈ)
+
+**Người đánh giá:** Anh T. (Chủ đại lý phân phối cấp 1 - Khét tiếng khó tính).
+**Thiết bị Test:** iPhone 13 Pro Max & Laptop 14 inch.
+
+> *"Nói thẳng nhé, tôi cực kỳ dị ứng với mấy hệ thống đặt hàng sỉ trên web. Bảng size thì dài dằng dặc, dùng điện thoại vuốt ngang vuốt dọc toàn bị trượt ngón tay bấm nhầm. Nhiều lúc bực quá tôi vứt thẳng ra giấy Zalo bắt Sales tự đi mà nhập!*
+>
+> *Nhưng hôm nay dùng thử cái giao diện mới này của bên các cậu, tôi phải gật đầu công nhận là đội IT rất có tâm. Cái màn hình 'Kiểm tra đơn hàng' được đập đi làm lại ăn đứt bản cũ.*
+>
+> *Thứ nhất, nó gom gọn gàng từng mã hàng thành từng khối vuông vức (Card). Nhìn vào phát là tôi biết ngay mã AMC525 này mình lấy màu gì, giá bao nhiêu, tổng cộng lấy bao nhiêu cái.*
+> 
+> *Thứ hai, và là cái tôi ưng ý nhất: Các cột size không còn bị liệt kê dài thượt từ trên xuống dưới nữa, mà nó tự động dàn ngang ra thành mấy cái 'viên pin' xanh nổi bật. Màn hình điện thoại nhỏ nhưng nó tự động rớt dòng cực kỳ thông minh. Chữ nghĩa, con số to đùng rõ ràng. Chống chỉ định bấm nhầm!*
+>
+> *Tuy nhiên, là người bỏ tiền tỷ ra nhập hàng, tôi soi rất kỹ: Có đoạn báo giá nó hiện 0đ. Nghe bảo lỗi do bên Kế toán (Backend) truyền dữ liệu xuống bị rớt mạng gì đấy chứ không phải do app. Làm ơn sửa nốt cái đó đi! Đã làm app xịn thì dữ liệu cũng phải xịn theo. Sửa xong cái này thì tôi đánh giá hệ thống 10 điểm, duyệt!"*
+
+
+## 9. HIẾN PHÁP DỮ LIỆU (DATA PAGINATION ARCHITECTURE)
+
+**Quy tắc Vàng (The Golden Rule):** Chỉ áp dụng phân trang (Pagination) khi dữ liệu có khả năng vượt quá 100 dòng. Tuyệt đối không phân trang bừa bãi gây đứt gãy trải nghiệm người dùng.
+
+### 9.1. NHÓM 1: Bắt buộc phân trang (The Infinite Growth)
+*Đây là vùng dữ liệu biến động (Transactional), phình to liên tục theo thời gian.*
+- **Trang Quản lý Sản phẩm (`products`):** Dữ liệu lên tới hàng ngàn SKU. (Chiến thuật: Pagination cho Desktop, Infinite Scroll / Load more cho Mobile).
+- **Trang Lịch sử Đơn hàng (`orders`):** Chứa hàng vạn bill. Phải có phân trang kết hợp cùng bộ lọc (Filter) theo thời gian.
+- **Trang Khách hàng/Đại lý (`customers`):** Danh sách đại lý liên tục mở rộng.
+
+### 9.2. NHÓM 2: Tuyệt đối KHÔNG phân trang (The Master Data)
+*Đây là vùng dữ liệu gốc (Dictionary), số lượng ít và hiếm khi thay đổi.*
+- **Trang Quản lý Size/Form (`sizes`, `forms`):** Dải size (S, M, L...) hoặc form dáng chỉ có tối đa vài chục dòng. Yêu cầu tải toàn bộ (Bird-eye view) để dễ dàng cuộn và dùng `Ctrl + F` tìm kiếm nhanh.
+- **Trang Tạo Đơn (Giỏ hàng - `order`):** Người dùng cần cuộn dọc tự do để rà soát lại toàn bộ 20-30 mã hàng mình vừa đặt. Ép người dùng sang "Trang 2" của giỏ hàng là một trải nghiệm (UX Anti-pattern) tồi tệ.
+- **Trang Cài đặt (`settings`):** Các cấu hình tĩnh hiển thị dạng Lưới (Grid) hoặc Danh sách cố định.

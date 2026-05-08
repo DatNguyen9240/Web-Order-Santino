@@ -8,7 +8,7 @@ var SizesPage = (function () {
     });
   }
   function _render() {
-    var sizes = DB.getAll('sizes').sort(function (a, b) { return a.nhom_size.localeCompare(b.nhom_size) || a.size - b.size; });
+    var sizes = [];
     var tbody = document.getElementById('sizes-body');
     if (!sizes.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><span class="material-symbols-outlined">straighten</span><span data-i18n="table.empty">' + t('table.empty') + '</span></td></tr>'; return; }
     tbody.innerHTML = sizes.map(function (s) {
@@ -23,7 +23,7 @@ var SizesPage = (function () {
     }).join('');
   }
   function openModal(id) {
-    var s = id ? DB.find('sizes', id) : null;
+    var s = null;
     document.getElementById('sm-title').textContent = s ? 'Sửa Size' : 'Thêm Size';
     document.getElementById('sm-id').value = s ? s.id : '';
     document.getElementById('sm-size').value = s ? s.size : '';
@@ -36,7 +36,7 @@ var SizesPage = (function () {
     var sz = parseInt(document.getElementById('sm-size').value);
     if (!sz) { showToast('Vui lòng nhập size!', false); return; }
     var data = { size: sz, ten_size: document.getElementById('sm-ten').value || String(sz), nhom_size: document.getElementById('sm-nhom').value.trim() || 'Nhóm 3' };
-    if (id) DB.update('sizes', id, data); else DB.add('sizes', { ...data, id: data.nhom_size + '_' + sz });
+    showToast('Chức năng thêm/sửa size vô hiệu hóa (chưa có API)');
     closeModal('modal-size'); _render(); showToast('Đã lưu size');
   }
   function del(id) {
@@ -46,7 +46,7 @@ var SizesPage = (function () {
       confirmText: 'Xóa',
       confirmClass: 'btn-danger',
       onConfirm: function() {
-        DB.remove('sizes', id);
+        showToast('Chức năng xóa vô hiệu hóa (chưa có API)');
         _render();
         showToast('Đã xóa size');
       }
