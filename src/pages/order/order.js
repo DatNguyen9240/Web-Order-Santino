@@ -309,36 +309,97 @@ var OrderPage = (function () {
   }
 
   function previewOrder() {
-    var lines = _buildLines();
-    if (!lines.length) { showToast('Vui lòng chọn sản phẩm và nhập số lượng', false); return; }
-    var info = document.getElementById('preview-info');
-    info.innerHTML = [
-      '<div><strong>Người nhận:</strong> ' + (document.getElementById('o-kh-ten')?.value || '—') + '</div>',
-      '<div><strong>SĐT:</strong> ' + (document.getElementById('o-kh-sdt')?.value || '—') + '</div>',
-      '<div><strong>Địa chỉ:</strong> ' + (document.getElementById('o-kh-dc')?.value || '—') + '</div>',
-      '<div><strong>Ghi chú:</strong> ' + (document.getElementById('o-note')?.value || '—') + '</div>',
-    ].join('');
+    if (!orderRows.length) { showToast('Vui lòng chọn sản phẩm và nhập số lượng', false); return; }
+    
+    // 1. Thu thập tất cả các size có số lượng > 0
+    var uniqueSizes = [];
+    var sizeMap = {};
+    var totalQtyAll = 0;
 
-    var headHtml = '<tr><th>Sản phẩm</th><th>Màu</th><th style="text-align:center">Size</th><th style="text-align:center">Số lượng</th><th style="text-align:right">Đơn giá</th><th style="text-align:right">Thành tiền</th></tr>';
+    orderRows.forEach(function(row) {
+      Object.entries(row.quantities).forEach(function(e) {
+        var sz = e[0], q = parseInt(e[1]) || 0;
+        if (q > 0) {
+          totalQtyAll += q;
+          if (!sizeMap[sz]) {
+            sizeMap[sz] = true;
+            uniqueSizes.push(sz);
+          }
+        }
+      });
+    });
 
-    var totalQtyAll = 0, totalMoneyAll = 0;
-    var bodyHtml = lines.map(function (line) {
-      totalQtyAll += line.so_luong;
-      totalMoneyAll += line.thanh_tien;
+    if (totalQtyAll === 0) { showToast('Vui lòng nhập số lượng', false); return; }
+
+    // 2. Sắp xếp uniqueSizes theo thứ tự trong cachedSizes
+    var allSizeNames = cachedSizes.map(function(s) { 
+      return s.size || s.Size || s.ten_size || s.Ten_size || s.TenSize || s.tenSize; 
+    });
+    uniqueSizes.sort(function(a, b) {
+      var idxA = allSizeNames.indexOf(a);
+      var idxB = allSizeNames.indexOf(b);
+      return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
+    });
+
+    // 3. Xây dựng Header
+    var headHtml = '<tr><th style="min-width:120px">Sản phẩm</th><th>Màu</th>';
+    uniqueSizes.forEach(function(sz) {
+      headHtml += '<th style="text-align:center; min-width:40px">' + sz + '</th>';
+    });
+    headHtml += '<th style="text-align:center">Tổng</th><th style="text-align:right">Thành tiền</th></tr>';
+
+    // 4. Xây dựng Body
+    var totalMoneyAll = 0;
+    var sizeTotals = {};
+    uniqueSizes.forEach(function(sz) { sizeTotals[sz] = 0; });
+
+    var bodyHtml = orderRows.map(function(row) {
+      var rowQty = 0;
+      var hasQty = false;
+      
+      var rowCells = uniqueSizes.map(function(sz) {
+        var q = row.quantities[sz] || 0;
+        if (q > 0) {
+          rowQty += q;
+          sizeTotals[sz] += q;
+          hasQty = true;
+        }
+        return '<td style="text-align:center">' + (q > 0 ? '<strong>' + q + '</strong>' : '-') + '</td>';
+      }).join('');
+      
+      if (!hasQty) return ''; // Bỏ qua sản phẩm không có số lượng
+
+      var rowMoney = rowQty * (row.product.don_gia || 0);
+      totalMoneyAll += rowMoney;
 
       return '<tr>' +
-        '<td><strong>' + line.ten_hang_2 + '</strong></td>' +
-        '<td><small>' + line.mau + '</small></td>' +
-        '<td style="text-align:center"><strong>' + line.size + '</strong></td>' +
-        '<td style="text-align:center">' + line.so_luong + '</td>' +
-        '<td style="text-align:right">' + Utils.formatMoney(line.don_gia) + '</td>' +
-        '<td style="text-align:right; font-weight:bold">' + Utils.formatMoney(line.thanh_tien) + '</td>' +
+        '<td><div style="font-weight:800; color:var(--primary)">' + row.ten_hang_2 + '</div><div style="font-size:11px; color:var(--muted); white-space:normal">' + row.product.ten_hang_hoa + '</div></td>' +
+        '<td><small>' + (row.product.mau || '—') + '</small></td>' +
+        rowCells +
+        '<td style="text-align:center; background:var(--bg); font-weight:bold">' + rowQty + '</td>' +
+        '<td style="text-align:right; font-weight:bold">' + Utils.formatMoney(rowMoney) + '</td>' +
         '</tr>';
     }).join('');
 
+    // 5. Xây dựng Footer
+    var footHtml = '<tr style="font-weight:700; background:var(--bg)"><td colspan="2" style="text-align:right">Tổng cộng:</td>';
+    uniqueSizes.forEach(function(sz) {
+      footHtml += '<td style="text-align:center">' + sizeTotals[sz] + '</td>';
+    });
+    footHtml += '<td style="text-align:center; color:var(--primary)">' + totalQtyAll + '</td><td style="text-align:right; color:var(--accent)">' + Utils.formatMoney(totalMoneyAll) + '</td></tr>';
+
+    // Cập nhật Modal
     document.getElementById('preview-head').innerHTML = headHtml;
     document.getElementById('preview-body').innerHTML = bodyHtml;
-    document.getElementById('preview-foot').innerHTML = '<tr style="font-weight:700; background:var(--bg)"><td colspan="3" style="text-align:right">Tổng cộng:</td><td style="text-align:center">' + totalQtyAll + '</td><td></td><td style="text-align:right; color:var(--accent)">' + Utils.formatMoney(totalMoneyAll) + '</td></tr>';
+    document.getElementById('preview-foot').innerHTML = footHtml;
+    
+    var info = document.getElementById('preview-info');
+    info.innerHTML = [
+      '<div><strong>Người nhận:</strong> ' + (document.getElementById('o-kh-ten')?.value || '—') + '</div>',
+      '<div><strong>Mã KH:</strong> ' + (document.getElementById('o-ma-kh')?.value || '—') + '</div>',
+      '<div><strong>Địa chỉ:</strong> ' + (document.getElementById('o-kh-dc')?.value || '—') + '</div>',
+    ].join('');
+
     openModal('modal-preview');
   }
 
