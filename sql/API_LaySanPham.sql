@@ -1,8 +1,17 @@
 CREATE PROCEDURE [dbo].[API_LaySanPham]
-    @SearchTerm NVARCHAR(100) = NULL
+    @SearchTerm NVARCHAR(100) = NULL,
+    @sanpham NVARCHAR(100) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
+
+    DECLARE @Term NVARCHAR(100) = LTRIM(RTRIM(COALESCE(@sanpham, @SearchTerm)));
+    
+    -- Nếu backend truyền nguyên chuỗi JSON ?q={"sanpham":"..."} vào
+    IF @Term LIKE '{%"sanpham"%}'
+    BEGIN
+        SET @Term = JSON_VALUE(@Term, '$.sanpham');
+    END
 
     SELECT 
         [ItemName2]    AS [ten_hang_2],
@@ -19,9 +28,8 @@ BEGIN
     WHERE 
         ([isDisable] = 0 OR [isDisable] IS NULL)
         AND (
-            @SearchTerm IS NULL 
-            OR [ItemName2] LIKE '%' + @SearchTerm + '%'
-            OR [TenHangHoa] LIKE N'%' + @SearchTerm + '%'
+            @Term IS NULL OR @Term = ''
+            OR [ItemName2] LIKE '%' + @Term + '%'
         )
     ORDER BY 
         [ItemName2] ASC;
