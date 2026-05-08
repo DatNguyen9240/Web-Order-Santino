@@ -10,6 +10,13 @@ var ProductsPage = (function () {
     var prods = []; // API chưa hỗ trợ hiển thị kho sản phẩm
 
     var tbody = document.getElementById('products-body');
+    
+    // Giả lập Dữ liệu Phân trang từ API
+    var mockTotalEntries = prods.length;
+    var mockCurrentPage = window._productsCurrentPage || 1;
+    var mockPerPage = 6;
+    _renderPagination(mockTotalEntries, mockCurrentPage, mockPerPage);
+
     if (!prods.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><span class="material-symbols-outlined">inventory_2</span><span data-i18n="table.empty">' + t('table.empty') + '</span></td></tr>'; return; }
     tbody.innerHTML = prods.map(function (p) {
       return '<tr><td><strong>' + p.ten_hang_2 + '</strong></td><td>' + p.nhom_hang + '</td>' +
@@ -24,6 +31,46 @@ var ProductsPage = (function () {
         '</td></tr>';
     }).join('');
   }
+  
+  function _renderPagination(totalEntries, currentPage, perPage) {
+    var container = document.getElementById('products-pagination-container');
+    if (!container) return;
+
+    var totalPages = Math.ceil(totalEntries / perPage);
+    if (totalPages === 0) totalPages = 1;
+
+    var startItem = totalEntries === 0 ? 0 : (currentPage - 1) * perPage + 1;
+    var endItem = Math.min(currentPage * perPage, totalEntries);
+
+    var html = '<div class="pagination-footer" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-top: 1px solid var(--border-light); background: var(--surface); border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">' +
+      '<div class="pagination-info" style="color: var(--muted); font-size: 0.875rem;">' +
+        'Showing ' + startItem + ' to ' + endItem + ' of ' + totalEntries + ' entries' +
+      '</div>';
+
+    html += '<div class="pagination-controls" style="display: flex; gap: 0.25rem;">';
+    
+    html += '<button class="btn-icon" style="width: 32px; height: 32px; border-radius: 0.5rem; border: 1px solid var(--border); background: transparent; cursor: ' + (currentPage > 1 ? 'pointer' : 'not-allowed') + '; display: flex; justify-content: center; align-items: center;" ' + (currentPage > 1 ? 'onclick="ProductsPage.changePage(' + (currentPage - 1) + ')"' : 'disabled') + '><span class="material-symbols-outlined" style="font-size: 1rem;">chevron_left</span></button>';
+
+    for (var i = 1; i <= Math.max(totalPages, 1); i++) {
+        if (i === currentPage) {
+            html += '<button style="width: 32px; height: 32px; border-radius: 0.5rem; border: none; background: var(--primary); color: var(--primary-fg); font-weight: bold; cursor: default; display: flex; justify-content: center; align-items: center;">' + i + '</button>';
+        } else {
+            html += '<button style="width: 32px; height: 32px; border-radius: 0.5rem; border: 1px solid var(--border); background: transparent; color: var(--text); cursor: pointer; display: flex; justify-content: center; align-items: center;" onclick="ProductsPage.changePage(' + i + ')">' + i + '</button>';
+        }
+    }
+
+    html += '<button class="btn-icon" style="width: 32px; height: 32px; border-radius: 0.5rem; border: 1px solid var(--border); background: transparent; cursor: ' + (currentPage < totalPages ? 'pointer' : 'not-allowed') + '; display: flex; justify-content: center; align-items: center;" ' + (currentPage < totalPages ? 'onclick="ProductsPage.changePage(' + (currentPage + 1) + ')"' : 'disabled') + '><span class="material-symbols-outlined" style="font-size: 1rem;">chevron_right</span></button>';
+
+    html += '</div></div>';
+
+    container.innerHTML = html;
+  }
+
+  function changePage(page) {
+    window._productsCurrentPage = page;
+    _render();
+  }
+
   function openModal(id) {
     var p = null;
     document.getElementById('pm-title').textContent = p ? 'Sửa Sản Phẩm' : 'Thêm Sản Phẩm';
@@ -79,5 +126,5 @@ var ProductsPage = (function () {
       }
     });
   }
-  return { render: render, openModal: openModal, save: save, del: del };
+  return { render: render, openModal: openModal, save: save, del: del, changePage: changePage };
 })();

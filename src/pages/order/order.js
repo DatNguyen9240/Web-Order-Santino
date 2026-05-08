@@ -292,20 +292,33 @@ var OrderPage = (function () {
   function _buildLines() {
     var ma_ctbh = document.getElementById('o-ctbh').value;
     var note = document.getElementById('o-note').value;
-    var lines = [];
+    // Lớp khiên VIP Aggregator: Sử dụng Map để gộp dòng (Data Normalization)
+    var linesMap = {};
+
     orderRows.forEach(function (row) {
       Object.entries(row.quantities).forEach(function (e) {
         var size = e[0], qty = parseInt(e[1]) || 0;
-        if (qty > 0) lines.push({
-          ten_hang_2: row.ten_hang_2, sku: Utils.buildSKU(row.ten_hang_2, size),
-          ten_hang: row.product.ten_hang_hoa, nhom_size: row.product.nhom_size,
-          mau: row.product.mau,
-          size: parseInt(size), so_luong: qty, don_gia: row.product.don_gia,
-          thanh_tien: qty * row.product.don_gia, ma_ctbh: ma_ctbh, ghi_chu: note
-        });
+        if (qty > 0) {
+          var compositeKey = row.ten_hang_2 + '|' + size; // Khóa tổ hợp duy nhất
+          
+          if (linesMap[compositeKey]) {
+            // Trùng lặp: Cộng dồn số lượng
+            linesMap[compositeKey].so_luong += qty;
+            linesMap[compositeKey].thanh_tien += (qty * (row.product.don_gia || 0));
+          } else {
+            // Mới: Khởi tạo dòng
+            linesMap[compositeKey] = {
+              ten_hang_2: row.ten_hang_2, sku: Utils.buildSKU(row.ten_hang_2, size),
+              ten_hang: row.product.ten_hang_hoa, nhom_size: row.product.nhom_size,
+              mau: row.product.mau,
+              size: size, so_luong: qty, don_gia: (row.product.don_gia || 0),
+              thanh_tien: qty * (row.product.don_gia || 0), ma_ctbh: ma_ctbh, ghi_chu: note
+            };
+          }
+        }
       });
     });
-    return lines;
+    return Object.values(linesMap);
   }
 
   function previewOrder() {
@@ -319,26 +332,58 @@ var OrderPage = (function () {
       '<div><strong>Ghi chú:</strong> ' + (document.getElementById('o-note')?.value || '—') + '</div>',
     ].join('');
 
-    var headHtml = '<tr><th>Sản phẩm</th><th>Màu</th><th style="text-align:center">Size</th><th style="text-align:center">Số lượng</th><th style="text-align:right">Đơn giá</th><th style="text-align:right">Thành tiền</th></tr>';
+    var totalQtyAll = lines.reduce(function(sum, l) { return sum + l.so_luong; }, 0);
+    var totalMoneyAll = lines.reduce(function(sum, l) { return sum + l.thanh_tien; }, 0);
 
-    var totalQtyAll = 0, totalMoneyAll = 0;
-    var bodyHtml = lines.map(function (line) {
-      totalQtyAll += line.so_luong;
-      totalMoneyAll += line.thanh_tien;
+    var bodyHtml = orderRows.map(function(row) {
+        var totalRowQty = 0;
+        var totalRowMoney = 0;
+        
+        var sizeBoxesHtml = '<div class="preview-size-grid">';
+        
+        row.sizes.forEach(function(s) {
+            var sz = s.size || s.Size || s.ten_size || s.Ten_size || s.TenSize || s.tenSize || '?';
+            var qty = row.quantities[sz] || 0;
+            if (qty > 0) {
+                totalRowQty += qty;
+                totalRowMoney += qty * (row.product.don_gia || 0);
+                sizeBoxesHtml += '<div class="preview-size-pill">' + 
+                    '<span>Size ' + Utils.escHtml(sz) + '</span>' +
+                    '<span>' + qty + '</span>' +
+                '</div>';
+            }
+        });
+        sizeBoxesHtml += '</div>';
 
-      return '<tr>' +
-        '<td><strong>' + line.ten_hang_2 + '</strong></td>' +
-        '<td><small>' + line.mau + '</small></td>' +
-        '<td style="text-align:center"><strong>' + line.size + '</strong></td>' +
-        '<td style="text-align:center">' + line.so_luong + '</td>' +
-        '<td style="text-align:right">' + Utils.formatMoney(line.don_gia) + '</td>' +
-        '<td style="text-align:right; font-weight:bold">' + Utils.formatMoney(line.thanh_tien) + '</td>' +
-        '</tr>';
+        if (totalRowQty === 0) return '';
+
+        return '<div class="preview-card">' +
+            '<div class="preview-card-header">' +
+              '<div>' +
+                '<div style="font-size: 16px; font-weight:800; color:var(--primary);">' + Utils.escHtml(row.ten_hang_2) + '</div>' +
+                '<div style="font-size: 13px; color:var(--muted);">' + Utils.escHtml(row.product.mau || 'Không màu') + ' | ' + Utils.formatMoney(row.product.don_gia) + '</div>' +
+              '</div>' +
+              '<div style="text-align:right;">' +
+                '<div style="font-size: 13px; color:var(--muted);">SL: <strong>' + totalRowQty + '</strong></div>' +
+                '<div style="font-size: 14px; font-weight:bold; color:var(--accent);">' + Utils.formatMoney(totalRowMoney) + '</div>' +
+              '</div>' +
+            '</div>' +
+            sizeBoxesHtml +
+        '</div>';
     }).join('');
 
-    document.getElementById('preview-head').innerHTML = headHtml;
-    document.getElementById('preview-body').innerHTML = bodyHtml;
-    document.getElementById('preview-foot').innerHTML = '<tr style="font-weight:700; background:var(--bg)"><td colspan="3" style="text-align:right">Tổng cộng:</td><td style="text-align:center">' + totalQtyAll + '</td><td></td><td style="text-align:right; color:var(--accent)">' + Utils.formatMoney(totalMoneyAll) + '</td></tr>';
+    var wrap = document.querySelector('#modal-preview .tbl-wrap');
+    if (wrap) {
+        wrap.innerHTML = '<div style="max-height:400px; overflow-y:auto; padding-right:4px;">' + bodyHtml + '</div>' + 
+                         '<div style="display:flex; justify-content:space-between; align-items:center; margin-top: 16px; padding: 16px; background: var(--surface); border-radius: 12px; border: 1px solid var(--primary);">' + 
+                            '<div style="font-weight: 600; font-size: 16px;">Tổng cộng:</div>' +
+                            '<div style="text-align:right;">' +
+                                '<div style="font-weight: bold; font-size: 16px;">' + totalQtyAll + ' SP</div>' +
+                                '<div style="font-weight: 800; font-size: 20px; color: var(--accent);">' + Utils.formatMoney(totalMoneyAll) + '</div>' +
+                            '</div>' +
+                         '</div>';
+    }
+
     openModal('modal-preview');
   }
 

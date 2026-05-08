@@ -8,15 +8,29 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // 2. Khôi phục Cài đặt
   var theme = localStorage.getItem('santino_theme') || 'auto';
+  var isDarkTheme = false;
   if (theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
     document.documentElement.classList.add('dark-theme');
+    isDarkTheme = true;
   } else {
     document.documentElement.classList.remove('dark-theme');
   }
+  updateThemeIcons(isDarkTheme);
   
-  var zoom = localStorage.getItem('santino_zoom');
-  if (zoom === null) zoom = '115';
-  document.documentElement.style.setProperty('--text-scale', (parseInt(zoom)/100).toString());
+  // ⚡ Cross-tab Synchronization (Storage Event)
+  window.addEventListener('storage', function(e) {
+    if (e.key === 'santino_zoom') {
+      var scale = e.newValue ? (parseInt(e.newValue) / 100) : 1;
+      if (window.innerWidth <= 480) scale = Math.min(scale, 1.15);
+      document.documentElement.style.setProperty('--text-scale', scale);
+    }
+    if (e.key === 'santino_theme') {
+      var isDark = e.newValue === 'dark' || (e.newValue === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      if (isDark) document.documentElement.classList.add('dark-theme');
+      else document.documentElement.classList.remove('dark-theme');
+      updateThemeIcons(isDark);
+    }
+  });
 
   var font = localStorage.getItem('santino_font');
   if(font) document.documentElement.style.setProperty('--font', '"' + font + '", sans-serif');
@@ -24,8 +38,12 @@ document.addEventListener('DOMContentLoaded', function () {
   var color = localStorage.getItem('santino_color');
   if(color) {
     document.documentElement.style.setProperty('--accent', color);
+    document.documentElement.style.setProperty('--primary', color);
     var colorFg = localStorage.getItem('santino_color_fg');
-    if(colorFg) document.documentElement.style.setProperty('--accent-fg', colorFg);
+    if(colorFg) {
+      document.documentElement.style.setProperty('--accent-fg', colorFg);
+      document.documentElement.style.setProperty('--primary-fg', colorFg);
+    }
   }
   Router.init();
 
@@ -36,9 +54,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // ── Global helpers (dùng được từ bất kỳ page nào) ─────────────────────
 
+function updateThemeIcons(isDark) {
+  var icons = document.querySelectorAll('.icon-btn[onclick="toggleTheme()"] .material-symbols-outlined');
+  icons.forEach(function(icon) {
+    icon.textContent = isDark ? 'light_mode' : 'dark_mode';
+  });
+}
+
 function toggleTheme() {
   var isDark = document.documentElement.classList.toggle('dark-theme');
   localStorage.setItem('santino_theme', isDark ? 'dark' : 'light');
+  updateThemeIcons(isDark);
 }
 
 
