@@ -26,5 +26,12 @@ const OrderService = (() => {
     return Http.post(API_CONFIG.ENDPOINTS.ORDERS.CREATE, orderData);
   }
 
-  return { getOrders, createOrder };
+  /**
+   * Lấy danh mục theo loại (Branch, Employee, PaymentType, PaymentTerm)
+   */
+  async function getCategories(type = '') {
+    return Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, { Loai: type });
+  }
+
+  return { getOrders, createOrder, getCategories };
 })();

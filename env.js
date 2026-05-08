@@ -24,6 +24,9 @@ window.API_CONFIG = {
         SIZES: {
             LIST: '/API_LayBangSize',
         },
+        CATEGORIES: {
+            LIST: '/API_DanhMuc',
+        },
         ORDERS: {
             LIST: '/API_LayDonHang',
             CREATE: '/API_TaoDonHang',
