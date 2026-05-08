@@ -1,17 +1,8 @@
 CREATE PROCEDURE [dbo].[API_LaySanPham]
-    @SearchTerm NVARCHAR(100) = NULL,
-    @sanpham NVARCHAR(100) = NULL
+    @SearchTerm NVARCHAR(4000) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
-
-    DECLARE @Term NVARCHAR(100) = LTRIM(RTRIM(COALESCE(@sanpham, @SearchTerm)));
-    
-    -- Nếu backend truyền nguyên chuỗi JSON ?q={"sanpham":"..."} vào
-    IF @Term LIKE '{%"sanpham"%}'
-    BEGIN
-        SET @Term = JSON_VALUE(@Term, '$.sanpham');
-    END
 
     SELECT 
         [ItemName2]    AS [ten_hang_2],
@@ -19,17 +10,17 @@ BEGIN
         [UnitPrice]    AS [don_gia],
         [MauSac]       AS [mau],
         [Form]         AS [form],
-        [FormName]     AS [ten_form],    -- Đổi thành ten_form cho chuẩn với web
-        [CategoryID]   AS [nhom_hang],   -- Web anh dùng nhom_hang hoặc nhom_size
+        [FormName]     AS [ten_form],    
+        [CategoryID]   AS [nhom_hang],   
         [Design]       AS [design],
-        [isDisable]    AS [ngung_su_dung] -- Đồng bộ trạng thái khóa
+        [isDisable]    AS [ngung_su_dung]
     FROM 
         [dbo].[CF_TenHang2Tbl]
     WHERE 
         ([isDisable] = 0 OR [isDisable] IS NULL)
         AND (
-            @Term IS NULL OR @Term = ''
-            OR [ItemName2] LIKE '%' + @Term + '%'
+            @SearchTerm IS NULL OR @SearchTerm = ''
+            OR [ItemName2] LIKE '%' + @SearchTerm + '%'
         )
     ORDER BY 
         [ItemName2] ASC;
