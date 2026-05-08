@@ -1,40 +1,14 @@
-<div class="card" style="padding: 16px;">
-  <div style="display:flex; gap:12px; align-items:center; margin-bottom:20px;">
-    <div class="search-wrapper" style="flex:1;">
-      <span class="material-symbols-outlined">search</span>
-      <input id="product-search" placeholder="Tìm kiếm tên hàng 2, thiết kế..." data-i18n-placeholder="products.search.placeholder" oninput="ProductsPage.render()">
-    </div>
-    <div style="display:flex; gap:8px;">
-        <select id="product-filter-form" style="padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-weight:600; font-size:13px; outline:none;" onchange="ProductsPage.render()">
-            <option value="">Tất cả Form</option>
-            <option>AMC</option>
-            <option>ARC</option>
-        </select>
-        <button class="btn btn-primary" onclick="ProductsPage.openModal()" style="gap:8px;">
-            <span class="material-symbols-outlined" style="font-size:20px">add</span> Thêm mới
-        </button>
-    </div>
+<div class="page-hdr" style="display: none;">
+  <div>
+    <h2><span data-i18n="hdr.products">Quản Lý Sản Phẩm</span></h2>
+    <p data-i18n="hdr.products.desc">CRUD Tên hàng 2 — nguồn sinh SKU</p>
   </div>
-  <div class="tbl-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th data-i18n="table.col.name2">TÊN HÀNG 2</th>
-          <th data-i18n="table.col.product_group">NHÓM HÀNG</th>
-          <th style="text-align:center" data-i18n="table.col.form">FORM</th>
-          <th data-i18n="table.col.design_color">MÀU/THIẾT KẾ</th>
-          <th data-i18n="table.col.size_group">NHÓM SIZE</th>
-          <th style="text-align:right" data-i18n="table.col.price">ĐƠN GIÁ</th>
-          <th data-i18n="table.col.product_name">TÊN HÀNG HÓA</th>
-          <th style="text-align:center" data-i18n="table.col.status">TRẠNG THÁI</th>
-          <th style="text-align:center" data-i18n="table.col.action">THAO TÁC</th>
-        </tr>
-      </thead>
-      <tbody id="products-body"></tbody>
-    </table>
+</div>
+<div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:16px; align-items:center;">
+  <div class="search-wrapper" style="flex:1; min-width: 250px;">
+    <span class="material-symbols-outlined">search</span>
+    <input id="product-search" placeholder="Tìm tên hàng 2..." data-i18n-placeholder="products.search.placeholder" oninput="ProductsPage.render()">
   </div>
-<<<<<<< HEAD
-=======
   <select id="product-filter-form" style="min-width:140px; padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);outline:none;font-weight:500;box-shadow:var(--shadow-sm);" onchange="ProductsPage.render()">
     <option value="">Tất cả Form</option>
     <option>AMC</option>
@@ -63,7 +37,6 @@
   </table>
   
   <div id="products-pagination-container"></div>
->>>>>>> feature/architect-updates
 </div>
 
 <!-- Modal: Sản phẩm -->

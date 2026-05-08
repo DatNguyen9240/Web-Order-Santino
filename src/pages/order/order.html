@@ -1,3 +1,21 @@
+<div class="page-hdr">
+  <div>
+    <h2 data-i18n="hdr.order">Đặt Hàng</h2>
+    <p data-i18n="hdr.order.desc">Tạo đơn hàng sỉ theo ma trận size</p>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-ghost btn-sm" onclick="OrderPage.clearOrder()">
+      <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">delete</span><span
+        data-i18n="btn.cancel">Hủy
+        đơn</span>
+    </button>
+    <button class="btn btn-accent" onclick="OrderPage.saveOrder()">
+      <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">save</span><span
+        data-i18n="btn.save">Lưu
+        đơn</span>
+    </button>
+  </div>
+</div>
 
 <!-- Thông tin giao hàng (Summary Card) -->
 <div class="card summary-card" onclick="OrderPage.closeAc(); openModal('modal-order-info')"
@@ -150,11 +168,11 @@
 
 <!-- Ma trận size -->
 <div class="card">
-  <div class="matrix-search" style="margin-bottom:16px; display:flex; gap:12px; align-items: center;">
+  <div class="matrix-search" style="margin-bottom:16px; display:flex; gap:8px;">
     <div class="autocomplete-wrap" style="flex:1; position:relative;">
       <div class="search-wrapper" style="width: 100%; position: relative;">
         <span class="material-symbols-outlined">search</span>
-        <input id="ac-input" placeholder="Tìm kiếm sản phẩm theo tên, mã SKU, barcode..."
+        <input id="ac-input" placeholder="Nhập Tên hàng 2 (VD: AMC545S659)..."
           data-i18n-placeholder="order.search.placeholder" autocomplete="off" oninput="OrderPage.acSearch(this.value)"
           onfocus="OrderPage.acSearch(this.value)" onclick="OrderPage.acSearch(this.value)"
           onkeydown="if(event.key==='Enter')OrderPage.addProductRow()">
@@ -164,22 +182,28 @@
       </div>
       <div class="autocomplete-dropdown" id="ac-list" style="z-index: 9999;"></div>
     </div>
-<<<<<<< HEAD
-    <button class="btn btn-ghost" style="border: 1px solid var(--border); gap: 8px;">
-        <span class="material-symbols-outlined">qr_code_scanner</span> Quét mã
-    </button>
-=======
->>>>>>> feature/architect-updates
   </div>
   <div id="matrix-container" style="display:flex; flex-direction:column; gap:16px;">
-    <div class="empty-state">
-      <span class="material-symbols-outlined">inventory_2</span>
-      <p>Chưa có sản phẩm nào</p>
-      <small>Bắt đầu bằng cách tìm kiếm sản phẩm hoặc quét mã vạch để thêm vào đơn hàng của bạn.</small>
-      <button class="btn btn-primary" style="margin-top: 24px; padding: 12px 32px; border-radius: 8px; font-weight: 700; gap: 8px;">
-          <span class="material-symbols-outlined" style="font-size: 20px;">open_in_new</span> Mở danh mục
-      </button>
+    <div class="empty-state"
+      style="background:var(--surface); border-radius:12px; padding:24px; border:1px solid var(--border); display:flex; flex-direction:column; align-items:center; gap:8px;">
+      <span class="material-symbols-outlined" style="font-size: 32px; color: var(--muted);">table_chart</span>
+      <span data-i18n="order.search.empty"
+        style="font-size: calc(15px * var(--text-scale, 1)); font-weight: 600; color: var(--muted);">Tìm và thêm sản
+        phẩm để bắt đầu nhập số lượng</span>
     </div>
+  </div>
+  <div class="matrix-footer">
+    <div class="total-info">
+      <span>Số lượng</span>: <span id="total-qty" style="color: var(--primary);">0</span>
+      <span style="margin: 0 12px; color: var(--border-strong);">|</span>
+      <span>Tổng cộng</span>: <span id="total-money"
+        style="color: var(--accent); font-weight: 800; font-size: calc(22px * var(--text-scale, 1));">0đ</span>
+    </div>
+    <button class="btn btn-accent" onclick="OrderPage.previewOrder()">
+      <span class="material-symbols-outlined"
+        style="font-size: calc(16px * var(--text-scale, 1))">shopping_cart_checkout</span><span>Kiểm tra & Đặt
+        hàng</span>
+    </button>
   </div>
 </div>
 

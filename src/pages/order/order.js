@@ -1,21 +1,13 @@
 var OrderPage = (function () {
   var orderRows = [];
-<<<<<<< HEAD
-  var multiSelectedCodes = {};
-=======
   var multiSelectedCodes = [];
   var cachedProds = {};
   var cachedSizes = [];
->>>>>>> feature/architect-updates
 
   function render($el) {
     return Router.fetchTemplate('src/pages/order/order.html')
       .then(function (html) {
         $el.innerHTML = html;
-        var footer = document.getElementById('global-footer');
-        if (footer) footer.style.display = 'flex';
-        var saveBtn = document.getElementById('btn-save-draft');
-        if (saveBtn) saveBtn.style.display = 'inline-flex';
         _init();
       });
   }
@@ -63,12 +55,7 @@ var OrderPage = (function () {
     }
   }
 
-<<<<<<< HEAD
-
-  function acSearch(val) {
-=======
   async function acSearch(val) {
->>>>>>> feature/architect-updates
     var btnClear = document.getElementById('ac-clear');
     if (btnClear) btnClear.style.display = val ? 'block' : 'none';
 
@@ -80,25 +67,6 @@ var OrderPage = (function () {
     prods.forEach(function(p) { cachedProds[p.ten_hang_2] = p; });
 
     if (!prods.length) {
-<<<<<<< HEAD
-      list.innerHTML = '<div class="ac-item"><small>KhÃ´ng tÃ¬m tháº¥y sáº£n pháº©m</small></div>';
-      list.classList.add('sh    var html = '<div class="ac-header"><div class="ac-col-1">TÊN HÀNG 2</div><div class="ac-col-color">MÀU/THIẾT KẾ</div><div class="ac-col-2" style="text-align:center">FORM</div><div class="ac-col-3">ĐƠN GIÁ</div></div>';
-    html += prods.slice(0, 8).map(function (p) {
-      var isChecked = multiSelectedCodes[p.ten_hang_2] ? 'checked' : '';
-      var brand = p.ten_hang_2.match(/^[A-Z]+/); brand = brand ? brand[0] : '';
-      return '<div class="ac-table-row" onclick="OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
-        '<input type="checkbox" ' + isChecked + ' style="margin-right:12px; cursor:pointer;" id="chk-' + p.ten_hang_2 + '" value="' + p.ten_hang_2 + '" onclick="event.stopPropagation(); OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
-        '<div class="ac-col-1"><strong>' + p.ten_hang_2 + '</strong></div>' +
-        '<div class="ac-col-color">' + (p.design || p.mau || '') + '</div>' +
-        '<div class="ac-col-2" style="text-align:center"><span class="ac-form-badge">' + brand + '</span></div>' +
-        '<div class="ac-col-3">' + Utils.formatMoney(p.don_gia) + '</div>' +
-        '</div>';
-    }).join('');
-
-    html += '<div class="ac-actions" style="display:flex;gap:8px;padding:8px 12px;border-top:1px solid var(--border);background:var(--surface);position:sticky;bottom:0;z-index:10;">' +
-      '<button class="btn btn-ghost" style="flex:1; padding:6px; font-size:13px; min-height:32px;" onclick="OrderPage.closeAc()">' + (typeof t === 'function' ? t('btn.cancel') : 'Hủy bỏ') + '</button>' +
-      '<button id="btn-add-multi" class="btn btn-primary" style="flex:2; padding:6px; font-size:13px; min-height:32px;" onclick="OrderPage.addSelectedProds()">' + (typeof t === 'function' ? t('btn.add') : 'Thêm đã chọn') + '</button>' +
-=======
       list.innerHTML = '<div class="ac-item"><small>Không tìm thấy sản phẩm</small></div>';
       list.classList.add('show');
       return;
@@ -129,7 +97,6 @@ var OrderPage = (function () {
     html += '<div class="ac-actions" style="display:flex;gap:8px;padding:12px;border-top:1px solid var(--border);background:var(--surface);position:sticky;bottom:-8px;margin:0 -8px -8px -8px;z-index:10;border-radius:0 0 12px 12px">' +
       '<button class="btn btn-ghost btn-sm" style="flex:1" onclick="OrderPage.closeAc()">Hủy</button>' +
       '<button id="btn-add-multi" class="btn btn-primary btn-sm" style="flex:1" onclick="OrderPage.addSelectedProds()">Thêm đã chọn</button>' +
->>>>>>> feature/architect-updates
       '</div>';
     list.innerHTML = html;
     list.classList.add('show');
@@ -304,12 +271,8 @@ var OrderPage = (function () {
   function _updateTotal() {
     var qty = 0, money = 0;
     orderRows.forEach(function (r) { Object.entries(r.quantities).forEach(function (e) { if (e[1] > 0) { qty += e[1]; money += e[1] * r.product.don_gia; } }); });
-    // Update Global Footer
-    var gQty = document.getElementById('f-total-qty');
-    var gMoney = document.getElementById('f-total-money');
-    if (gQty) gQty.textContent = qty;
-    if (gMoney) gMoney.textContent = Utils.formatMoney(money);
-
+    document.getElementById('total-qty').textContent = qty;
+    document.getElementById('total-money').textContent = Utils.formatMoney(money);
     var oTongTien = document.getElementById('o-tong-tien');
     if (oTongTien) {
       oTongTien.value = Utils.formatMoney(money);
@@ -319,14 +282,11 @@ var OrderPage = (function () {
   }
 
   function calcChange() {
-    var oTongTien = document.getElementById('o-tong-tien');
-    if (!oTongTien) return;
-    var total = parseInt(oTongTien.dataset.value || 0);
+    var total = parseInt(document.getElementById('o-tong-tien').dataset.value || 0);
     var givenStr = document.getElementById('o-khach-dua').value;
     var given = givenStr ? parseInt(givenStr) : 0;
     var change = given - total;
-    var tralai = document.getElementById('o-tra-lai');
-    if (tralai) tralai.value = Utils.formatMoney(change > 0 ? change : 0);
+    document.getElementById('o-tra-lai').value = Utils.formatMoney(change > 0 ? change : 0);
   }
 
   function _buildLines() {
@@ -493,12 +453,7 @@ var OrderPage = (function () {
   return {
     render: render, acSearch: acSearch, toggleAcSelect: toggleAcSelect, closeAc: closeAc,
     addSelectedProds: addSelectedProds, addProductRow: addProductRow, selectAcSingle: selectAcSingle,
-<<<<<<< HEAD
-    updateQty: updateQty, quickClear: typeof quickClear !== 'undefined' ? quickClear : undefined, removeRow: removeRow, previewOrder: previewOrder,
-    toggleDetails: typeof toggleDetails !== 'undefined' ? toggleDetails : undefined,
-=======
     updateQty: updateQty, removeRow: removeRow, previewOrder: previewOrder,
->>>>>>> feature/architect-updates
     saveOrder: saveOrder, clearOrder: clearOrder, clearSearch: clearSearch,
     updateInfoSummary: updateInfoSummary, calcChange: calcChange
   };

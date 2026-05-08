@@ -1,23 +1,14 @@
 var ProductsPage = (function () {
   function render($el) {
     return Router.fetchTemplate('src/pages/products/products.html').then(function (html) {
-      $el.innerHTML = html; 
-      var footer = document.getElementById('global-footer');
-      if (footer) footer.style.display = 'none';
-      _render();
+      $el.innerHTML = html; _render();
     });
   }
   function _render() {
     var q = (document.getElementById('product-search') || {}).value || '';
     var form = (document.getElementById('product-filter-form') || {}).value || '';
-<<<<<<< HEAD
-    var prods = DB.getAll('products').filter(function (p) {
-      return (!q || p.ten_hang_2.toLowerCase().includes(q.toLowerCase()) || (p.mau && p.mau.toLowerCase().includes(q.toLowerCase()))) && (!form || p.form === form);
-    });
-=======
     var prods = []; // API chưa hỗ trợ hiển thị kho sản phẩm
 
->>>>>>> feature/architect-updates
     var tbody = document.getElementById('products-body');
     
     // Giả lập Dữ liệu Phân trang từ API
@@ -28,18 +19,15 @@ var ProductsPage = (function () {
 
     if (!prods.length) { tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><span class="material-symbols-outlined">inventory_2</span><span data-i18n="table.empty">' + t('table.empty') + '</span></td></tr>'; return; }
     tbody.innerHTML = prods.map(function (p) {
-      return '<tr>' +
-        '<td><strong>' + p.ten_hang_2 + '</strong></td>' +
-        '<td><small style="color:var(--muted)">' + p.nhom_hang + '</small></td>' +
-        '<td style="text-align:center"><span class="badge badge-blue" style="background:rgba(37,99,235,0.08); color:var(--primary);">' + p.form + '</span></td>' +
-        '<td>' + (p.mau || '—') + '</td>' +
-        '<td><span class="badge badge-green" style="font-size:11px">' + p.nhom_size + '</span></td>' +
-        '<td style="font-weight:700; color:var(--accent); text-align:right">' + Utils.formatMoney(p.don_gia) + '</td>' +
-        '<td style="max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); font-size:13px;">' + p.ten_hang_hoa + '</td>' +
-        '<td style="text-align:center"><span class="badge ' + (p.ngung_su_dung ? 'badge-red' : 'badge-green') + '">' + (p.ngung_su_dung ? 'Ngừng bán' : 'Đang bán') + '</span></td>' +
-        '<td style="display:flex; gap:6px; justify-content:center">' +
-        '<button class="icon-btn" style="border:1px solid var(--border);" onclick="ProductsPage.openModal(\'' + p.id + '\')"><span class="material-symbols-outlined" style="font-size: 18px">edit</span></button>' +
-        '<button class="icon-btn" onclick="ProductsPage.del(\'' + p.id + '\')"><span class="material-symbols-outlined" style="font-size: 18px; color:var(--danger)">delete</span></button>' +
+      return '<tr><td><strong>' + p.ten_hang_2 + '</strong></td><td>' + p.nhom_hang + '</td>' +
+        '<td><span class="badge badge-blue">' + p.form + '</span></td>' +
+        '<td>' + p.mau + '</td><td><span class="badge badge-green">' + p.nhom_size + '</span></td>' +
+        '<td style="font-weight:700;color:var(--accent)">' + Utils.formatMoney(p.don_gia) + '</td>' +
+        '<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + p.ten_hang_hoa + '</td>' +
+        '<td><span class="badge ' + (p.ngung_su_dung ? 'badge-red' : 'badge-green') + '">' + (p.ngung_su_dung ? 'Ngừng bán' : 'Đang bán') + '</span></td>' +
+        '<td style="display:flex;gap:6px">' +
+        '<button class="btn-icon" onclick="ProductsPage.openModal(\'' + p.id + '\')"><span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">edit</span></button>' +
+        '<button class="btn-icon" onclick="ProductsPage.del(\'' + p.id + '\')"><span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1));color:var(--danger)">delete</span></button>' +
         '</td></tr>';
     }).join('');
   }

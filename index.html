@@ -75,69 +75,46 @@
     </header>
 
     <!-- SIDEBAR -->
-<<<<<<< HEAD
-    <aside class="sidebar">
-      <div class="logo" style="padding-top: 16px; margin-bottom: 24px;">
-        <img src="images/logo.png" alt="SANTINO" class="app-logo" style="height: 40px; object-fit: contain;">
-        <div style="font-size: 12px; opacity: 0.6; font-weight: 500; margin-top: 4px;">Wholesale Portal</div>
-=======
     <aside class="sidebar" id="sidebar">
       <div class="logo"
         onclick="location.hash='#/order'; if(window.innerWidth <= 1024) { document.querySelector('.sidebar').classList.remove('show'); document.querySelector('.sidebar-overlay').classList.remove('show'); document.body.style.overflow=''; }"
         style="cursor:pointer;">
         <img src="images/logo.png" alt="SANTINO" class="app-logo" style="height: 40px;">
->>>>>>> feature/architect-updates
       </div>
-      
-      <button class="btn btn-primary" style="width: 100%; margin-bottom: 24px; justify-content: center; gap: 10px;" onclick="window.location.hash='#/order'">
-        <span class="material-symbols-outlined">add</span> <span data-i18n="btn.new_order">Tạo đơn mới</span>
-      </button>
+      <div class="nav-group" data-i18n="nav.group.order">Hệ thống đặt hàng</div>
+      <a class="nav-item" href="#/order" data-route="/order"><span
+          class="material-symbols-outlined icon">shopping_bag</span><span data-i18n="nav.order">Đặt Hàng</span></a>
+      <a class="nav-item" href="#/orders" data-route="/orders"><span
+          class="material-symbols-outlined icon">receipt_long</span><span data-i18n="nav.orders">Đơn Hàng</span></a>
 
+      <div class="nav-group" data-i18n="nav.group.catalog">Danh mục sản phẩm</div>
+      <a class="nav-item" href="#/products" data-route="/products"><span
+          class="material-symbols-outlined icon">inventory_2</span><span data-i18n="nav.products">Sản Phẩm</span></a>
+      <a class="nav-item" href="#/sizes" data-route="/sizes"><span
+          class="material-symbols-outlined icon">straighten</span><span data-i18n="nav.sizes">Thông số Size</span></a>
+      <a class="nav-item" href="#/sku" data-route="/sku"><span
+          class="material-symbols-outlined icon">qr_code</span><span data-i18n="nav.sku">Cấu hình SKU</span></a>
+      <a class="nav-item" href="#/promos" data-route="/promos"><span
+          class="material-symbols-outlined icon">local_offer</span><span data-i18n="nav.promos">Chương trình
+          KM</span></a>
 
-      <a class="nav-item active" href="#/order" data-route="/order">
-        <span class="material-symbols-outlined icon">shopping_cart</span><span data-i18n="nav.order">Đặt hàng</span>
-      </a>
-      <a class="nav-item" href="#/orders" data-route="/orders">
-        <span class="material-symbols-outlined icon">receipt_long</span><span data-i18n="nav.orders">Danh sách đơn</span>
-      </a>
-      <a class="nav-item" href="#/products" data-route="/products">
-        <span class="material-symbols-outlined icon">inventory_2</span><span data-i18n="nav.products">Sản phẩm</span>
-      </a>
-      <a class="nav-item" href="#/sizes" data-route="/sizes">
-        <span class="material-symbols-outlined icon">straighten</span><span data-i18n="nav.sizes">Size</span>
-      </a>
-      <a class="nav-item" href="#/sku" data-route="/sku">
-        <span class="material-symbols-outlined icon">qr_code</span><span data-i18n="nav.sku">Cấu hình SKU</span>
-      </a>
-      <a class="nav-item" href="#/promos" data-route="/promos">
-        <span class="material-symbols-outlined icon">local_offer</span><span data-i18n="nav.promos">CTKM</span>
-      </a>
-
-      <div class="nav-bottom" style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border);">
-        <a class="nav-item" href="#/settings" data-route="/settings">
-          <span class="material-symbols-outlined icon">settings</span><span data-i18n="nav.settings">Cài đặt</span>
-        </a>
-        <a class="nav-item" href="login.html">
-          <span class="material-symbols-outlined icon">logout</span><span data-i18n="nav.logout">Đăng xuất</span>
-        </a>
+      <div class="nav-bottom">
+        <a class="nav-item" href="#/settings" data-route="/settings"><span
+            class="material-symbols-outlined icon">settings</span><span data-i18n="nav.settings">Cài đặt hiển
+            thị</span></a>
+        <a class="nav-item" href="login.html"><span class="material-symbols-outlined icon">logout</span><span
+            data-i18n="nav.logout">Đăng xuất</span></a>
       </div>
     </aside>
     <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-    <!-- HEADER -->
-    <header class="header">
-      <div style="display:flex;align-items:center;gap:12px">
-        <button class="icon-btn menu-btn" onclick="toggleMobileMenu()">
-          <span class="material-symbols-outlined">menu</span>
-        </button>
-        <div style="display:flex; align-items:center; gap:8px">
-            <div class="header-title" id="hdr-title" style="font-size: 20px; font-weight: 800;">Đặt Hàng</div>
-        </div>
-      </div>
+    <!-- HEADER (Cho Sidebar Mode) -->
+    <header class="header" id="sidebar-header" style="display:none; height: var(--header-h);">
+      <button class="icon-btn menu-btn" onclick="toggleSidebar()">
+        <span class="material-symbols-outlined">menu</span>
+      </button>
+      <div class="header-title" id="hdr-title"></div>
       <div class="header-actions">
-        <button id="btn-save-draft" class="btn btn-ghost btn-sm" onclick="OrderPage.saveOrder()" style="display:none; background: var(--surface); border: 1px solid var(--border); font-weight: 700;">
-          <span class="material-symbols-outlined" style="font-size: 18px;">save</span> Lưu nháp
-        </button>
         <button class="icon-btn" onclick="toggleTheme()" title="Đổi giao diện">
           <span class="material-symbols-outlined">dark_mode</span>
         </button>
@@ -167,39 +144,15 @@
     })();
   </script>
 
-  <!-- GLOBAL PAGE FOOTER (Dùng cho trang Đặt Hàng) -->
-  <footer class="page-footer" id="global-footer" style="display: none;">
-    <div class="footer-stats">
-      <div class="f-stat">
-        <div class="f-label" data-i18n="order.total.qty">Tổng số lượng</div>
-        <div class="f-val"><span id="f-total-qty">0</span> SP</div>
-      </div>
-      <div class="f-stat">
-        <div class="f-label" data-i18n="order.total.money">Tổng tiền</div>
-        <div class="f-val highlight" id="f-total-money">0đ</div>
-      </div>
-    </div>
-    <div class="footer-actions">
-      <button class="btn btn-accent btn-lg" onclick="OrderPage.previewOrder()" style="padding: 14px 40px; border-radius: 12px; font-weight: 800; gap: 12px;">
-        <span data-i18n="btn.preview">Xem trước</span> <span class="material-symbols-outlined">arrow_forward</span>
-      </button>
-    </div>
-  </footer>
-
-  <!-- TOAST (dùng chung toàn app) -->
+  <!-- TOAST -->
   <div class="toast" id="toast">
     <span class="material-symbols-outlined" style="color:var(--accent)">check_circle</span>
     <span id="toast-msg"></span>
   </div>
 
-<<<<<<< HEAD
-  <!-- BUNDLED JS (Core + Data + Components) -->
-  <script src="src/js/app.bundle.js"></script>
-=======
   <!-- BUNDLED JS -->
   <script src="env.js?v=66"></script>
   <script src="src/js/app.bundle.js?v=66"></script>
->>>>>>> feature/architect-updates
   <script>
     function toggleSidebar() {
       var sidebar = document.querySelector('.sidebar');

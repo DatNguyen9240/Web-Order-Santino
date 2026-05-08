@@ -484,17 +484,6 @@ const Http = (() => {
     } catch (e) { return null; }
   }
 
-<<<<<<< HEAD
-  // Init seed data (chỉ chạy lần đầu nếu chưa có data)
-  function initSeed() {
-    // Luôn ghi đè products từ product_master.js (tránh bị kẹt cache cũ thiếu field design)
-    const seeded = productMaster.map((p, i) => ({ ...p, id: 'p' + i }));
-    setAll('products', seeded);
-    if (!localStorage.getItem(_key('sizes'))) {
-      const seeded = [];
-      Object.entries(sizeGroups).forEach(([group, sizes]) => {
-        sizes.forEach(s => seeded.push({ id: group + '_' + s, size: s, ten_size: String(s), nhom_size: group }));
-=======
   function _setCache(key, data) {
     try {
       sessionStorage.setItem(key, JSON.stringify({ d: data, t: Date.now() }));
@@ -641,7 +630,6 @@ const Http = (() => {
         method: 'POST',
         headers: _headers(),
         body: JSON.stringify(body),
->>>>>>> feature/architect-updates
       });
       return _handleResponse(res);
     } finally {
@@ -1028,7 +1016,7 @@ var Router = (function () {
 
   // ── Nav highlight ─────────────────────────────────────────────────────
   function _updateNav(hash) {
-    document.querySelectorAll('.nav-item, .bn-item').forEach(function (el) {
+    document.querySelectorAll('.nav-item').forEach(function (el) {
       el.classList.remove('active');
       if (el.getAttribute('data-route') === hash) el.classList.add('active');
     });

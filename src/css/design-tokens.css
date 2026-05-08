@@ -6,26 +6,6 @@
 /* ---- Light Theme (Premium) ---- */
 :root {
   /* Colors */
-<<<<<<< HEAD
-  --bg:          #f4f4f5; /* Zinc 100 */
-  --surface:     #ffffff;
-  --surface-glass: rgba(255, 255, 255, 0.7);
-  --border:      #e4e4e7; /* Zinc 200 */
-  --text:        #09090b; /* Zinc 950 */
-  --muted:       #71717a; /* Zinc 500 */
-  
-  --primary:     #18181b; /* Zinc 900 - Sleek Black */
-  --primary-fg:  #ffffff; /* White text on primary */
-  
-  --accent:      #FBBF24; /* Bright Radiant Gold */
-  --accent-dim:  rgba(251, 191, 36, 0.15);
-  --tertiary:    #1A1A1D;
-  --neutral:     #F3F4F6;
-  
-  --danger:      #e11d48; /* Rose 600 */
-  --success:     #10b981; /* Emerald 500 - More vibrant */
-  --info:        #2563eb; /* Blue 600 */
-=======
   --bg: #ffffff;
   /* Zinc 100 */
   --surface: #ffffff;
@@ -51,49 +31,27 @@
   /* Emerald 600 */
   --info: #2563eb;
   /* Blue 600 */
->>>>>>> feature/architect-updates
 
   /* Radius */
-  --radius:      8px;
-  --radius-lg:   12px;
+  --radius: 12px;
+  --radius-lg: 20px;
 
   /* Shadow - Premium crisp apple-like shadows */
-  --shadow-sm:   0 2px 8px rgba(0, 0, 0, 0.04);
-  --shadow:      0 4px 16px rgba(0, 0, 0, 0.06);
-  --shadow-md:   0 8px 24px rgba(0, 0, 0, 0.08);
-  --shadow-lg:   0 16px 32px rgba(0, 0, 0, 0.12);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 16px 32px rgba(0, 0, 0, 0.12);
 
   /* Typography */
-  --font:        'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
   /* Layout */
-  --sidebar-w:   260px;
-  --header-h:    72px;
+  --sidebar-w: 260px;
+  --header-h: 80px;
 }
 
 /* ---- Dark Theme Overrides (Ultra Premium Dark) ---- */
 .dark-theme {
-<<<<<<< HEAD
-  --bg:          #09090b; /* Zinc 950 */
-  --surface:     #18181b; /* Zinc 900 */
-  --surface-glass: rgba(24, 24, 27, 0.7);
-  --border:      #27272a; /* Zinc 800 */
-  --text:        #fafafa; /* Zinc 50 */
-  --muted:       #a1a1aa; /* Zinc 400 */
-  
-  --primary:     #fafafa; /* Zinc 50 - Sleek White */
-  --primary-fg:  #18181b; /* Dark text on white primary */
-  
-  --accent:      #FBBF24; /* Bright Radiant Gold for Dark Mode */
-  --accent-dim:  rgba(251, 191, 36, 0.15);
-  
-  --shadow-sm:   0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow:      0 4px 16px rgba(0, 0, 0, 0.4);
-  --shadow-md:   0 8px 24px rgba(0, 0, 0, 0.5);
-  --shadow-lg:   0 16px 32px rgba(0, 0, 0, 0.6);
-  --success:     #34d399; /* Emerald 400 - Super vibrant for Dark mode */
-}
-=======
   --bg: #09090b;
   /* Zinc 950 */
   --surface: #18181b;
@@ -119,4 +77,3 @@
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 16px 32px rgba(0, 0, 0, 0.6);
 }
->>>>>>> feature/architect-updates
