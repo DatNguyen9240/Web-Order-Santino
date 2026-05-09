@@ -30,6 +30,9 @@ window.API_CONFIG = {
         ORDERS: {
             LIST: '/API_LayDonHang',
             CREATE: '/API_TaoDonHang',
+        },
+        CUSTOMERS: {
+            SAVE: '/API_KhachHang_Luu'
         }
     }
 };

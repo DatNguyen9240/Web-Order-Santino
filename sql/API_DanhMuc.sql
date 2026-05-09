@@ -19,6 +19,7 @@ BEGIN
         UNION ALL SELECT 'Employee',    N'Nhân viên'
         UNION ALL SELECT 'PaymentType', N'Hình thức thanh toán'
         UNION ALL SELECT 'PaymentTerm', N'Điều khoản thanh toán'
+        UNION ALL SELECT 'Customer',    N'Khách hàng'
         ORDER BY [TenLoai];
         RETURN;
     END
@@ -72,6 +73,22 @@ BEGIN
         FROM [dbo].[CF_PaymentTermTbl]
         WHERE (@TimKiem = '' OR [PaymentTermName] LIKE N'%' + @TimKiem + N'%')
         ORDER BY [PaymentTermID];
+    END
+
+    ELSE IF @Loai = 'Customer'
+    BEGIN
+        SELECT
+            [ObjectID]     AS [id],
+            [ObjectName]   AS [name],
+            [Address]      AS [address],
+            [EmployeeID]   AS [employee_id],
+            [BranchID]     AS [branch_id]
+        FROM [dbo].[CF_ObjectTbl]
+        WHERE ([isDisable] = 0 OR [isDisable] IS NULL)
+          AND (@TimKiem = '' OR [ObjectName] LIKE N'%' + @TimKiem + N'%'
+                             OR [ObjectID]   LIKE N'%' + @TimKiem + N'%'
+                             OR [Phone]      LIKE N'%' + @TimKiem + N'%')
+        ORDER BY [ObjectName];
     END
 END
 GO

@@ -103,20 +103,71 @@ var OrderPage = (function () {
   }
 
   var _catValues = {
+    khach_hang: { id: '', name: '' },
     chi_nhanh: { id: '', name: '' },
     nvkd: { id: '', name: '' },
     dieu_khoan: { id: '', name: '' },
     ht_tt: { id: '', name: '' }
   };
 
+  var _combos = {};
+
   async function _loadCategories() {
     try {
-      const [branches, employees, payTypes, payTerms] = await Promise.all([
+      const [branches, employees, payTypes, payTerms, customers] = await Promise.all([
         CategoryService.getCategories('Branch'),
         CategoryService.getCategories('Employee'),
         CategoryService.getCategories('PaymentType'),
-        CategoryService.getCategories('PaymentTerm')
+        CategoryService.getCategories('PaymentTerm'),
+        CategoryService.getCategories('Customer')
       ]);
+
+      // ── Khách hàng (MỚI) ──────────────────────────────────────────
+      var wrapKH = document.getElementById('wrap-khach-hang');
+      if (wrapKH && UIControls && UIControls.createDataComboBox) {
+        _combos.kh = UIControls.createDataComboBox({
+          id: 'o-ma-kh-search',
+          placeholder: '-- Tìm khách hàng --',
+          headers: ['Khách hàng', 'Tên kh/hàng', 'Địa chỉ', 'Mã NV', 'Chi nhánh'],
+          data: customers.map(function (c) { return [c.id, c.name, c.address || '', c.employee_id || '', c.branch_id || '']; }),
+          colFilterIndex: 1,
+          colHighlightIndex: 1,
+          onSearch: function (q) {
+            return _searchCategory('Customer', q).then(function (list) {
+              return list.map(function (c) { return [c.id, c.name, c.address || '', c.employee_id || '', c.branch_id || '']; });
+            });
+          },
+          onSelect: function (row) {
+            var id = row[0], name = row[1], addr = row[2], empId = row[3], branchId = row[4];
+            document.getElementById('o-ma-kh').value = id;
+            document.getElementById('o-kh-ten').value = name;
+            document.getElementById('o-kh-dc').value = addr;
+            _catValues.khach_hang = { id: id, name: name };
+            
+            // Tự động tìm và set cho Chi nhánh
+            if (branchId && _combos.branch) {
+              var b = branches.find(x => x.id === branchId);
+              if (b) {
+                _combos.branch.querySelector('input').value = b.name;
+                _catValues.chi_nhanh = { id: b.id, name: b.name };
+              }
+            }
+            // Tự động tìm và set cho Nhân viên
+            if (empId && _combos.nvkd) {
+              var e = employees.find(x => x.id === empId);
+              if (e) {
+                _combos.nvkd.querySelector('input').value = e.name;
+                _catValues.nvkd = { id: e.id, name: e.name };
+              }
+            }
+            updateInfoSummary();
+          },
+          onF2: function() {
+            openModal('modal-create-customer');
+          }
+        });
+        wrapKH.appendChild(_combos.kh);
+      }
 
       // ── Chi nhánh ─────────────────────────────────────────────
       var wrapBranch = document.getElementById('wrap-chi-nhanh');
@@ -124,7 +175,7 @@ var OrderPage = (function () {
         var defaultBranch = branches.find(function (b) { return b.is_default; }) || branches[0] || {};
         _catValues.chi_nhanh = { id: defaultBranch.id || '', name: defaultBranch.name || '' };
 
-        var cbBranch = UIControls.createDataComboBox({
+        _combos.branch = UIControls.createDataComboBox({
           id: 'o-chi-nhanh',
           placeholder: '-- Chọn chi nhánh --',
           headers: ['Mã', 'Chi nhánh', 'Địa chỉ'],
@@ -140,36 +191,36 @@ var OrderPage = (function () {
             _catValues.chi_nhanh = { id: row[0], name: row[1] };
           }
         });
-        cbBranch.querySelector('input').value = defaultBranch.name || '';
-        wrapBranch.appendChild(cbBranch);
+        _combos.branch.querySelector('input').value = defaultBranch.name || '';
+        wrapBranch.appendChild(_combos.branch);
       }
 
       // ── Nhân viên KD ──────────────────────────────────────────
       var wrapNvkd = document.getElementById('wrap-nvkd');
       if (wrapNvkd && UIControls && UIControls.createDataComboBox) {
-        var cbNvkd = UIControls.createDataComboBox({
+        _combos.nvkd = UIControls.createDataComboBox({
           id: 'o-nvkd',
           placeholder: '-- Chọn nhân viên --',
-          headers: ['Mã NV', 'Tên nhân viên', 'Bộ phận', 'ĐT'],
-          data: employees.map(function (e) { return [e.id, e.name, e.department || '', e.phone || '']; }),
-          colFilterIndex: 1,
-          colHighlightIndex: 1,
+          headers: ['Tên nhân viên', 'Mã NV'],
+          data: employees.map(function (e) { return [e.name, e.id]; }),
+          colFilterIndex: 0,
+          colHighlightIndex: 0,
           onSearch: function (q) {
             return _searchCategory('Employee', q).then(function (list) {
-              return list.map(function (e) { return [e.id, e.name, e.department || '', e.phone || '']; });
+              return list.map(function (e) { return [e.name, e.id]; });
             });
           },
           onSelect: function (row) {
-            _catValues.nvkd = { id: row[0], name: row[1] };
+            _catValues.nvkd = { id: row[1], name: row[0] };
           }
         });
-        wrapNvkd.appendChild(cbNvkd);
+        wrapNvkd.appendChild(_combos.nvkd);
       }
 
       // ── Điều khoản TT ─────────────────────────────────────────
       var wrapDK = document.getElementById('wrap-dieu-khoan');
       if (wrapDK && UIControls && UIControls.createDataComboBox) {
-        var cbDK = UIControls.createDataComboBox({
+        _combos.dk = UIControls.createDataComboBox({
           id: 'o-dieu-khoan',
           placeholder: '-- Chọn điều khoản --',
           headers: ['Mã', 'Điều khoản', 'Số ngày'],
@@ -185,7 +236,7 @@ var OrderPage = (function () {
             _catValues.dieu_khoan = { id: row[0], name: row[1] };
           }
         });
-        wrapDK.appendChild(cbDK);
+        wrapDK.appendChild(_combos.dk);
       }
 
       // ── Hình thức thanh toán ───────────────────────────────────
@@ -194,7 +245,7 @@ var OrderPage = (function () {
         var defaultPay = payTypes.find(function (p) { return /tiền mặt/i.test(p.name); }) || payTypes[0] || {};
         _catValues.ht_tt = { id: defaultPay.id || '', name: defaultPay.name || '' };
 
-        var cbHT = UIControls.createDataComboBox({
+        _combos.ht = UIControls.createDataComboBox({
           id: 'o-ht-thanh-toan',
           placeholder: '-- Chọn hình thức --',
           headers: ['Mã', 'Hình thức'],
@@ -210,8 +261,8 @@ var OrderPage = (function () {
             _catValues.ht_tt = { id: row[0], name: row[1] };
           }
         });
-        cbHT.querySelector('input').value = defaultPay.name || '';
-        wrapHT.appendChild(cbHT);
+        _combos.ht.querySelector('input').value = defaultPay.name || '';
+        wrapHT.appendChild(_combos.ht);
       }
 
     } catch (err) {
@@ -655,6 +706,55 @@ var OrderPage = (function () {
     addSelectedProds: addSelectedProds, addProductRow: addProductRow, selectAcSingle: selectAcSingle,
     updateQty: updateQty, removeRow: removeRow, previewOrder: previewOrder,
     saveOrder: saveOrder, clearOrder: clearOrder, clearSearch: clearSearch,
-    updateInfoSummary: updateInfoSummary, calcChange: calcChange
+    updateInfoSummary: updateInfoSummary, calcChange: calcChange,
+    createNewCustomer: createNewCustomer
   };
+
+  async function createNewCustomer() {
+    var form = document.getElementById('form-create-customer');
+    if (!form) return;
+
+    var data = {};
+    var inputs = form.querySelectorAll('input, select, textarea');
+    inputs.forEach(function(el) {
+      if (!el.name) return;
+      if (el.type === 'checkbox') {
+        data[el.name] = el.checked;
+      } else if (el.type === 'number' || el.step) {
+        data[el.name] = parseFloat(el.value) || 0;
+      } else {
+        data[el.name] = el.value.trim();
+      }
+    });
+
+    if (!data.ObjectID || !data.ObjectName) {
+      showToast('Vui lòng nhập Mã và Tên khách hàng', false);
+      return;
+    }
+
+    try {
+      showToast('Đang lưu khách hàng...');
+      var res = await CategoryService.saveCustomer(data);
+      if (res) {
+        showToast('Đã tạo khách hàng: ' + data.ObjectName, true);
+        
+        // Tự động chọn khách hàng này cho đơn hàng
+        document.getElementById('o-ma-kh').value = data.ObjectID;
+        document.getElementById('o-kh-ten').value = data.ObjectName;
+        document.getElementById('o-kh-dc').value = data.Address || '';
+        
+        if (_combos.kh) {
+           _combos.kh.querySelector('input').value = data.ObjectName;
+        }
+
+        closeModal('modal-create-customer');
+        updateInfoSummary();
+        
+        // Clear form
+        inputs.forEach(el => { if(el.type==='checkbox') el.checked=false; else el.value=''; });
+      }
+    } catch (err) {
+      showToast('Lỗi khi lưu khách hàng: ' + err.message, false);
+    }
+  }
 })();
