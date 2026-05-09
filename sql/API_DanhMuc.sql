@@ -24,6 +24,7 @@ BEGIN
         UNION ALL SELECT 'PTGiaoHang',  N'Phương tiện giao hàng'
         UNION ALL SELECT 'Remark',      N'Diễn giải (Mẫu)'
         UNION ALL SELECT 'Note',        N'Ghi chú (Mẫu)'
+        UNION ALL SELECT 'DeliveryPerson', N'Người giao hàng'
         ORDER BY [TenLoai];
         RETURN;
     END
@@ -142,6 +143,19 @@ BEGIN
         WHERE [Notes] IS NOT NULL AND [Notes] <> ''
           AND (@TimKiem = '' OR [Notes] LIKE N'%' + @TimKiem + N'%')
         ORDER BY [Notes];
+        RETURN;
+    END
+
+    ELSE IF @Loai = 'DeliveryPerson'
+    BEGIN
+        SELECT
+            [NguoiGiao] AS [id],
+            [NguoiGiao] AS [name],
+            [GhiChu]    AS [memo]
+        FROM [dbo].[CF_NguoiGiaoTbl]
+        WHERE (@TimKiem = '' OR [NguoiGiao] LIKE N'%' + @TimKiem + N'%'
+                             OR [GhiChu]    LIKE N'%' + @TimKiem + N'%')
+        ORDER BY [NguoiGiao];
         RETURN;
     END
 END

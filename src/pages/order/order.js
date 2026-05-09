@@ -63,6 +63,8 @@ var OrderPage = (function () {
     if (_combos.remark) _combos.remark.querySelector('input').value = '';
     if (document.getElementById('o-notes')) document.getElementById('o-notes').value = '';
     if (_combos.note) _combos.note.querySelector('input').value = '';
+    if (document.getElementById('o-nguoi-giao')) document.getElementById('o-nguoi-giao').value = '';
+    if (_combos.delivery) _combos.delivery.querySelector('input').value = '';
 
     // 2. Đảm bảo component đã load, rồi mới inject danh mục
     await _ensureComponents();
@@ -120,7 +122,7 @@ var OrderPage = (function () {
 
   async function _loadCategories() {
     try {
-      const [branches, employees, payTypes, payTerms, customers, promotions, vehicles, remarks, notes] = await Promise.all([
+      const [branches, employees, payTypes, payTerms, customers, promotions, vehicles, remarks, notes, deliveryPersons] = await Promise.all([
         CategoryService.getCategories('Branch'),
         CategoryService.getCategories('Employee'),
         CategoryService.getCategories('PaymentType'),
@@ -129,7 +131,8 @@ var OrderPage = (function () {
         CategoryService.getCategories('Promotion'),
         CategoryService.getCategories('PTGiaoHang'),
         CategoryService.getCategories('Remark'),
-        CategoryService.getCategories('Note')
+        CategoryService.getCategories('Note'),
+        CategoryService.getCategories('DeliveryPerson')
       ]);
 
       // ── Diễn giải (MỚI) ──────────────────────────────────────────
@@ -172,6 +175,26 @@ var OrderPage = (function () {
           }
         });
         wrapNote.appendChild(_combos.note);
+      }
+
+      // ── Người giao (MỚI) ──────────────────────────────────────────
+      var wrapNguoiGiao = document.getElementById('wrap-nguoi-giao');
+      if (wrapNguoiGiao && UIControls && UIControls.createDataComboBox) {
+        _combos.delivery = UIControls.createDataComboBox({
+          id: 'o-nguoi-giao-search',
+          placeholder: '-- Chọn người giao --',
+          headers: ['Người giao', 'Ghi chú'],
+          data: deliveryPersons.map(function (d) { return [d.name, d.memo || '']; }),
+          onSearch: function (q) {
+            return _searchCategory('DeliveryPerson', q).then(function (list) {
+              return list.map(function (d) { return [d.name, d.memo || '']; });
+            });
+          },
+          onSelect: function (row) {
+            document.getElementById('o-nguoi-giao').value = row[0];
+          }
+        });
+        wrapNguoiGiao.appendChild(_combos.delivery);
       }
 
       // ── Khách hàng (MỚI) ──────────────────────────────────────────
