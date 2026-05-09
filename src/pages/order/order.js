@@ -272,17 +272,17 @@ var OrderPage = (function () {
         _combos.dk = UIControls.createDataComboBox({
           id: 'o-dieu-khoan',
           placeholder: '-- Chọn điều khoản --',
-          headers: ['Mã', 'Điều khoản', 'Số ngày'],
-          data: payTerms.map(function (p) { return [p.id, p.name, p.due_days != null ? p.due_days + ' ngày' : '']; }),
-          colFilterIndex: 1,
-          colHighlightIndex: 1,
+          headers: ['Tên điều khoản', 'Điều khoản TT'],
+          data: payTerms.map(function (p) { return [p.name, p.id]; }),
+          colFilterIndex: 0,
+          colHighlightIndex: 0,
           onSearch: function (q) {
             return _searchCategory('PaymentTerm', q).then(function (list) {
-              return list.map(function (p) { return [p.id, p.name, p.due_days != null ? p.due_days + ' ngày' : '']; });
+              return list.map(function (p) { return [p.name, p.id]; });
             });
           },
           onSelect: function (row) {
-            _catValues.dieu_khoan = { id: row[0], name: row[1] };
+            _catValues.dieu_khoan = { id: row[1], name: row[0] };
           }
         });
         wrapDK.appendChild(_combos.dk);
