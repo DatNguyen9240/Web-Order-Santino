@@ -368,17 +368,17 @@ var OrderPage = (function () {
         _combos.ht = UIControls.createDataComboBox({
           id: 'o-ht-thanh-toan',
           placeholder: '-- Chọn hình thức --',
-          headers: ['Mã', 'Hình thức'],
-          data: payTypes.map(function (p) { return [p.id, p.name]; }),
-          colFilterIndex: 1,
-          colHighlightIndex: 1,
+          headers: ['Tên hình thức', 'Hình thức thanh toán'],
+          data: payTypes.map(function (p) { return [p.name, p.id]; }),
+          colFilterIndex: 0,
+          colHighlightIndex: 0,
           onSearch: function (q) {
             return _searchCategory('PaymentType', q).then(function (list) {
-              return list.map(function (p) { return [p.id, p.name]; });
+              return list.map(function (p) { return [p.name, p.id]; });
             });
           },
           onSelect: function (row) {
-            _catValues.ht_tt = { id: row[0], name: row[1] };
+            _catValues.ht_tt = { id: row[1], name: row[0] };
           }
         });
         _combos.ht.querySelector('input').value = defaultPay.name || '';
