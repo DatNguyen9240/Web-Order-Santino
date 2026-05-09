@@ -114,12 +114,13 @@ var OrderPage = (function () {
 
   async function _loadCategories() {
     try {
-      const [branches, employees, payTypes, payTerms, customers] = await Promise.all([
+      const [branches, employees, payTypes, payTerms, customers, promotions] = await Promise.all([
         CategoryService.getCategories('Branch'),
         CategoryService.getCategories('Employee'),
         CategoryService.getCategories('PaymentType'),
         CategoryService.getCategories('PaymentTerm'),
-        CategoryService.getCategories('Customer')
+        CategoryService.getCategories('Customer'),
+        CategoryService.getCategories('Promotion')
       ]);
 
       // ── Khách hàng (MỚI) ──────────────────────────────────────────
@@ -287,6 +288,28 @@ var OrderPage = (function () {
         wrapHT.appendChild(_combos.ht);
       }
 
+      // ── CTKM ──────────────────────────────────────────────────
+      var wrapKM = document.getElementById('wrap-ctkm');
+      if (wrapKM && UIControls && UIControls.createDataComboBox) {
+        _combos.ctkm = UIControls.createDataComboBox({
+          id: 'o-ctkm-search',
+          placeholder: '-- Chọn CTKM --',
+          headers: ['Tên chiết khấu', 'Chiết khấu'],
+          data: promotions.map(function (p) { return [p.name, p.id]; }),
+          colFilterIndex: 0,
+          colHighlightIndex: 0,
+          onSearch: function (q) {
+            return _searchCategory('Promotion', q).then(function (list) {
+              return list.map(function (p) { return [p.name, p.id]; });
+            });
+          },
+          onSelect: function (row) {
+            document.getElementById('o-ctbh').value = row[1];
+            updateInfoSummary();
+          }
+        });
+        wrapKM.appendChild(_combos.ctkm);
+      }
     } catch (err) {
       console.warn('[OrderPage] Lỗi load danh mục:', err);
     }

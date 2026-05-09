@@ -20,6 +20,7 @@ BEGIN
         UNION ALL SELECT 'PaymentType', N'Hình thức thanh toán'
         UNION ALL SELECT 'PaymentTerm', N'Điều khoản thanh toán'
         UNION ALL SELECT 'Customer',    N'Khách hàng'
+        UNION ALL SELECT 'Promotion',   N'Chương trình khuyến mại'
         ORDER BY [TenLoai];
         RETURN;
     END
@@ -89,6 +90,19 @@ BEGIN
                              OR [ObjectID]   LIKE N'%' + @TimKiem + N'%'
                              OR [Phone]      LIKE N'%' + @TimKiem + N'%')
         ORDER BY [ObjectName];
+        RETURN;
+    END
+
+    ELSE IF @Loai = 'Promotion'
+    BEGIN
+        SELECT
+            [ChietKhau] AS [id],
+            [CTKM]      AS [name]
+        FROM [dbo].[CF_CTKMTbl]
+        WHERE (@TimKiem = '' OR [CTKM] LIKE N'%' + @TimKiem + N'%')
+          AND ([NgayKetThuc] IS NULL OR [NgayKetThuc] >= CAST(GETDATE() AS DATE))
+        ORDER BY [CTKM];
+        RETURN;
     END
 END
 GO
