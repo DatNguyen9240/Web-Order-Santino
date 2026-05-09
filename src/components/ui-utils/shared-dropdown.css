@@ -3,7 +3,7 @@
   /* position & top/left set dynamically by UIUtils.computeDropdownPosition (fixed) */
   width: max-content;
   min-width: 100%;
-  max-width: 90vw;
+  max-width: min(600px, 95vw);
   background: var(--surface, #fff);
   backdrop-filter: blur(8px);
   border: 1px solid var(--border, #e2e8f0);
@@ -59,7 +59,9 @@
   padding: 8px 12px;
   border-bottom: 1px solid var(--border, #e2e8f0);
   color: var(--text, #1e293b);
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.4;
 }
 
 .dropdown-table td.highlight-col {
