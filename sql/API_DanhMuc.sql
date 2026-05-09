@@ -22,6 +22,7 @@ BEGIN
         UNION ALL SELECT 'Customer',    N'Khách hàng'
         UNION ALL SELECT 'Promotion',   N'Chương trình khuyến mại'
         UNION ALL SELECT 'PTGiaoHang',  N'Phương tiện giao hàng'
+        UNION ALL SELECT 'Remark',      N'Diễn giải (Mẫu)'
         ORDER BY [TenLoai];
         RETURN;
     END
@@ -116,6 +117,18 @@ BEGIN
         WHERE (@TimKiem = '' OR [TenPTGiaoHang] LIKE N'%' + @TimKiem + N'%'
                              OR [PTGiaoHang]    LIKE N'%' + @TimKiem + N'%')
         ORDER BY [PTGiaoHang];
+        RETURN;
+    END
+
+    ELSE IF @Loai = 'Remark'
+    BEGIN
+        SELECT DISTINCT
+            [Memo] AS [id],
+            [Memo] AS [name]
+        FROM [dbo].[InvoiceRequestTbl]
+        WHERE [Memo] IS NOT NULL AND [Memo] <> ''
+          AND (@TimKiem = '' OR [Memo] LIKE N'%' + @TimKiem + N'%')
+        ORDER BY [Memo];
         RETURN;
     END
 END

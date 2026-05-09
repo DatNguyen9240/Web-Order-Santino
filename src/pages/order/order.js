@@ -59,6 +59,8 @@ var OrderPage = (function () {
     document.getElementById('o-ma-dl').value = '';
     document.getElementById('o-ngay-tt').value = Utils.today();
     document.getElementById('o-kh-dc').value = '';
+    if (document.getElementById('o-remarks')) document.getElementById('o-remarks').value = '';
+    if (_combos.remark) _combos.remark.querySelector('input').value = '';
 
     // 2. Đảm bảo component đã load, rồi mới inject danh mục
     await _ensureComponents();
@@ -107,22 +109,45 @@ var OrderPage = (function () {
     chi_nhanh: { id: '', name: '' },
     nvkd: { id: '', name: '' },
     dieu_khoan: { id: '', name: '' },
-    ht_tt: { id: '', name: '' }
+    ht_tt: { id: '', name: '' },
+    remarks: { id: '', name: '' }
   };
 
   var _combos = {};
 
   async function _loadCategories() {
     try {
-      const [branches, employees, payTypes, payTerms, customers, promotions, vehicles] = await Promise.all([
+      const [branches, employees, payTypes, payTerms, customers, promotions, vehicles, remarks] = await Promise.all([
         CategoryService.getCategories('Branch'),
         CategoryService.getCategories('Employee'),
         CategoryService.getCategories('PaymentType'),
         CategoryService.getCategories('PaymentTerm'),
         CategoryService.getCategories('Customer'),
         CategoryService.getCategories('Promotion'),
-        CategoryService.getCategories('PTGiaoHang')
+        CategoryService.getCategories('PTGiaoHang'),
+        CategoryService.getCategories('Remark')
       ]);
+
+      // ── Diễn giải (MỚI) ──────────────────────────────────────────
+      var wrapRemark = document.getElementById('wrap-remark');
+      if (wrapRemark && UIControls && UIControls.createDataComboBox) {
+        _combos.remark = UIControls.createDataComboBox({
+          id: 'o-remarks-search',
+          placeholder: '-- Chọn hoặc nhập diễn giải --',
+          headers: ['Diễn giải'],
+          data: remarks.map(function (r) { return [r.name]; }),
+          onSearch: function (q) {
+            return _searchCategory('Remark', q).then(function (list) {
+              return list.map(function (r) { return [r.name]; });
+            });
+          },
+          onSelect: function (row) {
+            document.getElementById('o-remarks').value = row[0];
+            _catValues.remarks = { id: row[0], name: row[0] };
+          }
+        });
+        wrapRemark.appendChild(_combos.remark);
+      }
 
       // ── Khách hàng (MỚI) ──────────────────────────────────────────
       var wrapKH = document.getElementById('wrap-khach-hang');
@@ -726,7 +751,7 @@ var OrderPage = (function () {
       kh_ten: document.getElementById('o-kh-ten').value.trim(),
       kh_dc: document.getElementById('o-kh-dc').value,
       nguon_don: document.getElementById('o-nguon-don').value,
-      dien_giai: document.getElementById('o-dien-giai').value,
+      dien_giai: document.getElementById('o-remarks').value || (_combos.remark ? _combos.remark.querySelector('input').value : ''),
       ghi_chu: document.getElementById('o-note').value,
       pt_giao: document.getElementById('o-pt-giao').value,
       nguoi_giao: document.getElementById('o-nguoi-giao').value,
