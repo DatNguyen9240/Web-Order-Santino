@@ -13,9 +13,10 @@ const ProductService = (() => {
     }
 
     try {
-      // Backend yêu cầu format: ?q={"SearchTerm":"..."}
-      const queryObj = { SearchTerm: searchTerm };
-      const res = await Http.get(API_CONFIG.ENDPOINTS.PRODUCTS.LIST, { q: JSON.stringify(queryObj) });
+      // Truyền trực tiếp params, không bọc JSON
+      const params = { SearchTerm: searchTerm };
+      const res = await Http.get(API_CONFIG.ENDPOINTS.PRODUCTS.LIST, params);
+
       // Giả sử API trả về mảng trực tiếp hoặc nằm trong { records: [] }
       return res.records || res;
     } catch (error) {

@@ -1,25 +1,17 @@
 -- =============================================
--- API_DanhMuc — hỗ trợ cả 2 cách gọi:
---   1. FE gọi: @Loai nhận toàn bộ JSON (giống API_LaySanPham)
---   2. SSMS:   EXEC @Loai='Employee', @TimKiem='ngu'
+-- API_DanhMuc — chỉ hỗ trợ 1 cách gọi:
+--   - SSMS/FE: @Loai=... (string), @TimKiem=... (string)
+--   -> Đơn giản hóa, không parse JSON
 -- =============================================
 ALTER PROCEDURE [dbo].[API_DanhMuc]
-    @Loai    NVARCHAR(4000) = NULL,
+    @Loai    NVARCHAR(100)  = NULL,
     @TimKiem NVARCHAR(100)  = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- Nếu backend truyền nguyên JSON {"Loai":"...","TimKiem":"..."} vào @Loai
-    IF @Loai LIKE '{%"Loai"%}'
-    BEGIN
-        -- Ưu tiên @TimKiem param nếu có, không thì lấy từ JSON
-        IF @TimKiem IS NULL
-            SET @TimKiem = JSON_VALUE(@Loai, '$.TimKiem');
-        SET @Loai = JSON_VALUE(@Loai, '$.Loai');
-    END
-
     SET @TimKiem = LTRIM(RTRIM(ISNULL(@TimKiem, '')));
+
 
     IF @Loai IS NULL OR @Loai = ''
     BEGIN
@@ -91,5 +83,3 @@ EXEC [dbo].[API_DanhMuc] @Loai = 'Employee';
 -- Lọc trực tiếp bằng @TimKiem
 EXEC [dbo].[API_DanhMuc] @Loai = 'Employee', @TimKiem = N'ngu';
 
--- ── TEST qua JSON (giống FE gọi) ──────────────────────────────────────
-EXEC [dbo].[API_DanhMuc] @Loai = N'{"Loai":"Employee","TimKiem":"ngu"}';

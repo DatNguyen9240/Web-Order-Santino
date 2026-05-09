@@ -12,12 +12,13 @@ const CategoryService = (() => {
     if (!API_CONFIG.BASE_URL) return [];
 
     try {
-      const queryObj = { Loai: loai };
-      if (search && search.trim()) queryObj.TimKiem = search.trim();
+      // Truyền trực tiếp params, không bọc JSON
+      const params = { Loai: loai };
+      if (search && search.trim()) {
+        params.TimKiem = search.trim();
+        params._t = Date.now(); // Tránh cache khi search
+      }
 
-      // Search requests không cache — dùng noCache param để URL luôn unique
-      const params = { q: JSON.stringify(queryObj) };
-      if (search && search.trim()) params._t = Date.now();
 
       const res = await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, params);
       const data = res.records || res;

@@ -688,9 +688,10 @@ const ProductService = (() => {
     }
 
     try {
-      // Backend yêu cầu format: ?q={"SearchTerm":"..."}
-      const queryObj = { SearchTerm: searchTerm };
-      const res = await Http.get(API_CONFIG.ENDPOINTS.PRODUCTS.LIST, { q: JSON.stringify(queryObj) });
+      // Truyền trực tiếp params, không bọc JSON
+      const params = { SearchTerm: searchTerm };
+      const res = await Http.get(API_CONFIG.ENDPOINTS.PRODUCTS.LIST, params);
+
       // Giả sử API trả về mảng trực tiếp hoặc nằm trong { records: [] }
       return res.records || res;
     } catch (error) {
@@ -719,29 +720,37 @@ const ProductService = (() => {
  */
 const CategoryService = (() => {
   /**
-   * Lấy dữ liệu danh mục theo loại
-   * @param {string} loai - Loại danh mục (Branch, Employee, PaymentType, PaymentTerm)
+   * Lấy dữ liệu danh mục theo loại, có hỗ trợ tìm kiếm server-side
+   * @param {string} loai   - Loại: Branch | Employee | PaymentType | PaymentTerm
+   * @param {string} search - Từ khoá tìm kiếm (server-side LIKE filter)
    */
-  async function getCategories(loai = '') {
-    if (!API_CONFIG.BASE_URL) {
-      return [];
-    }
+  async function getCategories(loai = '', search = '') {
+    if (!API_CONFIG.BASE_URL) return [];
 
     try {
-      // Đổi sang pattern ?q={"Loai":"..."} giống ProductService
-      const queryObj = { Loai: loai };
-      const res = await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, { q: JSON.stringify(queryObj) });
-      
+      // Truyền trực tiếp params, không bọc JSON
+      const params = { Loai: loai };
+      if (search && search.trim()) {
+        params.TimKiem = search.trim();
+        params._t = Date.now(); // Tránh cache khi search
+      }
+
+
+      const res = await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, params);
       const data = res.records || res;
       if (!Array.isArray(data)) return [];
 
-      // Chuẩn hóa dữ liệu trả về để luôn có 'id' và 'name'
       return data.map(item => ({
-        id: item.id || item.Id || item.Loai || '',
-        name: item.name || item.Name || item.TenLoai || item.BranchName || item.EmployeeName || item.PaymentTypeName || item.PaymentTermName || ''
+        id:          item.id           || item.Id           || '',
+        name:        item.name         || item.Name         || '',
+        address:     item.address      || '',
+        phone:       item.phone        || '',
+        department:  item.department   || '',
+        due_days:    item.due_days     != null ? item.due_days : null,
+        is_default:  item.is_default   || false
       }));
-    } catch (error) {
-      console.warn(`[CategoryService] Lỗi gọi API lấy danh mục ${loai}:`, error);
+    } catch (err) {
+      console.warn(`[CategoryService] Lỗi lấy danh mục ${loai}:`, err);
       return [];
     }
   }
@@ -824,6 +833,344 @@ const Utils = (function () {
 
   return { formatMoney, buildSKU, genOrderNo, today, escHtml, uuid };
 })();
+
+
+/* --- UIUtils.js --- */
+/**
+ * Shared UI Utilities for Components
+ */
+var UIControls = window.UIControls || {};
+
+UIControls.utils = (function() {
+  /**
+   * Tính toán vị trí Dropdown thông minh (Tránh tràn màn hình, tránh navbar)
+   */
+  function computeDropdownPosition(inputElement, dropdownElement) {
+    var rect = inputElement.getBoundingClientRect();
+
+    // Navbar/header: giới hạn top khi mở lên trên
+    var navbarBottom = 0;
+    var navbar = document.querySelector('.app-navbar, .navbar, header, .top-bar');
+    if (navbar) navbarBottom = navbar.getBoundingClientRect().bottom;
+
+    // position:fixed — tọa độ viewport, không bị ảnh hưởng bởi overflow:hidden
+    dropdownElement.style.position   = 'fixed';
+    dropdownElement.style.zIndex     = '10001';
+    dropdownElement.style.left       = rect.left + 'px';
+    dropdownElement.style.minWidth   = rect.width + 'px';
+    dropdownElement.style.transition = 'opacity 0.15s ease, visibility 0.15s ease';
+
+    var isActive = dropdownElement.classList.contains('active');
+    if (!isActive) {
+      dropdownElement.style.maxHeight  = '300px';
+      dropdownElement.style.visibility = 'hidden';
+      dropdownElement.classList.add('active');
+    }
+
+    var dropHeight = dropdownElement.offsetHeight;
+    var spaceBelow = window.innerHeight - rect.bottom;
+    var spaceAbove = rect.top - navbarBottom;
+
+    if (spaceBelow < dropHeight && spaceAbove > spaceBelow) {
+      if (spaceAbove < dropHeight) {
+        dropdownElement.style.maxHeight = (spaceAbove - 4) + 'px';
+        dropHeight = dropdownElement.offsetHeight;
+      }
+      var topPos = Math.max(rect.top - dropHeight, navbarBottom + 4);
+      dropdownElement.style.top = topPos + 'px';
+    } else {
+      if (spaceBelow < dropHeight) {
+        dropdownElement.style.maxHeight = (spaceBelow - 4) + 'px';
+      }
+      dropdownElement.style.top = rect.bottom + 'px';
+    }
+
+    if (!isActive) {
+      dropdownElement.classList.remove('active');
+      dropdownElement.style.visibility = '';
+    }
+  }
+
+  /**
+   * Tìm tất cả scrollable ancestors từ một element
+   */
+  function getScrollableAncestors(el) {
+    var ancestors = [];
+    var node = el.parentElement;
+    while (node && node !== document.documentElement) {
+      var style = window.getComputedStyle(node);
+      var ov = style.overflow + style.overflowY + style.overflowX;
+      if (/auto|scroll/.test(ov)) {
+        ancestors.push(node);
+      }
+      node = node.parentElement;
+    }
+    ancestors.push(window);
+    return ancestors;
+  }
+
+  /**
+   * Sinh HTML cho Dropdown Table List
+   */
+  function createDropdownTableHTML(headers, data, colHighlightIndex) {
+    var theadHTML = headers.map(function(h) { return '<th>' + h + '</th>'; }).join('');
+    var tbodyHTML = data.map(function(row, rIdx) {
+      var cells = row.map(function(cell, cIdx) {
+        var cls = (cIdx === colHighlightIndex) ? 'highlight-col' : '';
+        return '<td class="' + cls + '">' + (cell != null ? cell : '') + '</td>';
+      }).join('');
+      return '<tr data-index="' + rIdx + '">' + cells + '</tr>';
+    }).join('');
+
+    return '<table class="dropdown-table"><thead><tr>' + theadHTML + '</tr></thead><tbody>' + tbodyHTML + '</tbody></table>';
+  }
+
+  return {
+    computeDropdownPosition: computeDropdownPosition,
+    getScrollableAncestors: getScrollableAncestors,
+    createDropdownTableHTML: createDropdownTableHTML,
+    setupTableSelection: function(tableBody, onSelect) {
+      if (!tableBody) return;
+      tableBody.addEventListener('click', function(e) {
+        var tr = e.target.closest('tr');
+        if (!tr) return;
+        var isAlreadyActive = tr.classList.contains('active');
+        Array.from(tableBody.querySelectorAll('tr')).forEach(function(r) { r.classList.remove('active'); });
+        if (!isAlreadyActive) {
+          tr.classList.add('active');
+          if (typeof onSelect === 'function') onSelect(tr);
+        } else {
+          if (typeof onSelect === 'function') onSelect(null);
+        }
+      });
+    }
+  };
+})();
+
+
+/* --- DataComboBox.js --- */
+/**
+ * Data ComboBox Component
+ */
+var UIControls = window.UIControls || {};
+
+UIControls.createDataComboBox = function(options) {
+  var container = document.createElement('div');
+  container.className = 'combo-box-container';
+
+  // Input
+  var input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'ui-input';
+  input.placeholder = options.placeholder || '';
+  if (options.id) input.id = options.id;
+
+  // Actions block – chỉ giữ nút mũi tên
+  var actions = document.createElement('div');
+  actions.className = 'combo-box-actions';
+
+  var btnArrow = document.createElement('button');
+  btnArrow.className = 'combo-action-btn';
+  btnArrow.innerHTML = '<span class="material-symbols-outlined">arrow_drop_down</span>';
+  btnArrow.title = 'Mở danh sách (F4)';
+  btnArrow.type = 'button';
+
+  actions.appendChild(btnArrow);
+
+  // ── Dropdown Panel ──────────────────────────────────────────────
+  var dropdown = document.createElement('div');
+  dropdown.className = 'data-dropdown-menu';
+
+  // Search bar bên trong dropdown
+  var searchWrapper = document.createElement('div');
+  searchWrapper.className = 'dd-search-wrapper';
+
+  var searchIcon = document.createElement('span');
+  searchIcon.className = 'material-symbols-outlined dd-search-icon';
+  searchIcon.textContent = 'search';
+
+  var searchInput = document.createElement('input');
+  searchInput.type = 'text';
+  searchInput.className = 'dd-search-input';
+  searchInput.placeholder = 'Tìm kiếm...';
+
+  searchWrapper.appendChild(searchIcon);
+  searchWrapper.appendChild(searchInput);
+
+  // Table wrapper (scrollable)
+  var tableWrapper = document.createElement('div');
+  tableWrapper.className = 'dd-table-wrapper';
+
+  // Footer "+ Thêm mới"
+  var footer = document.createElement('div');
+  footer.className = 'dd-footer';
+
+  var btnAddNew = document.createElement('button');
+  btnAddNew.type = 'button';
+  btnAddNew.className = 'dd-footer-add-btn';
+  btnAddNew.innerHTML = '<span class="material-symbols-outlined">add</span> Thêm mới';
+
+  btnAddNew.addEventListener('click', function(e) {
+    e.stopPropagation();
+    hideDropdown();
+    if (typeof options.onF2 === 'function') options.onF2();
+  });
+
+  footer.appendChild(btnAddNew);
+
+  dropdown.appendChild(searchWrapper);
+  dropdown.appendChild(tableWrapper);
+  dropdown.appendChild(footer);
+
+  // ── Data & Render ───────────────────────────────────────────────
+  var fullData = options.data || [];
+
+  function renderTable(displayData) {
+    if (UIControls.utils) {
+      tableWrapper.innerHTML = UIControls.utils.createDropdownTableHTML(
+        options.headers || [], displayData, options.colHighlightIndex || 0
+      );
+      var rows = tableWrapper.querySelectorAll('tbody tr');
+      rows.forEach(function(row) {
+        row.addEventListener('click', function() {
+          var dataRow = displayData[row.getAttribute('data-index')];
+          input.value = dataRow[options.colFilterIndex || 0];
+          hideDropdown();
+          if (typeof options.onSelect === 'function') {
+            options.onSelect(dataRow);
+          }
+        });
+      });
+    }
+  }
+
+  // ── Scroll listeners trên đúng container đang scroll ───────────
+  var _scrollTargets = [];
+  var _scrollHandler = null;
+
+  function attachScrollListeners() {
+    if (_scrollHandler) return;
+    _scrollHandler = function() {
+      if (UIControls.utils) {
+        UIControls.utils.computeDropdownPosition(container, dropdown);
+      }
+    };
+    _scrollTargets = UIControls.utils
+      ? UIControls.utils.getScrollableAncestors(container)
+      : [window];
+    _scrollTargets.forEach(function(target) {
+      target.addEventListener('scroll', _scrollHandler, { passive: true, capture: false });
+    });
+    window.addEventListener('resize', _scrollHandler, { passive: true });
+  }
+
+  function detachScrollListeners() {
+    if (!_scrollHandler) return;
+    _scrollTargets.forEach(function(target) {
+      target.removeEventListener('scroll', _scrollHandler, { capture: false });
+    });
+    window.removeEventListener('resize', _scrollHandler);
+    _scrollHandler = null;
+    _scrollTargets = [];
+  }
+
+  function showDropdown() {
+    if (dropdown.parentNode !== document.body) {
+      document.body.appendChild(dropdown);
+    }
+    renderTable(fullData);
+    searchInput.value = '';
+    if (UIControls.utils) {
+      UIControls.utils.computeDropdownPosition(container, dropdown);
+    }
+    dropdown.classList.add('active');
+    attachScrollListeners();
+    setTimeout(function() { searchInput.focus(); }, 50);
+  }
+
+  function hideDropdown() {
+    detachScrollListeners();
+    dropdown.classList.remove('active');
+    if (dropdown.parentNode) dropdown.parentNode.removeChild(dropdown);
+  }
+
+  // ── Search bên trong dropdown ───────────────────────────────────
+  var _searchDebounce = null;
+
+  searchInput.addEventListener('input', function() {
+    var val = searchInput.value;
+
+    if (typeof options.onSearch === 'function') {
+      // Server-side: debounce 300ms rồi gọi API
+      clearTimeout(_searchDebounce);
+      tableWrapper.innerHTML = '<div style="padding:12px;text-align:center;color:var(--muted,#94a3b8);font-size:13px">Đang tìm...</div>';
+      _searchDebounce = setTimeout(function() {
+        Promise.resolve(options.onSearch(val)).then(function(result) {
+          if (Array.isArray(result)) {
+            fullData = result;
+            renderTable(fullData);
+          }
+        }).catch(function() {
+          tableWrapper.innerHTML = '<div style="padding:12px;text-align:center;color:#ef4444;font-size:13px">Lỗi tìm kiếm</div>';
+        });
+      }, 300);
+    } else {
+      // Client-side: filter local fullData
+      var lval = val.toLowerCase();
+      if (!lval) { renderTable(fullData); return; }
+      var filtered = fullData.filter(function(row) {
+        return (row[options.colFilterIndex || 0] || '').toString().toLowerCase().includes(lval);
+      });
+      renderTable(filtered);
+    }
+  });
+
+  searchInput.addEventListener('click', function(e) { e.stopPropagation(); });
+
+  // ── Events ──────────────────────────────────────────────────────
+  btnArrow.addEventListener('click', function(e) {
+    e.preventDefault();
+    dropdown.classList.contains('active') ? hideDropdown() : showDropdown();
+  });
+
+  input.addEventListener('input', function(e) {
+    var val = e.target.value;
+    if (!dropdown.classList.contains('active')) showDropdown();
+
+    if (typeof options.onSearch === 'function') {
+      // Server-side: debounce giống searchInput
+      clearTimeout(_searchDebounce);
+      tableWrapper.innerHTML = '<div style="padding:12px;text-align:center;color:var(--muted,#94a3b8);font-size:13px">Đang tìm...</div>';
+      _searchDebounce = setTimeout(function() {
+        Promise.resolve(options.onSearch(val)).then(function(result) {
+          if (Array.isArray(result)) { fullData = result; renderTable(fullData); }
+        }).catch(function() {
+          tableWrapper.innerHTML = '<div style="padding:12px;text-align:center;color:#ef4444;font-size:13px">Lỗi tìm kiếm</div>';
+        });
+      }, 300);
+    } else {
+      // Client-side fallback
+      var lval = val.toLowerCase();
+      var filtered = fullData.filter(function(row) {
+        return (row[options.colFilterIndex || 0] || '').toString().toLowerCase().includes(lval);
+      });
+      renderTable(filtered);
+    }
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!container.contains(e.target) && !dropdown.contains(e.target)) hideDropdown();
+  });
+
+  input.addEventListener('kb:open',   function() { dropdown.classList.contains('active') ? hideDropdown() : showDropdown(); });
+  input.addEventListener('kb:new',    function() { if (options.onF2) options.onF2(); });
+  input.addEventListener('kb:close',  function() { hideDropdown(); });
+
+  container.appendChild(input);
+  container.appendChild(actions);
+
+  return container;
+};
 
 
 /* --- ConfirmModal.js --- */
