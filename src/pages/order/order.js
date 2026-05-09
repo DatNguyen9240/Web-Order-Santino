@@ -169,6 +169,28 @@ var OrderPage = (function () {
         wrapKH.appendChild(_combos.kh);
       }
 
+      // ── Mã đại lý (Dùng chung danh mục Customer) ──────────────
+      var wrapMaDL = document.getElementById('wrap-ma-dl');
+      if (wrapMaDL && UIControls && UIControls.createDataComboBox) {
+        _combos.ma_dl = UIControls.createDataComboBox({
+          id: 'o-ma-dl-search',
+          placeholder: '-- Tìm đại lý --',
+          headers: ['Khách hàng', 'Tên khách hàng', 'Địa chỉ'],
+          data: customers.map(function (c) { return [c.id, c.name, c.address || '']; }),
+          colFilterIndex: 1,
+          colHighlightIndex: 1,
+          onSearch: function (q) {
+            return _searchCategory('Customer', q).then(function (list) {
+              return list.map(function (c) { return [c.id, c.name, c.address || '']; });
+            });
+          },
+          onSelect: function (row) {
+            document.getElementById('o-ma-dl').value = row[0];
+          }
+        });
+        wrapMaDL.appendChild(_combos.ma_dl);
+      }
+
       // ── Chi nhánh ─────────────────────────────────────────────
       var wrapBranch = document.getElementById('wrap-chi-nhanh');
       if (wrapBranch && UIControls && UIControls.createDataComboBox) {
@@ -178,17 +200,17 @@ var OrderPage = (function () {
         _combos.branch = UIControls.createDataComboBox({
           id: 'o-chi-nhanh',
           placeholder: '-- Chọn chi nhánh --',
-          headers: ['Mã', 'Chi nhánh', 'Địa chỉ'],
-          data: branches.map(function (b) { return [b.id, b.name, b.address || '']; }),
-          colFilterIndex: 1,
-          colHighlightIndex: 1,
+          headers: ['Tên chi nhánh', 'Chi nhánh', 'STT'],
+          data: branches.map(function (b) { return [b.name, b.id, b.stt]; }),
+          colFilterIndex: 0,
+          colHighlightIndex: 0,
           onSearch: function (q) {
             return _searchCategory('Branch', q).then(function (list) {
-              return list.map(function (b) { return [b.id, b.name, b.address || '']; });
+              return list.map(function (b) { return [b.name, b.id, b.stt]; });
             });
           },
           onSelect: function (row) {
-            _catValues.chi_nhanh = { id: row[0], name: row[1] };
+            _catValues.chi_nhanh = { id: row[1], name: row[0] };
           }
         });
         _combos.branch.querySelector('input').value = defaultBranch.name || '';

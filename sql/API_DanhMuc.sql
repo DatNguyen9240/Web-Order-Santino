@@ -27,16 +27,16 @@ BEGIN
     IF @Loai = 'Branch'
     BEGIN
         SELECT
-            [BranchID]   AS [id],
             [BranchName] AS [name],
-            [DiaChi]     AS [address],
-            [DienThoai]  AS [phone],
+            [BranchID]   AS [id],
+            [STT]        AS [stt],
             [isDefault]  AS [is_default]
         FROM [dbo].[CF_BranchTbl]
         WHERE ([isDisable] = 0 OR [isDisable] IS NULL)
           AND (@TimKiem = '' OR [BranchName] LIKE N'%' + @TimKiem + N'%'
-                             OR [DiaChi]     LIKE N'%' + @TimKiem + N'%')
+                             OR [BranchID]   LIKE N'%' + @TimKiem + N'%')
         ORDER BY [STT], [BranchName];
+        RETURN;
     END
 
     ELSE IF @Loai = 'Employee'

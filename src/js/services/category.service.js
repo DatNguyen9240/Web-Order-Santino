@@ -29,6 +29,7 @@ const CategoryService = (() => {
         address:     item.address      || '',
         phone:       item.phone        || '',
         department:  item.department   || '',
+        stt:         item.stt          || item.STT          || 0,
         due_days:    item.due_days     != null ? item.due_days : null,
         is_default:  item.is_default   || false,
         employee_id: item.employee_id  || item.EmployeeID || '',
