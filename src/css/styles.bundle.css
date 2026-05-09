@@ -2798,6 +2798,20 @@ tbody tr:hover td {
   background: rgba(99, 102, 241, 0.08);
 }
 
+/* Mobile: Reduce font size and tighten spacing */
+@media (max-width: 768px) {
+  .dropdown-table {
+    font-size: 12px;
+  }
+  .dropdown-table th {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+  .dropdown-table td {
+    padding: 4px 8px;
+  }
+}
+
 
 /* --- combobox.css --- */
 /* 2. COMBO BOX & INPUT WRAPPERS */
