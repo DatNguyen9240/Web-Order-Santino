@@ -158,6 +158,19 @@ BEGIN
         ORDER BY [NguoiGiao];
         RETURN;
     END
+
+    ELSE IF @Loai = 'OrderSource'
+    BEGIN
+        SELECT
+            [NguonDon] AS [id],
+            [NguonDon] AS [name],
+            [GhiChu]   AS [memo]
+        FROM [dbo].[CF_NguonDonTbl]
+        WHERE (@TimKiem = '' OR [NguonDon] LIKE N'%' + @TimKiem + N'%'
+                             OR [GhiChu]   LIKE N'%' + @TimKiem + N'%')
+        ORDER BY [NguonDon];
+        RETURN;
+    END
 END
 GO
 

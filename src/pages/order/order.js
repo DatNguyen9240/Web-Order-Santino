@@ -65,6 +65,8 @@ var OrderPage = (function () {
     if (_combos.note) _combos.note.querySelector('input').value = '';
     if (document.getElementById('o-nguoi-giao')) document.getElementById('o-nguoi-giao').value = '';
     if (_combos.delivery) _combos.delivery.querySelector('input').value = '';
+    if (document.getElementById('o-nguon-don')) document.getElementById('o-nguon-don').value = '';
+    if (_combos.source) _combos.source.querySelector('input').value = '';
 
     // 2. Đảm bảo component đã load, rồi mới inject danh mục
     await _ensureComponents();
@@ -122,7 +124,7 @@ var OrderPage = (function () {
 
   async function _loadCategories() {
     try {
-      const [branches, employees, payTypes, payTerms, customers, promotions, vehicles, remarks, notes, deliveryPersons] = await Promise.all([
+      const [branches, employees, payTypes, payTerms, customers, promotions, vehicles, remarks, notes, deliveryPersons, sources] = await Promise.all([
         CategoryService.getCategories('Branch'),
         CategoryService.getCategories('Employee'),
         CategoryService.getCategories('PaymentType'),
@@ -132,7 +134,8 @@ var OrderPage = (function () {
         CategoryService.getCategories('PTGiaoHang'),
         CategoryService.getCategories('Remark'),
         CategoryService.getCategories('Note'),
-        CategoryService.getCategories('DeliveryPerson')
+        CategoryService.getCategories('DeliveryPerson'),
+        CategoryService.getCategories('OrderSource')
       ]);
 
       // ── Diễn giải (MỚI) ──────────────────────────────────────────
@@ -195,6 +198,26 @@ var OrderPage = (function () {
           }
         });
         wrapNguoiGiao.appendChild(_combos.delivery);
+      }
+
+      // ── Nguồn đơn (MỚI) ──────────────────────────────────────────
+      var wrapNguonDon = document.getElementById('wrap-nguon-don');
+      if (wrapNguonDon && UIControls && UIControls.createDataComboBox) {
+        _combos.source = UIControls.createDataComboBox({
+          id: 'o-nguon-don-search',
+          placeholder: '-- Chọn nguồn đơn --',
+          headers: ['Nguồn đơn', 'Ghi chú'],
+          data: sources.map(function (s) { return [s.name, s.memo || '']; }),
+          onSearch: function (q) {
+            return _searchCategory('OrderSource', q).then(function (list) {
+              return list.map(function (s) { return [s.name, s.memo || '']; });
+            });
+          },
+          onSelect: function (row) {
+            document.getElementById('o-nguon-don').value = row[0];
+          }
+        });
+        wrapNguonDon.appendChild(_combos.source);
       }
 
       // ── Khách hàng (MỚI) ──────────────────────────────────────────
@@ -669,7 +692,7 @@ var OrderPage = (function () {
 
   function _buildLines() {
     var ma_ctbh = document.getElementById('o-ctbh').value;
-    var note = document.getElementById('o-note').value;
+    var note = document.getElementById('o-notes').value || (_combos.note ? _combos.note.querySelector('input').value : '');
     var lines = [];
     orderRows.forEach(function (row) {
       Object.entries(row.quantities).forEach(function (e) {
@@ -678,7 +701,7 @@ var OrderPage = (function () {
           ten_hang_2: row.ten_hang_2, sku: Utils.buildSKU(row.ten_hang_2, size),
           ten_hang: row.product.ten_hang_hoa, nhom_size: row.product.nhom_size,
           mau: row.product.mau,
-          size: parseInt(size), so_luong: qty, don_gia: row.product.don_gia,
+          size: size, so_luong: qty, don_gia: row.product.don_gia,
           thanh_tien: qty * row.product.don_gia, ma_ctbh: ma_ctbh, ghi_chu: note
         });
       });
@@ -798,11 +821,11 @@ var OrderPage = (function () {
       ma_dl: document.getElementById('o-ma-dl').value,
       kh_ten: document.getElementById('o-kh-ten').value.trim(),
       kh_dc: document.getElementById('o-kh-dc').value,
-      nguon_don: document.getElementById('o-nguon-don').value,
+      nguon_don: document.getElementById('o-nguon-don').value || (_combos.source ? _combos.source.querySelector('input').value : ''),
       dien_giai: document.getElementById('o-remarks').value || (_combos.remark ? _combos.remark.querySelector('input').value : ''),
       ghi_chu: document.getElementById('o-notes').value || (_combos.note ? _combos.note.querySelector('input').value : ''),
       pt_giao: document.getElementById('o-pt-giao').value,
-      nguoi_giao: document.getElementById('o-nguoi-giao').value,
+      nguoi_giao: document.getElementById('o-nguoi-giao').value || (_combos.delivery ? _combos.delivery.querySelector('input').value : ''),
       dieu_khoan: _catValues.dieu_khoan.name || _catValues.dieu_khoan.id,
       ht_thanh_toan: _catValues.ht_tt.name || _catValues.ht_tt.id,
       ngay_tt: document.getElementById('o-ngay-tt').value,
