@@ -688,9 +688,8 @@ const ProductService = (() => {
     }
 
     try {
-      // Truyền trực tiếp params, không bọc JSON
-      const params = { SearchTerm: searchTerm };
-      const res = await Http.get(API_CONFIG.ENDPOINTS.PRODUCTS.LIST, params);
+      const queryObj = { SearchTerm: searchTerm };
+      const res = await Http.get(API_CONFIG.ENDPOINTS.PRODUCTS.LIST, { q: JSON.stringify(queryObj) });
 
       // Giả sử API trả về mảng trực tiếp hoặc nằm trong { records: [] }
       return res.records || res;
@@ -728,12 +727,11 @@ const CategoryService = (() => {
     if (!API_CONFIG.BASE_URL) return [];
 
     try {
-      // Truyền trực tiếp params, không bọc JSON
-      const params = { Loai: loai };
-      if (search && search.trim()) {
-        params.TimKiem = search.trim();
-        params._t = Date.now(); // Tránh cache khi search
-      }
+      const queryObj = { Loai: loai };
+      if (search && search.trim()) queryObj.TimKiem = search.trim();
+
+      const params = { q: JSON.stringify(queryObj) };
+      if (search && search.trim()) params._t = Date.now();
 
 
       const res = await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, params);
