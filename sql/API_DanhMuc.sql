@@ -23,6 +23,7 @@ BEGIN
         UNION ALL SELECT 'Promotion',   N'Chương trình khuyến mại'
         UNION ALL SELECT 'PTGiaoHang',  N'Phương tiện giao hàng'
         UNION ALL SELECT 'Remark',      N'Diễn giải (Mẫu)'
+        UNION ALL SELECT 'Note',        N'Ghi chú (Mẫu)'
         ORDER BY [TenLoai];
         RETURN;
     END
@@ -131,6 +132,18 @@ BEGIN
         ORDER BY [Memo];
         RETURN;
     END
+
+    ELSE IF @Loai = 'Note'
+    BEGIN
+        SELECT DISTINCT
+            [Notes] AS [id],
+            [Notes] AS [name]
+        FROM [dbo].[OrderTbl]
+        WHERE [Notes] IS NOT NULL AND [Notes] <> ''
+          AND (@TimKiem = '' OR [Notes] LIKE N'%' + @TimKiem + N'%')
+        ORDER BY [Notes];
+        RETURN;
+    END
 END
 GO
 
@@ -140,4 +153,3 @@ EXEC [dbo].[API_DanhMuc] @Loai = 'Employee';
 
 -- Lọc trực tiếp bằng @TimKiem
 EXEC [dbo].[API_DanhMuc] @Loai = 'Employee', @TimKiem = N'ngu';
-

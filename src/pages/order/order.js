@@ -61,6 +61,8 @@ var OrderPage = (function () {
     document.getElementById('o-kh-dc').value = '';
     if (document.getElementById('o-remarks')) document.getElementById('o-remarks').value = '';
     if (_combos.remark) _combos.remark.querySelector('input').value = '';
+    if (document.getElementById('o-notes')) document.getElementById('o-notes').value = '';
+    if (_combos.note) _combos.note.querySelector('input').value = '';
 
     // 2. Đảm bảo component đã load, rồi mới inject danh mục
     await _ensureComponents();
@@ -110,14 +112,15 @@ var OrderPage = (function () {
     nvkd: { id: '', name: '' },
     dieu_khoan: { id: '', name: '' },
     ht_tt: { id: '', name: '' },
-    remarks: { id: '', name: '' }
+    remarks: { id: '', name: '' },
+    notes: { id: '', name: '' }
   };
 
   var _combos = {};
 
   async function _loadCategories() {
     try {
-      const [branches, employees, payTypes, payTerms, customers, promotions, vehicles, remarks] = await Promise.all([
+      const [branches, employees, payTypes, payTerms, customers, promotions, vehicles, remarks, notes] = await Promise.all([
         CategoryService.getCategories('Branch'),
         CategoryService.getCategories('Employee'),
         CategoryService.getCategories('PaymentType'),
@@ -125,7 +128,8 @@ var OrderPage = (function () {
         CategoryService.getCategories('Customer'),
         CategoryService.getCategories('Promotion'),
         CategoryService.getCategories('PTGiaoHang'),
-        CategoryService.getCategories('Remark')
+        CategoryService.getCategories('Remark'),
+        CategoryService.getCategories('Note')
       ]);
 
       // ── Diễn giải (MỚI) ──────────────────────────────────────────
@@ -147,6 +151,27 @@ var OrderPage = (function () {
           }
         });
         wrapRemark.appendChild(_combos.remark);
+      }
+
+      // ── Ghi chú (MỚI) ──────────────────────────────────────────
+      var wrapNote = document.getElementById('wrap-note');
+      if (wrapNote && UIControls && UIControls.createDataComboBox) {
+        _combos.note = UIControls.createDataComboBox({
+          id: 'o-notes-search',
+          placeholder: '-- Chọn hoặc nhập ghi chú --',
+          headers: ['Ghi chú'],
+          data: notes.map(function (n) { return [n.name]; }),
+          onSearch: function (q) {
+            return _searchCategory('Note', q).then(function (list) {
+              return list.map(function (n) { return [n.name]; });
+            });
+          },
+          onSelect: function (row) {
+            document.getElementById('o-notes').value = row[0];
+            _catValues.notes = { id: row[0], name: row[0] };
+          }
+        });
+        wrapNote.appendChild(_combos.note);
       }
 
       // ── Khách hàng (MỚI) ──────────────────────────────────────────
@@ -752,7 +777,7 @@ var OrderPage = (function () {
       kh_dc: document.getElementById('o-kh-dc').value,
       nguon_don: document.getElementById('o-nguon-don').value,
       dien_giai: document.getElementById('o-remarks').value || (_combos.remark ? _combos.remark.querySelector('input').value : ''),
-      ghi_chu: document.getElementById('o-note').value,
+      ghi_chu: document.getElementById('o-notes').value || (_combos.note ? _combos.note.querySelector('input').value : ''),
       pt_giao: document.getElementById('o-pt-giao').value,
       nguoi_giao: document.getElementById('o-nguoi-giao').value,
       dieu_khoan: _catValues.dieu_khoan.name || _catValues.dieu_khoan.id,
