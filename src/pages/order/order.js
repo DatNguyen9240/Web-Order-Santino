@@ -114,13 +114,14 @@ var OrderPage = (function () {
 
   async function _loadCategories() {
     try {
-      const [branches, employees, payTypes, payTerms, customers, promotions] = await Promise.all([
+      const [branches, employees, payTypes, payTerms, customers, promotions, vehicles] = await Promise.all([
         CategoryService.getCategories('Branch'),
         CategoryService.getCategories('Employee'),
         CategoryService.getCategories('PaymentType'),
         CategoryService.getCategories('PaymentTerm'),
         CategoryService.getCategories('Customer'),
-        CategoryService.getCategories('Promotion')
+        CategoryService.getCategories('Promotion'),
+        CategoryService.getCategories('PTGiaoHang')
       ]);
 
       // ── Khách hàng (MỚI) ──────────────────────────────────────────
@@ -310,6 +311,30 @@ var OrderPage = (function () {
         });
         wrapKM.appendChild(_combos.ctkm);
       }
+
+      // ── PT Giao hàng ──────────────────────────────────────────
+      var wrapPT = document.getElementById('wrap-pt-giao');
+      if (wrapPT && UIControls && UIControls.createDataComboBox) {
+        _combos.pt_giao = UIControls.createDataComboBox({
+          id: 'o-pt-giao-search',
+          placeholder: '-- Chọn phương tiện --',
+          headers: ['Mã phương tiện', 'Phương tiện giao hàng', 'Ghi chú'],
+          data: vehicles.map(function (v) { return [v.id, v.name, v.memo || '']; }),
+          colFilterIndex: 1,
+          colHighlightIndex: 1,
+          onSearch: function (q) {
+            return _searchCategory('PTGiaoHang', q).then(function (list) {
+              return list.map(function (v) { return [v.id, v.name, v.memo || '']; });
+            });
+          },
+          onSelect: function (row) {
+            document.getElementById('o-pt-giao').value = row[0];
+          }
+        });
+        wrapPT.appendChild(_combos.pt_giao);
+      }
+
+      _initCTKM(promotions);
     } catch (err) {
       console.warn('[OrderPage] Lỗi load danh mục:', err);
     }

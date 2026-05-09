@@ -21,6 +21,7 @@ BEGIN
         UNION ALL SELECT 'PaymentTerm', N'Điều khoản thanh toán'
         UNION ALL SELECT 'Customer',    N'Khách hàng'
         UNION ALL SELECT 'Promotion',   N'Chương trình khuyến mại'
+        UNION ALL SELECT 'PTGiaoHang',  N'Phương tiện giao hàng'
         ORDER BY [TenLoai];
         RETURN;
     END
@@ -102,6 +103,19 @@ BEGIN
         WHERE (@TimKiem = '' OR [CTKM] LIKE N'%' + @TimKiem + N'%')
           AND ([NgayKetThuc] IS NULL OR [NgayKetThuc] >= CAST(GETDATE() AS DATE))
         ORDER BY [CTKM];
+        RETURN;
+    END
+
+    ELSE IF @Loai = 'PTGiaoHang'
+    BEGIN
+        SELECT
+            [PTGiaoHang]    AS [id],
+            [TenPTGiaoHang] AS [name],
+            [GhiChu]        AS [memo]
+        FROM [dbo].[CF_PTGiaoHangTbl]
+        WHERE (@TimKiem = '' OR [TenPTGiaoHang] LIKE N'%' + @TimKiem + N'%'
+                             OR [PTGiaoHang]    LIKE N'%' + @TimKiem + N'%')
+        ORDER BY [PTGiaoHang];
         RETURN;
     END
 END
