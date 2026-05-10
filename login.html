@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Đăng nhập Đại Lý - Santino B2B</title>
+  <title>Đăng nhập Đại Lý</title>
   <link rel="shortcut icon" href="images/logo.png" type="image/x-icon">
   <link rel="stylesheet" href="./src/css/design-tokens.css">
   <link rel="stylesheet" href="./src/css/global.css">
@@ -56,7 +56,7 @@
   <div class="auth-card">
     <div class="auth-logo">
       <img src="images/logo.png" alt="SANTINO" class="app-logo" style="height: 64px; object-fit: contain; margin: 0 auto 16px; display: block;">
-      <h2>SANTINO B2B</h2>
+      <!-- Removed branding -->
       <p>Đăng nhập hệ thống đại lý bán sỉ</p>
     </div>
     <form id="login-form">
@@ -85,7 +85,7 @@
       </div>
       <button type="submit" class="btn-primary" id="btn-login">
         <span class="btn-spinner" id="login-spinner"></span>
-        <span id="btn-login-text">Đăng nhập B2B</span>
+        <span id="btn-login-text">Đăng nhập</span>
       </button>
     </form>
   </div>
@@ -103,6 +103,9 @@
         var newDark = !document.body.classList.contains('dark-theme');
         localStorage.setItem('santino_theme', newDark ? 'dark' : 'light');
         updateThemeUI(newDark);
+        if (typeof SoundUtils !== 'undefined') {
+          SoundUtils.playThemeToggle(newDark);
+        }
       });
     })();
 
@@ -116,8 +119,10 @@
   </script>
 
   <!-- Load env.js để lấy API_BASE_URL -->
-  <script src="env.js?v=42"></script>
+  <script src="env.js?v=76"></script>
+  <!-- Load SoundUtils -->
+  <script src="src/js/core/sound.js?v=76"></script>
   <!-- Load logic đăng nhập -->
-  <script src="src/js/login.js?v=42"></script>
+  <script src="src/js/login.js?v=76"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 /**
- * SANTINO B2B — CẤU HÌNH HỆ THỐNG
+ * CẤU HÌNH HỆ THỐNG
  * Chỉnh sửa file này khi cần thay đổi URL server (không cần build lại)
  */
 const isVercel = window.location.hostname.includes('vercel.app');

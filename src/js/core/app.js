@@ -1,5 +1,5 @@
 /**
- * App Bootstrap — Khởi tạo Santino B2B
+ * App Bootstrap — Khởi tạo hệ thống
  * Chạy sau khi tất cả scripts đã load
  */
 document.addEventListener('DOMContentLoaded', function () {
@@ -39,6 +39,9 @@ document.addEventListener('DOMContentLoaded', function () {
 function toggleTheme() {
   var isDark = document.documentElement.classList.toggle('dark-theme');
   localStorage.setItem('santino_theme', isDark ? 'dark' : 'light');
+  if (typeof SoundUtils !== 'undefined') {
+    SoundUtils.playThemeToggle(isDark);
+  }
 }
 
 

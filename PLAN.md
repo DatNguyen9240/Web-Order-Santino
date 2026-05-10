@@ -1,4 +1,4 @@
-# 📋 PLAN — Web Order Santino B2B
+# 📋 PLAN — Web Order
 > Phân tích 5 hình ảnh requirement · Ngày: 05/05/2026
 
 ---

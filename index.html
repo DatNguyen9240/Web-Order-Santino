@@ -4,15 +4,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="SANTINO B2B — Hệ thống đặt hàng sỉ">
-  <title>SANTINO B2B</title>
+  <meta name="description" content="Hệ thống đặt hàng sỉ">
+  <title>Hệ thống đặt hàng</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
     href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
     rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
   <link rel="shortcut icon" href="images/logo.png" type="image/x-icon">
-  <link rel="stylesheet" href="src/css/styles.bundle.css?v=72">
+  <link rel="stylesheet" href="src/css/styles.bundle.css?v=76">
   <script>(function () { if (localStorage.getItem('santino_theme') === 'dark') document.documentElement.classList.add('dark-theme') })();</script>
 </head>
 
@@ -135,15 +135,22 @@
   </div>
 
   <!-- BUNDLED JS -->
-  <script src="env.js?v=72"></script>
-  <script src="src/js/app.bundle.js?v=72"></script>
+  <script src="env.js?v=76"></script>
+  <script src="src/js/app.bundle.js?v=76"></script>
   <script>
     function toggleSidebar() {
       var sidebar = document.querySelector('.sidebar');
       sidebar.classList.toggle('show');
       document.querySelector('.sidebar-overlay').classList.toggle('show');
+      
+      var isOpening = sidebar.classList.contains('show');
       if (window.innerWidth <= 1024) {
-        document.body.style.overflow = sidebar.classList.contains('show') ? 'hidden' : '';
+        document.body.style.overflow = isOpening ? 'hidden' : '';
+      }
+      
+      // Phát âm thanh khi MỞ sidebar (không phát khi đóng)
+      if (isOpening && typeof SoundUtils !== 'undefined' && SoundUtils.playSidebarOpen) {
+        SoundUtils.playSidebarOpen();
       }
     }
     // Auto-close menu when clicking nav items on mobile

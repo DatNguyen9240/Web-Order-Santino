@@ -60,6 +60,11 @@ var Header = (function () {
       $btnHamburger.addEventListener('click', function() {
         if ($sidebar) $sidebar.classList.add('open');
         if ($sidebarOverlay) $sidebarOverlay.classList.add('active');
+        
+        // Phát âm thanh khi mở Sidebar
+        if (typeof SoundUtils !== 'undefined' && SoundUtils.playSidebarOpen) {
+          SoundUtils.playSidebarOpen();
+        }
       });
     }
   }

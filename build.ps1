@@ -24,6 +24,7 @@ $jsFiles = @(
   "components\confirm-modal\ConfirmModal.js",
   "components\modal\Modal.js",
   "js\core\router.js",
+  "js\core\sound.js",
   "js\core\app.js"
 )
 

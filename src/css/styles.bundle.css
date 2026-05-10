@@ -1,6 +1,6 @@
 ﻿/* --- design-tokens.css --- */
 /* ============================================================
-   SANTINO B2B — Design Tokens
+   Design Tokens
    Chứa toàn bộ CSS variables. Import file này đầu tiên.
    ============================================================ */
 
@@ -81,7 +81,7 @@
 
 /* --- global.css --- */
 /* ============================================================
-   SANTINO B2B — Global Styles
+   Global Styles
    Requires: design-tokens.css loaded before this file.
    ============================================================ */
 

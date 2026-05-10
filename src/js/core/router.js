@@ -1,5 +1,5 @@
 /**
- * Router — Hash-based SPA cho Santino B2B
+ * Router — Hash-based SPA
  * Pattern: #/order → load src/pages/order/order.js → OrderPage.render($el)
  */
 var Router = (function () {
@@ -70,7 +70,7 @@ var Router = (function () {
       hdr.setAttribute('data-i18n', route.title);
       hdr.textContent = typeof t === 'function' ? t(route.title) : route.title;
     }
-    if (route) document.title = (typeof t === 'function' ? t(route.title) : route.title) + ' | SANTINO B2B';
+    if (route) document.title = (typeof t === 'function' ? t(route.title) : route.title);
   }
 
   // ── Main handler ──────────────────────────────────────────────────────

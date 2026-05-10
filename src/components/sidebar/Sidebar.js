@@ -1,6 +1,6 @@
 /**
  * Sidebar Component
- * Cấu trúc thanh điều hướng bên trái cho Santino B2B
+ * Cấu trúc thanh điều hướng bên trái
  */
 var Sidebar = (function () {
   
@@ -14,7 +14,7 @@ var Sidebar = (function () {
           <div style="display:flex; align-items:center;">
             <span class="material-symbols-outlined"
               style="margin-right:12px; font-size:32px; color:var(--color-primary)">local_mall</span>
-            SANTINO B2B
+            <!-- Branding text removed -->
           </div>
           <!-- Nút đóng Sidebar trên Mobile -->
           <button class="btn-close-sidebar" id="btn-close-sidebar">
