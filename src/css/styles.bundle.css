@@ -2803,7 +2803,7 @@ tbody tr:hover td {
 }
 
 .dropdown-table tbody tr.group-header:hover td {
-  background: #f1f5f9 !important;
+  background: var(--surface) !important;
 }
 
 /* Mobile: Reduce font size and tighten spacing */
@@ -2819,7 +2819,7 @@ tbody tr:hover td {
     padding: 4px 8px;
   }
 }
-.dropdown-table tbody tr.data-row.active td { background: rgba(251, 191, 36, 0.25) !important; font-weight: 600; color: #b45309; }
+.dropdown-table tbody tr.data-row.active td { background: var(--accent-dim, rgba(251, 191, 36, 0.25)) !important; font-weight: 600; color: var(--primary); }
 
 
 /* --- combobox.css --- */
