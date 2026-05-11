@@ -22,12 +22,15 @@ var SoundUtils = (function () {
 
   // Âm thanh khi mở Sidebar (Mở hòm/Inventory)
   function playSidebarOpen() {
+    // Tạm tắt tiếng theo yêu cầu
+    /*
     if (!sidebarAudio) return;
     
     sidebarAudio.currentTime = 0;
     sidebarAudio.play().catch(function(error) {
       console.warn('Không thể phát âm thanh sidebar, hoặc không tìm thấy file chest-opens-minecraft-sound-fx.wav:', error);
     });
+    */
   }
 
   return {
