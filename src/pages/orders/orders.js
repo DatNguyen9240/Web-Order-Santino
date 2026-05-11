@@ -1,5 +1,7 @@
 var OrdersPage = (function () {
   function render($el) {
+    // Thêm class để trang này rộng toàn màn hình
+    $el.classList.add('is-full-width');
     return Router.fetchTemplate('src/pages/orders/orders.html').then(function(html){
       $el.innerHTML = html; _render();
     });

@@ -51,6 +51,8 @@ var OrderPage = (function () {
     };
     _combos = {};
     orderRows = [];
+    // Xóa class full-width (nếu có) để trang này thu nhỏ lại 1000px
+    $el.classList.remove('is-full-width');
 
     return Router.fetchTemplate('src/pages/order/order.html')
       .then(function (html) {

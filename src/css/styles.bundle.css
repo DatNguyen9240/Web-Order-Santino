@@ -400,6 +400,10 @@ button {
   width: 100%;
 }
 
+.main.is-full-width {
+  max-width: 100% !important;
+}
+
 .page-section {
   display: none;
   flex-direction: column;
