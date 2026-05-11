@@ -81,32 +81,32 @@ UIControls.createDataComboBox = function (options) {
   
   var paginationWrapper = document.createElement('div');
   paginationWrapper.className = 'dd-pagination';
-  paginationWrapper.style.display = 'none'; // Ẩn mặc định, sẽ hiện nếu enablePagination = true
-  paginationWrapper.style.gap = '8px';
+  paginationWrapper.style.display = 'none';
+  paginationWrapper.style.gap = '12px';
   paginationWrapper.style.alignItems = 'center';
+  paginationWrapper.style.padding = '2px 8px';
 
   var btnPrev = document.createElement('button');
   btnPrev.type = 'button';
-  btnPrev.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">chevron_left</span>';
-  btnPrev.style.padding = '2px 4px';
-  btnPrev.style.cursor = 'pointer';
-  btnPrev.style.border = '1px solid var(--border, #e2e8f0)';
-  btnPrev.style.background = 'var(--surface, #ffffff)';
-  btnPrev.style.borderRadius = '4px';
+  btnPrev.className = 'btn-icon-sm';
+  btnPrev.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">chevron_left</span>';
+  btnPrev.style.cssText = 'border:1px solid var(--border); background:var(--surface); cursor:pointer; border-radius:6px; display:flex; align-items:center; justify-content:center; width:28px; height:28px; color:var(--muted); transition:all 0.2s;';
 
   var lblPage = document.createElement('span');
   lblPage.textContent = 'Trang 1';
-  lblPage.style.fontSize = '12px';
-  lblPage.style.color = 'var(--text, #334155)';
+  lblPage.style.cssText = 'font-size:13px; font-weight:600; color:var(--text); min-width:60px; text-align:center;';
 
   var btnNext = document.createElement('button');
   btnNext.type = 'button';
-  btnNext.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">chevron_right</span>';
-  btnNext.style.padding = '2px 4px';
-  btnNext.style.cursor = 'pointer';
-  btnNext.style.border = '1px solid var(--border, #e2e8f0)';
-  btnNext.style.background = 'var(--surface, #ffffff)';
-  btnNext.style.borderRadius = '4px';
+  btnNext.className = 'btn-icon-sm';
+  btnNext.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">chevron_right</span>';
+  btnNext.style.cssText = 'border:1px solid var(--border); background:var(--surface); cursor:pointer; border-radius:6px; display:flex; align-items:center; justify-content:center; width:28px; height:28px; color:var(--muted); transition:all 0.2s;';
+
+  // Hover effects
+  [btnPrev, btnNext].forEach(function(btn) {
+    btn.onmouseover = function() { this.style.borderColor = 'var(--primary)'; this.style.color = 'var(--primary)'; this.style.background = 'rgba(251, 191, 36, 0.05)'; };
+    btn.onmouseout = function() { this.style.borderColor = 'var(--border)'; this.style.color = 'var(--muted)'; this.style.background = 'var(--surface)'; };
+  });
 
   btnPrev.addEventListener('click', function(e) {
     e.stopPropagation();
