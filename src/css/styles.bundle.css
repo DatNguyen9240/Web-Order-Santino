@@ -148,9 +148,10 @@ button {
 /* Custom Date Format dd/mm/yyyy for input type="date" */
 input.date-vn {
   position: relative;
+  color: transparent !important;
 }
 input.date-vn::-webkit-datetime-edit {
-  color: transparent;
+  color: transparent !important;
 }
 input.date-vn::before {
   content: attr(data-date);
@@ -161,10 +162,13 @@ input.date-vn::before {
   color: var(--text);
   pointer-events: none;
 }
-input.date-vn:focus::-webkit-datetime-edit {
-  color: var(--text);
+input.date-vn:focus, input.date-vn:active {
+  color: var(--text) !important;
 }
-input.date-vn:focus::before {
+input.date-vn:focus::-webkit-datetime-edit, input.date-vn:active::-webkit-datetime-edit {
+  color: var(--text) !important;
+}
+input.date-vn:focus::before, input.date-vn:active::before {
   display: none;
 }
 
