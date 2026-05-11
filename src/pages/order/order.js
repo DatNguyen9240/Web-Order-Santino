@@ -39,6 +39,19 @@ var OrderPage = (function () {
   }
 
   function render($el) {
+    // Reset toàn bộ state khi render lại trang (Xóa sạch form)
+    _catValues = {
+      khach_hang: { id: '', name: '' },
+      chi_nhanh: { id: '', name: '' },
+      nvkd: { id: '', name: '' },
+      dieu_khoan: { id: '', name: '' },
+      ht_tt: { id: '', name: '' },
+      remarks: { id: '', name: '' },
+      notes: { id: '', name: '' }
+    };
+    _combos = {};
+    orderRows = [];
+
     return Router.fetchTemplate('src/pages/order/order.html')
       .then(function (html) {
         $el.innerHTML = html;
@@ -930,7 +943,7 @@ var OrderPage = (function () {
 
       closeModal('modal-preview');
       showToast(msg, true);
-      orderRows = []; _init();
+      render(document.getElementById('app-content'));
     } catch (err) {
       console.warn('[OrderService] Lỗi tạo đơn qua API:', err);
       showToast(err.message || 'Lỗi tạo đơn qua API. Vui lòng thử lại.', false);
@@ -943,7 +956,9 @@ var OrderPage = (function () {
       message: 'Bạn có chắc muốn xóa toàn bộ sản phẩm đã chọn?',
       confirmText: 'Xác nhận xóa',
       confirmClass: 'btn-danger',
-      onConfirm: function () { orderRows = []; _init(); }
+      onConfirm: function () { 
+        render(document.getElementById('app-content')); 
+      }
     });
   }
 
