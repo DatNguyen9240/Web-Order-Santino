@@ -966,7 +966,7 @@ UIControls.utils = (function () {
       var colSpan = headers.length;
       Object.keys(groups).sort().forEach(function(g) {
          var items = groups[g];
-         tbodyHTML += '<tr class="group-header" style="font-weight:700; cursor:default; border-top:1px solid var(--border); border-bottom:1px solid var(--border);"><td colspan="' + colSpan + '" style="padding: 6px 10px; background:var(--surface); color:var(--text);">' + g + ' (' + items.length + ')</td></tr>';
+         tbodyHTML += '<tr class="group-header" style="font-weight:700; cursor:default; border-top:1px solid var(--border); border-bottom:1px solid var(--border);"><td colspan="' + colSpan + '" style="padding: 8px 12px; background:var(--surface); color:var(--text);">' + g + ' (' + items.length + ')</td></tr>';
          items.forEach(function(item) {
             var row = item.row;
             var rIdx = item.index;

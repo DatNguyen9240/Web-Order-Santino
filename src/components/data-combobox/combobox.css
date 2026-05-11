@@ -8,11 +8,11 @@
 .combo-box-container .ui-input {
   flex: 1;
   min-width: 0;
-  padding: 8px 8px;
+  padding: 8px 10px;
   border: 1px solid var(--border, #e2e8f0);
   border-radius: var(--radius, 8px) 0 0 var(--radius, 8px);
   outline: none;
-  font-size: 14px;
+  font-size: 14.5px;
   transition: border-color 0.15s, box-shadow 0.15s;
   font-family: inherit;
   color: var(--text, #1e293b);
@@ -37,7 +37,7 @@
   background: transparent;
   border: none;
   border-left: 1px solid var(--border, #e2e8f0);
-  padding: 0 4px;
+  padding: 0 8px;
   color: var(--muted, #94a3b8);
   cursor: pointer;
   display: flex;
@@ -53,7 +53,7 @@
   color: var(--primary, #6366f1);
 }
 
-.combo-action-btn .material-symbols-outlined { font-size: 18px; }
+.combo-action-btn .material-symbols-outlined { font-size: 22px; }
 
 /* ── Dropdown: Search bar ─────────────────────────────────────── */
 .dd-search-wrapper {
@@ -80,7 +80,7 @@
   flex: 1;
   border: none;
   outline: none;
-  font-size: 14px;
+  font-size: 14.5px;
   font-family: inherit;
   color: var(--text, #1e293b);
   background: transparent;
