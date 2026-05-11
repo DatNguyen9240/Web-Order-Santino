@@ -263,23 +263,9 @@ BEGIN
             h.[isLock] AS [is_lock],
             ISNULL((SELECT SUM(Quantity) FROM [dbo].[OrderDetailTbl] d WHERE d.DocumentID = @TimKiem), 0) AS [total_qty],
              (SELECT 
-                CASE 
-                    WHEN d.[ItemID] IS NULL AND CHARINDEX('|', d.[ItemName]) > 0 
-                    THEN SUBSTRING(d.[ItemName], CHARINDEX('|', d.[ItemName]) + 1, CHARINDEX('|', d.[ItemName], CHARINDEX('|', d.[ItemName]) + 1) - CHARINDEX('|', d.[ItemName]) - 1)
-                    ELSE ISNULL(d.[ItemID], '') 
-                END AS [sku],
-                ISNULL(i.[ItemName2], 
-                    CASE 
-                        WHEN d.[ItemID] IS NULL AND CHARINDEX('|', d.[ItemName]) > 0 
-                        THEN SUBSTRING(d.[ItemName], 1, CHARINDEX('|', d.[ItemName]) - 1)
-                        ELSE ISNULL(d.[ItemID], '') 
-                    END
-                ) AS [ten_hang_2],
-                CASE 
-                    WHEN d.[ItemID] IS NULL AND CHARINDEX('|', d.[ItemName]) > 0 
-                    THEN SUBSTRING(d.[ItemName], CHARINDEX('|', d.[ItemName], CHARINDEX('|', d.[ItemName]) + 1) + 1, LEN(d.[ItemName]))
-                    ELSE d.[ItemName] 
-                END AS [ten_hang],
+                ISNULL(d.[ItemID], '') AS [sku],
+                ISNULL(i.[ItemName2], d.[ItemID]) AS [ten_hang_2],
+                d.[ItemName] AS [ten_hang],
                 d.[Size] AS [size],
                 d.[MauSac] AS [mau],
                 d.[Quantity] AS [so_luong],

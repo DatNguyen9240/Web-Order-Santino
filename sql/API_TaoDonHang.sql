@@ -84,11 +84,7 @@ BEGIN
                AND ci.Size     = JSON_VALUE(l.[value], '$.size')
                AND ci.MauSac   = JSON_VALUE(l.[value], '$.mau')
              ORDER BY ci.ItemID), -- Chấp nhận NULL để né Khóa Ngoại
-            CASE 
-                WHEN (SELECT TOP 1 ci.ItemID FROM [dbo].[CF_ItemTbl] ci WHERE ci.ItemName2 = JSON_VALUE(l.[value], '$.ten_hang_2') AND ci.Size = JSON_VALUE(l.[value], '$.size') AND ci.MauSac = JSON_VALUE(l.[value], '$.mau')) IS NULL 
-                THEN JSON_VALUE(l.[value], '$.ten_hang_2') + '|' + JSON_VALUE(l.[value], '$.sku') + '|' + JSON_VALUE(l.[value], '$.ten_hang')
-                ELSE JSON_VALUE(l.[value], '$.ten_hang')
-            END,
+            JSON_VALUE(l.[value], '$.ten_hang'),
             JSON_VALUE(l.[value], '$.size'),
             JSON_VALUE(l.[value], '$.mau'),
             CAST(ISNULL(NULLIF(JSON_VALUE(l.[value], '$.so_luong'), ''), '0') AS DECIMAL(18,2)),

@@ -14,9 +14,14 @@ BEGIN
         [FormName]     AS [ten_form],    
         [CategoryID]   AS [nhom_hang],   
         [Design]       AS [design],
-        [isDisable]    AS [ngung_su_dung]
+        [isDisable]    AS [ngung_su_dung],
+        -- Lấy danh sách size thực tế của sản phẩm này
+        (SELECT DISTINCT [Size] 
+         FROM [dbo].[CF_ItemTbl] ci 
+         WHERE ci.[ItemName2] = t2.[ItemName2] 
+         FOR JSON PATH) AS [sizes_json]
     FROM 
-        [dbo].[CF_TenHang2Tbl]
+        [dbo].[CF_TenHang2Tbl] t2
     WHERE 
         ([isDisable] = 0 OR [isDisable] IS NULL)
         AND (

@@ -641,10 +641,17 @@ var OrderPage = (function () {
         var mapNhom = { 'TL': 'Nhóm 1', 'QA': 'Nhóm 2', 'SKU101': 'Nhóm 1', 'SKU102': 'Nhóm 3' };
         var mappedNhomSize = mapNhom[nhomSize] || mapNhom[nhomSize.toUpperCase()] || 'Nhóm 1';
 
-        var sizes = cachedSizes.filter(function (s) {
-          var ns = s.nhom_size || s.Nhom_size || s.NhomSize || s.nhomSize;
-          return ns === nhomSize || ns === mappedNhomSize;
-        }).sort(function (a, b) { return (a.stt || a.STT || 0) - (b.stt || b.STT || 0); });
+        var sizes = [];
+        if (prod.sizes_json) {
+          try {
+            var realSizes = JSON.parse(prod.sizes_json).map(function (s) { return s.Size; });
+            sizes = cachedSizes.filter(function (s) {
+              return realSizes.indexOf(s.size || s.Size || s.ten_size) !== -1;
+            });
+          } catch (e) { console.error('Lỗi parse sizes_json', e); }
+        }
+
+        sizes.sort(function (a, b) { return (a.stt || a.STT || 0) - (b.stt || b.STT || 0); });
 
         orderRows.unshift({ ten_hang_2: code, product: prod, sizes: sizes, quantities: {} });
         added++;
@@ -667,10 +674,17 @@ var OrderPage = (function () {
     var mapNhom = { 'TL': 'Nhóm 1', 'QA': 'Nhóm 2', 'SKU101': 'Nhóm 1', 'SKU102': 'Nhóm 3' };
     var mappedNhomSize = mapNhom[nhomSize] || mapNhom[nhomSize.toUpperCase()] || 'Nhóm 1';
 
-    var sizes = cachedSizes.filter(function (s) {
-      var ns = s.nhom_size || s.Nhom_size || s.NhomSize || s.nhomSize;
-      return ns === nhomSize || ns === mappedNhomSize;
-    }).sort(function (a, b) { return (a.stt || a.STT || 0) - (b.stt || b.STT || 0); });
+    var sizes = [];
+    if (prod.sizes_json) {
+      try {
+        var realSizes = JSON.parse(prod.sizes_json).map(function (s) { return s.Size; });
+        sizes = cachedSizes.filter(function (s) {
+          return realSizes.indexOf(s.size || s.Size || s.ten_size) !== -1;
+        });
+      } catch (e) { console.error('Lỗi parse sizes_json', e); }
+    }
+
+    sizes.sort(function (a, b) { return (a.stt || a.STT || 0) - (b.stt || b.STT || 0); });
 
     orderRows.unshift({ ten_hang_2: code, product: prod, sizes: sizes, quantities: {} });
     document.getElementById('ac-input').value = '';
