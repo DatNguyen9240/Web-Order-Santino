@@ -1444,12 +1444,13 @@ tbody tr:hover td {
 
 .autocomplete-dropdown {
   position: absolute;
-  top: calc(100% + 8px);
+  top: 100%;
   left: 0;
   right: 0;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
   box-shadow: var(--shadow-lg);
   z-index: 100;
   max-height: 380px;

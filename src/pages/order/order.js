@@ -506,6 +506,29 @@ var OrderPage = (function () {
     }
   }
 
+  var acScrollHandler = null;
+  var acScrollTargets = [];
+  function _attachAcScroll() {
+    if (acScrollHandler) return;
+    var input = document.getElementById('ac-input');
+    var list = document.getElementById('ac-list');
+    acScrollHandler = function() {
+      if (list.classList.contains('show') && window.UIControls && UIControls.utils) {
+        UIControls.utils.computeDropdownPosition(input, list);
+      }
+    };
+    acScrollTargets = (window.UIControls && UIControls.utils) ? UIControls.utils.getScrollableAncestors(input) : [window];
+    acScrollTargets.forEach(function(t) { t.addEventListener('scroll', acScrollHandler, {passive: true, capture: false}); });
+    window.addEventListener('resize', acScrollHandler, {passive: true});
+  }
+  function _detachAcScroll() {
+    if (!acScrollHandler) return;
+    acScrollTargets.forEach(function(t) { t.removeEventListener('scroll', acScrollHandler, {capture: false}); });
+    window.removeEventListener('resize', acScrollHandler);
+    acScrollHandler = null;
+    acScrollTargets = [];
+  }
+
 
   function updateInfoSummary() {
     var name = document.getElementById('o-kh-ten').value.trim();
@@ -531,7 +554,14 @@ var OrderPage = (function () {
     if (btnClear) btnClear.style.display = val ? 'block' : 'none';
 
     var list = document.getElementById('ac-list');
-    if (!val || val.length < 2) { list.classList.remove('show'); return; }
+    var input = document.getElementById('ac-input');
+    if (!val || val.length < 2) { 
+      list.classList.remove('show'); 
+      input.style.borderBottomLeftRadius = '';
+      input.style.borderBottomRightRadius = '';
+      _detachAcScroll();
+      return; 
+    }
 
     // Gọi API qua Service lấy sản phẩm
     var prods = await ProductService.getProducts(val);
@@ -541,7 +571,10 @@ var OrderPage = (function () {
       list.innerHTML = '<div class="ac-item"><small>Không tìm thấy sản phẩm</small></div>';
       list.classList.add('show');
       if (window.UIControls && UIControls.utils) {
-        UIControls.utils.computeDropdownPosition(document.getElementById('ac-input'), list);
+        UIControls.utils.computeDropdownPosition(input, list);
+        _attachAcScroll();
+        input.style.borderBottomLeftRadius = '0';
+        input.style.borderBottomRightRadius = '0';
       }
       return;
     }
@@ -577,13 +610,20 @@ var OrderPage = (function () {
 
     // Tận dụng UIUtils để tính toán vị trí thông minh (fixed position, chống bị che)
     if (window.UIControls && UIControls.utils) {
-      UIControls.utils.computeDropdownPosition(document.getElementById('ac-input'), list);
+      UIControls.utils.computeDropdownPosition(input, list);
+      _attachAcScroll();
+      input.style.borderBottomLeftRadius = '0';
+      input.style.borderBottomRightRadius = '0';
     }
   }
 
   function selectAcSingle(code) {
-    document.getElementById('ac-input').value = code;
+    var input = document.getElementById('ac-input');
+    input.value = code;
     document.getElementById('ac-list').classList.remove('show');
+    input.style.borderBottomLeftRadius = '';
+    input.style.borderBottomRightRadius = '';
+    _detachAcScroll();
     addProductRow();
   }
 
@@ -633,6 +673,12 @@ var OrderPage = (function () {
   function closeAc() {
     multiSelectedCodes = [];
     document.getElementById('ac-list').classList.remove('show');
+    var input = document.getElementById('ac-input');
+    if (input) {
+      input.style.borderBottomLeftRadius = '';
+      input.style.borderBottomRightRadius = '';
+    }
+    _detachAcScroll();
   }
 
   function addSelectedProds() {
