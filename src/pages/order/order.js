@@ -538,6 +538,9 @@ var OrderPage = (function () {
     if (!prods.length) {
       list.innerHTML = '<div class="ac-item"><small>Không tìm thấy sản phẩm</small></div>';
       list.classList.add('show');
+      if (window.UIControls && UIControls.utils) {
+        UIControls.utils.computeDropdownPosition(document.getElementById('ac-input'), list);
+      }
       return;
     }
 
@@ -569,6 +572,11 @@ var OrderPage = (function () {
       '</div>';
     list.innerHTML = html;
     list.classList.add('show');
+
+    // Tận dụng UIUtils để tính toán vị trí thông minh (fixed position, chống bị che)
+    if (window.UIControls && UIControls.utils) {
+      UIControls.utils.computeDropdownPosition(document.getElementById('ac-input'), list);
+    }
   }
 
   function selectAcSingle(code) {

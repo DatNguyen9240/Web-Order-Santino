@@ -1444,8 +1444,8 @@ tbody tr:hover td {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-lg);
-  z-index: 500;
-  max-height: 400px;
+  z-index: 100;
+  max-height: 380px;
   overflow-y: auto;
   overflow-x: hidden;
   display: none;
