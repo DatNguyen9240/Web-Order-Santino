@@ -62,6 +62,9 @@ UIControls.createDataComboBox = function (options) {
   btnAddNew.type = 'button';
   btnAddNew.className = 'dd-footer-add-btn';
   btnAddNew.innerHTML = '<span class="material-symbols-outlined">add</span> Thêm mới';
+  
+  // Mặc định là ẩn, chỉ hiện khi có yêu cầu từ options
+  btnAddNew.style.display = options.showAddNew ? 'flex' : 'none';
 
   btnAddNew.addEventListener('click', function (e) {
     e.stopPropagation();
