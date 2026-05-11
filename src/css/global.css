@@ -328,7 +328,7 @@ input.date-vn:focus::before {
 
 /* ---- Main / Page Sections ---- */
 .main {
-  overflow-y: auto;
+  overflow-y: scroll;
   padding: 24px;
   display: flex;
   flex-direction: column;
@@ -675,7 +675,7 @@ input.date-vn:focus::before {
 
 /* ---- Main / Page Sections ---- */
 .main {
-  overflow-y: auto;
+  overflow-y: scroll;
   padding: 32px;
   display: flex;
   flex-direction: column;
