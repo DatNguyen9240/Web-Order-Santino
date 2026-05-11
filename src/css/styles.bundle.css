@@ -394,6 +394,10 @@ button {
   flex-direction: column;
   gap: 24px;
   scroll-behavior: smooth;
+  max-width: 1000px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  width: 100%;
 }
 
 .page-section {
