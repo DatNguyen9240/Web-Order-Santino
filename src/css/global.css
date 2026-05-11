@@ -236,7 +236,7 @@ button {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   z-index: 4999;
 }
 
@@ -1440,14 +1440,12 @@ tbody tr:hover td {
   top: calc(100% + 8px);
   left: 0;
   right: 0;
-  max-width: 900px;
-  margin: 0 auto;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-lg);
   z-index: 500;
-  max-height: 450px;
+  max-height: 400px;
   overflow-y: auto;
   overflow-x: hidden;
   display: none;
