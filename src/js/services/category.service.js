@@ -24,17 +24,18 @@ const CategoryService = (() => {
       if (!Array.isArray(data)) return [];
 
       return data.map(item => ({
-        id:          item.id           || item.Id           || '',
-        name:        item.name         || item.Name         || '',
-        address:     item.address      || '',
-        phone:       item.phone        || '',
-        department:  item.department   || '',
-        stt:         item.stt          || item.STT          || 0,
-        memo:        item.memo         || item.GhiChu       || '',
-        due_days:    item.due_days     != null ? item.due_days : null,
-        is_default:  item.is_default   || false,
-        employee_id: item.employee_id  || item.EmployeeID || '',
-        branch_id:   item.branch_id    || item.BranchID   || ''
+        id: item.id || item.Id || '',
+        name: item.name || item.Name || '',
+        address: item.address || '',
+        phone: item.phone || '',
+        department: item.department || '',
+        stt: item.stt || item.STT || 0,
+        memo: item.memo || item.GhiChu || '',
+        due_days: item.due_days != null ? item.due_days : null,
+        is_default: item.is_default || false,
+        employee_id: item.employee_id || item.EmployeeID || '',
+        branch_id: item.branch_id || item.BranchID || '',
+        group_id: item.group_id || item.ObjectGroupID || ''
       }));
     } catch (err) {
       console.warn(`[CategoryService] Lỗi lấy danh mục ${loai}:`, err);
@@ -48,7 +49,7 @@ const CategoryService = (() => {
    */
   async function saveCustomer(customerData) {
     if (!API_CONFIG.BASE_URL) throw new Error('API_BASE chưa cấu hình');
-    
+
     try {
       const params = { q: JSON.stringify(customerData) };
       const res = await Http.post(API_CONFIG.ENDPOINTS.CUSTOMERS.SAVE, params);

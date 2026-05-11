@@ -8,7 +8,7 @@
 .combo-box-container .ui-input {
   flex: 1;
   min-width: 0;
-  padding: 10px 12px;
+  padding: 8px 8px;
   border: 1px solid var(--border, #e2e8f0);
   border-radius: var(--radius, 8px) 0 0 var(--radius, 8px);
   outline: none;
@@ -37,7 +37,7 @@
   background: transparent;
   border: none;
   border-left: 1px solid var(--border, #e2e8f0);
-  padding: 0 8px;
+  padding: 0 4px;
   color: var(--muted, #94a3b8);
   cursor: pointer;
   display: flex;

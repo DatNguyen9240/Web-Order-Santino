@@ -1,9 +1,9 @@
 -- =============================================
 -- Author:      Antigravity
 -- Create date: 2026-05-08
--- Description: API tạo đơn hàng (Bản tương thích cao)
+-- Description: API tạo đơn hàng (Bản chuẩn công nghiệp)
 -- =============================================
-CREATE PROCEDURE [dbo].[API_TaoDonHang]
+ALTER PROCEDURE [dbo].[API_TaoDonHang]
     @OrderJson NVARCHAR(MAX)
 AS
 BEGIN
@@ -12,56 +12,91 @@ BEGIN
     BEGIN TRY
         BEGIN TRANSACTION;
 
-        -- 1. Lấy mã chứng từ
+        -- 1. Lấy mã chứng từ từ Client
         DECLARE @DocumentID NVARCHAR(50) = JSON_VALUE(@OrderJson, '$.so_ct');
+        DECLARE @BranchID NVARCHAR(50) = JSON_VALUE(@OrderJson, '$.chi_nhanh');
         
-        IF @DocumentID IS NULL OR @DocumentID = ''
+        -- Nếu Client không gửi mã, HOẶC mã Client gửi đã bị trùng, tự động sinh mã mới!
+        IF @DocumentID IS NULL OR @DocumentID = '' OR EXISTS (SELECT 1 FROM [dbo].[OrderTbl] WHERE DocumentID = @DocumentID)
         BEGIN
-            SET @DocumentID = 'DH' + FORMAT(GETDATE(), 'MMyy') + '/' + RIGHT('0000' + CAST(ISNULL((SELECT COUNT(*) FROM AP_OrderTbl) + 1, 1) AS VARCHAR), 4);
+            DECLARE @Prefix NVARCHAR(50) = CASE WHEN ISNULL(@BranchID, '') = '' THEN 'DH' ELSE @BranchID + '-DH' END + FORMAT(GETDATE(), 'MMyy') + '/';
+            DECLARE @MaxSeq INT;
+            
+            SELECT @MaxSeq = ISNULL(MAX(CAST(RIGHT(DocumentID, 4) AS INT)), 0)
+            FROM [dbo].[OrderTbl] WITH (UPDLOCK, HOLDLOCK)
+            WHERE DocumentID LIKE @Prefix + '%';
+            
+            SET @DocumentID = @Prefix + RIGHT('0000' + CAST(@MaxSeq + 1 AS VARCHAR), 4);
         END
 
-        -- Kiểm tra trùng
-        IF EXISTS (SELECT 1 FROM AP_OrderTbl WHERE DocumentID = @DocumentID)
-        BEGIN
-            RAISERROR('Số chứng từ đã tồn tại!', 16, 1);
-        END
+        DECLARE @KhachDua DECIMAL(18,2) = CAST(ISNULL(NULLIF(JSON_VALUE(@OrderJson, '$.khach_dua'), ''), '0') AS DECIMAL(18,2));
+        DECLARE @BaseTotal DECIMAL(18,2) = CAST(ISNULL(NULLIF(JSON_VALUE(@OrderJson, '$.total_money'), ''), '0') AS DECIMAL(18,2));
+        DECLARE @TraLai DECIMAL(18,2) = CASE WHEN @KhachDua > 0 THEN @KhachDua - @BaseTotal ELSE 0 END;
+        IF @TraLai < 0 SET @TraLai = 0;
 
-        -- 2. Insert Header
-        INSERT INTO [dbo].[AP_OrderTbl] (
-            [DocumentID], [DocumentDate], [BranchID], [Memo], [Notes], 
-            [BaseTotal], [UserCreate], [DateCreate], [StatusID], [isLock]
+        DECLARE @NgayTT NVARCHAR(50) = JSON_VALUE(@OrderJson, '$.ngay_tt');
+        DECLARE @NgayCT NVARCHAR(50) = JSON_VALUE(@OrderJson, '$.ngay_ct');
+
+        -- 2. Insert Header vào OrderTbl
+        INSERT INTO [dbo].[OrderTbl] (
+            [DocumentID], [DocumentDate], [BranchID], [BaseTotal], [KhachDua], [TraLai],
+            [ObjectID], [ObjectName], [Memo], [Notes], [EmployeeID], 
+            [NguoiGiao], [PTGiaoHang], [NguonDon], [MaDaiLy], [CTKM],
+            [PaymentTypeID], [PaymentTermID], [NgayThanhToan],
+            [UserCreate], [DateCreate], [isLock], [isBanSi]
         )
         VALUES (
             @DocumentID,
-            ISNULL(JSON_VALUE(@OrderJson, '$.ngay_ct'), GETDATE()),
+            ISNULL(TRY_CAST(NULLIF(@NgayCT, '') AS DATETIME), GETDATE()),
             JSON_VALUE(@OrderJson, '$.chi_nhanh'),
+            @BaseTotal,
+            @KhachDua,
+            @TraLai,
+            JSON_VALUE(@OrderJson, '$.ma_kh'),
+            JSON_VALUE(@OrderJson, '$.kh_ten'),
             JSON_VALUE(@OrderJson, '$.dien_giai'),
             JSON_VALUE(@OrderJson, '$.ghi_chu'),
-            CAST(ISNULL(JSON_VALUE(@OrderJson, '$.total_money'), 0) AS DECIMAL(18,2)),
+            JSON_VALUE(@OrderJson, '$.nvkd'),
+            JSON_VALUE(@OrderJson, '$.nguoi_giao'),
+            JSON_VALUE(@OrderJson, '$.pt_giao'),
+            JSON_VALUE(@OrderJson, '$.nguon_don'),
+            JSON_VALUE(@OrderJson, '$.ma_dl'),
+            JSON_VALUE(@OrderJson, '$.ma_ctbh'),
+            JSON_VALUE(@OrderJson, '$.ht_thanh_toan'),
+            JSON_VALUE(@OrderJson, '$.dieu_khoan'),
+            TRY_CAST(NULLIF(@NgayTT, '') AS DATETIME),
             JSON_VALUE(@OrderJson, '$.nguoi_tao'),
             GETDATE(),
-            1,
-            0
+            0, -- isLock
+            1  -- isBanSi (Order sỉ ma trận)
         );
 
-        -- 3. Insert Detail (Dùng JSON_VALUE trực tiếp để tránh lỗi cú pháp)
-        INSERT INTO [dbo].[AP_OrderDetailTbl] (
-            [DocumentID], [ParentID], [ItemID], [ItemName], [Size], 
+        -- 3. Insert Detail vào OrderDetailTbl
+        INSERT INTO [dbo].[OrderDetailTbl] (
+            [UserAutoID], [DocumentID], [ItemID], [ItemName], [Size], 
             [MauSac], [Quantity], [UnitPrice], [Amount], [TotalAmount], [STT]
         )
         SELECT 
+            NEWID(),
             @DocumentID,
-            @DocumentID,
-            JSON_VALUE([value], '$.sku'),
-            JSON_VALUE([value], '$.ten_hang'),
-            JSON_VALUE([value], '$.size'),
-            JSON_VALUE([value], '$.mau'),
-            CAST(JSON_VALUE([value], '$.so_luong') AS DECIMAL(18,2)),
-            CAST(JSON_VALUE([value], '$.don_gia') AS DECIMAL(18,2)),
-            CAST(JSON_VALUE([value], '$.thanh_tien') AS DECIMAL(18,2)),
-            CAST(JSON_VALUE([value], '$.thanh_tien') AS DECIMAL(18,2)),
-            CAST(ISNULL(JSON_VALUE([value], '$.stt'), [key]) AS INT)
-        FROM OPENJSON(@OrderJson, '$.lines');
+            (SELECT TOP 1 ci.ItemID FROM [dbo].[CF_ItemTbl] ci
+             WHERE ci.ItemName2 = JSON_VALUE(l.[value], '$.ten_hang_2')
+               AND ci.Size     = JSON_VALUE(l.[value], '$.size')
+               AND ci.MauSac   = JSON_VALUE(l.[value], '$.mau')
+             ORDER BY ci.ItemID), -- Chấp nhận NULL để né Khóa Ngoại
+            CASE 
+                WHEN (SELECT TOP 1 ci.ItemID FROM [dbo].[CF_ItemTbl] ci WHERE ci.ItemName2 = JSON_VALUE(l.[value], '$.ten_hang_2') AND ci.Size = JSON_VALUE(l.[value], '$.size') AND ci.MauSac = JSON_VALUE(l.[value], '$.mau')) IS NULL 
+                THEN JSON_VALUE(l.[value], '$.ten_hang_2') + '|' + JSON_VALUE(l.[value], '$.sku') + '|' + JSON_VALUE(l.[value], '$.ten_hang')
+                ELSE JSON_VALUE(l.[value], '$.ten_hang')
+            END,
+            JSON_VALUE(l.[value], '$.size'),
+            JSON_VALUE(l.[value], '$.mau'),
+            CAST(ISNULL(NULLIF(JSON_VALUE(l.[value], '$.so_luong'), ''), '0') AS DECIMAL(18,2)),
+            CAST(ISNULL(NULLIF(JSON_VALUE(l.[value], '$.don_gia'), ''), '0') AS DECIMAL(18,2)),
+            CAST(ISNULL(NULLIF(JSON_VALUE(l.[value], '$.thanh_tien'), ''), '0') AS DECIMAL(18,2)),
+            CAST(ISNULL(NULLIF(JSON_VALUE(l.[value], '$.thanh_tien'), ''), '0') AS DECIMAL(18,2)),
+            CAST(ISNULL(NULLIF(JSON_VALUE(l.[value], '$.stt'), ''), l.[key]) AS INT)
+        FROM OPENJSON(@OrderJson, '$.lines') l;
 
         COMMIT TRANSACTION;
 
@@ -73,3 +108,34 @@ BEGIN
         SELECT 0 AS [Success], ERROR_MESSAGE() AS [Message], NULL AS [DocumentID];
     END CATCH
 END
+GO
+
+-- ── TEST TRỰC TIẾP TRONG SSMS (Bôi đen đoạn dưới rồi ấn F5) ───────────────────
+/*
+DECLARE @testJson NVARCHAR(MAX) = N'{
+    "so_ct": "",
+    "ngay_ct": "2026-05-11",
+    "chi_nhanh": "1.VINH",
+    "ma_kh": "KH001",
+    "kh_ten": "Nguyễn Văn A",
+    "dien_giai": "Đơn hàng test từ SSMS",
+    "nvkd": "NV01",
+    "ht_thanh_toan": "TM",
+    "total_money": "",
+    "khach_dua": "",
+    "lines": [
+        {
+            "sku": "AMC38545S660",
+            "ten_hang": "Áo Polo Santino",
+            "size": "L",
+            "mau": "Trắng",
+            "so_luong": 2,
+            "don_gia": 250000,
+            "thanh_tien": 500000,
+            "stt": ""
+        }
+    ]
+}';
+
+EXEC [dbo].[API_TaoDonHang] @OrderJson = @testJson;
+*/

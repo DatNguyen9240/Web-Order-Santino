@@ -61,7 +61,7 @@
           <label>Nhân viên KD</label>
           <div id="wrap-nvkd"></div>
         </div>
-        <div class="form-group"><label>Người tạo</label><input id="o-nguoi-tao" value="Admin"></div>
+        <div class="form-group"><label>Người tạo</label><input id="o-nguoi-tao" value="Admin" readonly style="background:var(--bg-body, #f8fafc); cursor:not-allowed;"></div>
         <div class="form-group">
           <label>Tên CTKM</label>
           <div id="wrap-ctkm"></div>
@@ -80,10 +80,10 @@
           <input type="hidden" id="o-ma-dl">
         </div>
         <div class="form-group"><label>Tên kh/hàng</label><input id="o-kh-ten" placeholder="Tên khách hàng..." readonly
-            style="background:var(--bg)"></div>
+            style="background:var(--bg-body, #f8fafc); cursor:not-allowed;"></div>
 
         <!-- Row 4 -->
-        <div class="form-group span2"><label>Địa chỉ</label><input id="o-kh-dc" placeholder="Nhập địa chỉ chi tiết...">
+        <div class="form-group span2"><label>Địa chỉ</label><input id="o-kh-dc" placeholder="Nhập địa chỉ chi tiết..." readonly style="background:var(--bg-body, #f8fafc); cursor:not-allowed;">
         </div>
         <div class="form-group">
           <label>Nguồn đơn</label>
@@ -104,9 +104,13 @@
         </div>
 
         <!-- Row 6 -->
-        <div class="form-group">
+        <div class="form-group span2">
           <label>PT Giao hàng</label>
-          <div id="wrap-pt-giao"></div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <div id="wrap-pt-giao" style="flex: 1; min-width: 100px;"></div>
+            <input type="text" id="o-pt-giao-name" class="ui-input" readonly placeholder="Tên phương tiện..."
+              style="flex: 2; min-width: 150px; background-color: var(--bg-body, #f8fafc); cursor: not-allowed;">
+          </div>
           <input type="hidden" id="o-pt-giao">
         </div>
         <div class="form-group">

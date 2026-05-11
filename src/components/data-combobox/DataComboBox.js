@@ -3,7 +3,7 @@
  */
 var UIControls = window.UIControls || {};
 
-UIControls.createDataComboBox = function(options) {
+UIControls.createDataComboBox = function (options) {
   var container = document.createElement('div');
   container.className = 'combo-box-container';
 
@@ -50,22 +50,81 @@ UIControls.createDataComboBox = function(options) {
   var tableWrapper = document.createElement('div');
   tableWrapper.className = 'dd-table-wrapper';
 
-  // Footer "+ Thêm mới"
+  // Footer "+ Thêm mới" & Phân trang
   var footer = document.createElement('div');
   footer.className = 'dd-footer';
+  footer.style.display = 'flex';
+  footer.style.justifyContent = 'space-between';
+  footer.style.alignItems = 'center';
+  footer.style.width = '100%';
 
   var btnAddNew = document.createElement('button');
   btnAddNew.type = 'button';
   btnAddNew.className = 'dd-footer-add-btn';
   btnAddNew.innerHTML = '<span class="material-symbols-outlined">add</span> Thêm mới';
 
-  btnAddNew.addEventListener('click', function(e) {
+  btnAddNew.addEventListener('click', function (e) {
     e.stopPropagation();
     hideDropdown();
     if (typeof options.onF2 === 'function') options.onF2();
   });
 
-  footer.appendChild(btnAddNew);
+  var leftFooter = document.createElement('div');
+  leftFooter.appendChild(btnAddNew);
+
+  // Pagination Elements
+  var currentPage = 1;
+  var currentQuery = '';
+  
+  var paginationWrapper = document.createElement('div');
+  paginationWrapper.className = 'dd-pagination';
+  paginationWrapper.style.display = 'none'; // Ẩn mặc định, sẽ hiện nếu enablePagination = true
+  paginationWrapper.style.gap = '8px';
+  paginationWrapper.style.alignItems = 'center';
+
+  var btnPrev = document.createElement('button');
+  btnPrev.type = 'button';
+  btnPrev.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">chevron_left</span>';
+  btnPrev.style.padding = '2px 4px';
+  btnPrev.style.cursor = 'pointer';
+  btnPrev.style.border = '1px solid var(--border, #e2e8f0)';
+  btnPrev.style.background = 'var(--surface, #ffffff)';
+  btnPrev.style.borderRadius = '4px';
+
+  var lblPage = document.createElement('span');
+  lblPage.textContent = 'Trang 1';
+  lblPage.style.fontSize = '12px';
+  lblPage.style.color = 'var(--text, #334155)';
+
+  var btnNext = document.createElement('button');
+  btnNext.type = 'button';
+  btnNext.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">chevron_right</span>';
+  btnNext.style.padding = '2px 4px';
+  btnNext.style.cursor = 'pointer';
+  btnNext.style.border = '1px solid var(--border, #e2e8f0)';
+  btnNext.style.background = 'var(--surface, #ffffff)';
+  btnNext.style.borderRadius = '4px';
+
+  btnPrev.addEventListener('click', function(e) {
+    e.stopPropagation();
+    if (currentPage > 1) {
+      currentPage--;
+      loadData(currentQuery, currentPage);
+    }
+  });
+
+  btnNext.addEventListener('click', function(e) {
+    e.stopPropagation();
+    currentPage++;
+    loadData(currentQuery, currentPage);
+  });
+
+  paginationWrapper.appendChild(btnPrev);
+  paginationWrapper.appendChild(lblPage);
+  paginationWrapper.appendChild(btnNext);
+
+  footer.appendChild(leftFooter);
+  footer.appendChild(paginationWrapper);
 
   dropdown.appendChild(searchWrapper);
   dropdown.appendChild(tableWrapper);
@@ -77,12 +136,20 @@ UIControls.createDataComboBox = function(options) {
   function renderTable(displayData) {
     if (UIControls.utils) {
       tableWrapper.innerHTML = UIControls.utils.createDropdownTableHTML(
-        options.headers || [], displayData, options.colHighlightIndex || 0
+        options.headers || [], displayData, options.colHighlightIndex || 0, options.colGroupIndex
       );
-      var rows = tableWrapper.querySelectorAll('tbody tr');
-      rows.forEach(function(row) {
-        row.addEventListener('click', function() {
-          var dataRow = displayData[row.getAttribute('data-index')];
+      var rows = tableWrapper.querySelectorAll('tbody tr.data-row');
+      var currentInputVal = input.value.trim().toLowerCase();
+
+      rows.forEach(function (row) {
+        var dataRow = displayData[row.getAttribute('data-index')];
+        var rowVal = (dataRow[options.colFilterIndex || 0] || '').toString().toLowerCase();
+
+        if (currentInputVal && rowVal === currentInputVal) {
+          row.classList.add('active');
+        }
+
+        row.addEventListener('click', function () {
           input.value = dataRow[options.colFilterIndex || 0];
           hideDropdown();
           if (typeof options.onSelect === 'function') {
@@ -99,7 +166,7 @@ UIControls.createDataComboBox = function(options) {
 
   function attachScrollListeners() {
     if (_scrollHandler) return;
-    _scrollHandler = function() {
+    _scrollHandler = function () {
       if (UIControls.utils) {
         UIControls.utils.computeDropdownPosition(container, dropdown);
       }
@@ -107,7 +174,7 @@ UIControls.createDataComboBox = function(options) {
     _scrollTargets = UIControls.utils
       ? UIControls.utils.getScrollableAncestors(container)
       : [window];
-    _scrollTargets.forEach(function(target) {
+    _scrollTargets.forEach(function (target) {
       target.addEventListener('scroll', _scrollHandler, { passive: true, capture: false });
     });
     window.addEventListener('resize', _scrollHandler, { passive: true });
@@ -115,7 +182,7 @@ UIControls.createDataComboBox = function(options) {
 
   function detachScrollListeners() {
     if (!_scrollHandler) return;
-    _scrollTargets.forEach(function(target) {
+    _scrollTargets.forEach(function (target) {
       target.removeEventListener('scroll', _scrollHandler, { capture: false });
     });
     window.removeEventListener('resize', _scrollHandler);
@@ -123,18 +190,60 @@ UIControls.createDataComboBox = function(options) {
     _scrollTargets = [];
   }
 
+  function loadData(q, page) {
+    currentQuery = q;
+    currentPage = page;
+    if (typeof options.onSearch === 'function') {
+      tableWrapper.innerHTML = '<div style="padding:12px;text-align:center;color:var(--muted,#94a3b8);font-size:13px">Đang tải...</div>';
+      Promise.resolve(options.onSearch(q, page)).then(function (result) {
+        if (Array.isArray(result)) {
+          fullData = result;
+          renderTable(fullData);
+          if (options.enablePagination) {
+            paginationWrapper.style.display = 'flex';
+            lblPage.textContent = 'Trang ' + page + ' (' + result.length + ')';
+            btnPrev.disabled = (page <= 1);
+            btnPrev.style.opacity = (page <= 1) ? '0.5' : '1';
+            btnNext.disabled = (result.length < 200);
+            btnNext.style.opacity = (result.length < 200) ? '0.5' : '1';
+          }
+          if (UIControls.utils) {
+            UIControls.utils.computeDropdownPosition(container, dropdown);
+          }
+        }
+      }).catch(function () {
+        tableWrapper.innerHTML = '<div style="padding:12px;text-align:center;color:#ef4444;font-size:13px">Lỗi tải dữ liệu</div>';
+      });
+    } else {
+      var lval = q.toLowerCase();
+      var filtered = lval ? fullData.filter(function (row) {
+        return (row[options.colFilterIndex || 0] || '').toString().toLowerCase().includes(lval);
+      }) : fullData;
+      renderTable(filtered);
+      if (UIControls.utils) {
+        UIControls.utils.computeDropdownPosition(container, dropdown);
+      }
+    }
+  }
+
   function showDropdown() {
     if (dropdown.parentNode !== document.body) {
       document.body.appendChild(dropdown);
     }
-    renderTable(fullData);
     searchInput.value = '';
+
+    loadData('', 1);
+
     if (UIControls.utils) {
       UIControls.utils.computeDropdownPosition(container, dropdown);
     }
     dropdown.classList.add('active');
     attachScrollListeners();
-    setTimeout(function() { searchInput.focus(); }, 50);
+    setTimeout(function () { 
+      if (document.activeElement !== input) {
+        searchInput.focus(); 
+      }
+    }, 50);
   }
 
   function hideDropdown() {
@@ -146,74 +255,70 @@ UIControls.createDataComboBox = function(options) {
   // ── Search bên trong dropdown ───────────────────────────────────
   var _searchDebounce = null;
 
-  searchInput.addEventListener('input', function() {
+  searchInput.addEventListener('input', function () {
     var val = searchInput.value;
 
     if (typeof options.onSearch === 'function') {
       // Server-side: debounce 300ms rồi gọi API
       clearTimeout(_searchDebounce);
       tableWrapper.innerHTML = '<div style="padding:12px;text-align:center;color:var(--muted,#94a3b8);font-size:13px">Đang tìm...</div>';
-      _searchDebounce = setTimeout(function() {
-        Promise.resolve(options.onSearch(val)).then(function(result) {
-          if (Array.isArray(result)) {
-            fullData = result;
-            renderTable(fullData);
-          }
-        }).catch(function() {
-          tableWrapper.innerHTML = '<div style="padding:12px;text-align:center;color:#ef4444;font-size:13px">Lỗi tìm kiếm</div>';
-        });
+      _searchDebounce = setTimeout(function () {
+        loadData(val, 1);
       }, 300);
     } else {
       // Client-side: filter local fullData
       var lval = val.toLowerCase();
       if (!lval) { renderTable(fullData); return; }
-      var filtered = fullData.filter(function(row) {
+      var filtered = fullData.filter(function (row) {
         return (row[options.colFilterIndex || 0] || '').toString().toLowerCase().includes(lval);
       });
       renderTable(filtered);
     }
   });
 
-  searchInput.addEventListener('click', function(e) { e.stopPropagation(); });
+  searchInput.addEventListener('click', function (e) { e.stopPropagation(); });
 
   // ── Events ──────────────────────────────────────────────────────
-  btnArrow.addEventListener('click', function(e) {
+  btnArrow.addEventListener('click', function (e) {
     e.preventDefault();
     dropdown.classList.contains('active') ? hideDropdown() : showDropdown();
   });
 
-  input.addEventListener('input', function(e) {
+  input.addEventListener('input', function (e) {
     var val = e.target.value;
-    if (!dropdown.classList.contains('active')) showDropdown();
-
-    if (typeof options.onSearch === 'function') {
-      // Server-side: debounce giống searchInput
-      clearTimeout(_searchDebounce);
-      tableWrapper.innerHTML = '<div style="padding:12px;text-align:center;color:var(--muted,#94a3b8);font-size:13px">Đang tìm...</div>';
-      _searchDebounce = setTimeout(function() {
-        Promise.resolve(options.onSearch(val)).then(function(result) {
-          if (Array.isArray(result)) { fullData = result; renderTable(fullData); }
-        }).catch(function() {
-          tableWrapper.innerHTML = '<div style="padding:12px;text-align:center;color:#ef4444;font-size:13px">Lỗi tìm kiếm</div>';
-        });
-      }, 300);
-    } else {
-      // Client-side fallback
-      var lval = val.toLowerCase();
-      var filtered = fullData.filter(function(row) {
-        return (row[options.colFilterIndex || 0] || '').toString().toLowerCase().includes(lval);
-      });
-      renderTable(filtered);
+    if (typeof options.onChange === 'function') {
+      options.onChange(val);
     }
+
+    if (!options.hideDropdownOnInput && !dropdown.classList.contains('active')) {
+      showDropdown();
+    }
+    // Ghi chú: Đã bỏ logic filter và onSearch ở đây theo yêu cầu của user. 
+    // Chỉ ô tìm kiếm bên trong dropdown (searchInput) mới thực hiện filter.
   });
 
-  document.addEventListener('click', function(e) {
+  document.addEventListener('click', function (e) {
     if (!container.contains(e.target) && !dropdown.contains(e.target)) hideDropdown();
   });
 
-  input.addEventListener('kb:open',   function() { dropdown.classList.contains('active') ? hideDropdown() : showDropdown(); });
-  input.addEventListener('kb:new',    function() { if (options.onF2) options.onF2(); });
-  input.addEventListener('kb:close',  function() { hideDropdown(); });
+  input.addEventListener('blur', function () {
+    var val = input.value.trim().toLowerCase();
+    if (val && fullData.length > 0) {
+      var exactMatch = fullData.find(function (row) {
+        return (row[options.colFilterIndex || 0] || '').toString().toLowerCase() === val;
+      });
+      if (exactMatch) {
+        input.value = exactMatch[options.colFilterIndex || 0];
+        if (typeof options.onSelect === 'function') {
+          options.onSelect(exactMatch);
+        }
+      }
+    }
+  });
+
+  input.addEventListener('kb:open', function () { dropdown.classList.contains('active') ? hideDropdown() : showDropdown(); });
+  input.addEventListener('kb:new', function () { if (options.onF2) options.onF2(); });
+  input.addEventListener('kb:close', function () { hideDropdown(); });
 
   container.appendChild(input);
   container.appendChild(actions);

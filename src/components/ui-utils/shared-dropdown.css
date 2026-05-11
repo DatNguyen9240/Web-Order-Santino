@@ -46,7 +46,7 @@
 }
 
 .dropdown-table th {
-  padding: 8px 12px;
+  padding: 6px 10px;
   color: var(--muted, #94a3b8);
   font-weight: 600;
   text-transform: uppercase;
@@ -56,11 +56,15 @@
 }
 
 .dropdown-table td {
-  padding: 8px 12px;
+  padding: 6px 10px;
   border-bottom: 1px solid var(--border, #e2e8f0);
   color: var(--text, #1e293b);
   white-space: nowrap;
   line-height: 1.4;
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
 }
 
 .dropdown-table td.highlight-col {
@@ -68,14 +72,21 @@
   color: var(--primary, #6366f1);
 }
 
-.dropdown-table tbody tr {
+.dropdown-table tbody tr.data-row {
   cursor: pointer;
+}
+
+.dropdown-table tbody tr.data-row td {
   background: var(--surface, #fff);
   transition: background 0.15s ease;
 }
 
-.dropdown-table tbody tr:hover {
-  background: rgba(99, 102, 241, 0.08);
+.dropdown-table tbody tr.data-row:hover td {
+  background: rgba(251, 191, 36, 0.15) !important;
+}
+
+.dropdown-table tbody tr.group-header:hover td {
+  background: #f1f5f9 !important;
 }
 
 /* Mobile: Reduce font size and tighten spacing */
@@ -91,3 +102,4 @@
     padding: 4px 8px;
   }
 }
+.dropdown-table tbody tr.data-row.active td { background: rgba(251, 191, 36, 0.25) !important; font-weight: 600; color: #b45309; }

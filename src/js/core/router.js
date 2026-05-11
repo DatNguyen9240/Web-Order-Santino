@@ -79,8 +79,17 @@ var Router = (function () {
     _isNavigating = true;
 
     var $el = document.getElementById('app-content');
-    var hash = window.location.hash.replace('#', '') || '/order';
+    var fullHash = window.location.hash.replace('#', '') || '/order';
+    var pathParts = fullHash.split('?');
+    var hash = pathParts[0];
+    var qs = pathParts[1] || '';
     var route = _routeMap[hash];
+
+    // Cập nhật params vào biến toàn cục để các page tự lấy
+    window._queryParams = new URLSearchParams(qs);
+    if (window._queryParams.has('id')) {
+      window._viewOrderId = window._queryParams.get('id');
+    }
 
     _updateNav(hash);
     window.scrollTo({ top: 0, behavior: 'instant' });

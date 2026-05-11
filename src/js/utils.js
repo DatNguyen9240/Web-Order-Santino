@@ -15,13 +15,18 @@ const Utils = (function () {
     return `${brand}${size}${rest}`;
   }
 
-  // DH{MMYY}/{seq:04}
-  function genOrderNo() {
-    const d = new Date();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const yy = String(d.getFullYear()).slice(2);
-    const seq = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
-    return `DH${mm}${yy}/${seq}`;
+  // {BranchCode}-DH{MMYY}/{seq:04}
+  function genOrderNo(branchCode, dateStr, existingSeq) {
+    var d = dateStr ? new Date(dateStr) : new Date();
+    if (isNaN(d.getTime())) d = new Date();
+    var mm = String(d.getMonth() + 1).padStart(2, '0');
+    var yy = String(d.getFullYear()).slice(2);
+    
+    // Hiển thị mặc định 0001 nếu không có đuôi số truyền vào (đáp ứng yêu cầu UI)
+    var seq = existingSeq || '0001';
+    
+    var prefix = branchCode ? (branchCode.trim() + '-DH') : 'DH';
+    return prefix + mm + yy + '/' + seq;
   }
 
   function uuid() {

@@ -3,7 +3,7 @@
  */
 var UIControls = window.UIControls || {};
 
-UIControls.utils = (function() {
+UIControls.utils = (function () {
   /**
    * Tính toán vị trí Dropdown thông minh (Tránh tràn màn hình, tránh navbar)
    */
@@ -16,19 +16,20 @@ UIControls.utils = (function() {
     if (navbar) navbarBottom = navbar.getBoundingClientRect().bottom;
 
     // position:fixed — tọa độ viewport, không bị ảnh hưởng bởi overflow:hidden
-    dropdownElement.style.position   = 'fixed';
-    dropdownElement.style.zIndex     = '10001';
+    dropdownElement.style.position = 'fixed';
+    dropdownElement.style.zIndex = '10001';
     dropdownElement.style.transition = 'opacity 0.15s ease, visibility 0.15s ease';
-    dropdownElement.style.minWidth   = rect.width + 'px';
+    dropdownElement.style.minWidth = rect.width + 'px';
+    dropdownElement.style.maxWidth = Math.max(rect.width, window.innerWidth > 600 ? 600 : window.innerWidth - 20) + 'px';
 
     var isActive = dropdownElement.classList.contains('active');
     if (!isActive) {
-      dropdownElement.style.maxHeight  = '300px';
+      dropdownElement.style.maxHeight = '300px';
       dropdownElement.style.visibility = 'hidden';
       dropdownElement.classList.add('active');
     }
 
-    var dropWidth  = dropdownElement.offsetWidth;
+    var dropWidth = dropdownElement.offsetWidth;
     var dropHeight = dropdownElement.offsetHeight;
 
     // --- Tính toán Left ---
@@ -86,15 +87,43 @@ UIControls.utils = (function() {
   /**
    * Sinh HTML cho Dropdown Table List
    */
-  function createDropdownTableHTML(headers, data, colHighlightIndex) {
+  function createDropdownTableHTML(headers, data, colHighlightIndex, colGroupIndex) {
     var theadHTML = headers.map(function(h) { return '<th>' + h + '</th>'; }).join('');
-    var tbodyHTML = data.map(function(row, rIdx) {
-      var cells = row.map(function(cell, cIdx) {
-        var cls = (cIdx === colHighlightIndex) ? 'highlight-col' : '';
-        return '<td class="' + cls + '">' + (cell != null ? cell : '') + '</td>';
+    var tbodyHTML = '';
+
+    if (colGroupIndex !== undefined && colGroupIndex >= 0) {
+      var groups = {};
+      data.forEach(function(row, rIdx) {
+        var g = row[colGroupIndex] || 'Khác';
+        if (!groups[g]) groups[g] = [];
+        groups[g].push({ row: row, index: rIdx });
+      });
+      
+      var colSpan = headers.length;
+      Object.keys(groups).sort().forEach(function(g) {
+         var items = groups[g];
+         tbodyHTML += '<tr class="group-header" style="color:#0f172a; font-weight:700; cursor:default; border-top:1px solid #e2e8f0; border-bottom:1px solid #e2e8f0;"><td colspan="' + colSpan + '" style="padding: 6px 10px; background:#f1f5f9 !important;">' + g + ' (' + items.length + ')</td></tr>';
+         items.forEach(function(item) {
+            var row = item.row;
+            var rIdx = item.index;
+            var cells = headers.map(function(_, cIdx) {
+              var cell = row[cIdx];
+              var cls = (cIdx === colHighlightIndex) ? 'highlight-col' : '';
+              return '<td class="' + cls + '">' + (cell != null ? cell : '') + '</td>';
+            }).join('');
+            tbodyHTML += '<tr data-index="' + rIdx + '" class="data-row">' + cells + '</tr>';
+         });
+      });
+    } else {
+      tbodyHTML = data.map(function(row, rIdx) {
+        var cells = headers.map(function(_, cIdx) {
+          var cell = row[cIdx];
+          var cls = (cIdx === colHighlightIndex) ? 'highlight-col' : '';
+          return '<td class="' + cls + '">' + (cell != null ? cell : '') + '</td>';
+        }).join('');
+        return '<tr data-index="' + rIdx + '" class="data-row">' + cells + '</tr>';
       }).join('');
-      return '<tr data-index="' + rIdx + '">' + cells + '</tr>';
-    }).join('');
+    }
 
     return '<table class="dropdown-table"><thead><tr>' + theadHTML + '</tr></thead><tbody>' + tbodyHTML + '</tbody></table>';
   }
@@ -103,13 +132,13 @@ UIControls.utils = (function() {
     computeDropdownPosition: computeDropdownPosition,
     getScrollableAncestors: getScrollableAncestors,
     createDropdownTableHTML: createDropdownTableHTML,
-    setupTableSelection: function(tableBody, onSelect) {
+    setupTableSelection: function (tableBody, onSelect) {
       if (!tableBody) return;
-      tableBody.addEventListener('click', function(e) {
+      tableBody.addEventListener('click', function (e) {
         var tr = e.target.closest('tr');
         if (!tr) return;
         var isAlreadyActive = tr.classList.contains('active');
-        Array.from(tableBody.querySelectorAll('tr')).forEach(function(r) { r.classList.remove('active'); });
+        Array.from(tableBody.querySelectorAll('tr')).forEach(function (r) { r.classList.remove('active'); });
         if (!isAlreadyActive) {
           tr.classList.add('active');
           if (typeof onSelect === 'function') onSelect(tr);

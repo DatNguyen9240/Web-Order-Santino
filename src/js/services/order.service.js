@@ -23,7 +23,8 @@ const OrderService = (() => {
    * Tạo đơn hàng mới
    */
   async function createOrder(orderData) {
-    return Http.post(API_CONFIG.ENDPOINTS.ORDERS.CREATE, orderData);
+    const params = { OrderJson: JSON.stringify(orderData) };
+    return Http.post(API_CONFIG.ENDPOINTS.ORDERS.CREATE, params);
   }
 
   return { getOrders, createOrder };

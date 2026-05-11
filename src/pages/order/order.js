@@ -54,6 +54,20 @@ var OrderPage = (function () {
     }
     document.getElementById('o-so-ct').value = Utils.genOrderNo();
     document.getElementById('o-ngay').value = Utils.today();
+    document.getElementById('o-ngay').addEventListener('change', function () {
+      var currentSoCT = document.getElementById('o-so-ct').value || '';
+      var existingSeq = currentSoCT.split('/')[1] || null;
+      var ngayCT = this.value;
+      var branchId = _catValues && _catValues.chi_nhanh ? _catValues.chi_nhanh.id : '';
+      document.getElementById('o-so-ct').value = Utils.genOrderNo(branchId, ngayCT, existingSeq);
+      
+      // Cập nhật Ngày TT dựa vào Điều khoản TT hiện tại
+      var days = (_catValues.dieu_khoan && _catValues.dieu_khoan.due_days) ? parseInt(_catValues.dieu_khoan.due_days, 10) : 0;
+      var d = ngayCT ? new Date(ngayCT) : new Date();
+      d.setDate(d.getDate() + days);
+      document.getElementById('o-ngay-tt').value = d.toISOString().split('T')[0];
+    });
+
     document.getElementById('o-kh-ten').value = '';
     document.getElementById('o-ma-kh').value = '';
     document.getElementById('o-ma-dl').value = '';
@@ -86,11 +100,24 @@ var OrderPage = (function () {
 
   // Tìm kiếm danh mục server-side — gọi Http trực tiếp,
   // tránh dùng CategoryService cũ có thể đang trong bundle cũ.
-  function _searchCategory(loai, timKiem) {
+  function _searchCategory(loai, timKiem, ignoreBranchFilter, page) {
     var q = { Loai: loai };
     if (timKiem && timKiem.trim()) q.TimKiem = timKiem.trim();
+    if (loai === 'Customer') {
+      if (!ignoreBranchFilter && _catValues && _catValues.chi_nhanh && _catValues.chi_nhanh.id) {
+        q.chinhanh = _catValues.chi_nhanh.id;
+      } else {
+        q.chinhanh = ''; // ensure chinhanh is defined
+      }
+      if (page) {
+        q.chinhanh += '|PAGE:' + page;
+      }
+    }
+
     var params = { q: JSON.stringify(q) };
-    if (timKiem && timKiem.trim()) params._t = Date.now();
+    if (page || (timKiem && timKiem.trim())) {
+      params._t = Date.now(); // force no cache
+    }
     return Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, params)
       .then(function (res) {
         var data = res.records || res;
@@ -103,7 +130,10 @@ var OrderPage = (function () {
             phone: item.phone || '',
             department: item.department || '',
             due_days: item.due_days != null ? item.due_days : null,
-            is_default: item.is_default || false
+            is_default: item.is_default || false,
+            employee_id: item.employee_id || item.EmployeeID || '',
+            branch_id: item.branch_id || item.BranchID || '',
+            group_id: item.group_id || item.ObjectGroupID || ''
           };
         });
       })
@@ -226,13 +256,16 @@ var OrderPage = (function () {
         _combos.kh = UIControls.createDataComboBox({
           id: 'o-ma-kh-search',
           placeholder: '-- Tìm khách hàng --',
+          hideDropdownOnInput: true,
+          enablePagination: true,
           headers: ['Khách hàng', 'Tên kh/hàng', 'Địa chỉ', 'Mã NV', 'Chi nhánh'],
-          data: customers.map(function (c) { return [c.id, c.name, c.address || '', c.employee_id || '', c.branch_id || '']; }),
+          data: customers.map(function (c) { return [c.id, c.name, c.address || '', c.employee_id || '', c.branch_id || '', c.group_id || 'Khác']; }),
           colFilterIndex: 1,
           colHighlightIndex: 1,
-          onSearch: function (q) {
-            return _searchCategory('Customer', q).then(function (list) {
-              return list.map(function (c) { return [c.id, c.name, c.address || '', c.employee_id || '', c.branch_id || '']; });
+          colGroupIndex: 5,
+          onSearch: function (q, page) {
+            return _searchCategory('Customer', q, false, page).then(function (list) {
+              return list.map(function (c) { return [c.id, c.name, c.address || '', c.employee_id || '', c.branch_id || '', c.group_id || 'Khác']; });
             });
           },
           onSelect: function (row) {
@@ -241,7 +274,7 @@ var OrderPage = (function () {
             document.getElementById('o-kh-ten').value = name;
             document.getElementById('o-kh-dc').value = addr;
             _catValues.khach_hang = { id: id, name: name };
-            
+
             // Tự động tìm và set cho Chi nhánh
             if (branchId && _combos.branch) {
               var b = branches.find(x => x.id === branchId);
@@ -260,7 +293,7 @@ var OrderPage = (function () {
             }
             updateInfoSummary();
           },
-          onF2: function() {
+          onF2: function () {
             openModal('modal-create-customer');
           }
         });
@@ -273,13 +306,16 @@ var OrderPage = (function () {
         _combos.ma_dl = UIControls.createDataComboBox({
           id: 'o-ma-dl-search',
           placeholder: '-- Tìm đại lý --',
+          hideDropdownOnInput: true,
+          enablePagination: true,
           headers: ['Khách hàng', 'Tên khách hàng', 'Địa chỉ'],
-          data: customers.map(function (c) { return [c.id, c.name, c.address || '']; }),
+          data: customers.map(function (c) { return [c.id, c.name, c.address || '', c.group_id || 'Khác']; }),
           colFilterIndex: 1,
           colHighlightIndex: 1,
-          onSearch: function (q) {
-            return _searchCategory('Customer', q).then(function (list) {
-              return list.map(function (c) { return [c.id, c.name, c.address || '']; });
+          colGroupIndex: 3,
+          onSearch: function (q, page) {
+            return _searchCategory('Customer', q, true, page).then(function (list) {
+              return list.map(function (c) { return [c.id, c.name, c.address || '', c.group_id || 'Khác']; });
             });
           },
           onSelect: function (row) {
@@ -292,8 +328,7 @@ var OrderPage = (function () {
       // ── Chi nhánh ─────────────────────────────────────────────
       var wrapBranch = document.getElementById('wrap-chi-nhanh');
       if (wrapBranch && UIControls && UIControls.createDataComboBox) {
-        var defaultBranch = branches.find(function (b) { return b.is_default; }) || branches[0] || {};
-        _catValues.chi_nhanh = { id: defaultBranch.id || '', name: defaultBranch.name || '' };
+        _catValues.chi_nhanh = { id: '', name: '' };
 
         _combos.branch = UIControls.createDataComboBox({
           id: 'o-chi-nhanh',
@@ -309,9 +344,15 @@ var OrderPage = (function () {
           },
           onSelect: function (row) {
             _catValues.chi_nhanh = { id: row[1], name: row[0] };
+
+            // Cập nhật Số CT theo mã chi nhánh và ngày CT
+            var currentSoCT = document.getElementById('o-so-ct').value || '';
+            var existingSeq = currentSoCT.split('/')[1] || null; // lấy phần đuôi (VD: 0001)
+            var ngayCT = document.getElementById('o-ngay').value;
+
+            document.getElementById('o-so-ct').value = Utils.genOrderNo(row[1], ngayCT, existingSeq);
           }
         });
-        _combos.branch.querySelector('input').value = defaultBranch.name || '';
         wrapBranch.appendChild(_combos.branch);
       }
 
@@ -344,16 +385,26 @@ var OrderPage = (function () {
           id: 'o-dieu-khoan',
           placeholder: '-- Chọn điều khoản --',
           headers: ['Tên điều khoản', 'Điều khoản TT'],
-          data: payTerms.map(function (p) { return [p.name, p.id]; }),
+          data: payTerms.map(function (p) { return [p.name, p.id, p.due_days || 0]; }),
           colFilterIndex: 0,
           colHighlightIndex: 0,
           onSearch: function (q) {
             return _searchCategory('PaymentTerm', q).then(function (list) {
-              return list.map(function (p) { return [p.name, p.id]; });
+              return list.map(function (p) { return [p.name, p.id, p.due_days || 0]; });
             });
           },
           onSelect: function (row) {
-            _catValues.dieu_khoan = { id: row[1], name: row[0] };
+            if (row) {
+              var days = parseInt(row[2], 10) || 0;
+              _catValues.dieu_khoan = { id: row[1], name: row[0], due_days: days };
+              var baseDate = document.getElementById('o-ngay').value;
+              var d = baseDate ? new Date(baseDate) : new Date();
+              d.setDate(d.getDate() + days);
+              document.getElementById('o-ngay-tt').value = d.toISOString().split('T')[0];
+            } else {
+              _catValues.dieu_khoan = { id: '', name: '', due_days: 0 };
+              document.getElementById('o-ngay-tt').value = document.getElementById('o-ngay').value || Utils.today();
+            }
           }
         });
         wrapDK.appendChild(_combos.dk);
@@ -362,8 +413,7 @@ var OrderPage = (function () {
       // ── Hình thức thanh toán ───────────────────────────────────
       var wrapHT = document.getElementById('wrap-ht-thanh-toan');
       if (wrapHT && UIControls && UIControls.createDataComboBox) {
-        var defaultPay = payTypes.find(function (p) { return /tiền mặt/i.test(p.name); }) || payTypes[0] || {};
-        _catValues.ht_tt = { id: defaultPay.id || '', name: defaultPay.name || '' };
+        _catValues.ht_tt = { id: '', name: '' };
 
         _combos.ht = UIControls.createDataComboBox({
           id: 'o-ht-thanh-toan',
@@ -381,7 +431,6 @@ var OrderPage = (function () {
             _catValues.ht_tt = { id: row[1], name: row[0] };
           }
         });
-        _combos.ht.querySelector('input').value = defaultPay.name || '';
         wrapHT.appendChild(_combos.ht);
       }
 
@@ -416,15 +465,21 @@ var OrderPage = (function () {
           placeholder: '-- Chọn phương tiện --',
           headers: ['Mã phương tiện', 'Phương tiện giao hàng', 'Ghi chú'],
           data: vehicles.map(function (v) { return [v.id, v.name, v.memo || '']; }),
-          colFilterIndex: 1,
-          colHighlightIndex: 1,
+          colFilterIndex: 0,
+          colHighlightIndex: 0,
           onSearch: function (q) {
             return _searchCategory('PTGiaoHang', q).then(function (list) {
               return list.map(function (v) { return [v.id, v.name, v.memo || '']; });
             });
           },
           onSelect: function (row) {
-            document.getElementById('o-pt-giao').value = row[0];
+            if (row) {
+              document.getElementById('o-pt-giao').value = row[0];
+              document.getElementById('o-pt-giao-name').value = row[1];
+            } else {
+              document.getElementById('o-pt-giao').value = '';
+              document.getElementById('o-pt-giao-name').value = '';
+            }
           }
         });
         wrapPT.appendChild(_combos.pt_giao);
@@ -698,7 +753,7 @@ var OrderPage = (function () {
       Object.entries(row.quantities).forEach(function (e) {
         var size = e[0], qty = parseInt(e[1]) || 0;
         if (qty > 0) lines.push({
-          ten_hang_2: row.ten_hang_2, sku: Utils.buildSKU(row.ten_hang_2, size),
+          ma_hang: row.ten_hang_2, ten_hang_2: row.ten_hang_2, sku: Utils.buildSKU(row.ten_hang_2, size),
           ten_hang: row.product.ten_hang_hoa, nhom_size: row.product.nhom_size,
           mau: row.product.mau,
           size: size, so_luong: qty, don_gia: row.product.don_gia,
@@ -814,8 +869,8 @@ var OrderPage = (function () {
       id: Utils.uuid(), // Generate ID
       so_ct: document.getElementById('o-so-ct').value,
       ngay_ct: document.getElementById('o-ngay').value,
-      chi_nhanh: _catValues.chi_nhanh.name || _catValues.chi_nhanh.id,
-      nvkd: _catValues.nvkd.name || _catValues.nvkd.id,
+      chi_nhanh: _catValues.chi_nhanh.id || _catValues.chi_nhanh.name,
+      nvkd: _catValues.nvkd.id || _catValues.nvkd.name,
       nguoi_tao: document.getElementById('o-nguoi-tao').value,
       ma_kh: ma_kh,
       ma_dl: document.getElementById('o-ma-dl').value,
@@ -826,8 +881,8 @@ var OrderPage = (function () {
       ghi_chu: document.getElementById('o-notes').value || (_combos.note ? _combos.note.querySelector('input').value : ''),
       pt_giao: document.getElementById('o-pt-giao').value,
       nguoi_giao: document.getElementById('o-nguoi-giao').value || (_combos.delivery ? _combos.delivery.querySelector('input').value : ''),
-      dieu_khoan: _catValues.dieu_khoan.name || _catValues.dieu_khoan.id,
-      ht_thanh_toan: _catValues.ht_tt.name || _catValues.ht_tt.id,
+      dieu_khoan: _catValues.dieu_khoan.id || _catValues.dieu_khoan.name,
+      ht_thanh_toan: _catValues.ht_tt.id || _catValues.ht_tt.name,
       ngay_tt: document.getElementById('o-ngay-tt').value,
       khach_dua: document.getElementById('o-khach-dua').value,
       ma_ctbh: document.getElementById('o-ctbh').value,
@@ -842,13 +897,43 @@ var OrderPage = (function () {
     }
 
     try {
-      await OrderService.createOrder(order);
+      const res = await OrderService.createOrder(order);
+      
+      // Kiểm tra kết quả trả về từ SQL Server
+      let isSuccess = true;
+      let actualSoCT = order.so_ct;
+      let msg = '';
+      
+      if (res && res.records && res.records[0]) {
+        if (res.records[0].Success === 0) {
+          isSuccess = false;
+          msg = res.records[0].Message || 'Lỗi từ CSDL';
+        } else {
+          actualSoCT = res.records[0].DocumentID || actualSoCT;
+          msg = 'Đã lưu đơn: ' + actualSoCT;
+        }
+      } else if (res && res[0]) {
+        if (res[0].Success === 0) {
+          isSuccess = false;
+          msg = res[0].Message || 'Lỗi từ CSDL';
+        } else {
+          actualSoCT = res[0].DocumentID || actualSoCT;
+          msg = 'Đã lưu đơn: ' + actualSoCT;
+        }
+      } else {
+        msg = 'Đã lưu đơn: ' + actualSoCT;
+      }
+
+      if (!isSuccess) {
+        throw new Error(msg);
+      }
+
       closeModal('modal-preview');
-      showToast('Đã lưu đơn: ' + order.so_ct, true);
+      showToast(msg, true);
       orderRows = []; _init();
     } catch (err) {
       console.warn('[OrderService] Lỗi tạo đơn qua API:', err);
-      showToast('Lỗi tạo đơn qua API. Vui lòng thử lại.', false);
+      showToast(err.message || 'Lỗi tạo đơn qua API. Vui lòng thử lại.', false);
     }
   }
 
@@ -882,7 +967,7 @@ var OrderPage = (function () {
 
     var data = {};
     var inputs = form.querySelectorAll('input, select, textarea');
-    inputs.forEach(function(el) {
+    inputs.forEach(function (el) {
       if (!el.name) return;
       if (el.type === 'checkbox') {
         data[el.name] = el.checked;
@@ -903,21 +988,21 @@ var OrderPage = (function () {
       var res = await CategoryService.saveCustomer(data);
       if (res) {
         showToast('Đã tạo khách hàng: ' + data.ObjectName, true);
-        
+
         // Tự động chọn khách hàng này cho đơn hàng
         document.getElementById('o-ma-kh').value = data.ObjectID;
         document.getElementById('o-kh-ten').value = data.ObjectName;
         document.getElementById('o-kh-dc').value = data.Address || '';
-        
+
         if (_combos.kh) {
-           _combos.kh.querySelector('input').value = data.ObjectName;
+          _combos.kh.querySelector('input').value = data.ObjectName;
         }
 
         closeModal('modal-create-customer');
         updateInfoSummary();
-        
+
         // Clear form
-        inputs.forEach(el => { if(el.type==='checkbox') el.checked=false; else el.value=''; });
+        inputs.forEach(el => { if (el.type === 'checkbox') el.checked = false; else el.value = ''; });
       }
     } catch (err) {
       showToast('Lỗi khi lưu khách hàng: ' + err.message, false);
