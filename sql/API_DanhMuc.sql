@@ -226,7 +226,8 @@ BEGIN
             [CTKM]         AS [ma_ctbh],
             [EmployeeID]   AS [nvkd],
             [isLock]       AS [is_lock],
-            ISNULL((SELECT SUM(Quantity) FROM [dbo].[OrderDetailTbl] d WHERE d.DocumentID = o.DocumentID), 0) AS [total_qty]
+            ISNULL((SELECT SUM(Quantity) FROM [dbo].[OrderDetailTbl] d WHERE d.DocumentID = o.DocumentID), 0) AS [total_qty],
+            COUNT(*) OVER() AS [total_rows]
         FROM [dbo].[OrderTbl] o
         WHERE (@TuKhoa = '' OR [DocumentID] LIKE N'%' + @TuKhoa + N'%' OR [ObjectName] LIKE N'%' + @TuKhoa + N'%')
           AND (@chinhanh IS NULL OR @chinhanh = '' OR [BranchID] = @chinhanh)

@@ -1,14 +1,16 @@
 <div class="page-hdr">
   <div><h2><span data-i18n="hdr.orders">Danh Sách Đơn Hàng</span></h2><p data-i18n="hdr.orders.desc">Lịch sử và trạng thái đơn</p></div>
   <div class="orders-filter" style="display:flex; gap:12px; align-items:center; flex-wrap:wrap">
-    <div style="display:flex; align-items:center; gap:8px;">
-      <label style="font-size:calc(12px * var(--text-scale,1)); color:var(--muted)">Từ ngày:</label>
-      <input type="date" id="orders-from" onchange="OrdersPage.filter()" style="border:1px solid var(--border); border-radius:8px; padding:8px 12px; background:var(--surface); font-family:inherit; outline:none; transition: border-color 0.2s;">
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; flex: 1; min-width: 280px; max-width: 400px;">
+    <div style="display:flex; flex-direction:column; gap:4px;">
+      <label style="font-size:calc(12px * var(--text-scale,1)); color:var(--muted)">Từ ngày</label>
+      <input type="date" id="orders-from" class="date-vn" data-date="dd/mm/yyyy" onchange="this.setAttribute('data-date', this.value ? this.value.split('-').reverse().join('/') : 'dd/mm/yyyy'); OrdersPage.filter()" style="width:100%; border:1px solid var(--border); border-radius:8px; padding:8px 12px; background:var(--surface); font-family:inherit; outline:none; transition: border-color 0.2s;">
     </div>
-    <div style="display:flex; align-items:center; gap:8px;">
-      <label style="font-size:calc(12px * var(--text-scale,1)); color:var(--muted)">Đến ngày:</label>
-      <input type="date" id="orders-to" onchange="OrdersPage.filter()" style="border:1px solid var(--border); border-radius:8px; padding:8px 12px; background:var(--surface); font-family:inherit; outline:none; transition: border-color 0.2s;">
+    <div style="display:flex; flex-direction:column; gap:4px;">
+      <label style="font-size:calc(12px * var(--text-scale,1)); color:var(--muted)">Đến ngày</label>
+      <input type="date" id="orders-to" class="date-vn" data-date="dd/mm/yyyy" onchange="this.setAttribute('data-date', this.value ? this.value.split('-').reverse().join('/') : 'dd/mm/yyyy'); OrdersPage.filter()" style="width:100%; border:1px solid var(--border); border-radius:8px; padding:8px 12px; background:var(--surface); font-family:inherit; outline:none; transition: border-color 0.2s;">
     </div>
+  </div>
     <div class="search-wrapper" style="width: auto; flex: 1; min-width: 250px;">
       <span class="material-symbols-outlined">search</span>
       <input id="orders-search" placeholder="Tìm số CT hoặc Khách hàng..." data-i18n-placeholder="orders.search.placeholder" oninput="OrdersPage.filter()">
@@ -28,3 +30,4 @@
     </tbody>
   </table>
 </div>
+<div id="orders-pagination" style="margin-top: 16px; display: flex; justify-content: flex-end;"></div>

@@ -63,6 +63,29 @@ button {
   font-size: 14px;
 }
 
+/* Custom Date Format dd/mm/yyyy for input type="date" */
+input.date-vn {
+  position: relative;
+}
+input.date-vn::-webkit-datetime-edit {
+  color: transparent;
+}
+input.date-vn::before {
+  content: attr(data-date);
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text);
+  pointer-events: none;
+}
+input.date-vn:focus::-webkit-datetime-edit {
+  color: var(--text);
+}
+input.date-vn:focus::before {
+  display: none;
+}
+
 
 /* ---- Layout ---- */
 .layout {

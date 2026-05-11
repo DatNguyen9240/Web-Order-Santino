@@ -8,7 +8,8 @@ $cssFiles = @(
   "css\design-tokens.css",
   "css\global.css",
   "components\ui-utils\shared-dropdown.css",
-  "components\data-combobox\combobox.css"
+  "components\data-combobox\combobox.css",
+  "components\pagination\pagination.css"
 )
 
 # ====== DANH SACH JS (Core + Components + Data) ======
@@ -23,6 +24,7 @@ $jsFiles = @(
   "components\data-combobox\DataComboBox.js",
   "components\confirm-modal\ConfirmModal.js",
   "components\modal\Modal.js",
+  "components\pagination\Pagination.js",
   "js\core\router.js",
   "js\core\sound.js",
   "js\core\app.js"

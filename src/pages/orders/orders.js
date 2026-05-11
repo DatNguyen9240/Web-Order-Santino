@@ -1,4 +1,7 @@
 var OrdersPage = (function () {
+  var currentPage = 1;
+  var itemsPerPage = 20;
+
   function render($el) {
     // Thêm class để trang này rộng toàn màn hình
     $el.classList.add('is-full-width');
@@ -16,27 +19,33 @@ var OrdersPage = (function () {
     var toDate = toInput ? toInput.value : '';
 
     var orders = [];
+    var totalItems = 0;
     try {
       const queryObj = { Loai: 'Order' };
       // Gói chung vào TimKiem dạng JSON
-      const timKiemData = {};
+      const timKiemData = { page: currentPage, limit: itemsPerPage };
       if (q && q.trim()) timKiemData.q = q.trim();
       if (fromDate) timKiemData.from = fromDate;
       if (toDate) timKiemData.to = toDate;
       
-      if (Object.keys(timKiemData).length > 0) {
-        queryObj.TimKiem = JSON.stringify(timKiemData);
-      }
+      queryObj.TimKiem = JSON.stringify(timKiemData);
       
       const params = { q: JSON.stringify(queryObj), _t: Date.now() };
       
       const res = await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, params);
       orders = res.records || res;
       if (!Array.isArray(orders)) orders = [];
+      
+      if (orders.length > 0 && orders[0].total_rows) {
+        totalItems = orders[0].total_rows;
+      }
     } catch (err) {
       console.warn('Lỗi tải danh sách đơn hàng:', err);
     }
     var tbody = document.getElementById('orders-body');
+    var paginationContainer = document.getElementById('orders-pagination');
+    if (paginationContainer) paginationContainer.innerHTML = '';
+
     if(!orders || !orders.length){
       tbody.innerHTML='<tr><td colspan="8" class="empty-state"><span class="material-symbols-outlined">receipt_long</span><span data-i18n="orders.search.empty">Không có đơn hàng nào</span></td></tr>';
       return;
@@ -52,11 +61,25 @@ var OrdersPage = (function () {
           '<button class="btn-icon" onclick="OrdersPage.del(\''+o.id+'\')"><span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1));color:var(--danger)">delete</span></button>'+
         '</td></tr>';
     }).join('');
+
+    if (paginationContainer && totalItems > 0 && typeof Pagination !== 'undefined') {
+      var pag = Pagination.create({
+        totalItems: totalItems,
+        itemsPerPage: itemsPerPage,
+        currentPage: currentPage,
+        onPageChange: function(page) {
+          currentPage = page;
+          _render();
+        }
+      });
+      paginationContainer.appendChild(pag);
+    }
   }
   var _searchTimeout = null;
   function filter() { 
     if (_searchTimeout) clearTimeout(_searchTimeout);
     _searchTimeout = setTimeout(function() {
+      currentPage = 1;
       _render();
     }, 500);
   }
