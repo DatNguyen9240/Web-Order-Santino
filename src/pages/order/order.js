@@ -73,7 +73,7 @@ var OrderPage = (function () {
       var ngayCT = this.value;
       var branchId = _catValues && _catValues.chi_nhanh ? _catValues.chi_nhanh.id : '';
       document.getElementById('o-so-ct').value = Utils.genOrderNo(branchId, ngayCT, existingSeq);
-      
+
       // Cập nhật Ngày TT dựa vào Điều khoản TT hiện tại
       var days = (_catValues.dieu_khoan && _catValues.dieu_khoan.due_days) ? parseInt(_catValues.dieu_khoan.due_days, 10) : 0;
       var d = ngayCT ? new Date(ngayCT) : new Date();
@@ -911,12 +911,12 @@ var OrderPage = (function () {
 
     try {
       const res = await OrderService.createOrder(order);
-      
+
       // Kiểm tra kết quả trả về từ SQL Server
       let isSuccess = true;
       let actualSoCT = order.so_ct;
       let msg = '';
-      
+
       if (res && res.records && res.records[0]) {
         if (res.records[0].Success === 0) {
           isSuccess = false;
@@ -942,7 +942,8 @@ var OrderPage = (function () {
       }
 
       closeModal('modal-preview');
-      showToast(msg, true);
+      var actionBtn = '<a href="#/order-detail?id=' + encodeURIComponent(actualSoCT) + '" style="color:#000; background:var(--accent); padding:4px 10px; border-radius:4px; font-weight:600; text-decoration:none; display:inline-block;">Xem đơn</a>';
+      showToast(msg, true, actionBtn, 8000);
       render(document.getElementById('app-content'));
     } catch (err) {
       console.warn('[OrderService] Lỗi tạo đơn qua API:', err);
@@ -956,8 +957,8 @@ var OrderPage = (function () {
       message: 'Bạn có chắc muốn xóa toàn bộ sản phẩm đã chọn?',
       confirmText: 'Xác nhận xóa',
       confirmClass: 'btn-danger',
-      onConfirm: function () { 
-        render(document.getElementById('app-content')); 
+      onConfirm: function () {
+        render(document.getElementById('app-content'));
       }
     });
   }

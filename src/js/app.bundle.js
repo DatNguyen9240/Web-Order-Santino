@@ -1738,16 +1738,23 @@ function toggleTheme() {
 }
 
 
-function showToast(msg, ok) {
+function showToast(msg, ok, actionHtml, duration) {
   if (ok === undefined) ok = true;
   var t = document.getElementById('toast');
   var m = document.getElementById('toast-msg');
   if (!t || !m) return;
   t.querySelector('.material-symbols-outlined').textContent = ok ? 'check_circle' : 'error';
-  m.textContent = msg;
+  
+  if (actionHtml) {
+    m.innerHTML = msg + '&nbsp;&nbsp;' + actionHtml;
+  } else {
+    m.textContent = msg;
+  }
+  
   t.classList.add('show');
   clearTimeout(t._timer);
-  t._timer = setTimeout(function () { t.classList.remove('show'); }, 3000);
+  var hideTime = duration ? duration : (actionHtml ? 7000 : 3000);
+  t._timer = setTimeout(function () { t.classList.remove('show'); }, hideTime);
 }
 
 function openModal(id)  { var el = document.getElementById(id); if (el) el.classList.add('show'); }
