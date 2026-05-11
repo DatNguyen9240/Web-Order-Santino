@@ -232,7 +232,7 @@ BEGIN
           AND (@chinhanh IS NULL OR @chinhanh = '' OR [BranchID] = @chinhanh)
           AND (@TuNgay IS NULL OR [DocumentDate] >= @TuNgay)
           AND (@DenNgay IS NULL OR [DocumentDate] <= @DenNgay)
-        ORDER BY [DocumentDate] DESC, [DocumentID] DESC
+        ORDER BY [DateCreate] DESC
         OFFSET (@Page - 1) * @PageSize ROWS
         FETCH NEXT @PageSize ROWS ONLY;
         RETURN;
