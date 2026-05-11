@@ -17,7 +17,7 @@ UIControls.utils = (function () {
 
     // position:fixed — tọa độ viewport, không bị ảnh hưởng bởi overflow:hidden
     dropdownElement.style.position = 'fixed';
-    dropdownElement.style.zIndex = '1000';
+    dropdownElement.style.zIndex = '18000';
     dropdownElement.style.transition = 'opacity 0.15s ease, visibility 0.15s ease';
     dropdownElement.style.minWidth = rect.width + 'px';
     dropdownElement.style.maxWidth = Math.max(rect.width, window.innerWidth > 600 ? 600 : window.innerWidth - 20) + 'px';

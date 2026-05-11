@@ -309,7 +309,7 @@ button {
   gap: 6px;
   padding: 20px 12px;
   overflow-y: auto;
-  z-index: 5000;
+  z-index: 20000;
   box-shadow: var(--shadow-sm);
   grid-row: 1 / -1;
 }
@@ -318,8 +318,7 @@ button {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 4999;
+  z-index: 19000;
 }
 
 .header-title {
@@ -1726,7 +1725,7 @@ tbody tr:hover td {
   inset: 0;
   background: rgba(15, 23, 42, 0.6);
   backdrop-filter: blur(8px);
-  z-index: 10000;
+  z-index: 15000;
   display: none;
   align-items: center;
   justify-content: center;
