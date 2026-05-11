@@ -642,12 +642,15 @@ var OrderPage = (function () {
         var mappedNhomSize = mapNhom[nhomSize] || mapNhom[nhomSize.toUpperCase()] || 'Nhóm 1';
 
         var sizes = [];
-        if (prod.sizes_json) {
+        if (prod.sizes_json && prod.sizes_json !== 'null') {
           try {
-            var realSizes = JSON.parse(prod.sizes_json).map(function (s) { return s.Size; });
-            sizes = cachedSizes.filter(function (s) {
-              return realSizes.indexOf(s.size || s.Size || s.ten_size) !== -1;
-            });
+            var parsed = JSON.parse(prod.sizes_json);
+            if (parsed && Array.isArray(parsed)) {
+              var realSizes = parsed.map(function (s) { return s.Size; });
+              sizes = cachedSizes.filter(function (s) {
+                return realSizes.indexOf(s.size || s.Size || s.ten_size) !== -1;
+              });
+            }
           } catch (e) { console.error('Lỗi parse sizes_json', e); }
         }
 
@@ -675,12 +678,15 @@ var OrderPage = (function () {
     var mappedNhomSize = mapNhom[nhomSize] || mapNhom[nhomSize.toUpperCase()] || 'Nhóm 1';
 
     var sizes = [];
-    if (prod.sizes_json) {
+    if (prod.sizes_json && prod.sizes_json !== 'null') {
       try {
-        var realSizes = JSON.parse(prod.sizes_json).map(function (s) { return s.Size; });
-        sizes = cachedSizes.filter(function (s) {
-          return realSizes.indexOf(s.size || s.Size || s.ten_size) !== -1;
-        });
+        var parsed = JSON.parse(prod.sizes_json);
+        if (parsed && Array.isArray(parsed)) {
+          var realSizes = parsed.map(function (s) { return s.Size; });
+          sizes = cachedSizes.filter(function (s) {
+            return realSizes.indexOf(s.size || s.Size || s.ten_size) !== -1;
+          });
+        }
       } catch (e) { console.error('Lỗi parse sizes_json', e); }
     }
 

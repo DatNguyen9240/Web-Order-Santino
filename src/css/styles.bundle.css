@@ -308,15 +308,18 @@ button {
   flex-direction: column;
   gap: 6px;
   padding: 20px 12px;
-  /* Slightly reduced horizontal padding */
   overflow-y: auto;
-  z-index: 10;
+  z-index: 5000;
   box-shadow: var(--shadow-sm);
   grid-row: 1 / -1;
 }
 
 .sidebar-overlay {
   display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 4999;
 }
 
 .header-title {
@@ -1091,26 +1094,6 @@ tbody tr:hover td {
   position: relative;
 }
 
-.autocomplete-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  right: 0;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-lg);
-  z-index: 100;
-  max-height: 280px;
-  overflow-y: auto;
-  display: none;
-  padding: 8px;
-}
-
-.autocomplete-dropdown.show {
-  display: block;
-  animation: slideUp 0.2s ease;
-}
 
 .ac-item {
   padding: 12px 16px;
@@ -1543,8 +1526,8 @@ tbody tr:hover td {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-lg);
-  z-index: 100;
-  max-height: 280px;
+  z-index: 500;
+  max-height: 400px;
   overflow-y: auto;
   overflow-x: hidden;
   display: none;
@@ -1595,17 +1578,6 @@ tbody tr:hover td {
 }
 
 @media (max-width: 768px) {
-  .autocomplete-dropdown {
-    width: 100%;
-    min-width: 100%;
-    left: 0;
-  }
-
-  .ac-item {
-    padding: 10px 12px;
-    gap: 4px;
-  }
-
   .ac-title-row {
     flex-direction: column;
     align-items: flex-start;

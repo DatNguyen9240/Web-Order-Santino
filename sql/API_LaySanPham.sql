@@ -18,7 +18,8 @@ BEGIN
         -- Lấy danh sách size thực tế của sản phẩm này
         (SELECT DISTINCT [Size] 
          FROM [dbo].[CF_ItemTbl] ci 
-         WHERE ci.[ItemName2] = t2.[ItemName2] 
+         WHERE LTRIM(RTRIM(ci.[ItemName2])) = LTRIM(RTRIM(t2.[ItemName2]))
+           AND LTRIM(RTRIM(ci.[MauSac])) = LTRIM(RTRIM(t2.[MauSac]))
          FOR JSON PATH) AS [sizes_json]
     FROM 
         [dbo].[CF_TenHang2Tbl] t2
