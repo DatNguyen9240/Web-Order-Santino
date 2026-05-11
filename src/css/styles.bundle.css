@@ -1843,7 +1843,7 @@ tbody tr:hover td {
     grid-column: span 1;
   }
 
-  .modal-overlay {
+  .modal-overlay:has(.bottom-sheet-modal) {
     align-items: flex-end;
   }
 

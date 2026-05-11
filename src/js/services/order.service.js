@@ -27,5 +27,13 @@ const OrderService = (() => {
     return Http.post(API_CONFIG.ENDPOINTS.ORDERS.CREATE, params);
   }
 
-  return { getOrders, createOrder };
+  /**
+   * Xóa đơn hàng
+   */
+  async function deleteOrder(documentId) {
+    const params = { DocumentID: documentId };
+    return Http.post(API_CONFIG.ENDPOINTS.ORDERS.DELETE, params);
+  }
+
+  return { getOrders, createOrder, deleteOrder };
 })();

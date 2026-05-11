@@ -85,13 +85,41 @@ var OrdersPage = (function () {
   }
   function del(id) {
     ConfirmModal.show({
-      title: t('order.delete.title'),
-      message: t('order.delete.msg'),
-      confirmText: t('btn.delete'),
+      title: t('order.delete.title') || 'Xóa đơn hàng',
+      message: 'Bạn có chắc chắn muốn xóa đơn hàng <strong>' + id + '</strong> không?',
+      confirmText: t('btn.delete') || 'Xóa',
       confirmClass: 'btn-danger',
-      onConfirm: function() {
-        showToast('Chức năng xóa đã vô hiệu hóa (chưa có API)');
-        showToast(t('toast.order_deleted'));
+      onConfirm: async function() {
+        try {
+          const res = await OrderService.deleteOrder(id);
+          // Hỗ trợ cả 2 dạng: Array trực tiếp hoặc Object { records: [...] }
+          let success = false;
+          let msg = 'Không thể xóa đơn hàng ' + id;
+          
+          if (Array.isArray(res) && res.length > 0) {
+            success = (res[0].Success == '1' || res[0].Success === 1);
+            msg = res[0].Message || msg;
+          } else if (res && typeof res === 'object') {
+            if (res.Success == '1' || res.Success === 1 || res.code === 0) {
+              success = true;
+            } else if (res.records && res.records.length > 0) {
+              success = (res.records[0].Success == '1' || res.records[0].Success === 1);
+            }
+            // Nếu server trả về chung chung, mình đính kèm thêm ID cho rõ
+            var serverMsg = res.Message || (res.records && res.records.length > 0 ? res.records[0].Message : '');
+            msg = serverMsg ? (serverMsg + ' (' + id + ')') : ('Đã xóa đơn hàng ' + id + ' thành công');
+          }
+
+          if (success) {
+            showToast(msg);
+            _render(); // Tải lại danh sách
+          } else {
+            showToast(msg, 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Lỗi khi gọi API xóa đơn hàng ' + id, 'error');
+        }
       }
     });
   }
