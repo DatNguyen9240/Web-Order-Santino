@@ -579,6 +579,9 @@ var OrderPage = (function () {
 
     var list = document.getElementById('ac-list');
     var input = document.getElementById('ac-input');
+    // Lệnh yêu cầu: "focus vào ô input mà trống thì hiện tất cả"
+    // Nên ta sẽ loại bỏ đoạn chặn (!val || val.length < 2) này
+    /* 
     if (!val || val.length < 2) { 
       list.classList.remove('show'); 
       input.style.borderBottomLeftRadius = '';
@@ -586,6 +589,7 @@ var OrderPage = (function () {
       _detachAcScroll();
       return; 
     }
+    */
 
     acSearchTimer = setTimeout(async function() {
 
