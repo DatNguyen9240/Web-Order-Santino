@@ -41,7 +41,7 @@ var TRANSLATIONS = {
     "order.staff": "Nhân viên",
     "order.promo": "Khuyến mãi",
     "order.note": "Ghi chú",
-    "order.search.placeholder": "Nhập mã hoặc tên sản phẩm (VD: AMC545, Áo sơ mi)...",
+    "order.search.placeholder": "Tìm mã, tên (VD: AMC, Áo)...",
     "order.col.name": "Tên hàng 2",
     "order.col.form": "Form",
     "order.col.price": "Đơn giá",
