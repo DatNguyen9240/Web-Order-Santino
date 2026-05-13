@@ -4,13 +4,18 @@
     <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">arrow_back</span><span data-i18n="btn.back">Quay lại</span>
   </button>
 </div>
-<div class="card" id="detail-info" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px"></div>
-<div class="tbl-wrap">
-  <table>
-    <thead><tr>
-      <th data-i18n="order.col.name">Tên hàng 2</th><th>SKU</th><th data-i18n="product.col.name">Tên hàng hóa</th><th data-i18n="nav.sizes">Size</th>
-      <th data-i18n="order.col.qty">SL</th><th data-i18n="order.col.price">Đơn giá</th><th data-i18n="order.total.money">Thành tiền</th>
+<div class="card" id="detail-info" style="display:flex; flex-wrap:wrap; gap:15px 40px; align-items: flex-start"></div>
+<div class="tbl-wrap" style="background: #fff; box-shadow: var(--shadow-sm); border: 1px solid var(--border)">
+  <table style="background: #fff">
+    <thead style="background: #fff"><tr style="background: #fff">
+      <th style="background: #fff" data-i18n="order.col.name">Tên hàng 2</th>
+      <th style="background: #fff">SKU</th>
+      <th style="background: #fff" data-i18n="product.col.name">Tên hàng hóa</th>
+      <th style="background: #fff" data-i18n="nav.sizes">Size</th>
+      <th style="background: #fff" data-i18n="order.col.qty">SL</th>
+      <th style="background: #fff" data-i18n="order.col.price">Đơn giá</th>
+      <th style="background: #fff" data-i18n="order.total.money">Thành tiền</th>
     </tr></thead>
-    <tbody id="detail-body"></tbody>
+    <tbody id="detail-body" style="background: #fff"></tbody>
   </table>
 </div>

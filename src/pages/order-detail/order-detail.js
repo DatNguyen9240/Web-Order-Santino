@@ -1,6 +1,9 @@
 var OrderDetailPage = (function () {
   async function render($el) {
     try {
+      // Cho phép trang này hiển thị rộng tối đa màn hình
+      $el.classList.add('is-full-width');
+      
       const html = await Router.fetchTemplate('src/pages/order-detail/order-detail.html');
       $el.innerHTML = html;
       var id = window._viewOrderId;
@@ -31,13 +34,13 @@ var OrderDetailPage = (function () {
 
       document.getElementById('detail-title').textContent = t('btn.detail') + ': ' + o.so_ct;
       document.getElementById('detail-info').innerHTML = [
-        '<div><small style="color:var(--muted)"><span data-i18n="order.no">' + t('order.no') + '</span></small><div style="font-weight:700">' + o.so_ct + '</div></div>',
-        '<div><small style="color:var(--muted)"><span data-i18n="order.date">' + t('order.date') + '</span></small><div>' + (o.ngay_ct || '—') + '</div></div>',
-        '<div><small style="color:var(--muted)"><span data-i18n="order.branch">' + t('order.branch') + '</span></small><div>' + (o.chi_nhanh || '—') + '</div></div>',
-        '<div><small style="color:var(--muted)"><span data-i18n="order.staff">' + t('order.staff') + '</span></small><div>' + (o.nvkd || '—') + '</div></div>',
-        '<div><small style="color:var(--muted)"><span data-i18n="order.promo">' + t('order.promo') + '</span></small><div><span class="badge badge-yellow">' + (o.ma_ctbh || 'Không') + '</span></div></div>',
-        '<div><small style="color:var(--muted)"><span data-i18n="order.total.money">' + t('order.total.money') + '</span></small><div style="font-weight:800;color:var(--accent)">' + Utils.formatMoney(o.total_money || 0) + '</div></div>',
-        '<div><small style="color:var(--muted)"><span data-i18n="order.note">' + t('order.note') + '</span></small><div>' + (o.ghi_chu || '—') + '</div></div>',
+        '<div style="flex: 1 1 auto; min-width: 140px"><small style="color:var(--muted)"><span data-i18n="order.no">' + t('order.no') + '</span></small><div style="font-weight:700">' + o.so_ct + '</div></div>',
+        '<div style="flex: 1 1 auto; min-width: 140px"><small style="color:var(--muted)"><span data-i18n="order.date">' + t('order.date') + '</span></small><div>' + (o.ngay_ct || '—') + '</div></div>',
+        '<div style="flex: 1 1 auto; min-width: 140px"><small style="color:var(--muted)"><span data-i18n="order.branch">' + t('order.branch') + '</span></small><div>' + (o.chi_nhanh || '—') + '</div></div>',
+        '<div style="flex: 1 1 auto; min-width: 140px"><small style="color:var(--muted)"><span data-i18n="order.staff">' + t('order.staff') + '</span></small><div>' + (o.nvkd || '—') + '</div></div>',
+        '<div style="flex: 1.5 1 auto; min-width: 200px"><small style="color:var(--muted)"><span data-i18n="order.promo">' + t('order.promo') + '</span></small><div><span class="badge badge-yellow">' + (o.ma_ctbh || 'Không') + '</span></div></div>',
+        '<div style="flex: 1 1 auto; min-width: 140px"><small style="color:var(--muted)"><span data-i18n="order.total.money">' + t('order.total.money') + '</span></small><div style="font-weight:800;color:var(--accent)">' + Utils.formatMoney(o.total_money || 0) + '</div></div>',
+        '<div style="flex: 1 1 auto; min-width: 140px"><small style="color:var(--muted)"><span data-i18n="order.note">' + t('order.note') + '</span></small><div>' + (o.ghi_chu || '—') + '</div></div>',
       ].join('');
       document.getElementById('detail-body').innerHTML = (o.lines || []).map(function (l) {
         return '<tr><td>' + l.ten_hang_2 + '</td><td style="font-family:monospace;font-size: calc(12px * var(--text-scale, 1))">' + l.sku + '</td>' +
