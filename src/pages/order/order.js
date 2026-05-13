@@ -950,9 +950,14 @@ var OrderPage = (function () {
 
   async function saveOrder() {
     var lines = _buildLines();
+    if (!lines || lines.length === 0) {
+      showToast('Vui lòng chọn ít nhất 1 sản phẩm', false);
+      return;
+    }
     var kh_ten = document.getElementById('o-kh-ten').value.trim();
     var ma_kh = document.getElementById('o-ma-kh').value.trim();
     if (!ma_kh) { showToast('Vui lòng nhập mã khách hàng', false); return; }
+
 
     var order = {
       id: Utils.uuid(), // Generate ID

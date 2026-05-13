@@ -151,7 +151,7 @@
     </div>
     <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border);">
       <button class="btn btn-primary" style="width:100%; height:48px; font-size:16px; border-radius:12px;"
-        onclick="closeModal('modal-order-info'); OrderPage.updateInfoSummary()">
+        onclick="closeModal('modal-order-info'); OrderPage.updateInfoSummary(); setTimeout(() => { var inp = document.getElementById('ac-input'); if(inp) { inp.focus(); } }, 300);">
         <span class="material-symbols-outlined">check_circle</span> Xong & Bắt đầu chọn hàng
       </button>
     </div>
