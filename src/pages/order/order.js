@@ -730,6 +730,11 @@ var OrderPage = (function () {
             }
           } catch (e) { console.error('Lỗi parse sizes_json', e); }
         }
+        
+        // Nếu sản phẩm chưa sinh SKU (sizes_json rỗng), fallback cho phép dùng toàn bộ bảng Size
+        if (sizes.length === 0) {
+            sizes = cachedSizes.slice();
+        }
 
         sizes.sort(function (a, b) { return (a.stt || a.STT || 0) - (b.stt || b.STT || 0); });
 
@@ -765,6 +770,10 @@ var OrderPage = (function () {
           });
         }
       } catch (e) { console.error('Lỗi parse sizes_json', e); }
+    }
+    
+    if (sizes.length === 0) {
+        sizes = cachedSizes.slice();
     }
 
     sizes.sort(function (a, b) { return (a.stt || a.STT || 0) - (b.stt || b.STT || 0); });

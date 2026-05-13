@@ -44,8 +44,8 @@ var OrderDetailPage = (function () {
       ].join('');
 
       document.getElementById('detail-body').innerHTML = (o.lines || []).map(function (l) {
-        return '<tr><td>' + l.ten_hang_2 + '</td><td style="font-family:monospace;font-size: calc(12px * var(--text-scale, 1))">' + l.sku + '</td>' +
-          '<td>' + (l.ten_hang || '') + '</td><td>' + l.size + '</td>' +
+        return '<tr><td>' + (l.ten_hang_2 || '—') + '</td><td style="font-family:monospace;font-size: calc(12px * var(--text-scale, 1))">' + (l.sku || '—') + '</td>' +
+          '<td>' + (l.ten_hang || '—') + '</td><td>' + (l.size || '—') + '</td>' +
           '<td style="font-weight:700;color:var(--accent)">' + l.so_luong + '</td>' +
           '<td>' + Utils.formatMoney(l.don_gia) + '</td>' +
           '<td style="font-weight:700">' + Utils.formatMoney(l.thanh_tien) + '</td></tr>';

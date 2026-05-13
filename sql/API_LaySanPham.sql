@@ -29,6 +29,14 @@ BEGIN
             @SearchTerm IS NULL OR @SearchTerm = ''
             OR [ItemName2] LIKE '%' + @SearchTerm + '%'
         )
+        /* -- TẠM TẮT CHẶN ĐỂ TEST DATA ẢO
+        AND EXISTS (
+            SELECT 1 
+            FROM [dbo].[CF_ItemTbl] ci 
+            WHERE LTRIM(RTRIM(ci.[ItemName2])) = LTRIM(RTRIM(t2.[ItemName2]))
+              AND LTRIM(RTRIM(ci.[MauSac])) = LTRIM(RTRIM(t2.[MauSac]))
+        )
+        */
     ORDER BY 
         [ItemName2] ASC;
 END

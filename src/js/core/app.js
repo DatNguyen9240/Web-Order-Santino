@@ -97,6 +97,8 @@ window.addEventListener('popstate', function (e) {
       m.classList.remove('show');
     });
   }
+  // Đóng các dropdown combobox
+  document.dispatchEvent(new CustomEvent('close-other-comboboxes'));
 });
 
 // Đóng modal khi click overlay

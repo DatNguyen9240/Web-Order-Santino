@@ -15,6 +15,11 @@ BEGIN
         -- 1. Lấy mã chứng từ từ Client
         DECLARE @DocumentID NVARCHAR(50) = JSON_VALUE(@OrderJson, '$.so_ct');
         DECLARE @BranchID NVARCHAR(50) = JSON_VALUE(@OrderJson, '$.chi_nhanh');
+        DECLARE @MaKH NVARCHAR(50) = JSON_VALUE(@OrderJson, '$.ma_kh');
+        
+        -- Ràng buộc bắt buộc (Mandatory fields)
+        IF ISNULL(@BranchID, '') = '' THROW 50000, N'Lỗi: Vui lòng chọn Chi nhánh tạo đơn!', 1;
+        IF ISNULL(@MaKH, '') = '' THROW 50000, N'Lỗi: Vui lòng chọn Khách hàng!', 1;
         
         -- Nếu Client không gửi mã, HOẶC mã Client gửi đã bị trùng, tự động sinh mã mới!
         IF @DocumentID IS NULL OR @DocumentID = '' OR EXISTS (SELECT 1 FROM [dbo].[OrderTbl] WHERE DocumentID = @DocumentID)
@@ -28,6 +33,22 @@ BEGIN
             
             SET @DocumentID = @Prefix + RIGHT('0000' + CAST(@MaxSeq + 1 AS VARCHAR), 4);
         END
+
+        /* -- TẠM TẮT CHẶN ĐỂ TEST DATA ẢO
+        -- Kiểm tra tồn kho/danh mục: Cấm lưu sản phẩm rác (fake items)
+        IF EXISTS (
+            SELECT 1 FROM OPENJSON(@OrderJson, '$.lines') l
+            WHERE NOT EXISTS (
+                SELECT 1 FROM [dbo].[CF_ItemTbl] ci
+                WHERE ci.ItemName2 = JSON_VALUE(l.[value], '$.ten_hang_2')
+                  AND ci.Size     = JSON_VALUE(l.[value], '$.size')
+                  AND ci.MauSac   = JSON_VALUE(l.[value], '$.mau')
+            )
+        )
+        BEGIN
+            THROW 50000, N'Lỗi: Đơn hàng chứa sản phẩm ảo (không tồn tại trong danh mục CF_ItemTbl)!', 1;
+        END
+        */
 
         DECLARE @KhachDua DECIMAL(18,2) = CAST(ISNULL(NULLIF(JSON_VALUE(@OrderJson, '$.khach_dua'), ''), '0') AS DECIMAL(18,2));
         DECLARE @BaseTotal DECIMAL(18,2) = CAST(ISNULL(NULLIF(JSON_VALUE(@OrderJson, '$.total_money'), ''), '0') AS DECIMAL(18,2));
