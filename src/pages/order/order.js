@@ -549,6 +549,27 @@ var OrderPage = (function () {
     }
   }
 
+  function finishOrderInfo() {
+    var maKH = document.getElementById('o-ma-kh').value.trim();
+    var chiNhanh = _catValues.chi_nhanh.id || _catValues.chi_nhanh.name;
+
+    if (!chiNhanh) {
+      showToast('Vui lòng chọn chi nhánh', false);
+      return;
+    }
+    if (!maKH) {
+      showToast('Vui lòng chọn khách hàng', false);
+      return;
+    }
+
+    closeModal('modal-order-info');
+    updateInfoSummary();
+    setTimeout(function() {
+      var inp = document.getElementById('ac-input');
+      if (inp) inp.focus();
+    }, 300);
+  }
+
   async function acSearch(val) {
     var btnClear = document.getElementById('ac-clear');
     if (btnClear) btnClear.style.display = val ? 'block' : 'none';
@@ -954,6 +975,13 @@ var OrderPage = (function () {
       showToast('Vui lòng chọn ít nhất 1 sản phẩm', false);
       return;
     }
+    
+    var chiNhanh = _catValues.chi_nhanh.id || _catValues.chi_nhanh.name;
+    if (!chiNhanh) {
+      showToast('Vui lòng chọn chi nhánh', false);
+      return;
+    }
+
     var kh_ten = document.getElementById('o-kh-ten').value.trim();
     var ma_kh = document.getElementById('o-ma-kh').value.trim();
     if (!ma_kh) { showToast('Vui lòng nhập mã khách hàng', false); return; }
@@ -1055,7 +1083,7 @@ var OrderPage = (function () {
     updateQty: updateQty, removeRow: removeRow, previewOrder: previewOrder,
     saveOrder: saveOrder, clearOrder: clearOrder, clearSearch: clearSearch,
     updateInfoSummary: updateInfoSummary, calcChange: calcChange,
-    createNewCustomer: createNewCustomer
+    createNewCustomer: createNewCustomer, finishOrderInfo: finishOrderInfo
   };
 
   async function createNewCustomer() {
