@@ -1,4 +1,4 @@
-/* --- translations.js --- */
+﻿/* --- translations.js --- */
 var TRANSLATIONS = {
   vi: {
     // --- Sidebar ---
@@ -470,6 +470,13 @@ const Http = (() => {
 
   // --- Cache layer (sessionStorage) ---
   function _cacheKey(url) { return CACHE_PREFIX + url; }
+  
+  function _getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return '';
+  }
 
   function _getFromCache(key) {
     try {
@@ -497,13 +504,6 @@ const Http = (() => {
       if (k && k.startsWith(CACHE_PREFIX)) keysToRemove.push(k);
     }
     keysToRemove.forEach(k => sessionStorage.removeItem(k));
-  }
-
-  function _getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
-    return '';
   }
 
   // --- Auth & Headers ---
@@ -884,12 +884,18 @@ const Utils = (function () {
       if (!userRaw) return '??';
       const user = JSON.parse(userRaw);
       const name = user.name || user.DisplayName || 'User';
+      
       const words = name.trim().split(/\s+/);
-      if (words.length === 1) return _removeDiacritics(words[0].substring(0, 2)).toUpperCase();
+      if (words.length === 1) {
+        return _removeDiacritics(words[0].substring(0, 2)).toUpperCase();
+      }
+      
       const first = words[0][0];
       const last = words[words.length - 1][0];
       return _removeDiacritics(first + last).toUpperCase();
-    } catch (e) { return '??'; }
+    } catch (e) {
+      return '??';
+    }
   }
 
   return { formatMoney, buildSKU, genOrderNo, today, escHtml, uuid, getUserInitials };
