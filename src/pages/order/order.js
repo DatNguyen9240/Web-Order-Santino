@@ -109,7 +109,14 @@ var OrderPage = (function () {
 
     renderMatrix();
     document.addEventListener('click', function (e) {
-      // In default multi-mode, user must explicitly click "Hủy" or "Thêm đã chọn"
+      var list = document.getElementById('ac-list');
+      var wrap = document.querySelector('.autocomplete-wrap');
+      if (list && list.classList.contains('show')) {
+        // Nếu click ra ngoài cả danh sách (list) VÀ vùng tìm kiếm (wrap)
+        if (!list.contains(e.target) && (!wrap || !wrap.contains(e.target))) {
+          closeAc();
+        }
+      }
     });
   }
 
@@ -571,6 +578,7 @@ var OrderPage = (function () {
   }
 
   let acSearchTimer = null;
+  let acSearchId = 0;
   function acSearch(val) {
     if (acSearchTimer) clearTimeout(acSearchTimer);
     
@@ -591,10 +599,15 @@ var OrderPage = (function () {
     }
     */
 
+    var currentSearchId = ++acSearchId;
     acSearchTimer = setTimeout(async function() {
 
     // Gọi API qua Service lấy sản phẩm
     var prods = await ProductService.getProducts(val);
+    
+    // NẾU người dùng đã đóng bảng TRƯỚC KHI API trả về kết quả, thì HỦY render
+    if (currentSearchId !== acSearchId) return;
+
     prods.forEach(function (p) { cachedProds[p.ten_hang_2] = p; });
 
     if (!prods.length) {
@@ -702,6 +715,8 @@ var OrderPage = (function () {
   }
 
   function closeAc() {
+    if (acSearchTimer) clearTimeout(acSearchTimer);
+    acSearchId++; // Vô hiệu hóa mọi cục API đang bị delay (nếu có)
     multiSelectedCodes = [];
     document.getElementById('ac-list').classList.remove('show');
     var input = document.getElementById('ac-input');
