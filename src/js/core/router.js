@@ -101,7 +101,11 @@ var Router = (function () {
     }
 
     _fadeOut($el)
-      .then(function () { return _loadScript(route.script); })
+      .then(function () { 
+        if (window.LoadingSpinner) LoadingSpinner.show('Đang tải trang...');
+        return _loadScript(route.script); 
+      })
+
       .then(function () {
         var mod = window[route.pageFn];
         if (mod && typeof mod.render === 'function') {
@@ -113,11 +117,15 @@ var Router = (function () {
         if (typeof applyLanguage === 'function') applyLanguage();
         _fadeIn($el); 
         _isNavigating = false; 
+        if (window.LoadingSpinner) LoadingSpinner.hide();
       })
+
       .catch(function (err) {
+        if (window.LoadingSpinner) LoadingSpinner.hide();
         console.error('[Router]', err);
         $el.innerHTML = '<div class="card" style="color:var(--danger)"><span class="material-symbols-outlined" style="vertical-align:middle">error</span> ' + err.message + '</div>';
         _fadeIn($el);
+
         _isNavigating = false;
       });
   }

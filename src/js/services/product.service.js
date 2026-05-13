@@ -14,7 +14,8 @@ const ProductService = (() => {
 
     try {
       const queryObj = { SearchTerm: searchTerm };
-      const res = await Http.get(API_CONFIG.ENDPOINTS.PRODUCTS.LIST, { q: JSON.stringify(queryObj) });
+      const res = await Http.get(API_CONFIG.ENDPOINTS.PRODUCTS.LIST, { q: JSON.stringify(queryObj) }, true);
+
 
       // Giả sử API trả về mảng trực tiếp hoặc nằm trong { records: [] }
       return res.records || res;

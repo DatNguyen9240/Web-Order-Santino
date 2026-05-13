@@ -1021,6 +1021,7 @@ var OrderPage = (function () {
     try {
       const res = await OrderService.createOrder(order);
 
+
       // Kiểm tra kết quả trả về từ SQL Server
       let isSuccess = true;
       let actualSoCT = order.so_ct;
@@ -1051,14 +1052,17 @@ var OrderPage = (function () {
       }
 
       closeModal('modal-preview');
+
       var actionBtn = '<a href="#/order-detail?id=' + encodeURIComponent(actualSoCT) + '" style="color:#000; background:var(--accent); padding:4px 10px; border-radius:4px; font-weight:600; text-decoration:none; display:inline-block;">Xem đơn</a>';
       showToast(msg, true, actionBtn, 8000);
       render(document.getElementById('app-content'));
     } catch (err) {
       console.warn('[OrderService] Lỗi tạo đơn qua API:', err);
+
       showToast(err.message || 'Lỗi tạo đơn qua API. Vui lòng thử lại.', false);
     }
   }
+
 
   function clearOrder() {
     ConfirmModal.show({
@@ -1109,10 +1113,12 @@ var OrderPage = (function () {
     }
 
     try {
-      showToast('Đang lưu khách hàng...');
       var res = await CategoryService.saveCustomer(data);
+
       if (res) {
+
         showToast('Đã tạo khách hàng: ' + data.ObjectName, true);
+
 
         // Tự động chọn khách hàng này cho đơn hàng
         document.getElementById('o-ma-kh').value = data.ObjectID;
@@ -1133,4 +1139,5 @@ var OrderPage = (function () {
       showToast('Lỗi khi lưu khách hàng: ' + err.message, false);
     }
   }
+
 })();

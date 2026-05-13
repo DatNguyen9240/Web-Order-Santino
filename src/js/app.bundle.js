@@ -1,4 +1,4 @@
-/* --- translations.js --- */
+﻿/* --- translations.js --- */
 var TRANSLATIONS = {
   vi: {
     // --- Sidebar ---
@@ -608,7 +608,7 @@ const Http = (() => {
   }
 
   // --- Public API ---
-  async function get(endpoint, params = {}) {
+  async function get(endpoint, params = {}, silent = false) {
     const qs = new URLSearchParams(params).toString();
     const url = getApiBaseUrl() + endpoint + (qs ? `?${qs}` : '');
 
@@ -616,6 +616,7 @@ const Http = (() => {
     if (cached) return cached;
 
     document.body.style.cursor = 'wait';
+    if (!silent && window.LoadingSpinner) LoadingSpinner.show();
     try {
       const res = await _fetchWithTimeout(url, { method: 'GET', headers: _headers() });
       const data = await _handleResponse(res);
@@ -627,11 +628,13 @@ const Http = (() => {
       return data;
     } finally {
       document.body.style.cursor = '';
+      if (!silent && window.LoadingSpinner) LoadingSpinner.hide();
     }
   }
 
   async function post(endpoint, body = {}) {
     document.body.style.cursor = 'wait';
+    if (window.LoadingSpinner) LoadingSpinner.show();
     try {
       clearCache();
       const url = getApiBaseUrl() + endpoint;
@@ -643,11 +646,13 @@ const Http = (() => {
       return _handleResponse(res);
     } finally {
       document.body.style.cursor = '';
+      if (window.LoadingSpinner) LoadingSpinner.hide();
     }
   }
 
   async function put(endpoint, body = {}) {
     document.body.style.cursor = 'wait';
+    if (window.LoadingSpinner) LoadingSpinner.show();
     try {
       clearCache();
       const url = getApiBaseUrl() + endpoint;
@@ -659,11 +664,13 @@ const Http = (() => {
       return _handleResponse(res);
     } finally {
       document.body.style.cursor = '';
+      if (window.LoadingSpinner) LoadingSpinner.hide();
     }
   }
 
-  async function del(endpoint) {
+  async function del(endpoint, body = {}) {
     document.body.style.cursor = 'wait';
+    if (window.LoadingSpinner) LoadingSpinner.show();
     try {
       clearCache();
       const url = getApiBaseUrl() + endpoint;
@@ -674,9 +681,9 @@ const Http = (() => {
       return _handleResponse(res);
     } finally {
       document.body.style.cursor = '';
+      if (window.LoadingSpinner) LoadingSpinner.hide();
     }
   }
-
   return { get, post, put, del, clearCache };
 })();
 
@@ -698,7 +705,8 @@ const ProductService = (() => {
 
     try {
       const queryObj = { SearchTerm: searchTerm };
-      const res = await Http.get(API_CONFIG.ENDPOINTS.PRODUCTS.LIST, { q: JSON.stringify(queryObj) });
+      const res = await Http.get(API_CONFIG.ENDPOINTS.PRODUCTS.LIST, { q: JSON.stringify(queryObj) }, true);
+
 
       // Giả sử API trả về mảng trực tiếp hoặc nằm trong { records: [] }
       return res.records || res;
@@ -1733,7 +1741,11 @@ var Router = (function () {
     }
 
     _fadeOut($el)
-      .then(function () { return _loadScript(route.script); })
+      .then(function () { 
+        if (window.LoadingSpinner) LoadingSpinner.show('Đang tải trang...');
+        return _loadScript(route.script); 
+      })
+
       .then(function () {
         var mod = window[route.pageFn];
         if (mod && typeof mod.render === 'function') {
@@ -1745,11 +1757,15 @@ var Router = (function () {
         if (typeof applyLanguage === 'function') applyLanguage();
         _fadeIn($el); 
         _isNavigating = false; 
+        if (window.LoadingSpinner) LoadingSpinner.hide();
       })
+
       .catch(function (err) {
+        if (window.LoadingSpinner) LoadingSpinner.hide();
         console.error('[Router]', err);
         $el.innerHTML = '<div class="card" style="color:var(--danger)"><span class="material-symbols-outlined" style="vertical-align:middle">error</span> ' + err.message + '</div>';
         _fadeIn($el);
+
         _isNavigating = false;
       });
   }
@@ -1885,6 +1901,7 @@ function openModal(id) {
   var el = document.getElementById(id);
   if (el) {
     el.classList.add('show');
+    // Đẩy trạng thái mới vào history để nút Back có thể đóng modal
     history.pushState({ modalId: id }, null, "");
   }
 }
@@ -1893,13 +1910,16 @@ function closeModal(id) {
   var el = document.getElementById(id);
   if (el && el.classList.contains('show')) {
     el.classList.remove('show');
+    // Nếu đóng thủ công, ta quay lại history 1 bước để xóa state của modal
     if (history.state && history.state.modalId === id) {
       history.back();
     }
   }
 }
 
+// Xử lý nút Back của trình duyệt/điện thoại
 window.addEventListener('popstate', function (e) {
+  // Tìm tất cả các modal đang mở và đóng chúng
   var openModals = document.querySelectorAll('.modal-overlay.show, .modal.show');
   if (openModals.length > 0) {
     openModals.forEach(function (m) {
@@ -1908,14 +1928,9 @@ window.addEventListener('popstate', function (e) {
   }
 });
 
-
 // Đóng modal khi click overlay
 document.addEventListener('click', function (e) {
-  if (e.target.classList.contains('modal-overlay')) {
-    if (e.target.id) closeModal(e.target.id);
-    else e.target.classList.remove('show');
-  }
-
+  if (e.target.classList.contains('modal-overlay')) e.target.classList.remove('show');
 });
 
 // Chuyển đổi ngôn ngữ
