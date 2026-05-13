@@ -608,7 +608,7 @@ const Http = (() => {
   }
 
   // --- Public API ---
-  async function get(endpoint, params = {}, silent = false) {
+  async function get(endpoint, params = {}) {
     const qs = new URLSearchParams(params).toString();
     const url = getApiBaseUrl() + endpoint + (qs ? `?${qs}` : '');
 
@@ -616,7 +616,6 @@ const Http = (() => {
     if (cached) return cached;
 
     document.body.style.cursor = 'wait';
-    if (!silent && window.LoadingSpinner) LoadingSpinner.show();
     try {
       const res = await _fetchWithTimeout(url, { method: 'GET', headers: _headers() });
       const data = await _handleResponse(res);
@@ -628,7 +627,6 @@ const Http = (() => {
       return data;
     } finally {
       document.body.style.cursor = '';
-      if (!silent && window.LoadingSpinner) LoadingSpinner.hide();
     }
   }
 
@@ -705,8 +703,7 @@ const ProductService = (() => {
 
     try {
       const queryObj = { SearchTerm: searchTerm };
-      const res = await Http.get(API_CONFIG.ENDPOINTS.PRODUCTS.LIST, { q: JSON.stringify(queryObj) }, true);
-
+      const res = await Http.get(API_CONFIG.ENDPOINTS.PRODUCTS.LIST, { q: JSON.stringify(queryObj) });
 
       // Giả sử API trả về mảng trực tiếp hoặc nằm trong { records: [] }
       return res.records || res;
