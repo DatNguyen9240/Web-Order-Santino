@@ -570,7 +570,10 @@ var OrderPage = (function () {
     }, 300);
   }
 
-  async function acSearch(val) {
+  let acSearchTimer = null;
+  function acSearch(val) {
+    if (acSearchTimer) clearTimeout(acSearchTimer);
+    
     var btnClear = document.getElementById('ac-clear');
     if (btnClear) btnClear.style.display = val ? 'block' : 'none';
 
@@ -583,6 +586,8 @@ var OrderPage = (function () {
       _detachAcScroll();
       return; 
     }
+
+    acSearchTimer = setTimeout(async function() {
 
     // Gọi API qua Service lấy sản phẩm
     var prods = await ProductService.getProducts(val);
@@ -636,6 +641,7 @@ var OrderPage = (function () {
       input.style.borderBottomLeftRadius = '0';
       input.style.borderBottomRightRadius = '0';
     }
+    }, 400); // 400ms debounce
   }
 
   function selectAcSingle(code) {

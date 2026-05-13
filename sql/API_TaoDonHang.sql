@@ -34,7 +34,6 @@ BEGIN
             SET @DocumentID = @Prefix + RIGHT('0000' + CAST(@MaxSeq + 1 AS VARCHAR), 4);
         END
 
-        /* -- TẠM TẮT CHẶN ĐỂ TEST DATA ẢO
         -- Kiểm tra tồn kho/danh mục: Cấm lưu sản phẩm rác (fake items)
         IF EXISTS (
             SELECT 1 FROM OPENJSON(@OrderJson, '$.lines') l
@@ -48,7 +47,6 @@ BEGIN
         BEGIN
             THROW 50000, N'Lỗi: Đơn hàng chứa sản phẩm ảo (không tồn tại trong danh mục CF_ItemTbl)!', 1;
         END
-        */
 
         DECLARE @KhachDua DECIMAL(18,2) = CAST(ISNULL(NULLIF(JSON_VALUE(@OrderJson, '$.khach_dua'), ''), '0') AS DECIMAL(18,2));
         DECLARE @BaseTotal DECIMAL(18,2) = CAST(ISNULL(NULLIF(JSON_VALUE(@OrderJson, '$.total_money'), ''), '0') AS DECIMAL(18,2));

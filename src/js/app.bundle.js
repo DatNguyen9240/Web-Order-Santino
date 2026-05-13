@@ -702,7 +702,7 @@ const ProductService = (() => {
     }
 
     try {
-      const queryObj = { SearchTerm: searchTerm };
+      const queryObj = { TimKiem: searchTerm };
       const res = await Http.get(API_CONFIG.ENDPOINTS.PRODUCTS.LIST, { q: JSON.stringify(queryObj) });
 
       // Giả sử API trả về mảng trực tiếp hoặc nằm trong { records: [] }
