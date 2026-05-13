@@ -1,4 +1,4 @@
-﻿/* --- translations.js --- */
+/* --- translations.js --- */
 var TRANSLATIONS = {
   vi: {
     // --- Sidebar ---
@@ -1881,12 +1881,41 @@ function showToast(msg, ok, actionHtml, duration) {
   t._timer = setTimeout(function () { t.classList.remove('show'); }, hideTime);
 }
 
-function openModal(id)  { var el = document.getElementById(id); if (el) el.classList.add('show'); }
-function closeModal(id) { var el = document.getElementById(id); if (el) el.classList.remove('show'); }
+function openModal(id) {
+  var el = document.getElementById(id);
+  if (el) {
+    el.classList.add('show');
+    history.pushState({ modalId: id }, null, "");
+  }
+}
+
+function closeModal(id) {
+  var el = document.getElementById(id);
+  if (el && el.classList.contains('show')) {
+    el.classList.remove('show');
+    if (history.state && history.state.modalId === id) {
+      history.back();
+    }
+  }
+}
+
+window.addEventListener('popstate', function (e) {
+  var openModals = document.querySelectorAll('.modal-overlay.show, .modal.show');
+  if (openModals.length > 0) {
+    openModals.forEach(function (m) {
+      m.classList.remove('show');
+    });
+  }
+});
+
 
 // Đóng modal khi click overlay
 document.addEventListener('click', function (e) {
-  if (e.target.classList.contains('modal-overlay')) e.target.classList.remove('show');
+  if (e.target.classList.contains('modal-overlay')) {
+    if (e.target.id) closeModal(e.target.id);
+    else e.target.classList.remove('show');
+  }
+
 });
 
 // Chuyển đổi ngôn ngữ

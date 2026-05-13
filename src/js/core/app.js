@@ -68,8 +68,36 @@ function showToast(msg, ok, actionHtml, duration) {
   t._timer = setTimeout(function () { t.classList.remove('show'); }, hideTime);
 }
 
-function openModal(id)  { var el = document.getElementById(id); if (el) el.classList.add('show'); }
-function closeModal(id) { var el = document.getElementById(id); if (el) el.classList.remove('show'); }
+function openModal(id) {
+  var el = document.getElementById(id);
+  if (el) {
+    el.classList.add('show');
+    // Đẩy trạng thái mới vào history để nút Back có thể đóng modal
+    history.pushState({ modalId: id }, null, "");
+  }
+}
+
+function closeModal(id) {
+  var el = document.getElementById(id);
+  if (el && el.classList.contains('show')) {
+    el.classList.remove('show');
+    // Nếu đóng thủ công, ta quay lại history 1 bước để xóa state của modal
+    if (history.state && history.state.modalId === id) {
+      history.back();
+    }
+  }
+}
+
+// Xử lý nút Back của trình duyệt/điện thoại
+window.addEventListener('popstate', function (e) {
+  // Tìm tất cả các modal đang mở và đóng chúng
+  var openModals = document.querySelectorAll('.modal-overlay.show, .modal.show');
+  if (openModals.length > 0) {
+    openModals.forEach(function (m) {
+      m.classList.remove('show');
+    });
+  }
+});
 
 // Đóng modal khi click overlay
 document.addEventListener('click', function (e) {
