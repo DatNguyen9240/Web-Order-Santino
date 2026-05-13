@@ -28,7 +28,7 @@ BEGIN
         AND (
             @TimKiem IS NULL OR @TimKiem = ''
             OR [ItemName2] LIKE '%' + @TimKiem + '%'
-            OR [TenHangHoa] LIKE N'%' + @TimKiem + '%'
+            OR [TenHangHoa] COLLATE Latin1_General_CI_AI LIKE N'%' + @TimKiem + '%' COLLATE Latin1_General_CI_AI
         )
         AND EXISTS (
             SELECT 1 
