@@ -52,16 +52,21 @@
 
         // Check format login backend
         if (data.code === 0 && data.access_token) {
-          // Lưu vào LocalStorage
-          localStorage.setItem('auth_token', data.access_token);
+          // Lưu toàn bộ thông tin User trừ token vào LocalStorage
+          const { access_token, refresh_token, code, msg, ...userInfo } = data;
+          
           localStorage.setItem('santino_user', JSON.stringify({ 
             name: data.DisplayName || user, 
             id: data.UserName,
-            role: data.Group
+            role: data.Group,
+            ...userInfo // Lưu BranchID, StoreHouseID, v.v.
           }));
           
-          // Lưu vào Cookie (hạn 7 ngày)
+          // Lưu access_token và refresh_token vào Cookie (hạn 7 ngày)
           document.cookie = `auth_token=${data.access_token}; path=/; max-age=${7*24*60*60}`;
+          if (data.refresh_token) {
+            document.cookie = `refresh_token=${data.refresh_token}; path=/; max-age=${7*24*60*60}`;
+          }
 
           if (rememberCheckbox.checked) { 
             localStorage.setItem('santino_remember_user', user); 

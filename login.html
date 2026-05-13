@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -8,7 +9,7 @@
   <link rel="stylesheet" href="./src/css/design-tokens.css">
   <link rel="stylesheet" href="./src/css/global.css">
   <script>
-    (function() {
+    (function () {
       var savedTheme = localStorage.getItem('santino_theme') || 'auto';
       if (savedTheme === 'dark' || (savedTheme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         document.documentElement.classList.add('dark-theme');
@@ -16,46 +17,285 @@
     })();
   </script>
   <style>
-    body { margin: 0; font-family: var(--font); background: var(--bg); color: var(--text); display: flex; align-items: center; justify-content: center; min-height: 100vh; transition: background-color 0.3s; }
-    .theme-btn { position: absolute; top: 24px; right: 24px; background: var(--surface); border: 1px solid var(--border); color: var(--text); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; box-shadow: var(--shadow-sm); }
-    .theme-btn:hover { background: var(--bg); border-color: var(--primary); }
-    .auth-card { background: var(--surface); padding: 48px 40px; border-radius: 24px; box-shadow: var(--shadow-lg); width: 100%; max-width: 420px; border: 1px solid var(--border); animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(20px); }
-    .auth-logo { text-align: center; margin-bottom: 36px; }
-    .auth-logo .icon-box { width: 64px; height: 64px; background: var(--accent-dim); border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; color: var(--accent); box-shadow: var(--shadow-sm); }
-    .auth-logo h2 { font-size: 26px; font-weight: 800; margin: 0 0 8px 0; letter-spacing: -0.02em; }
-    .auth-logo p { color: var(--muted); font-size: 14px; margin: 0; }
-    .form-group { margin-bottom: 20px; }
-    .form-label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--text); letter-spacing: 0.01em; }
-    .input-wrap { position: relative; display: flex; align-items: center; }
-    .input-icon { position: absolute; left: 14px; color: var(--muted); display: flex; pointer-events: none; }
-    .form-group input.form-input { width: 100%; padding: 12px 16px 12px 42px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 15px; transition: all 0.2s; font-weight: 500; }
-    .form-group input.form-input.has-toggle { padding-right: 42px; }
-    .form-group input.form-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); background: var(--surface); }
-    .btn-toggle-pw { position: absolute; right: 14px; background: none; border: none; color: var(--muted); cursor: pointer; display: flex; padding: 0; transition: color 0.2s; }
-    .btn-toggle-pw:hover { color: var(--accent); }
-    .form-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; font-size: 14px; }
-    .checkbox-wrap { display: flex; align-items: center; gap: 8px; color: var(--muted); font-weight: 500; cursor: pointer; }
-    .checkbox-wrap input { accent-color: var(--accent); width: 16px; height: 16px; cursor: pointer; }
-    .link { color: var(--accent); text-decoration: none; font-weight: 600; transition: color 0.2s; }
-    .link:hover { color: var(--text); }
-    .btn-primary { width: 100%; padding: 14px; border-radius: 12px; background: var(--primary); color: var(--primary-fg); font-size: 16px; font-weight: 700; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: var(--shadow); }
-    .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: var(--shadow-md); filter: brightness(1.1); }
-    .btn-primary:active:not(:disabled) { transform: translateY(0); box-shadow: var(--shadow-sm); }
-    .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
-    .btn-spinner { display: none; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: var(--primary-fg); border-radius: 50%; animation: spin 0.8s linear infinite; }
-    #login-error { background: rgba(225, 29, 72, 0.1); color: var(--danger); padding: 12px; border-radius: 10px; font-size: 14px; margin-bottom: 20px; display: none; text-align: center; border: 1px solid rgba(225, 29, 72, 0.2); font-weight: 600; }
-    @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      transition: background-color 0.3s;
+    }
+
+    .theme-btn {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .theme-btn:hover {
+      background: var(--bg);
+      border-color: var(--primary);
+    }
+
+    .auth-card {
+      background: var(--surface);
+      padding: 48px 40px;
+      border-radius: 24px;
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-width: 420px;
+      border: 1px solid var(--border);
+      animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .auth-logo {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .auth-logo .icon-box {
+      width: 64px;
+      height: 64px;
+      background: var(--accent-dim);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      color: var(--accent);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .auth-logo h2 {
+      font-size: 26px;
+      font-weight: 800;
+      margin: 0 0 8px 0;
+      letter-spacing: -0.02em;
+    }
+
+    .auth-logo p {
+      color: var(--muted);
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text);
+      letter-spacing: 0.01em;
+    }
+
+    .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 14px;
+      color: var(--muted);
+      display: flex;
+      pointer-events: none;
+    }
+
+    .form-group input.form-input {
+      width: 100%;
+      padding: 12px 16px 12px 42px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 15px;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+
+    .form-group input.form-input.has-toggle {
+      padding-right: 42px;
+    }
+
+    .form-group input.form-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+      background: var(--surface);
+    }
+
+    .btn-toggle-pw {
+      position: absolute;
+      right: 14px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      display: flex;
+      padding: 0;
+      transition: color 0.2s;
+    }
+
+    .btn-toggle-pw:hover {
+      color: var(--accent);
+    }
+
+    .form-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+      font-size: 14px;
+    }
+
+    .checkbox-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .checkbox-wrap input {
+      accent-color: var(--accent);
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s;
+    }
+
+    .link:hover {
+      color: var(--text);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      background: var(--primary);
+      color: var(--primary-fg);
+      font-size: 16px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--shadow);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      filter: brightness(1.1);
+    }
+
+    .btn-primary:active:not(:disabled) {
+      transform: translateY(0);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .btn-spinner {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: var(--primary-fg);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    #login-error {
+      background: rgba(225, 29, 72, 0.1);
+      color: var(--danger);
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 20px;
+      display: none;
+      text-align: center;
+      border: 1px solid rgba(225, 29, 72, 0.2);
+      font-weight: 600;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
   </style>
 </head>
+
 <body>
   <button class="theme-btn" id="btn-theme" aria-label="Đổi giao diện">
-    <svg id="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-    <svg id="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+    <svg id="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+    </svg>
+    <svg id="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      style="display:none">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
   </button>
   <div class="auth-card">
     <div class="auth-logo">
-      <img src="images/logo.png" alt="SANTINO" class="app-logo" style="height: 64px; object-fit: contain; margin: 0 auto 16px; display: block;">
+      <img src="images/logo.png" alt="SANTINO" class="app-logo"
+        style="height: 64px; object-fit: contain; margin: 0 auto 16px; display: block;">
       <!-- Removed branding -->
       <p>Đăng nhập hệ thống đại lý bán sỉ</p>
     </div>
@@ -64,18 +304,37 @@
       <div class="form-group">
         <label class="form-label" for="login-username">Mã Đại Lý / Tên đăng nhập</label>
         <div class="input-wrap">
-          <span class="input-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span>
-          <input type="text" id="login-username" class="form-input" placeholder="Nhập mã đại lý" autocomplete="username" required>
+          <span class="input-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg></span>
+          <input type="text" id="login-username" class="form-input" placeholder="Nhập mã đại lý" autocomplete="username"
+            required>
         </div>
       </div>
       <div class="form-group">
         <label class="form-label" for="login-password">Mật khẩu</label>
         <div class="input-wrap">
-          <span class="input-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
-          <input type="password" id="login-password" class="form-input has-toggle" placeholder="Nhập mật khẩu" autocomplete="current-password" required>
+          <span class="input-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg></span>
+          <input type="password" id="login-password" class="form-input has-toggle" placeholder="Nhập mật khẩu"
+            autocomplete="current-password" required>
           <button type="button" class="btn-toggle-pw" aria-label="Hiện/Ẩn mật khẩu">
-            <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-            <svg class="eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+            <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            <svg class="eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" style="display:none">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"></path>
+              <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"></path>
+              <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>
           </button>
         </div>
       </div>
@@ -90,7 +349,7 @@
     </form>
   </div>
   <script>
-    (function() {
+    (function () {
       var btnTheme = document.getElementById('btn-theme'), iconMoon = document.getElementById('icon-moon'), iconSun = document.getElementById('icon-sun');
       function updateThemeUI(isDark) {
         if (isDark) { document.body.classList.add('dark-theme'); document.documentElement.classList.add('dark-theme'); iconMoon.style.display = 'none'; iconSun.style.display = 'block'; }
@@ -99,7 +358,7 @@
       var savedTheme = localStorage.getItem('santino_theme') || 'auto';
       var isDark = savedTheme === 'dark' || (savedTheme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
       updateThemeUI(isDark);
-      btnTheme.addEventListener('click', function() {
+      btnTheme.addEventListener('click', function () {
         var newDark = !document.body.classList.contains('dark-theme');
         localStorage.setItem('santino_theme', newDark ? 'dark' : 'light');
         updateThemeUI(newDark);
@@ -109,9 +368,9 @@
       });
     })();
 
-    (function() {
+    (function () {
       var btnTogglePw = document.querySelector('.btn-toggle-pw'), inputPw = document.getElementById('login-password'), eyeOpen = btnTogglePw.querySelector('.eye-open'), eyeOff = btnTogglePw.querySelector('.eye-off');
-      btnTogglePw.addEventListener('click', function() {
+      btnTogglePw.addEventListener('click', function () {
         if (inputPw.type === 'password') { inputPw.type = 'text'; eyeOpen.style.display = 'none'; eyeOff.style.display = 'block'; }
         else { inputPw.type = 'password'; eyeOpen.style.display = 'block'; eyeOff.style.display = 'none'; }
       });
@@ -125,4 +384,5 @@
   <!-- Load logic đăng nhập -->
   <script src="src/js/login.js?v=76"></script>
 </body>
+
 </html>

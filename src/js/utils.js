@@ -41,5 +41,29 @@ const Utils = (function () {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  return { formatMoney, buildSKU, genOrderNo, today, escHtml, uuid };
+  function _removeDiacritics(str) {
+    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
+  }
+
+  function getUserInitials() {
+    try {
+      const userRaw = localStorage.getItem('santino_user');
+      if (!userRaw) return '??';
+      const user = JSON.parse(userRaw);
+      const name = user.name || user.DisplayName || 'User';
+      
+      const words = name.trim().split(/\s+/);
+      if (words.length === 1) {
+        return _removeDiacritics(words[0].substring(0, 2)).toUpperCase();
+      }
+      
+      const first = words[0][0];
+      const last = words[words.length - 1][0];
+      return _removeDiacritics(first + last).toUpperCase();
+    } catch (e) {
+      return '??';
+    }
+  }
+
+  return { formatMoney, buildSKU, genOrderNo, today, escHtml, uuid, getUserInitials };
 })();

@@ -12,6 +12,13 @@ const Http = (() => {
 
   // --- Cache layer (sessionStorage) ---
   function _cacheKey(url) { return CACHE_PREFIX + url; }
+  
+  function _getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return '';
+  }
 
   function _getFromCache(key) {
     try {
@@ -43,7 +50,7 @@ const Http = (() => {
 
   // --- Auth & Headers ---
   function _getToken() {
-    return localStorage.getItem('auth_token') || '';
+    return _getCookie('auth_token');
   }
 
   function _headers(extra = {}) {
@@ -69,7 +76,8 @@ const Http = (() => {
     // 1. Check Auth
     if (res.status === 401) {
       _alert('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.', false);
-      localStorage.removeItem('auth_token');
+      document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      document.cookie = "refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       localStorage.removeItem('santino_user');
       window.location.href = 'login.html';
       return;
@@ -103,7 +111,8 @@ const Http = (() => {
     // 5. Business Logic Code (quy ước code = 2 là hết phiên)
     if (data.code === 2) {
       _alert(data.msg || 'Phiên đăng nhập đã hết hạn.', false);
-      localStorage.removeItem('auth_token');
+      document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      document.cookie = "refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       localStorage.removeItem('santino_user');
       window.location.href = 'login.html';
       return;

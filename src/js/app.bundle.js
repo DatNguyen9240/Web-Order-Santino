@@ -1,4 +1,4 @@
-﻿/* --- translations.js --- */
+/* --- translations.js --- */
 var TRANSLATIONS = {
   vi: {
     // --- Sidebar ---
@@ -499,9 +499,16 @@ const Http = (() => {
     keysToRemove.forEach(k => sessionStorage.removeItem(k));
   }
 
+  function _getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return '';
+  }
+
   // --- Auth & Headers ---
   function _getToken() {
-    return localStorage.getItem('auth_token') || '';
+    return _getCookie('auth_token');
   }
 
   function _headers(extra = {}) {
@@ -527,7 +534,8 @@ const Http = (() => {
     // 1. Check Auth
     if (res.status === 401) {
       _alert('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.', false);
-      localStorage.removeItem('auth_token');
+      document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      document.cookie = "refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       localStorage.removeItem('santino_user');
       window.location.href = 'login.html';
       return;
@@ -561,7 +569,8 @@ const Http = (() => {
     // 5. Business Logic Code (quy ước code = 2 là hết phiên)
     if (data.code === 2) {
       _alert(data.msg || 'Phiên đăng nhập đã hết hạn.', false);
-      localStorage.removeItem('auth_token');
+      document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      document.cookie = "refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       localStorage.removeItem('santino_user');
       window.location.href = 'login.html';
       return;
@@ -865,7 +874,25 @@ const Utils = (function () {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  return { formatMoney, buildSKU, genOrderNo, today, escHtml, uuid };
+  function _removeDiacritics(str) {
+    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
+  }
+
+  function getUserInitials() {
+    try {
+      const userRaw = localStorage.getItem('santino_user');
+      if (!userRaw) return '??';
+      const user = JSON.parse(userRaw);
+      const name = user.name || user.DisplayName || 'User';
+      const words = name.trim().split(/\s+/);
+      if (words.length === 1) return _removeDiacritics(words[0].substring(0, 2)).toUpperCase();
+      const first = words[0][0];
+      const last = words[words.length - 1][0];
+      return _removeDiacritics(first + last).toUpperCase();
+    } catch (e) { return '??'; }
+  }
+
+  return { formatMoney, buildSKU, genOrderNo, today, escHtml, uuid, getUserInitials };
 })();
 
 
@@ -1783,7 +1810,11 @@ var SoundUtils = (function () {
  * Chạy sau khi tất cả scripts đã load
  */
 document.addEventListener('DOMContentLoaded', function () {
-  // Cài đặt khởi tạo
+  // 1. Khởi tạo User Menu Component
+  if (typeof UserMenu !== 'undefined') {
+    UserMenu.render('user-menu-navbar');
+    UserMenu.render('user-menu-sidebar-header');
+  }
 
 
   // 2. Khôi phục Cài đặt

@@ -3,7 +3,11 @@
  * Chạy sau khi tất cả scripts đã load
  */
 document.addEventListener('DOMContentLoaded', function () {
-  // Cài đặt khởi tạo
+  // 1. Khởi tạo User Menu Component
+  if (typeof UserMenu !== 'undefined') {
+    UserMenu.render('user-menu-navbar');
+    UserMenu.render('user-menu-sidebar-header');
+  }
 
 
   // 2. Khôi phục Cài đặt
