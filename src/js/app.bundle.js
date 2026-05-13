@@ -1294,6 +1294,9 @@ UIControls.createDataComboBox = function (options) {
   }
 
   function showDropdown() {
+    // Đóng các dropdown khác trước khi mở
+    document.dispatchEvent(new CustomEvent('close-other-comboboxes', { detail: dropdown }));
+
     if (dropdown.parentNode !== document.body) {
       document.body.appendChild(dropdown);
     }
@@ -1364,9 +1367,31 @@ UIControls.createDataComboBox = function (options) {
     // Chỉ ô tìm kiếm bên trong dropdown (searchInput) mới thực hiện filter.
   });
 
-  document.addEventListener('click', function (e) {
+  function _onDocClick(e) {
+    if (!document.body.contains(container)) {
+      _cleanupListeners();
+      return;
+    }
     if (!container.contains(e.target) && !dropdown.contains(e.target)) hideDropdown();
-  });
+  }
+
+  function _onCloseOthers(e) {
+    if (!document.body.contains(container)) {
+      _cleanupListeners();
+      return;
+    }
+    if (e.detail !== dropdown) hideDropdown();
+  }
+
+  function _cleanupListeners() {
+    document.removeEventListener('click', _onDocClick);
+    document.removeEventListener('close-other-comboboxes', _onCloseOthers);
+    hideDropdown();
+  }
+
+  document.addEventListener('click', _onDocClick);
+  document.addEventListener('close-other-comboboxes', _onCloseOthers);
+
 
   input.addEventListener('blur', function () {
     var val = input.value.trim().toLowerCase();
