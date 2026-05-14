@@ -20,6 +20,7 @@ BEGIN
          FROM [dbo].[CF_ItemTbl] ci 
          WHERE ci.[ItemName2] = t2.[ItemName2]
            AND ci.[MauSac] = t2.[MauSac]
+           AND (ci.[isDisable] = 0 OR ci.[isDisable] IS NULL)
          FOR JSON PATH) AS [sizes_json]
     FROM 
         [dbo].[CF_TenHang2Tbl] t2
@@ -35,6 +36,7 @@ BEGIN
             FROM [dbo].[CF_ItemTbl] ci 
             WHERE ci.[ItemName2] = t2.[ItemName2]
               AND ci.[MauSac] = t2.[MauSac]
+              AND (ci.[isDisable] = 0 OR ci.[isDisable] IS NULL)
         )
     ORDER BY 
         [ItemName2] ASC;
