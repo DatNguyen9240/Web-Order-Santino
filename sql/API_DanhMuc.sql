@@ -263,19 +263,32 @@ BEGIN
             h.[KhachDua] AS [khach_dua],
             h.[isLock] AS [is_lock],
             ISNULL((SELECT SUM(Quantity) FROM [dbo].[OrderDetailTbl] d WHERE d.DocumentID = @TimKiem), 0) AS [total_qty],
-             (SELECT 
-                ISNULL(d.[ItemID], '') AS [sku],
-                ISNULL(i.[ItemName2], d.[ItemID]) AS [ten_hang_2],
-                d.[ItemName] AS [ten_hang],
-                d.[Size] AS [size],
-                d.[MauSac] AS [mau],
-                d.[Quantity] AS [so_luong],
-                d.[UnitPrice] AS [don_gia],
-                d.[TotalAmount] AS [thanh_tien]
-             FROM [dbo].[OrderDetailTbl] d 
-             LEFT JOIN [dbo].[CF_ItemTbl] i ON d.[ItemID] = i.[ItemID]
-             WHERE d.DocumentID = @TimKiem 
-             FOR JSON PATH, INCLUDE_NULL_VALUES) AS [lines]
+             (
+                SELECT 
+                    CI.[ItemName2] AS [ten_hang_2],
+                    MAX(D.[ItemName]) AS [ten_hang],
+                    MAX(CI.[MauSac]) AS [mau],
+                    SUM(D.[Quantity]) AS [so_luong],
+                    MAX(D.[UnitPrice]) AS [don_gia],
+                    SUM(D.[TotalAmount]) AS [thanh_tien],
+                    (
+                        SELECT 
+                            subD.[Size] AS [size], 
+                            SUM(subD.[Quantity]) AS [qty]
+                        FROM [dbo].[OrderDetailTbl] subD
+                        LEFT JOIN [dbo].[CF_ItemTbl] subCI ON subD.[ItemID] = subCI.[ItemID]
+                        WHERE subD.[DocumentID] = h.[DocumentID]
+                          AND subCI.[ItemName2] = CI.[ItemName2]
+                        GROUP BY subD.[Size]
+                        FOR JSON PATH
+                    ) AS [chi_tiet_size]
+                FROM [dbo].[OrderDetailTbl] D
+                LEFT JOIN [dbo].[CF_ItemTbl] CI ON D.[ItemID] = CI.[ItemID]
+                WHERE D.[DocumentID] = h.[DocumentID]
+                GROUP BY CI.[ItemName2]
+                ORDER BY MIN(D.[STT]) ASC
+                FOR JSON PATH
+             ) AS [lines]
         FROM [dbo].[OrderTbl] h
         LEFT JOIN [dbo].[CF_EmployeeTbl] e ON h.[EmployeeID] = e.[EmployeeID]
         WHERE h.DocumentID = @TimKiem;
