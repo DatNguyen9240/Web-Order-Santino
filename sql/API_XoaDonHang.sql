@@ -13,7 +13,7 @@ BEGIN
         BEGIN TRANSACTION;
 
         -- 1. Kiểm tra xem đơn hàng có tồn tại không
-        IF NOT EXISTS (SELECT 1 FROM [dbo].[OrderTbl] WHERE DocumentID = @DocumentID)
+        IF NOT EXISTS (SELECT 1 FROM [dbo].[WEB_OrderTbl] WHERE DocumentID = @DocumentID)
         BEGIN
             ROLLBACK TRANSACTION;
             SELECT 0 AS [Success], N'Không tìm thấy đơn hàng ' + @DocumentID AS [Message];
@@ -21,7 +21,7 @@ BEGIN
         END
 
         -- 2. Kiểm tra điều kiện (Ví dụ: Đơn hàng đã bị khóa thì không cho xóa)
-        IF EXISTS (SELECT 1 FROM [dbo].[OrderTbl] WHERE DocumentID = @DocumentID AND ISNULL(isLock, 0) = 1)
+        IF EXISTS (SELECT 1 FROM [dbo].[WEB_OrderTbl] WHERE DocumentID = @DocumentID AND ISNULL(isLock, 0) = 1)
         BEGIN
             ROLLBACK TRANSACTION;
             SELECT 0 AS [Success], N'Đơn hàng ' + @DocumentID + N' đã bị khóa, không thể xóa' AS [Message];
@@ -29,10 +29,10 @@ BEGIN
         END
 
         -- 3. Xóa chi tiết đơn hàng (Detail)
-        DELETE FROM [dbo].[OrderDetailTbl] WHERE DocumentID = @DocumentID;
+        DELETE FROM [dbo].[WEB_OrderDetailTbl] WHERE DocumentID = @DocumentID;
 
         -- 4. Xóa thông tin chung đơn hàng (Header)
-        DELETE FROM [dbo].[OrderTbl] WHERE DocumentID = @DocumentID;
+        DELETE FROM [dbo].[WEB_OrderTbl] WHERE DocumentID = @DocumentID;
 
         COMMIT TRANSACTION;
 
