@@ -41,14 +41,14 @@ BEGIN
                         SELECT 
                             subD.[Size] AS [size], 
                             SUM(subD.[Quantity]) AS [qty]
-                        FROM [dbo].[OrderDetailTbl] subD
+                        FROM [dbo].[WEB_OrderDetailTbl] subD
                         LEFT JOIN [dbo].[CF_ItemTbl] subCI ON subD.[ItemID] = subCI.[ItemID]
                         WHERE subD.[DocumentID] = H.[DocumentID]
                           AND subCI.[ItemName2] = CI.[ItemName2]
                         GROUP BY subD.[Size]
                         FOR JSON PATH
                     ) AS [chi_tiet_size]
-                FROM [dbo].[OrderDetailTbl] D
+                FROM [dbo].[WEB_OrderDetailTbl] D
                 LEFT JOIN [dbo].[CF_ItemTbl] CI ON D.[ItemID] = CI.[ItemID]
                 WHERE D.[DocumentID] = H.[DocumentID]
                 GROUP BY CI.[ItemName2]
@@ -56,7 +56,7 @@ BEGIN
                 FOR JSON PATH
             ) AS [lines]
             
-        FROM [dbo].[OrderTbl] H
+        FROM [dbo].[WEB_OrderTbl] H
         WHERE H.[DocumentID] = @DocumentID
         FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
     ) AS [json_data];

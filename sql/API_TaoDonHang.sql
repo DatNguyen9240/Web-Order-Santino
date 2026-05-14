@@ -22,13 +22,13 @@ BEGIN
         IF ISNULL(@MaKH, '') = '' THROW 50000, N'Lỗi: Vui lòng chọn Khách hàng!', 1;
         
         -- Nếu Client không gửi mã, HOẶC mã Client gửi đã bị trùng, tự động sinh mã mới!
-        IF @DocumentID IS NULL OR @DocumentID = '' OR EXISTS (SELECT 1 FROM [dbo].[OrderTbl] WHERE DocumentID = @DocumentID)
+        IF @DocumentID IS NULL OR @DocumentID = '' OR EXISTS (SELECT 1 FROM [dbo].[WEB_OrderTbl] WHERE DocumentID = @DocumentID)
         BEGIN
             DECLARE @Prefix NVARCHAR(50) = CASE WHEN ISNULL(@BranchID, '') = '' THEN 'DH' ELSE @BranchID + '-DH' END + FORMAT(GETDATE(), 'MMyy') + '/';
             DECLARE @MaxSeq INT;
             
             SELECT @MaxSeq = ISNULL(MAX(CAST(RIGHT(DocumentID, 4) AS INT)), 0)
-            FROM [dbo].[OrderTbl] WITH (UPDLOCK, HOLDLOCK)
+            FROM [dbo].[WEB_OrderTbl] WITH (UPDLOCK, HOLDLOCK)
             WHERE DocumentID LIKE @Prefix + '%';
             
             SET @DocumentID = @Prefix + RIGHT('0000' + CAST(@MaxSeq + 1 AS VARCHAR), 4);
@@ -58,8 +58,8 @@ BEGIN
         DECLARE @NgayTT NVARCHAR(50) = JSON_VALUE(@OrderJson, '$.ngay_tt');
         DECLARE @NgayCT NVARCHAR(50) = JSON_VALUE(@OrderJson, '$.ngay_ct');
 
-        -- 2. Insert Header vào OrderTbl
-        INSERT INTO [dbo].[OrderTbl] (
+        -- 2. Insert Header vào WEB_OrderTbl
+        INSERT INTO [dbo].[WEB_OrderTbl] (
             [DocumentID], [DocumentDate], [BranchID], [BaseTotal], [KhachDua], [TraLai],
             [ObjectID], [ObjectName], [Memo], [Notes], [EmployeeID], 
             [NguoiGiao], [PTGiaoHang], [NguonDon], [MaDaiLy], [CTKM],
@@ -92,7 +92,7 @@ BEGIN
             1  -- isBanSi (Order sỉ ma trận)
         );
 
-        INSERT INTO [dbo].[OrderDetailTbl] (
+        INSERT INTO [dbo].[WEB_OrderDetailTbl] (
             [UserAutoID], [DocumentID], [ItemID], [ItemName], [Size], 
             [MauSac], [Quantity], [UnitPrice], [Amount], [TotalAmount], [STT]
         )

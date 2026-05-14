@@ -157,7 +157,7 @@ BEGIN
         SELECT DISTINCT
             [Notes] AS [id],
             [Notes] AS [name]
-        FROM [dbo].[OrderTbl]
+        FROM [dbo].[WEB_OrderTbl]
         WHERE [Notes] IS NOT NULL AND [Notes] <> ''
           AND (@TimKiem = '' OR [Notes] LIKE N'%' + @TimKiem + N'%')
         ORDER BY [Notes];
@@ -226,9 +226,9 @@ BEGIN
             [CTKM]         AS [ma_ctbh],
             [EmployeeID]   AS [nvkd],
             [isLock]       AS [is_lock],
-            ISNULL((SELECT SUM(Quantity) FROM [dbo].[OrderDetailTbl] d WHERE d.DocumentID = o.DocumentID), 0) AS [total_qty],
+            ISNULL((SELECT SUM(Quantity) FROM [dbo].[WEB_OrderDetailTbl] d WHERE d.DocumentID = o.DocumentID), 0) AS [total_qty],
             COUNT(*) OVER() AS [total_rows]
-        FROM [dbo].[OrderTbl] o
+        FROM [dbo].[WEB_OrderTbl] o
         WHERE (@TuKhoa = '' OR [DocumentID] LIKE N'%' + @TuKhoa + N'%' OR [ObjectName] LIKE N'%' + @TuKhoa + N'%')
           AND (@chinhanh IS NULL OR @chinhanh = '' OR [BranchID] = @chinhanh)
           AND (@TuNgay IS NULL OR [DocumentDate] >= @TuNgay)
@@ -262,7 +262,7 @@ BEGIN
             h.[BaseTotal] AS [total_money],
             h.[KhachDua] AS [khach_dua],
             h.[isLock] AS [is_lock],
-            ISNULL((SELECT SUM(Quantity) FROM [dbo].[OrderDetailTbl] d WHERE d.DocumentID = @TimKiem), 0) AS [total_qty],
+            ISNULL((SELECT SUM(Quantity) FROM [dbo].[WEB_OrderDetailTbl] d WHERE d.DocumentID = @TimKiem), 0) AS [total_qty],
              (
                 SELECT 
                     CI.[ItemName2] AS [ten_hang_2],
@@ -275,21 +275,21 @@ BEGIN
                         SELECT 
                             subD.[Size] AS [size], 
                             SUM(subD.[Quantity]) AS [qty]
-                        FROM [dbo].[OrderDetailTbl] subD
+                        FROM [dbo].[WEB_OrderDetailTbl] subD
                         LEFT JOIN [dbo].[CF_ItemTbl] subCI ON subD.[ItemID] = subCI.[ItemID]
                         WHERE subD.[DocumentID] = h.[DocumentID]
                           AND subCI.[ItemName2] = CI.[ItemName2]
                         GROUP BY subD.[Size]
                         FOR JSON PATH
                     ) AS [chi_tiet_size]
-                FROM [dbo].[OrderDetailTbl] D
+                FROM [dbo].[WEB_OrderDetailTbl] D
                 LEFT JOIN [dbo].[CF_ItemTbl] CI ON D.[ItemID] = CI.[ItemID]
                 WHERE D.[DocumentID] = h.[DocumentID]
                 GROUP BY CI.[ItemName2]
                 ORDER BY MIN(D.[STT]) ASC
                 FOR JSON PATH
              ) AS [lines]
-        FROM [dbo].[OrderTbl] h
+        FROM [dbo].[WEB_OrderTbl] h
         LEFT JOIN [dbo].[CF_EmployeeTbl] e ON h.[EmployeeID] = e.[EmployeeID]
         WHERE h.DocumentID = @TimKiem;
         RETURN;
