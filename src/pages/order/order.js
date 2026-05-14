@@ -894,22 +894,42 @@ var OrderPage = (function () {
     var note = document.getElementById('o-notes').value || (_combos.note ? _combos.note.querySelector('input').value : '');
     var lines = [];
     orderRows.forEach(function (row) {
+      var chi_tiet_size = [];
+      var total_qty = 0;
+      var total_money = 0;
+
       Object.entries(row.quantities).forEach(function (e) {
         var size = e[0], qty = parseInt(e[1]) || 0;
-        if (qty > 0) lines.push({
-          ma_hang: row.ten_hang_2, ten_hang_2: row.ten_hang_2, sku: Utils.buildSKU(row.ten_hang_2, size),
-          ten_hang: row.product.ten_hang_hoa, nhom_size: row.product.nhom_size,
-          mau: row.product.mau,
-          size: size, so_luong: qty, don_gia: row.product.don_gia,
-          thanh_tien: qty * row.product.don_gia, ma_ctbh: ma_ctbh, ghi_chu: note
-        });
+        if (qty > 0) {
+          chi_tiet_size.push({ size: size, qty: qty });
+          total_qty += qty;
+          total_money += qty * (row.product.don_gia || 0);
+        }
       });
+
+      if (total_qty > 0) {
+        lines.push({
+          ten_hang_2: row.ten_hang_2,
+          ten_hang: row.product.ten_hang_hoa,
+          nhom_size: row.product.nhom_size,
+          mau: row.product.mau,
+          so_luong: total_qty,
+          don_gia: row.product.don_gia,
+          thanh_tien: total_money,
+          ma_ctbh: ma_ctbh,
+          ghi_chu: note,
+          chi_tiet_size: chi_tiet_size
+        });
+      }
     });
     return lines;
   }
 
   function previewOrder() {
     if (!orderRows.length) { showToast('Vui lòng chọn sản phẩm và nhập số lượng', false); return; }
+    
+    // Đóng danh sách tìm kiếm (nếu đang mở) để không bị đè lên modal
+    closeAc();
 
     // 1. Thu thập tất cả các size có số lượng > 0
     var uniqueSizes = [];

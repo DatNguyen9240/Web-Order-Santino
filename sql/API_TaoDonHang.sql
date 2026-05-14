@@ -36,11 +36,13 @@ BEGIN
 
         -- Kiểm tra tồn kho/danh mục: Cấm lưu sản phẩm rác (fake items)
         IF EXISTS (
-            SELECT 1 FROM OPENJSON(@OrderJson, '$.lines') l
+            SELECT 1 
+            FROM OPENJSON(@OrderJson, '$.lines') l
+            CROSS APPLY OPENJSON(l.[value], '$.chi_tiet_size') sz
             WHERE NOT EXISTS (
                 SELECT 1 FROM [dbo].[CF_ItemTbl] ci
                 WHERE ci.ItemName2 = JSON_VALUE(l.[value], '$.ten_hang_2')
-                  AND ci.Size     = JSON_VALUE(l.[value], '$.size')
+                  AND ci.Size     = LTRIM(RTRIM(JSON_VALUE(sz.[value], '$.size')))
                   AND ci.MauSac   = JSON_VALUE(l.[value], '$.mau')
             )
         )
@@ -90,7 +92,6 @@ BEGIN
             1  -- isBanSi (Order sỉ ma trận)
         );
 
-        -- 3. Insert Detail vào OrderDetailTbl
         INSERT INTO [dbo].[OrderDetailTbl] (
             [UserAutoID], [DocumentID], [ItemID], [ItemName], [Size], 
             [MauSac], [Quantity], [UnitPrice], [Amount], [TotalAmount], [STT]
@@ -100,18 +101,19 @@ BEGIN
             @DocumentID,
             (SELECT TOP 1 ci.ItemID FROM [dbo].[CF_ItemTbl] ci
              WHERE ci.ItemName2 = JSON_VALUE(l.[value], '$.ten_hang_2')
-               AND ci.Size     = JSON_VALUE(l.[value], '$.size')
+               AND ci.Size     = JSON_VALUE(sz.[value], '$.size')
                AND ci.MauSac   = JSON_VALUE(l.[value], '$.mau')
              ORDER BY ci.ItemID), -- Chấp nhận NULL để né Khóa Ngoại
             JSON_VALUE(l.[value], '$.ten_hang'),
-            JSON_VALUE(l.[value], '$.size'),
+            JSON_VALUE(sz.[value], '$.size'),
             JSON_VALUE(l.[value], '$.mau'),
-            CAST(ISNULL(NULLIF(JSON_VALUE(l.[value], '$.so_luong'), ''), '0') AS DECIMAL(18,2)),
+            CAST(ISNULL(NULLIF(JSON_VALUE(sz.[value], '$.qty'), ''), '0') AS DECIMAL(18,2)),
             CAST(ISNULL(NULLIF(JSON_VALUE(l.[value], '$.don_gia'), ''), '0') AS DECIMAL(18,2)),
-            CAST(ISNULL(NULLIF(JSON_VALUE(l.[value], '$.thanh_tien'), ''), '0') AS DECIMAL(18,2)),
-            CAST(ISNULL(NULLIF(JSON_VALUE(l.[value], '$.thanh_tien'), ''), '0') AS DECIMAL(18,2)),
+            CAST(ISNULL(NULLIF(JSON_VALUE(sz.[value], '$.qty'), ''), '0') AS DECIMAL(18,2)) * CAST(ISNULL(NULLIF(JSON_VALUE(l.[value], '$.don_gia'), ''), '0') AS DECIMAL(18,2)),
+            CAST(ISNULL(NULLIF(JSON_VALUE(sz.[value], '$.qty'), ''), '0') AS DECIMAL(18,2)) * CAST(ISNULL(NULLIF(JSON_VALUE(l.[value], '$.don_gia'), ''), '0') AS DECIMAL(18,2)),
             CAST(ISNULL(NULLIF(JSON_VALUE(l.[value], '$.stt'), ''), l.[key]) AS INT)
-        FROM OPENJSON(@OrderJson, '$.lines') l;
+        FROM OPENJSON(@OrderJson, '$.lines') l
+        CROSS APPLY OPENJSON(l.[value], '$.chi_tiet_size') sz;
 
         COMMIT TRANSACTION;
 
