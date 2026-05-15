@@ -573,7 +573,7 @@ var OrderPage = (function () {
     updateInfoSummary();
     setTimeout(function() {
       var inp = document.getElementById('ac-input');
-      if (inp) inp.focus();
+      if (inp && orderRows.length === 0) inp.focus();
     }, 300);
   }
 
