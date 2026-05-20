@@ -741,7 +741,14 @@ const CategoryService = (() => {
     if (!API_CONFIG.BASE_URL) return [];
 
     try {
-      const queryObj = { Loai: loai };
+      const user = JSON.parse(localStorage.getItem('santino_user') || '{}');
+      const queryObj = {
+        Loai: loai,
+        UserRole: user.role || user.Group || '',
+        UserEmployeeID: user.EmployeeID || '',
+        UserManagerID: user.ManagerID || '',
+        UserObjectID: user.ObjectID || ''
+      };
       if (search && search.trim()) queryObj.TimKiem = search.trim();
 
       const params = { q: JSON.stringify(queryObj) };
@@ -819,6 +826,13 @@ const OrderService = (() => {
    * Tạo đơn hàng mới
    */
   async function createOrder(orderData) {
+    if (!API_CONFIG.BASE_URL) throw new Error('API_BASE chưa cấu hình');
+    const user = JSON.parse(localStorage.getItem('santino_user') || '{}');
+    orderData.UserRole = user.role || user.Group || '';
+    orderData.UserEmployeeID = user.EmployeeID || '';
+    orderData.UserManagerID = user.ManagerID || '';
+    orderData.UserObjectID = user.ObjectID || '';
+    
     const params = { OrderJson: JSON.stringify(orderData) };
     return Http.post(API_CONFIG.ENDPOINTS.ORDERS.CREATE, params);
   }
@@ -832,6 +846,31 @@ const OrderService = (() => {
   }
 
   return { getOrders, createOrder, deleteOrder };
+})();
+
+
+/* --- menu.service.js --- */
+/**
+ * Menu Service
+ * Quản lý các lệnh gọi API liên quan đến Menu
+ */
+const MenuService = (() => {
+  async function getChildren(parentID) {
+    if (!API_CONFIG || !API_CONFIG.BASE_URL) return [];
+    try {
+      const queryObj = { Parent: parentID };
+      const params = { q: JSON.stringify(queryObj) };
+      const res = await Http.get(API_CONFIG.ENDPOINTS.MENU.CHILDREN, params);
+      return res.data || res.records || res || [];
+    } catch (err) {
+      console.error('Lỗi tải danh sách menu con:', err);
+      return [];
+    }
+  }
+
+  return {
+    getChildren
+  };
 })();
 
 
@@ -903,7 +942,17 @@ const Utils = (function () {
     }
   }
 
-  return { formatMoney, buildSKU, genOrderNo, today, escHtml, uuid, getUserInitials };
+  function toggleRow(el) {
+    if (!el || !el.parentElement) return;
+    const isSelected = el.classList.contains('row-selected');
+    const rows = el.parentElement.querySelectorAll('tr');
+    rows.forEach(r => r.classList.remove('row-selected'));
+    if (!isSelected) {
+      el.classList.add('row-selected');
+    }
+  }
+
+  return { formatMoney, buildSKU, genOrderNo, today, escHtml, uuid, getUserInitials, toggleRow };
 })();
 
 
@@ -1884,10 +1933,87 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   Router.init();
 
+  // 3. Khởi tạo Load Menu động
+  if (typeof MenuService !== 'undefined') {
+    MenuService.getChildren('02').then(function(items) {
+      if (Array.isArray(items) && items.length > 0) {
+        var html = '';
+        items.forEach(function(item) {
+          // Map URLPara hoặc FormKey sang route
+          var route = item.URLPara ? item.URLPara : '';
+          if (!route) {
+            if (item.FormName === 'WEB_OrderDetailFrm' || item.FormKey === 'List') route = '/orders';
+            else if (item.FormName === 'WEB_OrderFrm' || item.FormKey === 'Null') route = '/order';
+            else route = '/' + (item.FormKey || '').toLowerCase();
+          }
+          if (!route.startsWith('/')) route = '/' + route;
+          
+          // Map IconClass
+          var icon = item.IconClass;
+          // Fallback mapping in case DB uses 'icon-grid' for both but we want specific icons
+          if (icon === 'icon-grid' || !icon) {
+            if (route === '/orders') icon = 'receipt_long';
+            if (route === '/order') icon = 'shopping_bag';
+          }
+          if (!icon) icon = 'label';
+          
+          var title = item.VN || item.FormName;
+          
+          html += '<a class="nav-item" href="#' + route + '" data-route="' + route + '">';
+          html += '<span class="material-symbols-outlined icon">' + icon + '</span>';
+          html += '<span>' + title + '</span></a>';
+        });
+        
+        // Cập nhật Navbar links
+        var navLinks = document.getElementById('navbar-dynamic-links');
+        if (navLinks) {
+          navLinks.innerHTML = html;
+        }
+        
+        // Cập nhật Sidebar links
+        var sidebarLinks = document.getElementById('sidebar-dynamic-links');
+        if (sidebarLinks) {
+          sidebarLinks.innerHTML = html;
+          
+          // Gắn sự kiện auto-close cho mobile
+          sidebarLinks.querySelectorAll('.nav-item').forEach(function(el) {
+            el.addEventListener('click', function() {
+              if (window.innerWidth <= 1024) {
+                var sidebar = document.querySelector('.sidebar');
+                var overlay = document.querySelector('.sidebar-overlay');
+                if (sidebar) sidebar.classList.remove('show');
+                if (overlay) overlay.classList.remove('show');
+                document.body.style.overflow = '';
+              }
+            });
+          });
+        }
+        
+        // Re-apply language if needed
+        applyLanguage();
+        // Cập nhật trạng thái active
+        if (typeof Router !== 'undefined' && Router._highlightActive) {
+           Router._highlightActive();
+        } else {
+           _highlightActiveNav();
+        }
+      }
+    });
+  }
+
   // Ẩn splash nếu có
   var splash = document.getElementById('app-splash');
   if (splash) splash.style.display = 'none';
 });
+
+// Helper highlight active nav sau khi load động
+function _highlightActiveNav() {
+  var hash = window.location.hash || '#/dashboard';
+  var route = hash.replace('#', '').split('?')[0];
+  document.querySelectorAll('.nav-item').forEach(function (el) {
+    el.classList.toggle('active', el.getAttribute('data-route') === route);
+  });
+}
 
 // ── Global helpers (dùng được từ bất kỳ page nào) ─────────────────────
 

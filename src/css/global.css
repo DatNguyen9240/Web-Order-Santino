@@ -990,6 +990,16 @@ tbody tr:last-child td {
 
 tbody tr:hover td {
   background: var(--bg);
+  cursor: pointer;
+}
+
+tbody tr.row-selected td {
+  background: rgba(251, 191, 36, 0.15) !important;
+  border-bottom: 1px solid rgba(251, 191, 36, 0.4);
+}
+
+tbody tr.row-selected td:first-child {
+  box-shadow: inset 4px 0 0 0 var(--primary);
 }
 
 .badge {
@@ -1413,6 +1423,16 @@ tbody tr:last-child td {
 
 tbody tr:hover td {
   background: var(--bg);
+  cursor: pointer;
+}
+
+tbody tr.row-selected td {
+  background: rgba(251, 191, 36, 0.15) !important;
+  border-bottom: 1px solid rgba(251, 191, 36, 0.4);
+}
+
+tbody tr.row-selected td:first-child {
+  box-shadow: inset 4px 0 0 0 var(--primary);
 }
 
 .badge {

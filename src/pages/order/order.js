@@ -134,6 +134,28 @@ var OrderPage = (function () {
       if (page) {
         q.chinhanh += '|PAGE:' + page;
       }
+      // TRÙM CUỐI: Bọc tham số quyền vào chinhanh để lách qua C# Backend
+      try {
+        var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
+        var role = user.role || user.Group || '';
+        var empID = user.EmployeeID || '';
+        var objID = user.ObjectID || '';
+
+        // FIX CỰC QUAN TRỌNG: 
+        // Vì SQL dùng phép OR, nếu Khách lẻ (Chị Thủy) truyền cả ObjectID và EmployeeID(VP) 
+        // xuống thì SQL sẽ hiểu nhầm bả là nhân viên VP -> Nhả ra 17 khách của VP!
+        // Giải pháp: Khách lẻ thì xóa sạch EmployeeID trước khi gửi!
+        if (objID && objID !== '') {
+          empID = '';
+        }
+
+        // Đảm bảo phải có mỏ neo |PAGE: để SQL API_DanhMuc có thể parse
+        if (!page) {
+          q.chinhanh += '|PAGE:1';
+        }
+
+        q.chinhanh += '|ROLE:' + role + '|EMP:' + empID + '|OBJ:' + objID;
+      } catch (e) {}
     }
 
     var params = { q: JSON.stringify(q) };
@@ -319,6 +341,64 @@ var OrderPage = (function () {
             openModal('modal-create-customer');
           }
         });
+
+        // -------------------------------------------------------------
+        // KHOÁ Ô KHÁCH HÀNG NẾU LÀ KHÁCH LẺ (CÓ OBJECT_ID)
+        // -------------------------------------------------------------
+        try {
+          var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
+          var role = (user.role || user.Group || '').toLowerCase();
+          var objID = user.ObjectID || '';
+          
+          // KHÔNG KHÓA đối với Đại lý/NPP (Cua hang, DL, Ban dai ly) vì họ cần chọn khách con!
+          if (objID && objID !== '' && 
+              role !== 'admin' && role !== 'ketoan' && role !== 'kế toán' && role !== 'administrator' &&
+              role !== 'cua hang' && role !== 'cửa hàng' && role !== 'dl' && role !== 'ban dai ly') {
+            var inputEl = _combos.kh.querySelector('input');
+            if (inputEl) {
+              inputEl.value = user.name || user.DisplayName || objID;
+              inputEl.readOnly = true;
+              inputEl.style.backgroundColor = '#f1f5f9';
+              inputEl.style.cursor = 'not-allowed';
+            }
+            
+            var actionBtn = _combos.kh.querySelector('.combo-action-btn');
+            if (actionBtn) {
+              actionBtn.innerHTML = '<span class="material-symbols-outlined" style="color:#94a3b8; font-size:18px;">lock</span>';
+            }
+            
+            // Chặn tuyệt đối mọi tương tác chuột vào Combobox
+            _combos.kh.style.pointerEvents = 'none';
+
+            // Tự động thiết lập giá trị ngầm để khi Lưu đơn hàng lấy được mã KH
+            var name = user.name || user.DisplayName || objID;
+            document.getElementById('o-ma-kh').value = objID;
+            document.getElementById('o-kh-ten').value = name;
+            _catValues.khach_hang = { id: objID, name: name };
+            
+            // Tự động map Nhân viên phụ trách
+            var empId = user.EmployeeID || '';
+            if (empId) {
+              var e = employees.find(x => x.id === empId);
+              if (e && _combos.nvkd) {
+                _combos.nvkd.querySelector('input').value = e.name;
+                _catValues.nvkd = { id: e.id, name: e.name };
+              }
+            }
+            
+            // Tự động map Chi nhánh
+            var branchId = user.BranchID || '';
+            if (branchId) {
+              var b = branches.find(x => x.id === branchId);
+              if (b && _combos.branch) {
+                _combos.branch.querySelector('input').value = b.name;
+                _catValues.chi_nhanh = { id: b.id, name: b.name };
+              }
+            }
+            updateInfoSummary();
+          }
+        } catch(e) {}
+
         wrapKH.appendChild(_combos.kh);
       }
 
@@ -344,6 +424,32 @@ var OrderPage = (function () {
             document.getElementById('o-ma-dl').value = row[0];
           }
         });
+
+        // -------------------------------------------------------------
+        // KHOÁ Ô ĐẠI LÝ NẾU TÀI KHOẢN CÓ OBJECT_ID (Khách/Đại lý)
+        // -------------------------------------------------------------
+        try {
+          var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
+          var role = (user.role || user.Group || '').toLowerCase();
+          var objID = user.ObjectID || '';
+          
+          if (objID && objID !== '' && role !== 'admin' && role !== 'ketoan' && role !== 'kế toán' && role !== 'administrator') {
+            var inputEl = _combos.ma_dl.querySelector('input');
+            if (inputEl) {
+              inputEl.value = user.name || user.DisplayName || objID;
+              inputEl.readOnly = true;
+              inputEl.style.backgroundColor = '#f1f5f9';
+              inputEl.style.cursor = 'not-allowed';
+            }
+            var actionBtn = _combos.ma_dl.querySelector('.combo-action-btn');
+            if (actionBtn) {
+              actionBtn.innerHTML = '<span class="material-symbols-outlined" style="color:#94a3b8; font-size:18px;">lock</span>';
+            }
+            _combos.ma_dl.style.pointerEvents = 'none';
+            document.getElementById('o-ma-dl').value = objID;
+          }
+        } catch(e) {}
+
         wrapMaDL.appendChild(_combos.ma_dl);
       }
 
@@ -397,6 +503,34 @@ var OrderPage = (function () {
             _catValues.nvkd = { id: row[1], name: row[0] };
           }
         });
+
+        // -------------------------------------------------------------
+        // KHOÁ Ô NHÂN VIÊN NẾU TÀI KHOẢN CÓ EMPLOYEE_ID (NVKD / Khách của NVKD)
+        // -------------------------------------------------------------
+        try {
+          var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
+          var role = (user.role || user.Group || '').toLowerCase();
+          var empID = user.EmployeeID || '';
+          
+          if (empID && empID !== '' && role !== 'admin' && role !== 'ketoan' && role !== 'kế toán' && role !== 'administrator') {
+            var e = employees.find(x => x.id === empID);
+            var empName = e ? e.name : empID;
+            var inputEl = _combos.nvkd.querySelector('input');
+            if (inputEl) {
+              inputEl.value = empName;
+              inputEl.readOnly = true;
+              inputEl.style.backgroundColor = '#f1f5f9';
+              inputEl.style.cursor = 'not-allowed';
+            }
+            var actionBtn = _combos.nvkd.querySelector('.combo-action-btn');
+            if (actionBtn) {
+              actionBtn.innerHTML = '<span class="material-symbols-outlined" style="color:#94a3b8; font-size:18px;">lock</span>';
+            }
+            _combos.nvkd.style.pointerEvents = 'none';
+            _catValues.nvkd = { id: empID, name: empName };
+          }
+        } catch(e) {}
+
         wrapNvkd.appendChild(_combos.nvkd);
       }
 
@@ -519,18 +653,18 @@ var OrderPage = (function () {
     if (acScrollHandler) return;
     var input = document.getElementById('ac-input');
     var list = document.getElementById('ac-list');
-    acScrollHandler = function() {
+    acScrollHandler = function () {
       if (list.classList.contains('show') && window.UIControls && UIControls.utils) {
         UIControls.utils.computeDropdownPosition(input, list);
       }
     };
     acScrollTargets = (window.UIControls && UIControls.utils) ? UIControls.utils.getScrollableAncestors(input) : [window];
-    acScrollTargets.forEach(function(t) { t.addEventListener('scroll', acScrollHandler, {passive: true, capture: false}); });
-    window.addEventListener('resize', acScrollHandler, {passive: true});
+    acScrollTargets.forEach(function (t) { t.addEventListener('scroll', acScrollHandler, { passive: true, capture: false }); });
+    window.addEventListener('resize', acScrollHandler, { passive: true });
   }
   function _detachAcScroll() {
     if (!acScrollHandler) return;
-    acScrollTargets.forEach(function(t) { t.removeEventListener('scroll', acScrollHandler, {capture: false}); });
+    acScrollTargets.forEach(function (t) { t.removeEventListener('scroll', acScrollHandler, { capture: false }); });
     window.removeEventListener('resize', acScrollHandler);
     acScrollHandler = null;
     acScrollTargets = [];
@@ -560,7 +694,12 @@ var OrderPage = (function () {
     var maKH = document.getElementById('o-ma-kh').value.trim();
     var chiNhanh = _catValues.chi_nhanh.id || _catValues.chi_nhanh.name;
 
-    if (!chiNhanh) {
+    var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
+    var role = (user.role || user.Group || '').toLowerCase();
+    
+    // Nếu không phải Khách lẻ mà chưa chọn chi nhánh thì mới báo lỗi
+    // (Khách lẻ mặc định bị ẩn ô chi nhánh nên không bắt buộc chọn)
+    if (!chiNhanh && role === 'admin') {
       showToast('Vui lòng chọn chi nhánh', false);
       return;
     }
@@ -571,7 +710,7 @@ var OrderPage = (function () {
 
     closeModal('modal-order-info');
     updateInfoSummary();
-    setTimeout(function() {
+    setTimeout(function () {
       var inp = document.getElementById('ac-input');
       if (inp && orderRows.length === 0) inp.focus();
     }, 300);
@@ -581,7 +720,7 @@ var OrderPage = (function () {
   let acSearchId = 0;
   function acSearch(val) {
     if (acSearchTimer) clearTimeout(acSearchTimer);
-    
+
     var btnClear = document.getElementById('ac-clear');
     if (btnClear) btnClear.style.display = val ? 'block' : 'none';
 
@@ -600,64 +739,64 @@ var OrderPage = (function () {
     */
 
     var currentSearchId = ++acSearchId;
-    acSearchTimer = setTimeout(async function() {
+    acSearchTimer = setTimeout(async function () {
 
-    // Gọi API qua Service lấy sản phẩm
-    var prods = await ProductService.getProducts(val);
-    
-    // NẾU người dùng đã đóng bảng TRƯỚC KHI API trả về kết quả, thì HỦY render
-    if (currentSearchId !== acSearchId) return;
+      // Gọi API qua Service lấy sản phẩm
+      var prods = await ProductService.getProducts(val);
 
-    prods.forEach(function (p) { cachedProds[p.ten_hang_2] = p; });
+      // NẾU người dùng đã đóng bảng TRƯỚC KHI API trả về kết quả, thì HỦY render
+      if (currentSearchId !== acSearchId) return;
 
-    if (!prods.length) {
-      list.innerHTML = '<div class="ac-item"><small>Không tìm thấy sản phẩm</small></div>';
+      prods.forEach(function (p) { cachedProds[p.ten_hang_2] = p; });
+
+      if (!prods.length) {
+        list.innerHTML = '<div class="ac-item"><small>Không tìm thấy sản phẩm</small></div>';
+        list.classList.add('show');
+        if (window.UIControls && UIControls.utils) {
+          UIControls.utils.computeDropdownPosition(input, list);
+          _attachAcScroll();
+          input.style.borderBottomLeftRadius = '0';
+          input.style.borderBottomRightRadius = '0';
+        }
+        return;
+      }
+
+      var html = '<div class="ac-header"><div style="width:24px; margin-right:12px; flex-shrink:0"></div><div class="ac-col-1">SẢN PHẨM</div><div class="ac-col-2" style="min-width:45px">FORM</div><div class="ac-col-3" style="min-width:26px; text-align:center">TỒN</div><div class="ac-col-3" style="min-width:75px">ĐƠN GIÁ</div></div>';
+
+      html += prods.slice(0, 8).map(function (p) {
+        var pos = multiSelectedCodes.indexOf(p.ten_hang_2);
+        var isChecked = pos !== -1 ? 'checked' : '';
+        var numDisplay = pos !== -1 ? 'flex' : 'none';
+        var numVal = pos !== -1 ? (pos + 1) : '';
+        var brand = p.ten_hang_2.match(/^[A-Z]+/); brand = brand ? brand[0] : '';
+        var stock = p.ton_kho !== undefined ? p.ton_kho : (Math.floor(Math.random() * 50) + 10);
+        var stockColor = stock > 20 ? 'var(--success)' : 'var(--accent)';
+        return '<div class="ac-table-row" onclick="OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
+          '<div style="position:relative; margin-right:12px; width:18px; height:18px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">' +
+          '<input type="checkbox" class="chk-code" ' + isChecked + ' id="chk-' + p.ten_hang_2 + '" value="' + p.ten_hang_2 + '" onclick="event.stopPropagation(); OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')" style="margin:0; width:16px; height:16px; cursor:pointer;">' +
+          '<div class="chk-num" id="chk-num-' + p.ten_hang_2 + '" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); pointer-events:none; display:' + numDisplay + '; align-items:center; justify-content:center; width:18px; height:18px; background:var(--primary); color:white; font-size:11px; font-weight:bold; border-radius:4px;">' + numVal + '</div>' +
+          '</div>' +
+          '<div class="ac-col-1" style="padding-right:4px;"><strong>' + p.ten_hang_2 + '</strong><div style="font-size:calc(12px * var(--text-scale,1)); color:var(--muted); white-space:normal; line-height:1.2"><span class="ac-desc">' + p.ten_hang_hoa + '</span> - <small>' + p.mau + '</small></div></div>' +
+          '<div class="ac-col-2" style="min-width:45px"><span class="ac-form-badge">' + brand + '</span></div>' +
+          '<div class="ac-col-3" style="min-width:26px; text-align:center; font-weight:700; color:' + stockColor + '">' + stock + '</div>' +
+          '<div class="ac-col-3" style="min-width:75px">' + Utils.formatMoney(p.don_gia) + '</div>' +
+          '</div>';
+      }).join('');
+
+      html += '<div class="ac-actions" style="display:flex;gap:8px;padding:12px;border-top:1px solid var(--border);background:var(--surface);position:sticky;bottom:-8px;margin:0 -8px -8px -8px;z-index:10;border-radius:0 0 12px 12px">' +
+        '<button class="btn btn-ghost btn-sm" style="flex:1" onclick="OrderPage.closeAc()">Hủy</button>' +
+        '<button id="btn-add-multi" class="btn btn-primary btn-sm" style="flex:1" onclick="OrderPage.addSelectedProds()">Thêm đã chọn</button>' +
+        '</div>';
+      list.innerHTML = html;
       list.classList.add('show');
+
+      // Tận dụng UIUtils để tính toán vị trí thông minh (fixed position, chống bị che)
       if (window.UIControls && UIControls.utils) {
         UIControls.utils.computeDropdownPosition(input, list);
         _attachAcScroll();
         input.style.borderBottomLeftRadius = '0';
         input.style.borderBottomRightRadius = '0';
       }
-      return;
-    }
-
-    var html = '<div class="ac-header"><div style="width:24px; margin-right:12px; flex-shrink:0"></div><div class="ac-col-1">SẢN PHẨM</div><div class="ac-col-2" style="min-width:45px">FORM</div><div class="ac-col-3" style="min-width:26px; text-align:center">TỒN</div><div class="ac-col-3" style="min-width:75px">ĐƠN GIÁ</div></div>';
-
-    html += prods.slice(0, 8).map(function (p) {
-      var pos = multiSelectedCodes.indexOf(p.ten_hang_2);
-      var isChecked = pos !== -1 ? 'checked' : '';
-      var numDisplay = pos !== -1 ? 'flex' : 'none';
-      var numVal = pos !== -1 ? (pos + 1) : '';
-      var brand = p.ten_hang_2.match(/^[A-Z]+/); brand = brand ? brand[0] : '';
-      var stock = p.ton_kho !== undefined ? p.ton_kho : (Math.floor(Math.random() * 50) + 10);
-      var stockColor = stock > 20 ? 'var(--success)' : 'var(--accent)';
-      return '<div class="ac-table-row" onclick="OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
-        '<div style="position:relative; margin-right:12px; width:18px; height:18px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">' +
-        '<input type="checkbox" class="chk-code" ' + isChecked + ' id="chk-' + p.ten_hang_2 + '" value="' + p.ten_hang_2 + '" onclick="event.stopPropagation(); OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')" style="margin:0; width:16px; height:16px; cursor:pointer;">' +
-        '<div class="chk-num" id="chk-num-' + p.ten_hang_2 + '" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); pointer-events:none; display:' + numDisplay + '; align-items:center; justify-content:center; width:18px; height:18px; background:var(--primary); color:white; font-size:11px; font-weight:bold; border-radius:4px;">' + numVal + '</div>' +
-        '</div>' +
-        '<div class="ac-col-1" style="padding-right:4px;"><strong>' + p.ten_hang_2 + '</strong><div style="font-size:calc(12px * var(--text-scale,1)); color:var(--muted); white-space:normal; line-height:1.2"><span class="ac-desc">' + p.ten_hang_hoa + '</span> - <small>' + p.mau + '</small></div></div>' +
-        '<div class="ac-col-2" style="min-width:45px"><span class="ac-form-badge">' + brand + '</span></div>' +
-        '<div class="ac-col-3" style="min-width:26px; text-align:center; font-weight:700; color:' + stockColor + '">' + stock + '</div>' +
-        '<div class="ac-col-3" style="min-width:75px">' + Utils.formatMoney(p.don_gia) + '</div>' +
-        '</div>';
-    }).join('');
-
-    html += '<div class="ac-actions" style="display:flex;gap:8px;padding:12px;border-top:1px solid var(--border);background:var(--surface);position:sticky;bottom:-8px;margin:0 -8px -8px -8px;z-index:10;border-radius:0 0 12px 12px">' +
-      '<button class="btn btn-ghost btn-sm" style="flex:1" onclick="OrderPage.closeAc()">Hủy</button>' +
-      '<button id="btn-add-multi" class="btn btn-primary btn-sm" style="flex:1" onclick="OrderPage.addSelectedProds()">Thêm đã chọn</button>' +
-      '</div>';
-    list.innerHTML = html;
-    list.classList.add('show');
-
-    // Tận dụng UIUtils để tính toán vị trí thông minh (fixed position, chống bị che)
-    if (window.UIControls && UIControls.utils) {
-      UIControls.utils.computeDropdownPosition(input, list);
-      _attachAcScroll();
-      input.style.borderBottomLeftRadius = '0';
-      input.style.borderBottomRightRadius = '0';
-    }
     }, 400); // 400ms debounce
   }
 
@@ -755,10 +894,10 @@ var OrderPage = (function () {
             }
           } catch (e) { console.error('Lỗi parse sizes_json', e); }
         }
-        
+
         // Nếu sản phẩm chưa sinh SKU (sizes_json rỗng), fallback cho phép dùng toàn bộ bảng Size
         if (sizes.length === 0) {
-            sizes = cachedSizes.slice();
+          sizes = cachedSizes.slice();
         }
 
         sizes.sort(function (a, b) { return (a.stt || a.STT || 0) - (b.stt || b.STT || 0); });
@@ -796,9 +935,9 @@ var OrderPage = (function () {
         }
       } catch (e) { console.error('Lỗi parse sizes_json', e); }
     }
-    
+
     if (sizes.length === 0) {
-        sizes = cachedSizes.slice();
+      sizes = cachedSizes.slice();
     }
 
     sizes.sort(function (a, b) { return (a.stt || a.STT || 0) - (b.stt || b.STT || 0); });
@@ -927,7 +1066,7 @@ var OrderPage = (function () {
 
   function previewOrder() {
     if (!orderRows.length) { showToast('Vui lòng chọn sản phẩm và nhập số lượng', false); return; }
-    
+
     // Đóng danh sách tìm kiếm (nếu đang mở) để không bị đè lên modal
     closeAc();
 
@@ -1029,9 +1168,12 @@ var OrderPage = (function () {
       showToast('Vui lòng chọn ít nhất 1 sản phẩm', false);
       return;
     }
-    
+
     var chiNhanh = _catValues.chi_nhanh.id || _catValues.chi_nhanh.name;
-    if (!chiNhanh) {
+    var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
+    var role = (user.role || user.Group || '').toLowerCase();
+    
+    if (!chiNhanh && role === 'admin') {
       showToast('Vui lòng chọn chi nhánh', false);
       return;
     }

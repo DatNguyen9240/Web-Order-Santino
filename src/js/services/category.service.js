@@ -12,7 +12,14 @@ const CategoryService = (() => {
     if (!API_CONFIG.BASE_URL) return [];
 
     try {
-      const queryObj = { Loai: loai };
+      const user = JSON.parse(localStorage.getItem('santino_user') || '{}');
+      const queryObj = {
+        Loai: loai,
+        UserRole: user.role || user.Group || '',
+        UserEmployeeID: user.EmployeeID || '',
+        UserManagerID: user.ManagerID || '',
+        UserObjectID: user.ObjectID || ''
+      };
       if (search && search.trim()) queryObj.TimKiem = search.trim();
 
       const params = { q: JSON.stringify(queryObj) };

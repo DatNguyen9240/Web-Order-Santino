@@ -34,6 +34,9 @@ window.API_CONFIG = {
         },
         CUSTOMERS: {
             SAVE: '/API_KhachHang_Luu'
+        },
+        MENU: {
+            CHILDREN: '/API_GetMenuChildren'
         }
     }
 };

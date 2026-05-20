@@ -23,6 +23,13 @@ const OrderService = (() => {
    * Tạo đơn hàng mới
    */
   async function createOrder(orderData) {
+    if (!API_CONFIG.BASE_URL) throw new Error('API_BASE chưa cấu hình');
+    const user = JSON.parse(localStorage.getItem('santino_user') || '{}');
+    orderData.UserRole = user.role || user.Group || '';
+    orderData.UserEmployeeID = user.EmployeeID || '';
+    orderData.UserManagerID = user.ManagerID || '';
+    orderData.UserObjectID = user.ObjectID || '';
+    
     const params = { OrderJson: JSON.stringify(orderData) };
     return Http.post(API_CONFIG.ENDPOINTS.ORDERS.CREATE, params);
   }

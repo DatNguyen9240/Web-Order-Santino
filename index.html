@@ -30,12 +30,8 @@
         <div class="logo" style="cursor:pointer;" onclick="location.hash='#/order'">
           <img src="images/logo.png" alt="SANTINO" class="app-logo">
         </div>
-        <div class="nav-links">
-          <a class="nav-item" href="#/order" data-route="/order"><span
-              class="material-symbols-outlined icon">shopping_bag</span><span data-i18n="nav.order">Đặt Hàng</span></a>
-          <a class="nav-item" href="#/orders" data-route="/orders"><span
-              class="material-symbols-outlined icon">receipt_long</span><span data-i18n="nav.orders">Danh Sách
-              Đơn</span></a>
+        <div class="nav-links" id="navbar-dynamic-links">
+          <!-- Dynamic links loaded by MenuService -->
         </div>
       </div>
       <div class="nav-right">
@@ -55,10 +51,9 @@
         <img src="images/logo.png" alt="SANTINO" class="app-logo" style="height: 40px;">
       </div>
       <div class="nav-group" data-i18n="nav.group.order">Hệ thống đặt hàng</div>
-      <a class="nav-item" href="#/order" data-route="/order"><span
-          class="material-symbols-outlined icon">shopping_bag</span><span data-i18n="nav.order">Đặt Hàng</span></a>
-      <a class="nav-item" href="#/orders" data-route="/orders"><span
-          class="material-symbols-outlined icon">receipt_long</span><span data-i18n="nav.orders">Đơn Hàng</span></a>
+      <div id="sidebar-dynamic-links" style="display: contents;">
+        <!-- Dynamic links loaded by MenuService -->
+      </div>
 
       <div class="nav-bottom">
         <a class="nav-item" href="#/settings" data-route="/settings"><span

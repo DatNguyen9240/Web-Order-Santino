@@ -11,6 +11,16 @@ var OrderDetailPage = (function () {
 
       try {
         const queryObj = { Loai: 'OrderDetail', TimKiem: id };
+        
+        var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
+        var role = user.role || user.Group || '';
+        var empID = user.EmployeeID || '';
+        var objID = user.ObjectID || '';
+        if (objID && objID !== '' && role !== 'admin' && role !== 'ketoan' && role !== 'kế toán' && role !== 'administrator') {
+           empID = '';
+        }
+        queryObj.chinhanh = '|PAGE:1|ROLE:' + role + '|EMP:' + empID + '|OBJ:' + objID;
+        
         const params = { q: JSON.stringify(queryObj), _t: Date.now() };
         const res = await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, params);
 
@@ -51,7 +61,7 @@ var OrderDetailPage = (function () {
                 sizesText = sizesArr.map(function(s) { return s.size + '(' + s.qty + ')' }).join(', ');
             } catch(e) {}
         }
-        return '<tr><td>' + (l.ten_hang_2 || '—') + '</td>' +
+        return '<tr onclick="Utils.toggleRow(this)"><td>' + (l.ten_hang_2 || '—') + '</td>' +
           '<td>' + (l.ten_hang || '—') + '</td><td style="font-size: calc(12px * var(--text-scale, 1)); color: var(--text-secondary)">' + sizesText + '</td>' +
           '<td style="font-weight:700;color:var(--accent)">' + l.so_luong + '</td>' +
           '<td>' + Utils.formatMoney(l.don_gia) + '</td>' +

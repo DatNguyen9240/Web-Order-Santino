@@ -7,17 +7,55 @@ ALTER PROCEDURE [dbo].[API_DanhMuc]
     @Loai       NVARCHAR(100)  = NULL,
     @TimKiem    NVARCHAR(MAX)  = NULL,
     @chinhanh   NVARCHAR(50)   = NULL,
-    @Page       INT            = 1,
-    @PageSize   INT            = 50
+    @Page           INT            = 1,
+    @PageSize       INT            = 50,
+    @UserRole       NVARCHAR(50)   = NULL,
+    @UserEmployeeID NVARCHAR(50)   = NULL,
+    @UserManagerID  NVARCHAR(50)   = NULL,
+    @UserObjectID   NVARCHAR(50)   = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
 
     SET @TimKiem = LTRIM(RTRIM(ISNULL(@TimKiem, '')));
+
     IF CHARINDEX('|PAGE:', ISNULL(@chinhanh, '')) > 0
     BEGIN
-        SET @Page = CAST(SUBSTRING(@chinhanh, CHARINDEX('|PAGE:', @chinhanh) + 6, LEN(@chinhanh)) AS INT);
+        -- Lấy ra chuỗi PAGE và các tham số khác đằng sau nó
+        DECLARE @MetaString NVARCHAR(MAX) = SUBSTRING(@chinhanh, CHARINDEX('|PAGE:', @chinhanh), LEN(@chinhanh));
         SET @chinhanh = SUBSTRING(@chinhanh, 1, CHARINDEX('|PAGE:', @chinhanh) - 1);
+
+        -- Parse PAGE
+        IF CHARINDEX('|PAGE:', @MetaString) > 0
+        BEGIN
+            DECLARE @pageStr NVARCHAR(50) = SUBSTRING(@MetaString, CHARINDEX('|PAGE:', @MetaString) + 6, LEN(@MetaString));
+            IF CHARINDEX('|', @pageStr) > 0 SET @pageStr = SUBSTRING(@pageStr, 1, CHARINDEX('|', @pageStr) - 1);
+            SET @Page = CAST(@pageStr AS INT);
+        END
+
+        -- Parse ROLE
+        IF CHARINDEX('|ROLE:', @MetaString) > 0
+        BEGIN
+            DECLARE @roleStr NVARCHAR(50) = SUBSTRING(@MetaString, CHARINDEX('|ROLE:', @MetaString) + 6, LEN(@MetaString));
+            IF CHARINDEX('|', @roleStr) > 0 SET @roleStr = SUBSTRING(@roleStr, 1, CHARINDEX('|', @roleStr) - 1);
+            SET @UserRole = @roleStr;
+        END
+
+        -- Parse EMP
+        IF CHARINDEX('|EMP:', @MetaString) > 0
+        BEGIN
+            DECLARE @empStr NVARCHAR(50) = SUBSTRING(@MetaString, CHARINDEX('|EMP:', @MetaString) + 5, LEN(@MetaString));
+            IF CHARINDEX('|', @empStr) > 0 SET @empStr = SUBSTRING(@empStr, 1, CHARINDEX('|', @empStr) - 1);
+            SET @UserEmployeeID = @empStr;
+        END
+
+        -- Parse OBJ
+        IF CHARINDEX('|OBJ:', @MetaString) > 0
+        BEGIN
+            DECLARE @objStr NVARCHAR(50) = SUBSTRING(@MetaString, CHARINDEX('|OBJ:', @MetaString) + 5, LEN(@MetaString));
+            IF CHARINDEX('|', @objStr) > 0 SET @objStr = SUBSTRING(@objStr, 1, CHARINDEX('|', @objStr) - 1);
+            SET @UserObjectID = @objStr;
+        END
     END
 
     SET @Page = ISNULL(@Page, 1);
@@ -109,6 +147,20 @@ BEGIN
           AND (@chinhanh IS NULL OR @chinhanh = '' 
                OR ISNULL([BranchID], '') = ''
                OR CHARINDEX(',' + @chinhanh + ',', ',' + REPLACE(ISNULL([BranchID], ''), ' ', '') + ',') > 0)
+          -- PHÂN QUYỀN: Kế toán/Admin xem hết, NV KD xem KH của mình, NPP xem KH thuộc quản lý, KH tự xem mình
+          AND (
+               -- CÚ CHECK TỰ ĐỘNG: Bất kỳ nhóm nào được tick isAdmin hoặc isManager thì mặc định nhả hết Khách hàng
+               -- (NGOẠI TRỪ các nhóm Đại lý/Khách lẻ vì hệ thống đang bị cắm nhầm cờ isManager = 1)
+               (@UserRole NOT IN ('Cua hang', 'cửa hàng', 'DL', 'Ban dai ly', 'User', 'Khach le', 'Khách lẻ') 
+                AND EXISTS (SELECT 1 FROM [dbo].[SY_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND ([isAdmin] = 1 OR [isManager] = 1)))
+               
+               OR (@UserEmployeeID IS NOT NULL AND @UserEmployeeID <> '' AND [EmployeeID] = @UserEmployeeID)
+               OR (@UserManagerID IS NOT NULL AND @UserManagerID <> '' AND [ObjectGroupID] = @UserManagerID)
+               OR (@UserObjectID IS NOT NULL AND @UserObjectID <> '' AND [ObjectGroupID] = @UserObjectID) -- NPP quản lý nhóm khách
+               OR (@UserObjectID IS NOT NULL AND @UserObjectID <> '' AND [ObjectID] = @UserObjectID)
+               -- Fallback: Nếu không truyền phân quyền gì cả, cứ xem như admin để backward-compatibility
+               OR (ISNULL(@UserRole, '') = '' AND ISNULL(@UserEmployeeID, '') = '' AND ISNULL(@UserManagerID, '') = '' AND ISNULL(@UserObjectID, '') = '')
+          )
         ORDER BY [ObjectName]
         OFFSET (@Page - 1) * 200 ROWS
         FETCH NEXT 200 ROWS ONLY;
@@ -233,6 +285,13 @@ BEGIN
           AND (@chinhanh IS NULL OR @chinhanh = '' OR [BranchID] = @chinhanh)
           AND (@TuNgay IS NULL OR [DocumentDate] >= @TuNgay)
           AND (@DenNgay IS NULL OR [DocumentDate] <= @DenNgay)
+          -- BỨC TƯỜNG LỬA BẢO VỆ ĐƠN HÀNG: Chỉ Sếp mới xem hết, NV xem đơn của mình, KH xem đơn của họ
+          AND (
+               ISNULL(@UserRole, '') IN ('Admin', 'Ketoan', 'Kế toán', 'Administrator', 'BRUNO ADMIN', 'GT ADMIN', 'KT Bruno', 'QLKD', 'QLKT', 'QLBL')
+               OR (@UserEmployeeID IS NOT NULL AND @UserEmployeeID <> '' AND [EmployeeID] = @UserEmployeeID)
+               OR (@UserObjectID IS NOT NULL AND @UserObjectID <> '' AND ([ObjectID] = @UserObjectID OR ISNULL([MaDaiLy], '') = @UserObjectID))
+               OR (ISNULL(@UserRole, '') = '' AND ISNULL(@UserEmployeeID, '') = '' AND ISNULL(@UserObjectID, '') = '')
+          )
         ORDER BY [DateCreate] DESC
         OFFSET (@Page - 1) * @PageSize ROWS
         FETCH NEXT @PageSize ROWS ONLY;
@@ -291,7 +350,14 @@ BEGIN
              ) AS [lines]
         FROM [dbo].[WEB_OrderTbl] h
         LEFT JOIN [dbo].[CF_EmployeeTbl] e ON h.[EmployeeID] = e.[EmployeeID]
-        WHERE h.DocumentID = @TimKiem;
+        WHERE h.DocumentID = @TimKiem
+          -- BỨC TƯỜNG LỬA CHẶN XEM LÉN CHI TIẾT ĐƠN HÀNG (Người ngoài biết mã cũng không xem được)
+          AND (
+               ISNULL(@UserRole, '') IN ('Admin', 'Ketoan', 'Kế toán', 'Administrator', 'BRUNO ADMIN', 'GT ADMIN', 'KT Bruno', 'QLKD', 'QLKT', 'QLBL')
+               OR (@UserEmployeeID IS NOT NULL AND @UserEmployeeID <> '' AND h.[EmployeeID] = @UserEmployeeID)
+               OR (@UserObjectID IS NOT NULL AND @UserObjectID <> '' AND (h.[ObjectID] = @UserObjectID OR ISNULL(h.[MaDaiLy], '') = @UserObjectID))
+               OR (ISNULL(@UserRole, '') = '' AND ISNULL(@UserEmployeeID, '') = '' AND ISNULL(@UserObjectID, '') = '')
+          );
         RETURN;
     END
 END

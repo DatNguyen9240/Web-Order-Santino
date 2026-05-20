@@ -65,5 +65,15 @@ const Utils = (function () {
     }
   }
 
-  return { formatMoney, buildSKU, genOrderNo, today, escHtml, uuid, getUserInitials };
+  function toggleRow(el) {
+    if (!el || !el.parentElement) return;
+    const isSelected = el.classList.contains('row-selected');
+    const rows = el.parentElement.querySelectorAll('tr');
+    rows.forEach(r => r.classList.remove('row-selected'));
+    if (!isSelected) {
+      el.classList.add('row-selected');
+    }
+  }
+
+  return { formatMoney, buildSKU, genOrderNo, today, escHtml, uuid, getUserInitials, toggleRow };
 })();

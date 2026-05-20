@@ -19,6 +19,7 @@ $jsFiles = @(
   "js\services\product.service.js",
   "js\services\category.service.js",
   "js\services\order.service.js",
+  "js\services\menu.service.js",
   "js\utils.js",
   "components\ui-utils\UIUtils.js",
   "components\data-combobox\DataComboBox.js",

@@ -30,6 +30,15 @@ var OrdersPage = (function () {
       
       queryObj.TimKiem = JSON.stringify(timKiemData);
       
+      var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
+      var role = user.role || user.Group || '';
+      var empID = user.EmployeeID || '';
+      var objID = user.ObjectID || '';
+      if (objID && objID !== '' && role !== 'admin' && role !== 'ketoan' && role !== 'kế toán' && role !== 'administrator') {
+         empID = '';
+      }
+      queryObj.chinhanh = '|PAGE:1|ROLE:' + role + '|EMP:' + empID + '|OBJ:' + objID;
+      
       const params = { q: JSON.stringify(queryObj), _t: Date.now() };
       
       const res = await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, params);
@@ -51,7 +60,7 @@ var OrdersPage = (function () {
       return;
     }
     tbody.innerHTML = orders.map(function(o){
-      return '<tr><td><strong>'+o.so_ct+'</strong></td><td>'+o.ngay_ct+'</td><td>'+o.chi_nhanh+'</td>'+
+      return '<tr onclick="Utils.toggleRow(this)"><td><strong>'+o.so_ct+'</strong></td><td>'+o.ngay_ct+'</td><td>'+o.chi_nhanh+'</td>'+
         '<td>'+(o.ma_ctbh ? '<span class="badge badge-yellow">'+o.ma_ctbh+'</span>' : '<span style="color:var(--muted)">—</span>')+'</td>'+
         '<td style="font-weight:700">'+(o.total_qty||0)+' ' + t('order.preview.sp') + '</td>'+
         '<td style="font-weight:700;color:var(--accent)">'+Utils.formatMoney(o.total_money||0)+'</td>'+

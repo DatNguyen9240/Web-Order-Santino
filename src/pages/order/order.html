@@ -51,7 +51,7 @@
         <div class="form-group"><label>Số CT</label><input id="o-so-ct" placeholder="Nhập số CT..."></div>
         <div class="form-group"><label>Ngày CT <span style="color:var(--accent)">*</span></label><input id="o-ngay"
             type="date"></div>
-        <div class="form-group">
+        <div class="form-group" style="display:none;">
           <label>Chi nhánh <span style="color:var(--accent)">*</span></label>
           <div id="wrap-chi-nhanh"></div>
         </div>
@@ -61,7 +61,7 @@
           <label>Nhân viên KD</label>
           <div id="wrap-nvkd"></div>
         </div>
-        <div class="form-group"><label>Người tạo</label><input id="o-nguoi-tao" value="Admin" readonly style="background:var(--surface); opacity:0.8; color:var(--text); cursor:not-allowed;"></div>
+        <div class="form-group" style="display:none;"><label>Người tạo</label><input id="o-nguoi-tao" value="Admin" readonly style="background:var(--surface); opacity:0.8; color:var(--text); cursor:not-allowed;"></div>
         <div class="form-group">
           <label>Tên CTKM</label>
           <div id="wrap-ctkm"></div>
@@ -83,9 +83,9 @@
             style="background:var(--surface); opacity:0.8; color:var(--text); cursor:not-allowed;"></div>
 
         <!-- Row 4 -->
-        <div class="form-group span2"><label>Địa chỉ</label><input id="o-kh-dc" placeholder="Nhập địa chỉ chi tiết..." readonly style="background:var(--surface); opacity:0.8; color:var(--text); cursor:not-allowed;">
+        <div class="form-group span2" style="display:none;"><label>Địa chỉ</label><input id="o-kh-dc" placeholder="Nhập địa chỉ chi tiết..." readonly style="background:var(--surface); opacity:0.8; color:var(--text); cursor:not-allowed;">
         </div>
-        <div class="form-group">
+        <div class="form-group" style="display:none;">
           <label>Nguồn đơn</label>
           <div id="wrap-nguon-don"></div>
           <input type="hidden" id="o-nguon-don">
@@ -104,7 +104,7 @@
         </div>
 
         <!-- Row 6 -->
-        <div class="form-group span2">
+        <div class="form-group span2" style="display:none;">
           <label>PT Giao hàng</label>
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             <div id="wrap-pt-giao" style="flex: 1; min-width: 100px;"></div>
@@ -113,39 +113,39 @@
           </div>
           <input type="hidden" id="o-pt-giao">
         </div>
-        <div class="form-group">
+        <div class="form-group" style="display:none;">
           <label>Người giao</label>
           <div id="wrap-nguoi-giao"></div>
           <input type="hidden" id="o-nguoi-giao">
         </div>
-        <div class="form-group">
+        <div class="form-group" style="display:none;">
           <label>Điều khoản TT</label>
           <div id="wrap-dieu-khoan"></div>
         </div>
 
         <!-- Row 7 -->
-        <div class="form-group">
+        <div class="form-group" style="display:none;">
           <label>Tổng tiền</label>
           <input id="o-tong-tien" class="locked" readonly value="0"
             style="background:var(--bg); font-weight:bold; color:var(--primary); text-align:right; font-size:18px;">
         </div>
-        <div class="form-group">
+        <div class="form-group" style="display:none;">
           <label>Khách đưa</label>
           <input id="o-khach-dua" type="number" min="0" placeholder="0" oninput="OrderPage.calcChange()"
             style="text-align:right; font-size:18px;">
         </div>
-        <div class="form-group">
+        <div class="form-group" style="display:none;">
           <label>Trả lại</label>
           <input id="o-tra-lai" class="locked" readonly value="0"
             style="background:var(--bg); text-align:right; font-weight:bold; color:var(--danger); font-size:18px;">
         </div>
 
         <!-- Row 8 -->
-        <div class="form-group">
+        <div class="form-group" style="display:none;">
           <label>Hình thức thanh toán</label>
           <div id="wrap-ht-thanh-toan"></div>
         </div>
-        <div class="form-group"><label>Ngày TT</label><input id="o-ngay-tt" type="date"></div>
+        <div class="form-group" style="display:none;"><label>Ngày TT</label><input id="o-ngay-tt" type="date"></div>
         <div class="form-group"></div>
       </div>
     </div>

@@ -17,9 +17,45 @@ BEGIN
         DECLARE @BranchID NVARCHAR(50) = JSON_VALUE(@OrderJson, '$.chi_nhanh');
         DECLARE @MaKH NVARCHAR(50) = JSON_VALUE(@OrderJson, '$.ma_kh');
         
+        -- Lấy thông tin user đăng nhập từ Frontend gửi kèm
+        DECLARE @UserRole NVARCHAR(50)       = JSON_VALUE(@OrderJson, '$.UserRole');
+        DECLARE @UserEmployeeID NVARCHAR(50) = JSON_VALUE(@OrderJson, '$.UserEmployeeID');
+        DECLARE @UserManagerID NVARCHAR(50)  = JSON_VALUE(@OrderJson, '$.UserManagerID');
+        DECLARE @UserObjectID NVARCHAR(50)   = JSON_VALUE(@OrderJson, '$.UserObjectID');
+        
         -- Ràng buộc bắt buộc (Mandatory fields)
-        IF ISNULL(@BranchID, '') = '' THROW 50000, N'Lỗi: Vui lòng chọn Chi nhánh tạo đơn!', 1;
+        -- Đã bỏ check Chi nhánh vì form FE đã ẩn
         IF ISNULL(@MaKH, '') = '' THROW 50000, N'Lỗi: Vui lòng chọn Khách hàng!', 1;
+        
+        -- PHÂN QUYỀN LÚC TẠO ĐƠN:
+        IF ISNULL(@UserRole, '') NOT IN ('Admin', 'Ketoan', 'Kế toán', 'Administrator') 
+           AND ISNULL(@UserRole, '') <> '' -- Fallback backward compatibility
+        BEGIN
+            DECLARE @Allowed BIT = 0;
+            -- 1. NV KD tự tạo cho KH của mình
+            IF @UserEmployeeID IS NOT NULL AND @UserEmployeeID <> ''
+               AND EXISTS (SELECT 1 FROM [dbo].[CF_ObjectTbl] WHERE ObjectID = @MaKH AND EmployeeID = @UserEmployeeID)
+            BEGIN
+                SET @Allowed = 1;
+            END
+            -- 2. Nhà phân phối tạo cho KH thuộc Group
+            IF (@UserManagerID IS NOT NULL AND @UserManagerID <> ''
+               AND EXISTS (SELECT 1 FROM [dbo].[CF_ObjectTbl] WHERE ObjectID = @MaKH AND ObjectGroupID = @UserManagerID))
+               OR 
+               (@UserObjectID IS NOT NULL AND @UserObjectID <> ''
+               AND EXISTS (SELECT 1 FROM [dbo].[CF_ObjectTbl] WHERE ObjectID = @MaKH AND ObjectGroupID = @UserObjectID))
+            BEGIN
+                SET @Allowed = 1;
+            END
+            -- 3. Khách hàng tự tạo cho chính mình
+            IF @UserObjectID IS NOT NULL AND @UserObjectID <> '' AND @MaKH = @UserObjectID
+            BEGIN
+                SET @Allowed = 1;
+            END
+            
+            IF @Allowed = 0 
+                THROW 50000, N'Lỗi: Bạn không có quyền tạo đơn cho Khách hàng này!', 1;
+        END
         
         -- Nếu Client không gửi mã, HOẶC mã Client gửi đã bị trùng, tự động sinh mã mới!
         IF @DocumentID IS NULL OR @DocumentID = '' OR EXISTS (SELECT 1 FROM [dbo].[WEB_OrderTbl] WHERE DocumentID = @DocumentID)
