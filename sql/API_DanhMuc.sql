@@ -369,3 +369,9 @@ EXEC [dbo].[API_DanhMuc] @Loai = 'Employee';
 
 -- Lọc trực tiếp bằng @TimKiem
 EXEC [dbo].[API_DanhMuc] @Loai = 'Employee', @TimKiem = N'ngu';
+
+-- Admin xem chi tiết đơn hàng (thay 'MÃ_ĐƠN_HÀNG_Ở_ĐÂY' bằng mã thực tế)
+EXEC [dbo].[API_DanhMuc] 
+    @Loai = 'OrderDetail', 
+    @TimKiem = 'MÃ_ĐƠN_HÀNG_Ở_ĐÂY', 
+    @UserRole = 'Admin';

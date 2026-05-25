@@ -1,0 +1,64 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<style>
+body { font-family: 'Arial', sans-serif; font-size: 13pt; line-height: 1.5; }
+h1 { color: #1E3A8A; font-size: 16pt; text-align: center; font-weight: bold; }
+h2 { color: #D97706; font-size: 14pt; margin-top: 25px; border-bottom: 1px solid #E5E7EB; padding-bottom: 5px; }
+ul { margin-top: 10px; margin-bottom: 10px; }
+li { margin-bottom: 8px; }
+.highlight { color: #047857; font-weight: bold; }
+</style>
+</head>
+<body>
+<h1>📋 DANH SÁCH KIỂM THỬ: BẢO MẬT ĐẶT HÀNG</h1>
+<p style="text-align:center"><i>(Tất cả tài khoản đều dùng chung Mật khẩu: <b>123456</b>)</i></p>
+
+<h2>1. Quyền Kế Toán (Tài khoản: <span class="highlight">Dat</span>)</h2>
+<ul>
+<li><b>Tạo đơn:</b> Click ô <i>Tìm khách hàng</i> ➔ Thấy <b>TẤT CẢ</b> khách hàng trên toàn quốc.</li>
+<li><b>Lịch sử:</b> Thấy <b>TẤT CẢ</b> đơn hàng của công ty.</li>
+</ul>
+
+<h2>2. Quyền Nhân viên Sales (Tài khoản: <span class="highlight">ST09</span>)</h2>
+<ul>
+<li><b>Tạo đơn:</b>
+  <ul>
+  <li>Ô <i>Nhân viên KD</i> bị <b>khóa mờ</b> (Ngăn gian lận doanh số).</li>
+  <li>Click ô <i>Tìm khách hàng</i> ➔ <b>Chỉ hiện</b> những khách hàng do ST09 quản lý.</li>
+  </ul>
+</li>
+<li><b>Lịch sử:</b> Chỉ thấy các đơn hàng do chính ST09 chốt.</li>
+</ul>
+
+<h2>3. Quyền Đại Lý (Tài khoản: <span class="highlight">A8172991</span>)</h2>
+<ul>
+<li><b>Tạo đơn:</b> 
+  <ul>
+  <li>Ô <i>Mã đại lý</i> có hình <b>ổ khóa 🔒</b>.</li>
+  <li>Click ô <i>Tìm khách hàng</i> ➔ <b>Chỉ hiện</b> bản thân Đại lý và các Khách cấp dưới của họ.</li>
+  </ul>
+</li>
+<li><b>Lịch sử:</b> Chỉ thấy đơn do Đại lý và khách cấp dưới mua.</li>
+</ul>
+
+<h2>4. Quyền Khách Lẻ (Tài khoản: <span class="highlight">A2142010</span> và <span class="highlight">A2122893</span>)</h2>
+<ul>
+<li><b>Tạo đơn (Đăng nhập TK A2142010):</b> 
+  <ul>
+  <li>Ô <i>Tìm khách hàng</i> có hình <b>ổ khóa 🔒</b>. Khách lẻ chỉ được đặt cho bản thân, không cho đổi tên người khác.</li>
+  </ul>
+</li>
+<li><b>Lịch sử:</b> Chỉ thấy đúng những đơn mình tự mua.</li>
+<li><b>Test chống xem trộm:</b>
+  <ol>
+  <li>Lấy mã 1 đơn hàng của A2142010.</li>
+  <li>Đăng xuất, Đăng nhập lại bằng Khách lẻ 2 (A2122893).</li>
+  <li>Lấy mã đơn đó đi tìm kiếm ➔ Kết quả <b>Trống trơn</b>. <i>(Đã chặn xem trộm thành công!)</i></li>
+  </ol>
+</li>
+</ul>
+<br>
+<p><i>Kịch bản được thiết kế đảm bảo 100% dữ liệu được phân vùng chặt chẽ từ phía cơ sở dữ liệu (Database).</i></p>
+</body>
+</html>

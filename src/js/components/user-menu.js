@@ -30,7 +30,7 @@ const UserMenu = (() => {
         </div>
         <div class="user-info-nav">
           <span class="user-name-nav">${user.name}</span>
-          <span class="user-role-nav">${user.role}</span>
+          <span class="user-role-nav">${user.id || user.role || 'User'}</span>
         </div>
         <span class="material-symbols-outlined expand-icon">expand_more</span>
 

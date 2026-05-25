@@ -57,8 +57,8 @@
           
           localStorage.setItem('santino_user', JSON.stringify({ 
             name: data.DisplayName || user, 
-            id: data.UserName,
-            role: data.Group,
+            id: data.UserName || user,
+            role: data.Group || '',
             ...userInfo // Lưu BranchID, StoreHouseID, v.v.
           }));
           
