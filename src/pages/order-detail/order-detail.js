@@ -16,7 +16,7 @@ var OrderDetailPage = (function () {
         var role = user.role || user.Group || '';
         var empID = user.EmployeeID || '';
         var objID = user.ObjectID || '';
-        if (objID && objID !== '' && role !== 'admin' && role !== 'ketoan' && role !== 'kế toán' && role !== 'administrator') {
+        if (objID && objID !== '') {
            empID = '';
         }
         queryObj.chinhanh = '|PAGE:1|ROLE:' + role + '|EMP:' + empID + '|OBJ:' + objID;

@@ -1,0 +1,4 @@
+UserGroupID	varchar
+UserGroupName	nvarchar
+IsDisable	bit
+BranchID	varchar

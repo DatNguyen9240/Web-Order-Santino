@@ -1,4 +1,4 @@
-/* --- design-tokens.css --- */
+﻿/* --- design-tokens.css --- */
 /* ============================================================
    Design Tokens
    Chứa toàn bộ CSS variables. Import file này đầu tiên.
@@ -2902,7 +2902,7 @@ tbody tr.row-selected td:first-child {
     width: 100%;
     max-width: 100%;
   }
-}
+}
 
 /* --- shared-dropdown.css --- */
 /* 3. DATAGRID DROPDOWN MENU (FOR COMBOBOX/GRID CELL) */

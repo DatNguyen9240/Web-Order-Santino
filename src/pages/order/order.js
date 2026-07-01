@@ -4,6 +4,36 @@ var OrderPage = (function () {
   var cachedProds = {};
   var cachedSizes = [];
 
+  var _userPerm = { isAdmin: false, isManager: false, isAgent: false };
+
+  async function _loadUserPermission() {
+    try {
+      var res = await _searchCategory('UserPermission', '', false, 1);
+      if (res && res[0]) {
+        _userPerm.isAdmin = !!res[0].isAdmin;
+        _userPerm.isManager = !!res[0].isManager;
+        _userPerm.isAgent = !!res[0].isAgent;
+      }
+    } catch (err) {
+      console.warn('[OrderPage] Lỗi load quyền người dùng:', err);
+    }
+  }
+
+  function _getUserPermission() {
+    var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
+    var isPrivileged = _userPerm.isAdmin || _userPerm.isManager;
+                  
+    return {
+      user: user,
+      role: (user.role || user.Group || '').toLowerCase(),
+      isAdmin: _userPerm.isAdmin,
+      isPrivileged: isPrivileged,
+      isAgent: _userPerm.isAgent,
+      empID: user.EmployeeID || '',
+      objID: user.ObjectID || ''
+    };
+  }
+
   // Load script động nếu chưa có trong bundle
   function _dynScript(src) {
     return new Promise(function (resolve) {
@@ -62,6 +92,7 @@ var OrderPage = (function () {
   }
 
   async function _init() {
+    await _loadUserPermission();
     // 1. Lấy bảng size và thông tin cơ bản
     var resSizes = await ProductService.getSizes();
     if (Array.isArray(resSizes) && resSizes.length > 0) {
@@ -136,10 +167,10 @@ var OrderPage = (function () {
       }
       // TRÙM CUỐI: Bọc tham số quyền vào chinhanh để lách qua C# Backend
       try {
-        var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
-        var role = user.role || user.Group || '';
-        var empID = user.EmployeeID || '';
-        var objID = user.ObjectID || '';
+        var perm = _getUserPermission();
+        var role = perm.user.role || perm.user.Group || '';
+        var empID = perm.empID;
+        var objID = perm.objID;
 
         // FIX CỰC QUAN TRỌNG: 
         // Vì SQL dùng phép OR, nếu Khách lẻ (Chị Thủy) truyền cả ObjectID và EmployeeID(VP) 
@@ -346,17 +377,13 @@ var OrderPage = (function () {
         // KHOÁ Ô KHÁCH HÀNG NẾU LÀ KHÁCH LẺ (CÓ OBJECT_ID)
         // -------------------------------------------------------------
         try {
-          var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
-          var role = (user.role || user.Group || '').toLowerCase();
-          var objID = user.ObjectID || '';
+          var perm = _getUserPermission();
           
           // KHÔNG KHÓA đối với Đại lý/NPP (Cua hang, DL, Ban dai ly) vì họ cần chọn khách con!
-          if (objID && objID !== '' && 
-              role !== 'admin' && role !== 'ketoan' && role !== 'kế toán' && role !== 'administrator' &&
-              role !== 'cua hang' && role !== 'cửa hàng' && role !== 'dl' && role !== 'ban dai ly') {
+          if (perm.objID && perm.objID !== '' && !perm.isPrivileged && !perm.isAgent) {
             var inputEl = _combos.kh.querySelector('input');
             if (inputEl) {
-              inputEl.value = user.name || user.DisplayName || objID;
+              inputEl.value = perm.user.name || perm.user.DisplayName || perm.objID;
               inputEl.readOnly = true;
               inputEl.style.backgroundColor = '#f1f5f9';
               inputEl.style.cursor = 'not-allowed';
@@ -371,13 +398,13 @@ var OrderPage = (function () {
             _combos.kh.style.pointerEvents = 'none';
 
             // Tự động thiết lập giá trị ngầm để khi Lưu đơn hàng lấy được mã KH
-            var name = user.name || user.DisplayName || objID;
-            document.getElementById('o-ma-kh').value = objID;
+            var name = perm.user.name || perm.user.DisplayName || perm.objID;
+            document.getElementById('o-ma-kh').value = perm.objID;
             document.getElementById('o-kh-ten').value = name;
-            _catValues.khach_hang = { id: objID, name: name };
+            _catValues.khach_hang = { id: perm.objID, name: name };
             
             // Tự động map Nhân viên phụ trách
-            var empId = user.EmployeeID || '';
+            var empId = perm.empID;
             if (empId) {
               var e = employees.find(x => x.id === empId);
               if (e && _combos.nvkd) {
@@ -387,7 +414,7 @@ var OrderPage = (function () {
             }
             
             // Tự động map Chi nhánh
-            var branchId = user.BranchID || '';
+            var branchId = perm.user.BranchID || '';
             if (branchId) {
               var b = branches.find(x => x.id === branchId);
               if (b && _combos.branch) {
@@ -429,14 +456,12 @@ var OrderPage = (function () {
         // KHOÁ Ô ĐẠI LÝ NẾU TÀI KHOẢN CÓ OBJECT_ID (Khách/Đại lý)
         // -------------------------------------------------------------
         try {
-          var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
-          var role = (user.role || user.Group || '').toLowerCase();
-          var objID = user.ObjectID || '';
+          var perm = _getUserPermission();
           
-          if (objID && objID !== '' && role !== 'admin' && role !== 'ketoan' && role !== 'kế toán' && role !== 'administrator') {
+          if (perm.objID && perm.objID !== '' && !perm.isPrivileged) {
             var inputEl = _combos.ma_dl.querySelector('input');
             if (inputEl) {
-              inputEl.value = user.name || user.DisplayName || objID;
+              inputEl.value = perm.user.name || perm.user.DisplayName || perm.objID;
               inputEl.readOnly = true;
               inputEl.style.backgroundColor = '#f1f5f9';
               inputEl.style.cursor = 'not-allowed';
@@ -446,7 +471,7 @@ var OrderPage = (function () {
               actionBtn.innerHTML = '<span class="material-symbols-outlined" style="color:#94a3b8; font-size:18px;">lock</span>';
             }
             _combos.ma_dl.style.pointerEvents = 'none';
-            document.getElementById('o-ma-dl').value = objID;
+            document.getElementById('o-ma-dl').value = perm.objID;
           }
         } catch(e) {}
 
@@ -508,13 +533,11 @@ var OrderPage = (function () {
         // KHOÁ Ô NHÂN VIÊN NẾU TÀI KHOẢN CÓ EMPLOYEE_ID (NVKD / Khách của NVKD)
         // -------------------------------------------------------------
         try {
-          var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
-          var role = (user.role || user.Group || '').toLowerCase();
-          var empID = user.EmployeeID || '';
+          var perm = _getUserPermission();
           
-          if (empID && empID !== '' && role !== 'admin' && role !== 'ketoan' && role !== 'kế toán' && role !== 'administrator') {
-            var e = employees.find(x => x.id === empID);
-            var empName = e ? e.name : empID;
+          if (perm.empID && perm.empID !== '' && !perm.isPrivileged) {
+            var e = employees.find(x => x.id === perm.empID);
+            var empName = e ? e.name : perm.empID;
             var inputEl = _combos.nvkd.querySelector('input');
             if (inputEl) {
               inputEl.value = empName;
@@ -527,7 +550,7 @@ var OrderPage = (function () {
               actionBtn.innerHTML = '<span class="material-symbols-outlined" style="color:#94a3b8; font-size:18px;">lock</span>';
             }
             _combos.nvkd.style.pointerEvents = 'none';
-            _catValues.nvkd = { id: empID, name: empName };
+            _catValues.nvkd = { id: perm.empID, name: empName };
           }
         } catch(e) {}
 
@@ -694,12 +717,11 @@ var OrderPage = (function () {
     var maKH = document.getElementById('o-ma-kh').value.trim();
     var chiNhanh = _catValues.chi_nhanh.id || _catValues.chi_nhanh.name;
 
-    var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
-    var role = (user.role || user.Group || '').toLowerCase();
+    var perm = _getUserPermission();
     
     // Nếu không phải Khách lẻ mà chưa chọn chi nhánh thì mới báo lỗi
     // (Khách lẻ mặc định bị ẩn ô chi nhánh nên không bắt buộc chọn)
-    if (!chiNhanh && role === 'admin') {
+    if (!chiNhanh && perm.isAdmin) {
       showToast('Vui lòng chọn chi nhánh', false);
       return;
     }
@@ -1170,10 +1192,9 @@ var OrderPage = (function () {
     }
 
     var chiNhanh = _catValues.chi_nhanh.id || _catValues.chi_nhanh.name;
-    var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
-    var role = (user.role || user.Group || '').toLowerCase();
+    var perm = _getUserPermission();
     
-    if (!chiNhanh && role === 'admin') {
+    if (!chiNhanh && perm.isAdmin) {
       showToast('Vui lòng chọn chi nhánh', false);
       return;
     }
@@ -1224,7 +1245,7 @@ var OrderPage = (function () {
       let msg = '';
 
       if (res && res.records && res.records[0]) {
-        if (res.records[0].Success === 0) {
+        if (res.records[0].Success !== 1 && res.records[0].Success !== '1') {
           isSuccess = false;
           msg = res.records[0].Message || 'Lỗi từ CSDL';
         } else {
@@ -1232,7 +1253,7 @@ var OrderPage = (function () {
           msg = 'Đã lưu đơn: ' + actualSoCT;
         }
       } else if (res && res[0]) {
-        if (res[0].Success === 0) {
+        if (res[0].Success !== 1 && res[0].Success !== '1') {
           isSuccess = false;
           msg = res[0].Message || 'Lỗi từ CSDL';
         } else {

@@ -42,7 +42,7 @@ BEGIN
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
-        SELECT 0 AS [Success], ERROR_MESSAGE() AS [Message];
+        SELECT -1 AS [Success], ERROR_MESSAGE() AS [Message];
     END CATCH
 END
 GO

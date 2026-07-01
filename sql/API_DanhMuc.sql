@@ -94,6 +94,18 @@ BEGIN
         RETURN;
     END
 
+    ELSE IF @Loai = 'UserPermission'
+    BEGIN
+        SELECT 
+            -- Check xem group có quyền admin ở chức năng Đơn hàng không
+            CAST(ISNULL((SELECT TOP 1 [isAdmin] FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND [MenuID] = 'WEB_OrderFrm'), 0) AS BIT) AS [isAdmin],
+            -- Check xem group có quyền manager ở chức năng Đơn hàng không
+            CAST(ISNULL((SELECT TOP 1 [isManager] FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND [MenuID] = 'WEB_OrderFrm'), 0) AS BIT) AS [isManager],
+            -- Check xem có phải nhóm Đại lý/Cửa hàng không
+            CAST(CASE WHEN @UserRole IN ('DL', 'Cua hang', 'cửa hàng', 'Ban dai ly') THEN 1 ELSE 0 END AS BIT) AS [isAgent]
+        RETURN;
+    END
+
     ELSE IF @Loai = 'Employee'
     BEGIN
         SELECT
@@ -150,9 +162,7 @@ BEGIN
           -- PHÂN QUYỀN: Kế toán/Admin xem hết, NV KD xem KH của mình, NPP xem KH thuộc quản lý, KH tự xem mình
           AND (
                -- CÚ CHECK TỰ ĐỘNG: Bất kỳ nhóm nào được tick isAdmin hoặc isManager thì mặc định nhả hết Khách hàng
-               -- (NGOẠI TRỪ các nhóm Đại lý/Khách lẻ vì hệ thống đang bị cắm nhầm cờ isManager = 1)
-               (@UserRole NOT IN ('Cua hang', 'cửa hàng', 'DL', 'Ban dai ly', 'User', 'Khach le', 'Khách lẻ') 
-                AND EXISTS (SELECT 1 FROM [dbo].[SY_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND ([isAdmin] = 1 OR [isManager] = 1)))
+                EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND ([isAdmin] = 1 OR [isManager] = 1))
                
                OR (@UserEmployeeID IS NOT NULL AND @UserEmployeeID <> '' AND [EmployeeID] = @UserEmployeeID)
                OR (@UserManagerID IS NOT NULL AND @UserManagerID <> '' AND [ObjectGroupID] = @UserManagerID)
@@ -287,7 +297,7 @@ BEGIN
           AND (@DenNgay IS NULL OR [DocumentDate] <= @DenNgay)
           -- BỨC TƯỜNG LỬA BẢO VỆ ĐƠN HÀNG: Chỉ Sếp mới xem hết, NV xem đơn của mình, KH xem đơn của họ
           AND (
-               ISNULL(@UserRole, '') IN ('Admin', 'Ketoan', 'Kế toán', 'Administrator', 'BRUNO ADMIN', 'GT ADMIN', 'KT Bruno', 'QLKD', 'QLKT', 'QLBL')
+               EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND ([isAdmin] = 1 OR [isManager] = 1))
                OR (@UserEmployeeID IS NOT NULL AND @UserEmployeeID <> '' AND [EmployeeID] = @UserEmployeeID)
                OR (@UserObjectID IS NOT NULL AND @UserObjectID <> '' AND ([ObjectID] = @UserObjectID OR ISNULL([MaDaiLy], '') = @UserObjectID))
                OR (ISNULL(@UserRole, '') = '' AND ISNULL(@UserEmployeeID, '') = '' AND ISNULL(@UserObjectID, '') = '')
@@ -353,7 +363,7 @@ BEGIN
         WHERE h.DocumentID = @TimKiem
           -- BỨC TƯỜNG LỬA CHẶN XEM LÉN CHI TIẾT ĐƠN HÀNG (Người ngoài biết mã cũng không xem được)
           AND (
-               ISNULL(@UserRole, '') IN ('Admin', 'Ketoan', 'Kế toán', 'Administrator', 'BRUNO ADMIN', 'GT ADMIN', 'KT Bruno', 'QLKD', 'QLKT', 'QLBL')
+               EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND ([isAdmin] = 1 OR [isManager] = 1))
                OR (@UserEmployeeID IS NOT NULL AND @UserEmployeeID <> '' AND h.[EmployeeID] = @UserEmployeeID)
                OR (@UserObjectID IS NOT NULL AND @UserObjectID <> '' AND (h.[ObjectID] = @UserObjectID OR ISNULL(h.[MaDaiLy], '') = @UserObjectID))
                OR (ISNULL(@UserRole, '') = '' AND ISNULL(@UserEmployeeID, '') = '' AND ISNULL(@UserObjectID, '') = '')

@@ -25,10 +25,15 @@ BEGIN
         
         -- Ràng buộc bắt buộc (Mandatory fields)
         -- Đã bỏ check Chi nhánh vì form FE đã ẩn
-        IF ISNULL(@MaKH, '') = '' THROW 50000, N'Lỗi: Vui lòng chọn Khách hàng!', 1;
+        IF ISNULL(@MaKH, '') = '' 
+        BEGIN
+            IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+            SELECT -1 AS [Success], N'Lỗi: Vui lòng chọn Khách hàng!' AS [Message], NULL AS [DocumentID];
+            RETURN;
+        END
         
         -- PHÂN QUYỀN LÚC TẠO ĐƠN:
-        IF ISNULL(@UserRole, '') NOT IN ('Admin', 'Ketoan', 'Kế toán', 'Administrator') 
+        IF NOT EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND ([isAdmin] = 1 OR [isManager] = 1))
            AND ISNULL(@UserRole, '') <> '' -- Fallback backward compatibility
         BEGIN
             DECLARE @Allowed BIT = 0;
@@ -54,7 +59,11 @@ BEGIN
             END
             
             IF @Allowed = 0 
-                THROW 50000, N'Lỗi: Bạn không có quyền tạo đơn cho Khách hàng này!', 1;
+            BEGIN
+                IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+                SELECT -1 AS [Success], N'Lỗi: Bạn không có quyền tạo đơn cho Khách hàng này!' AS [Message], NULL AS [DocumentID];
+                RETURN;
+            END
         END
         
         -- Nếu Client không gửi mã, HOẶC mã Client gửi đã bị trùng, tự động sinh mã mới!
@@ -83,7 +92,9 @@ BEGIN
             )
         )
         BEGIN
-            THROW 50000, N'Lỗi: Đơn hàng chứa sản phẩm ảo (không tồn tại trong danh mục CF_ItemTbl)!', 1;
+            IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+            SELECT -1 AS [Success], N'Lỗi: Đơn hàng chứa sản phẩm ảo (không tồn tại trong danh mục CF_ItemTbl)!' AS [Message], NULL AS [DocumentID];
+            RETURN;
         END
 
         DECLARE @KhachDua DECIMAL(18,2) = CAST(ISNULL(NULLIF(JSON_VALUE(@OrderJson, '$.khach_dua'), ''), '0') AS DECIMAL(18,2));
@@ -158,7 +169,7 @@ BEGIN
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
-        SELECT 0 AS [Success], ERROR_MESSAGE() AS [Message], NULL AS [DocumentID];
+        SELECT -1 AS [Success], ERROR_MESSAGE() AS [Message], NULL AS [DocumentID];
     END CATCH
 END
 GO

@@ -1,0 +1,14 @@
+ID	varchar
+UserName	varchar
+MenuID	varchar
+IsRun	bit
+IsAdd	bit
+IsUpdate	bit
+IsDelete	bit
+isManager	bit
+isAdmin	bit
+isAutoLock	bit
+isHideAmount	bit
+isLockDoc	bit
+isUnLockDoc	bit
+isExportExcel	bit
