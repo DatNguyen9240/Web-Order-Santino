@@ -1,25 +1,27 @@
-<div class="page-hdr" style="flex-wrap: wrap; gap: 10px;">
+<div class="page-hdr" style="flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
   <div style="flex: 1; min-width: 0;">
-    <h2 id="detail-title" style="word-wrap: break-word; font-size: clamp(18px, 5vw, 24px); margin: 0; line-height: 1.3;">Chi Tiết Đơn</h2>
+    <h2 id="detail-title" style="word-wrap: break-word; font-size: 14.5px; font-weight: 700; margin: 0; line-height: 1.2;">Chi Tiết Đơn</h2>
   </div>
-  <button class="btn btn-ghost btn-sm" onclick="Router.go('/orders')" style="white-space: nowrap; flex-shrink: 0;">
-    <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">arrow_back</span><span
+  <button class="btn btn-ghost btn-sm" onclick="Router.go('/orders')" style="white-space: nowrap; flex-shrink: 0; padding: 4px 8px; height: 28px; min-height: 28px; font-size: 12px; gap: 4px;">
+    <span class="material-symbols-outlined" style="font-size: 14px;">arrow_back</span><span
       data-i18n="btn.back">Quay lại</span>
   </button>
 </div>
-<div class="card" id="detail-info" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap:15px 20px; align-items: flex-start;"></div>
-<div class="tbl-wrap" style="background: var(--surface); box-shadow: var(--shadow-sm); border: 1px solid var(--border)">
-  <table>
-    <thead>
-      <tr>
-        <th data-i18n="order.col.name">Tên hàng 2</th>
-        <th data-i18n="product.col.name">Tên hàng hóa</th>
-        <th data-i18n="nav.sizes">Size</th>
-        <th data-i18n="order.col.qty">SL</th>
-        <th data-i18n="order.col.price">Đơn giá</th>
-        <th data-i18n="order.total.money">Thành tiền</th>
-      </tr>
-    </thead>
-    <tbody id="detail-body"></tbody>
-  </table>
+<div class="order-detail-layout">
+  <div class="order-detail-header-card" id="detail-info"></div>
+  <div class="tbl-wrap" style="background: var(--surface); box-shadow: var(--shadow-sm); border: 1px solid var(--border)">
+    <table>
+      <thead>
+        <tr>
+          <th data-i18n="order.col.name">Tên hàng 2</th>
+          <th data-i18n="product.col.name">Tên hàng hóa</th>
+          <th data-i18n="nav.sizes">Size</th>
+          <th data-i18n="order.col.qty">SL</th>
+          <th data-i18n="order.col.price">Đơn giá</th>
+          <th data-i18n="order.total.money">Thành tiền</th>
+        </tr>
+      </thead>
+      <tbody id="detail-body"></tbody>
+    </table>
+  </div>
 </div>

@@ -43,15 +43,40 @@ var OrderDetailPage = (function () {
       }
 
       document.getElementById('detail-title').textContent = t('btn.detail') + ': ' + o.so_ct;
-      document.getElementById('detail-info').innerHTML = [
-        '<div><small style="color:var(--muted)"><span data-i18n="order.no">' + t('order.no') + '</span></small><div style="font-weight:700">' + o.so_ct + '</div></div>',
-        '<div><small style="color:var(--muted)"><span data-i18n="order.date">' + t('order.date') + '</span></small><div>' + (o.ngay_ct || '—') + '</div></div>',
-        '<div><small style="color:var(--muted)"><span data-i18n="order.branch">' + t('order.branch') + '</span></small><div>' + (o.chi_nhanh || '—') + '</div></div>',
-        '<div><small style="color:var(--muted)"><span data-i18n="order.staff">' + t('order.staff') + '</span></small><div>' + (o.nvkd || '—') + '</div></div>',
-        '<div><small style="color:var(--muted)"><span data-i18n="order.promo">' + t('order.promo') + '</span></small><div><span class="badge badge-yellow">' + (o.ma_ctbh || 'Không') + '</span></div></div>',
-        '<div><small style="color:var(--muted)"><span data-i18n="order.total.money">' + t('order.total.money') + '</span></small><div style="font-weight:800;color:var(--accent)">' + Utils.formatMoney(o.total_money || 0) + '</div></div>',
-        '<div><small style="color:var(--muted)"><span data-i18n="order.note">' + t('order.note') + '</span></small><div>' + (o.ghi_chu || '—') + '</div></div>',
-      ].join('');
+      document.getElementById('detail-info').innerHTML = `
+        <div class="order-info-item">
+          <span class="order-info-label" data-i18n="order.no">${t('order.no')}</span>
+          <span class="order-info-value highlight-code">${o.so_ct}</span>
+        </div>
+        <div class="order-info-item">
+          <span class="order-info-label" data-i18n="order.date">${t('order.date')}</span>
+          <span class="order-info-value">${o.ngay_ct || '—'}</span>
+        </div>
+        <div class="order-info-item">
+          <span class="order-info-label" data-i18n="order.branch">${t('order.branch')}</span>
+          <span class="order-info-value">${o.chi_nhanh || '—'}</span>
+        </div>
+        <div class="order-info-item">
+          <span class="order-info-label" data-i18n="order.staff">${t('order.staff')}</span>
+          <span class="order-info-value">${o.nvkd || '—'}</span>
+        </div>
+        <div class="order-info-item">
+          <span class="order-info-label" data-i18n="order.promo">${t('order.promo')}</span>
+          <div class="order-info-value">
+            ${o.ma_ctbh && o.ma_ctbh !== 'Không' && o.ma_ctbh !== 'none' ? `<span class="order-promo-badge"><span class="material-symbols-outlined" style="font-size:16px;">sell</span>${o.ma_ctbh}</span>` : '<span style="color:var(--muted)">—</span>'}
+          </div>
+        </div>
+        <div class="order-info-item">
+          <span class="order-info-label" data-i18n="order.total.money">${t('order.total.money')}</span>
+          <span class="order-info-value highlight-money">${Utils.formatMoney(o.total_money || 0)}</span>
+        </div>
+        <div class="order-info-item span-full">
+          <span class="order-info-label" data-i18n="order.note">${t('order.note')}</span>
+          <div class="order-info-note-box">
+            ${o.ghi_chu || '—'}
+          </div>
+        </div>
+      `;
 
       document.getElementById('detail-body').innerHTML = (o.lines || []).map(function (l) {
         var sizesText = '—';
