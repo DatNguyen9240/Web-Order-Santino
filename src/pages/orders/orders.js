@@ -6,7 +6,43 @@ var OrdersPage = (function () {
     // Thêm class để trang này rộng toàn màn hình
     $el.classList.add('is-full-width');
     return Router.fetchTemplate('src/pages/orders/orders.html').then(function(html){
-      $el.innerHTML = html; _render();
+      $el.innerHTML = html;
+      
+      // Tính toán giá trị mặc định: Từ ngày = Đầu tháng, Đến ngày = Hôm nay
+      var now = new Date();
+      var y = now.getFullYear();
+      var m = String(now.getMonth() + 1).padStart(2, '0');
+      var fromDefault = y + '-' + m + '-01';
+      var toDefault = y + '-' + m + '-' + String(now.getDate()).padStart(2, '0');
+
+      // Khởi tạo Custom Date Pickers
+      var fromContainer = document.getElementById('orders-from-container');
+      var toContainer = document.getElementById('orders-to-container');
+      if (fromContainer && toContainer && typeof UIInput !== 'undefined') {
+        var fromInput = UIInput.createDate({
+          id: 'orders-from',
+          name: 'orders-from',
+          label: 'Từ ngày',
+          placeholder: 'Chọn ngày...',
+          value: fromDefault
+        });
+        var toInput = UIInput.createDate({
+          id: 'orders-to',
+          name: 'orders-to',
+          label: 'Đến ngày',
+          placeholder: 'Chọn ngày...',
+          value: toDefault
+        });
+        fromContainer.appendChild(fromInput);
+        toContainer.appendChild(toInput);
+
+        var hiddenFrom = document.getElementById('orders-from');
+        var hiddenTo = document.getElementById('orders-to');
+        if (hiddenFrom) hiddenFrom.addEventListener('change', filter);
+        if (hiddenTo) hiddenTo.addEventListener('change', filter);
+      }
+      
+      _render();
     });
   }
   async function _render() {

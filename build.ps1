@@ -14,7 +14,8 @@ $cssFiles = @(
   "components\toast\toast.css",
   "components\alert\alert.css",
   "components\context-menu\context-menu.css",
-  "components\empty-state\empty-state.css"
+  "components\empty-state\empty-state.css",
+  "components\calendar\calendar.css"
 )
 
 # ====== DANH SACH JS (Core + Components + Data) ======
@@ -33,6 +34,7 @@ $jsFiles = @(
   "components\data-combobox\DataComboBox.js",
   "components\confirm-modal\ConfirmModal.js",
   "components\modal\Modal.js",
+  "components\input\Input.js",
   "components\pagination\Pagination.js",
   "components\icon\Icon.js",
   "components\tabs\NestedTabs.js",
@@ -40,6 +42,7 @@ $jsFiles = @(
   "components\context-menu\ContextMenu.js",
   "components\toast\Toast.js",
   "components\alert\Alert.js",
+  "components\calendar\Calendar.js",
   "js\core\router.js",
   "js\core\sound.js",
   "js\core\app.js"

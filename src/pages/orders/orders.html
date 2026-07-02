@@ -9,8 +9,19 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
-    flex: 1;
-    min-width: 200px;
+    width: 320px; /* Bé lại trên màn hình to */
+    flex-shrink: 0;
+  }
+  .orders-date-grid .form-group {
+    margin-bottom: 0; /* Bỏ margin bottom mặc định */
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .orders-date-grid .form-group label {
+    font-size: calc(12px * var(--text-scale, 1));
+    color: var(--muted);
+    font-weight: 500;
   }
   @media (max-width: 768px) {
     .orders-filter {
@@ -20,6 +31,7 @@
     .orders-date-grid {
       max-width: 100%;
       min-width: 100%;
+      width: 100%;
     }
   }
 </style>
@@ -28,16 +40,10 @@
 </div>
 <div class="orders-filter" style="margin-bottom: 20px;">
   <div class="orders-date-grid">
-    <div style="display:flex; flex-direction:column; gap:4px;">
-      <label style="font-size:calc(12px * var(--text-scale,1)); color:var(--muted)">Từ ngày</label>
-      <input type="date" id="orders-from" class="date-vn" data-date="dd/mm/yyyy" onchange="this.setAttribute('data-date', this.value ? this.value.split('-').reverse().join('/') : 'dd/mm/yyyy'); OrdersPage.filter()" style="width:100%; border:1px solid var(--border); border-radius:8px; padding:10px 12px; background:var(--surface); font-family:inherit; outline:none; transition: border-color 0.2s;">
-    </div>
-    <div style="display:flex; flex-direction:column; gap:4px;">
-      <label style="font-size:calc(12px * var(--text-scale,1)); color:var(--muted)">Đến ngày</label>
-      <input type="date" id="orders-to" class="date-vn" data-date="dd/mm/yyyy" onchange="this.setAttribute('data-date', this.value ? this.value.split('-').reverse().join('/') : 'dd/mm/yyyy'); OrdersPage.filter()" style="width:100%; border:1px solid var(--border); border-radius:8px; padding:10px 12px; background:var(--surface); font-family:inherit; outline:none; transition: border-color 0.2s;">
-    </div>
+    <div id="orders-from-container"></div>
+    <div id="orders-to-container"></div>
   </div>
-  <div class="search-wrapper" style="width: auto; flex: 1; min-width: 250px;">
+  <div class="search-wrapper" style="width: 300px; max-width: 100%; flex: none;">
     <span class="material-symbols-outlined">search</span>
     <input id="orders-search" placeholder="Tìm số CT hoặc Khách hàng..." data-i18n-placeholder="orders.search.placeholder" oninput="OrdersPage.filter()">
   </div>

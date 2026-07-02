@@ -1,4 +1,4 @@
-/* --- translations.js --- */
+﻿/* --- translations.js --- */
 var TRANSLATIONS = {
   vi: {
     // --- Sidebar ---
@@ -1948,6 +1948,977 @@ var UIModal = (function () {
 })();
 
 
+/* --- Input.js --- */
+/**
+ * Input Component
+ * Sinh ra các ô nhập liệu (Text, Number, Date...) kèm Label bằng DOM Node chuẩn.
+ * An toàn XSS, tiện lợi khi build Form hoàn toàn bằng JavaScript.
+ */
+var UIInput = (function () {
+
+  /**
+   * Sinh cấu trúc Label + DOM Input
+   */
+  function _createBaseWrapper(config, inputType) {
+    var wrapper = document.createElement('div');
+    wrapper.className = 'form-group ' + (config.className || '');
+
+    if (config.label) {
+      var lbl = document.createElement('label');
+      lbl.innerText = config.label;
+      if (config.required) {
+        var req = document.createElement('span');
+        req.innerText = ' *';
+        req.style.color = 'var(--danger)';
+        lbl.appendChild(req);
+      }
+      wrapper.appendChild(lbl);
+    }
+
+    var input = document.createElement('input');
+    if (config.isMoney) {
+      input.type = 'text';
+      input.setAttribute('inputmode', 'numeric');
+    } else {
+      input.type = inputType;
+    }
+    input.className = 'ui-input';
+    if (config.id) input.id = config.id;
+    if (config.name) input.name = config.name;
+
+    var finalPlaceholder = config.placeholder;
+    if (!finalPlaceholder && config.label && inputType !== 'checkbox' && inputType !== 'radio' && inputType !== 'date') {
+      finalPlaceholder = 'Nhập ' + config.label.toLowerCase() + '...';
+    }
+    if (finalPlaceholder) input.placeholder = finalPlaceholder;
+
+    if (config.value !== undefined) input.value = config.value;
+    if (config.disabled) input.disabled = true;
+    if (config.readonly) input.readOnly = true;
+
+    wrapper.appendChild(input);
+
+    if (config.isMoney) {
+      var wordEl = document.createElement('div');
+      wordEl.className = 'money-words-text';
+      wordEl.style.cssText = 'font-size: 11px; color: var(--success); margin-top: 4px; min-height: 16px; font-style: italic;';
+      wrapper.appendChild(wordEl);
+      setupMoneyInput(input, wordEl);
+    }
+
+    return { wrapper: wrapper, input: input };
+  }
+
+  /**
+   * Ô nhập Text thông thường
+   */
+  function createText(config) {
+    return _createBaseWrapper(config, 'text').wrapper;
+  }
+
+  /**
+   * Ô nhập Số
+   */
+  function createNumber(config) {
+    var obj = _createBaseWrapper(config, 'number');
+    if (config.min !== undefined) obj.input.min = config.min;
+    if (config.max !== undefined) obj.input.max = config.max;
+    if (config.step !== undefined) obj.input.step = config.step;
+    return obj.wrapper;
+  }
+
+  /**
+   * Ô nhập Tiền tệ (tự động format + đọc số thành chữ)
+   */
+  function createMoney(config) {
+    var conf = Object.assign({}, config, { isMoney: true });
+    return _createBaseWrapper(conf, 'text').wrapper;
+  }
+
+  /**
+   * Ô chọn Giờ
+   */
+  function createTime(config) {
+    var initialVal = config.value || ''; // Expected standard format: HH:mm (e.g. 15:32)
+    
+    // Parse the initial HH:mm value for display hh:mm A
+    var displayVal = '';
+    if (initialVal) {
+      var parts = initialVal.split(':');
+      if (parts.length >= 2) {
+        var h = parseInt(parts[0], 10);
+        var m = parts[1].substring(0, 2);
+        var period = h >= 12 ? 'PM' : 'AM';
+        var displayH = h % 12;
+        if (displayH === 0) displayH = 12;
+        var displayHStr = String(displayH).padStart(2, '0');
+        displayVal = displayHStr + ':' + m + ' ' + period;
+      }
+    }
+
+    var obj = _createBaseWrapper(config, 'text');
+    var visibleInput = obj.input;
+    
+    // Remove name from visible text input to avoid duplicate submission
+    visibleInput.removeAttribute('name');
+    var elementId = config.id || config.name;
+    if (elementId) visibleInput.id = elementId + '_visible';
+    visibleInput.readOnly = true;
+    visibleInput.style.cursor = 'pointer';
+    visibleInput.placeholder = config.placeholder || 'Chọn giờ...';
+    visibleInput.value = displayVal;
+
+    // Create the hidden input for form data collection in HH:mm format
+    var hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    if (config.name) hiddenInput.name = config.name;
+    if (elementId) hiddenInput.id = elementId;
+    hiddenInput.value = initialVal;
+    obj.wrapper.appendChild(hiddenInput);
+
+    // Sync from hidden input value back to visible input value
+    hiddenInput.addEventListener('change', function () {
+      var val = hiddenInput.value;
+      if (val) {
+        var parts = val.split(':');
+        if (parts.length >= 2) {
+          var h = parseInt(parts[0], 10);
+          var m = parts[1].substring(0, 2);
+          var period = h >= 12 ? 'PM' : 'AM';
+          var displayH = h % 12;
+          if (displayH === 0) displayH = 12;
+          var displayHStr = String(displayH).padStart(2, '0');
+          visibleInput.value = displayHStr + ':' + m + ' ' + period;
+        } else {
+          visibleInput.value = val;
+        }
+      } else {
+        visibleInput.value = '';
+      }
+    });
+
+    // Remove the native input direct placement to wrap it nicely
+    if (visibleInput.parentNode) {
+      visibleInput.parentNode.removeChild(visibleInput);
+    }
+
+    // Input Group wrapper
+    var inputContainer = document.createElement('div');
+    inputContainer.style.position = 'relative';
+    inputContainer.style.display = 'flex';
+    inputContainer.style.alignItems = 'center';
+    inputContainer.appendChild(visibleInput);
+
+    // Icon (schedule = clock icon in Material Symbols)
+    var icon = document.createElement('span');
+    icon.className = 'material-symbols-outlined';
+    icon.innerText = 'schedule';
+    icon.style.position = 'absolute';
+    icon.style.right = '12px';
+    icon.style.color = 'var(--muted)';
+    icon.style.pointerEvents = 'none';
+    icon.style.fontSize = '20px';
+    inputContainer.appendChild(icon);
+
+    obj.wrapper.appendChild(inputContainer);
+
+    var popup = null;
+    var _scrollTargets = [];
+    var _scrollHandler = null;
+
+    function isElementClipped(el) {
+      var rect = el.getBoundingClientRect();
+      if (rect.bottom < 0 || rect.top > window.innerHeight) {
+        return true;
+      }
+      var node = el.parentElement;
+      while (node && node !== document.documentElement) {
+        var style = window.getComputedStyle(node);
+        var ov = style.overflow + style.overflowY + style.overflowX;
+        if (/auto|scroll/.test(ov)) {
+          var parentRect = node.getBoundingClientRect();
+          if (rect.bottom < parentRect.top || rect.top > parentRect.bottom) {
+            return true;
+          }
+        }
+        node = node.parentElement;
+      }
+      return false;
+    }
+
+    function updatePosition() {
+      if (!popup) return;
+      var rect = visibleInput.getBoundingClientRect();
+      var windowWidth = window.innerWidth;
+      var windowHeight = window.innerHeight;
+      var popupWidth = 240;
+      var popupHeight = 270;
+
+      if (isElementClipped(visibleInput)) {
+        closePopup();
+        return;
+      }
+
+      var topPos = rect.bottom + 4;
+      if (rect.bottom + popupHeight > windowHeight && rect.top - popupHeight > 0) {
+        topPos = rect.top - popupHeight - 4;
+      }
+
+      var leftPos = rect.left;
+      if (rect.left + popupWidth > windowWidth) {
+        leftPos = rect.right - popupWidth;
+      }
+      leftPos = Math.max(10, leftPos);
+
+      popup.style.top = topPos + 'px';
+      popup.style.left = leftPos + 'px';
+    }
+
+    function attachScrollListeners() {
+      if (_scrollHandler) return;
+      _scrollHandler = function () {
+        updatePosition();
+      };
+      _scrollTargets = (UIControls.utils && typeof UIControls.utils.getScrollableAncestors === 'function')
+        ? UIControls.utils.getScrollableAncestors(inputContainer)
+        : [window];
+      _scrollTargets.forEach(function (target) {
+        target.addEventListener('scroll', _scrollHandler, { passive: true, capture: false });
+      });
+      window.addEventListener('resize', _scrollHandler, { passive: true });
+    }
+
+    function detachScrollListeners() {
+      if (!_scrollHandler) return;
+      _scrollTargets.forEach(function (target) {
+        target.removeEventListener('scroll', _scrollHandler, { capture: false });
+      });
+      window.removeEventListener('resize', _scrollHandler);
+      _scrollHandler = null;
+      _scrollTargets = [];
+    }
+
+    function openPopup() {
+      if (popup) return;
+      window.dispatchEvent(new CustomEvent('close-all-pickers'));
+      window.addEventListener('close-all-pickers', closePopup);
+      popup = document.createElement('div');
+      popup.className = 'custom-timepicker-popup';
+
+      var isMobile = (window.innerWidth <= 576);
+
+      if (isMobile) {
+        var backdrop = document.createElement('div');
+        backdrop.id = 'timepicker-mobile-backdrop';
+        backdrop.style.position = 'fixed';
+        backdrop.style.inset = '0';
+        backdrop.style.background = 'rgba(0, 0, 0, 0.4)';
+        backdrop.style.zIndex = '99999998';
+        backdrop.addEventListener('click', closePopup);
+        document.body.appendChild(backdrop);
+        
+        popup.style.position = 'fixed';
+        popup.style.zIndex = '99999999';
+      } else {
+        popup.style.position = 'fixed';
+        popup.style.zIndex = '99999999';
+      }
+
+      // Populate columns: Hour (01-12), Minute (00-59), Period (AM/PM)
+      var val = hiddenInput.value || '';
+      var activeH = '08', activeM = '00', activeP = 'AM';
+      if (val) {
+        var parts = val.split(':');
+        if (parts.length >= 2) {
+          var h = parseInt(parts[0], 10);
+          activeM = parts[1].substring(0, 2);
+          activeP = h >= 12 ? 'PM' : 'AM';
+          var displayH = h % 12;
+          if (displayH === 0) displayH = 12;
+          activeH = String(displayH).padStart(2, '0');
+        }
+      }
+
+      var columnsWrap = document.createElement('div');
+      columnsWrap.className = 'timepicker-columns';
+
+      // 1. Hour Column (01-12)
+      var hrCol = document.createElement('div');
+      hrCol.className = 'timepicker-column hours-col';
+      for (var i = 1; i <= 12; i++) {
+        var itemVal = String(i).padStart(2, '0');
+        var item = document.createElement('div');
+        item.className = 'timepicker-item' + (itemVal === activeH ? ' active' : '');
+        item.innerText = itemVal;
+        item.setAttribute('data-value', itemVal);
+        item.onclick = function () {
+          hrCol.querySelectorAll('.timepicker-item').forEach(function (el) { el.classList.remove('active'); });
+          this.classList.add('active');
+          scrollToActive(hrCol);
+          updateTimeValue();
+        };
+        hrCol.appendChild(item);
+      }
+
+      // 2. Minute Column (00-59)
+      var minCol = document.createElement('div');
+      minCol.className = 'timepicker-column minutes-col';
+      for (var i = 0; i <= 59; i++) {
+        var itemVal = String(i).padStart(2, '0');
+        var item = document.createElement('div');
+        item.className = 'timepicker-item' + (itemVal === activeM ? ' active' : '');
+        item.innerText = itemVal;
+        item.setAttribute('data-value', itemVal);
+        item.onclick = function () {
+          minCol.querySelectorAll('.timepicker-item').forEach(function (el) { el.classList.remove('active'); });
+          this.classList.add('active');
+          scrollToActive(minCol);
+          updateTimeValue();
+        };
+        minCol.appendChild(item);
+      }
+
+      // 3. Period Column (AM/PM)
+      var pCol = document.createElement('div');
+      pCol.className = 'timepicker-column period-col';
+      ['AM', 'PM'].forEach(function (itemVal) {
+        var item = document.createElement('div');
+        item.className = 'timepicker-item' + (itemVal === activeP ? ' active' : '');
+        item.innerText = itemVal;
+        item.setAttribute('data-value', itemVal);
+        item.onclick = function () {
+          pCol.querySelectorAll('.timepicker-item').forEach(function (el) { el.classList.remove('active'); });
+          this.classList.add('active');
+          scrollToActive(pCol);
+          updateTimeValue();
+        };
+        pCol.appendChild(item);
+      });
+
+      columnsWrap.appendChild(hrCol);
+      columnsWrap.appendChild(minCol);
+      columnsWrap.appendChild(pCol);
+      popup.appendChild(columnsWrap);
+
+      // Scroll to active items in columns
+      setTimeout(function () {
+        scrollToActive(hrCol);
+        scrollToActive(minCol);
+        scrollToActive(pCol);
+      }, 0);
+
+      function scrollToActive(columnEl) {
+        var activeItem = columnEl.querySelector('.timepicker-item.active');
+        if (activeItem) {
+          columnEl.scrollTop = activeItem.offsetTop - (columnEl.clientHeight / 2) + (activeItem.clientHeight / 2);
+        }
+      }
+
+      function updateTimeValue() {
+        var hEl = hrCol.querySelector('.timepicker-item.active');
+        var mEl = minCol.querySelector('.timepicker-item.active');
+        var pEl = pCol.querySelector('.timepicker-item.active');
+        if (!hEl || !mEl || !pEl) return;
+
+        var hStr = hEl.getAttribute('data-value');
+        var mStr = mEl.getAttribute('data-value');
+        var pStr = pEl.getAttribute('data-value');
+
+        var hVal = parseInt(hStr, 10);
+        if (pStr === 'PM' && hVal < 12) hVal += 12;
+        if (pStr === 'AM' && hVal === 12) hVal = 0;
+        
+        var standardVal = String(hVal).padStart(2, '0') + ':' + mStr;
+        hiddenInput.value = standardVal;
+        visibleInput.value = hStr + ':' + mStr + ' ' + pStr;
+        hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+        hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+
+      // Footer
+      var footer = document.createElement('div');
+      footer.className = 'timepicker-footer';
+
+      var btnClear = document.createElement('button');
+      btnClear.className = 'btn-timepicker-clear';
+      btnClear.innerText = 'Xóa';
+      btnClear.onclick = function () {
+        hiddenInput.value = '';
+        visibleInput.value = '';
+        hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+        hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+        closePopup();
+      };
+
+      var btnDone = document.createElement('button');
+      btnDone.className = 'btn-timepicker-done';
+      btnDone.innerText = 'Xong';
+      btnDone.onclick = function () {
+        updateTimeValue();
+        closePopup();
+      };
+
+      footer.appendChild(btnClear);
+      footer.appendChild(btnDone);
+      popup.appendChild(footer);
+
+      document.body.appendChild(popup);
+
+      if (!isMobile) {
+        updatePosition();
+        attachScrollListeners();
+      }
+
+      setTimeout(function () {
+        document.addEventListener('click', outsideClickListener);
+      }, 0);
+    }
+
+    function closePopup() {
+      if (!popup) return;
+      window.removeEventListener('close-all-pickers', closePopup);
+      document.removeEventListener('click', outsideClickListener);
+      detachScrollListeners();
+      var backdrop = document.getElementById('timepicker-mobile-backdrop');
+      if (backdrop && backdrop.parentNode) {
+        backdrop.parentNode.removeChild(backdrop);
+      }
+      if (popup.parentNode) {
+        popup.parentNode.removeChild(popup);
+      }
+      popup = null;
+    }
+
+    function outsideClickListener(e) {
+      if (!document.body.contains(e.target)) return;
+      if (popup && !popup.contains(e.target) && e.target !== visibleInput) {
+        closePopup();
+      }
+    }
+
+    visibleInput.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (popup) {
+        closePopup();
+      } else {
+        openPopup();
+      }
+    });
+
+    return obj.wrapper;
+  }
+
+  /**
+   * Ô chọn Ngày
+   */
+  function createDate(config) {
+    if (config.value) {
+      var rawVal = String(config.value).trim();
+      if (rawVal.indexOf('T') !== -1) {
+        config.value = rawVal.split('T')[0];
+      } else if (rawVal.indexOf('/') !== -1) {
+        var parts = rawVal.split(' ')[0].split('/');
+        if (parts.length === 3) {
+          if (parts[0].length === 4) { // YYYY/MM/DD
+            config.value = parts[0] + '-' + parts[1] + '-' + parts[2];
+          } else { // DD/MM/YYYY
+            config.value = parts[2] + '-' + parts[1] + '-' + parts[0];
+          }
+        }
+      } else if (rawVal.indexOf(' ') !== -1) {
+        config.value = rawVal.split(' ')[0];
+      }
+    }
+
+    var obj = _createBaseWrapper(config, 'text');
+    var visibleInput = obj.input;
+
+    // Remove name to prevent duplicate submission of the text representation
+    visibleInput.removeAttribute('name');
+    var elementId = config.id || config.name;
+    if (elementId) visibleInput.id = elementId + '_visible';
+    visibleInput.readOnly = true;
+    visibleInput.style.cursor = 'pointer';
+    visibleInput.placeholder = config.placeholder || 'Chọn ngày...';
+
+    // Format display value
+    var initialDate = config.value || '';
+    if (initialDate) {
+      var p = initialDate.split('-');
+      if (p.length === 3) {
+        visibleInput.value = p[2] + '/' + p[1] + '/' + p[0];
+      }
+    }
+
+    // Create the actual hidden input for form value collection
+    var hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    if (config.name) hiddenInput.name = config.name;
+    if (elementId) hiddenInput.id = elementId;
+    hiddenInput.value = initialDate;
+    obj.wrapper.appendChild(hiddenInput);
+
+    // Sync from hidden input value back to visible input value
+    hiddenInput.addEventListener('change', function () {
+      var val = hiddenInput.value;
+      if (val) {
+        var p = val.split('-');
+        if (p.length === 3) {
+          visibleInput.value = p[2] + '/' + p[1] + '/' + p[0];
+        } else {
+          visibleInput.value = val;
+        }
+      } else {
+        visibleInput.value = '';
+      }
+    });
+
+    // Remove the native input direct placement to wrap it nicely
+    if (visibleInput.parentNode) {
+      visibleInput.parentNode.removeChild(visibleInput);
+    }
+
+    // Input Group wrapper
+    var inputContainer = document.createElement('div');
+    inputContainer.style.position = 'relative';
+    inputContainer.style.display = 'flex';
+    inputContainer.style.alignItems = 'center';
+    inputContainer.appendChild(visibleInput);
+
+    // Icon
+    var icon = document.createElement('span');
+    icon.className = 'material-symbols-outlined';
+    icon.innerText = 'calendar_today';
+    icon.style.position = 'absolute';
+    icon.style.right = '12px';
+    icon.style.color = 'var(--muted)';
+    icon.style.pointerEvents = 'none';
+    icon.style.fontSize = '20px';
+    inputContainer.appendChild(icon);
+
+    obj.wrapper.appendChild(inputContainer);
+
+    // Custom calendar popup picker
+    var popup = null;
+    var calendarInstance = null;
+    var _scrollTargets = [];
+    var _scrollHandler = null;
+
+    function isElementClipped(el) {
+      var rect = el.getBoundingClientRect();
+      if (rect.bottom < 0 || rect.top > window.innerHeight) {
+        return true;
+      }
+      var node = el.parentElement;
+      while (node && node !== document.documentElement) {
+        var style = window.getComputedStyle(node);
+        var ov = style.overflow + style.overflowY + style.overflowX;
+        if (/auto|scroll/.test(ov)) {
+          var parentRect = node.getBoundingClientRect();
+          if (rect.bottom < parentRect.top || rect.top > parentRect.bottom) {
+            return true;
+          }
+        }
+        node = node.parentElement;
+      }
+      return false;
+    }
+
+    function updatePosition() {
+      if (!popup) return;
+      var rect = visibleInput.getBoundingClientRect();
+      var windowWidth = window.innerWidth;
+      var windowHeight = window.innerHeight;
+      var popupWidth = 340;
+      var popupHeight = 380;
+
+      // Close if the input is scrolled out of view/container bounds
+      if (isElementClipped(visibleInput)) {
+        closePopup();
+        return;
+      }
+
+      // Calculate vertical position (flip if not enough space below)
+      var topPos = rect.bottom + 4;
+      if (rect.bottom + popupHeight > windowHeight && rect.top - popupHeight > 0) {
+        topPos = rect.top - popupHeight - 4;
+      }
+
+      // Calculate horizontal position
+      var leftPos = rect.left;
+      if (rect.left + popupWidth > windowWidth) {
+        leftPos = rect.right - popupWidth;
+      }
+      leftPos = Math.max(10, leftPos);
+
+      popup.style.top = topPos + 'px';
+      popup.style.left = leftPos + 'px';
+    }
+
+    function attachScrollListeners() {
+      if (_scrollHandler) return;
+      _scrollHandler = function () {
+        updatePosition();
+      };
+      _scrollTargets = (UIControls.utils && typeof UIControls.utils.getScrollableAncestors === 'function')
+        ? UIControls.utils.getScrollableAncestors(inputContainer)
+        : [window];
+      _scrollTargets.forEach(function (target) {
+        target.addEventListener('scroll', _scrollHandler, { passive: true, capture: false });
+      });
+      window.addEventListener('resize', _scrollHandler, { passive: true });
+    }
+
+    function detachScrollListeners() {
+      if (!_scrollHandler) return;
+      _scrollTargets.forEach(function (target) {
+        target.removeEventListener('scroll', _scrollHandler, { capture: false });
+      });
+      window.removeEventListener('resize', _scrollHandler);
+      _scrollHandler = null;
+      _scrollTargets = [];
+    }
+
+    function openPopup() {
+      if (popup) return;
+      window.dispatchEvent(new CustomEvent('close-all-pickers'));
+      window.addEventListener('close-all-pickers', closePopup);
+      popup = document.createElement('div');
+      popup.className = 'custom-datepicker-popup';
+
+      var isMobile = (window.innerWidth <= 576);
+
+      if (isMobile) {
+        // Add a dim backdrop for mobile focus
+        var backdrop = document.createElement('div');
+        backdrop.id = 'datepicker-mobile-backdrop';
+        backdrop.style.position = 'fixed';
+        backdrop.style.inset = '0';
+        backdrop.style.background = 'rgba(0, 0, 0, 0.4)';
+        backdrop.style.zIndex = '99999998';
+        backdrop.addEventListener('click', closePopup);
+        document.body.appendChild(backdrop);
+        
+        popup.style.position = 'fixed';
+        popup.style.zIndex = '99999999';
+      } else {
+        // Desktop/Tablet layout: Position relative to input using fixed (non-clipped)
+        popup.style.position = 'fixed';
+        popup.style.zIndex = '99999999';
+      }
+
+      if (typeof UICalendar !== 'undefined') {
+        calendarInstance = UICalendar.create({
+          selectedDate: hiddenInput.value || null,
+          onSelect: function (dateStr) {
+            hiddenInput.value = dateStr;
+            var p = dateStr.split('-');
+            if (p.length === 3) {
+              visibleInput.value = p[2] + '/' + p[1] + '/' + p[0];
+            }
+            hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+            hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+            closePopup();
+          }
+        });
+        popup.appendChild(calendarInstance);
+      } else {
+        popup.innerText = 'UICalendar not loaded';
+      }
+
+      document.body.appendChild(popup);
+
+      if (!isMobile) {
+        updatePosition();
+        attachScrollListeners();
+      }
+
+      if (calendarInstance && calendarInstance.setSelectedDate) {
+        calendarInstance.setSelectedDate(hiddenInput.value || null);
+      }
+
+      setTimeout(function () {
+        document.addEventListener('click', outsideClickListener);
+      }, 0);
+    }
+
+    function closePopup() {
+      if (!popup) return;
+      window.removeEventListener('close-all-pickers', closePopup);
+      document.removeEventListener('click', outsideClickListener);
+      detachScrollListeners();
+      var backdrop = document.getElementById('datepicker-mobile-backdrop');
+      if (backdrop && backdrop.parentNode) {
+        backdrop.parentNode.removeChild(backdrop);
+      }
+      if (popup.parentNode) {
+        popup.parentNode.removeChild(popup);
+      }
+      popup = null;
+      calendarInstance = null;
+    }
+
+    function outsideClickListener(e) {
+      if (!document.body.contains(e.target)) return;
+      if (popup && !popup.contains(e.target) && e.target !== visibleInput) {
+        closePopup();
+      }
+    }
+
+    visibleInput.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (popup) {
+        closePopup();
+      } else {
+        openPopup();
+      }
+    });
+
+    return obj.wrapper;
+  }
+
+  /**
+   * Ô Switch (Công tắc bật/tắt cho boolean)
+   */
+  function createSwitch(config) {
+    var obj = _createBaseWrapper(config, 'checkbox');
+    obj.wrapper.classList.remove('form-group');
+    obj.wrapper.classList.add('modern-checkbox-wrapper');
+    obj.input.className = 'modern-checkbox';
+    obj.input.style.cursor = 'pointer';
+
+    // Checkbox uses checked instead of value
+    if (config.value === '1' || config.value === 1 || config.value === true || String(config.value).toLowerCase() === 'true') {
+      obj.input.checked = true;
+    }
+
+    // Thêm giá trị thực vào dataset để tự động serialize thành 1/0
+    obj.input.value = obj.input.checked ? 1 : 0;
+    obj.input.onchange = function () {
+      this.value = this.checked ? 1 : 0;
+    };
+
+    // Đảo ngược thứ tự input và label cho đẹp
+    var label = obj.wrapper.querySelector('label');
+    if (label) {
+      // Xóa class cũ
+      label.className = '';
+      label.style.cursor = 'pointer';
+      // Đảo ngược thứ tự: input trước, label sau
+      obj.wrapper.insertBefore(obj.input, label);
+    }
+
+    return obj.wrapper;
+  }
+
+  /**
+   * Ô nhập Mật Khẩu (có nút mắt ẩn/hiện)
+   */
+  function createPassword(config) {
+    var obj = _createBaseWrapper(config, 'password');
+    var input = obj.input;
+
+    // Wrapper cho input + nút mắt
+    var inputWrap = document.createElement('div');
+    inputWrap.style.position = 'relative';
+    inputWrap.style.display = 'flex';
+    inputWrap.style.alignItems = 'center';
+
+    // Thay thế input bằng inputWrap TRƯỚC (input vẫn còn là child của wrapper)
+    obj.wrapper.replaceChild(inputWrap, input);
+
+    // Rồi mới chuyển input vào inputWrap
+    input.style.paddingRight = '40px';
+    inputWrap.appendChild(input);
+
+    // Nút mắt
+    var eyeBtn = document.createElement('button');
+    eyeBtn.type = 'button';
+    eyeBtn.tabIndex = -1;
+    eyeBtn.className = 'password-eye-btn';
+    eyeBtn.style.cssText = 'position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; padding:4px; display:flex; align-items:center; justify-content:center; color:var(--muted); border-radius:4px; transition: color 0.2s;';
+    eyeBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:20px;">visibility_off</span>';
+    eyeBtn.title = 'Hiện mật khẩu';
+
+    var isVisible = false;
+    eyeBtn.addEventListener('click', function () {
+      isVisible = !isVisible;
+      input.type = isVisible ? 'text' : 'password';
+      eyeBtn.querySelector('.material-symbols-outlined').textContent = isVisible ? 'visibility' : 'visibility_off';
+      eyeBtn.title = isVisible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu';
+      input.focus();
+    });
+
+    // Hover effect
+    eyeBtn.addEventListener('mouseenter', function () { this.style.color = 'var(--text)'; });
+    eyeBtn.addEventListener('mouseleave', function () { this.style.color = 'var(--muted)'; });
+
+    inputWrap.appendChild(eyeBtn);
+
+    return obj.wrapper;
+  }
+
+  /**
+   * Ô Select (Combobox thả xuống)
+   */
+  function createSelect(config, options) {
+    var wrapper = document.createElement('div');
+    wrapper.className = 'form-group ' + (config.className || '');
+
+    if (config.label) {
+      var lbl = document.createElement('label');
+      lbl.innerText = config.label;
+      if (config.required) {
+        var req = document.createElement('span');
+        req.innerText = ' *';
+        req.style.color = 'var(--danger)';
+        lbl.appendChild(req);
+      }
+      wrapper.appendChild(lbl);
+    }
+
+    var select = document.createElement('select');
+    select.className = 'ui-input'; // Xài chung style với thẻ input
+    if (config.id) select.id = config.id;
+    if (config.name) select.name = config.name;
+    if (config.disabled) select.disabled = true;
+
+    var defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.innerText = '-- Vui lòng chọn --';
+    select.appendChild(defaultOpt);
+
+    (options || []).forEach(function (opt) {
+      var o = document.createElement('option');
+      o.value = opt.value;
+      o.innerText = opt.label;
+      if (config.value == opt.value) o.selected = true;
+      select.appendChild(o);
+    });
+
+    wrapper.appendChild(select);
+    return wrapper;
+  }
+
+  /**
+   * Sinh HTML chuỗi cho Bộ chọn số lượng (Quantity Selector)
+   * Dùng cho các Grid/Table sử dụng innerHTML thay vì DOM Nodes.
+   */
+  function createQuantityHTML(config) {
+    var value = config.value || 1;
+    var onDecrease = config.onDecrease || '';
+    var onIncrease = config.onIncrease || '';
+    var onChange = config.onChange || '';
+    var stopPropagation = config.stopPropagation ? 'event.stopPropagation(); ' : '';
+
+    var h = config.height || 32;
+    var w = config.width || 96;
+    var btnW = config.btnWidth || 30;
+    var inpW = w - (btnW * 2);
+
+    return `
+      <div class="d-flex align-items-center justify-content-center mx-auto" style="width: ${w}px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--surface); box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+        <button class="btn btn-light d-flex align-items-center justify-content-center p-0" style="width: ${btnW}px; height: ${h}px; border: none; border-radius: 0; background: #f8f9fa; color: #475569;" onclick="${stopPropagation}${onDecrease}" title="Giảm">
+          <span class="material-symbols-outlined" style="font-size: 16px;">remove</span>
+        </button>
+        <input type="text" class="form-control text-center p-0 border-0" style="width: ${inpW}px; height: ${h}px; font-weight: 600; font-size: 13px; background: transparent; box-shadow: none;" value="${value}" onchange="${stopPropagation}${onChange}" title="Nhập số lượng">
+        <button class="btn btn-light d-flex align-items-center justify-content-center p-0" style="width: ${btnW}px; height: ${h}px; border: none; border-radius: 0; background: #f8f9fa; color: #475569;" onclick="${stopPropagation}${onIncrease}" title="Tăng">
+          <span class="material-symbols-outlined" style="font-size: 16px;">add</span>
+        </button>
+      </div>
+    `;
+  }
+
+  /**
+   * Hàm đọc số thành chữ tiếng Việt
+   */
+  function docSoTienVN(n) {
+    if (!n || n === 0) return 'Không đồng';
+    var dvDoc = ['', 'nghìn', 'triệu', 'tỷ', 'nghìn tỷ', 'triệu tỷ', 'tỷ tỷ'];
+    var soDoc = ['không', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
+    function docNhom(so) {
+      var tram = Math.floor(so / 100);
+      var chuc = Math.floor((so % 100) / 10);
+      var dv = so % 10;
+      var kq = '';
+      if (tram > 0) kq += soDoc[tram] + ' trăm ';
+      if (chuc === 1) kq += 'mười ';
+      else if (chuc > 1) kq += soDoc[chuc] + ' mươi ';
+      if (dv === 1 && chuc > 1) kq += 'mốt ';
+      else if (dv === 5 && chuc > 0) kq += 'lăm ';
+      else if (dv > 0) kq += soDoc[dv] + ' ';
+      return kq.trim();
+    }
+    var str = Math.round(n).toString();
+    var groups = [];
+    while (str.length > 0) {
+      groups.unshift(str.slice(-3));
+      str = str.slice(0, -3);
+    }
+    var result = '';
+    groups.forEach(function (g, i) {
+      var val = parseInt(g, 10);
+      if (val > 0) {
+        result += docNhom(val) + ' ' + dvDoc[groups.length - 1 - i] + ' ';
+      }
+    });
+    return result.trim() + ' đồng';
+  }
+
+  /**
+   * Cài đặt tự động format số tiền + hiển thị text cho một ô input có sẵn
+   */
+  function setupMoneyInput(inputEl, textEl) {
+    if (!inputEl) return;
+
+    function refresh() {
+      var raw = parseInt(inputEl.value.replace(/\D/g, ''), 10) || 0;
+      inputEl.value = raw === 0 ? '' : raw.toLocaleString('vi-VN');
+      if (textEl) textEl.innerText = raw === 0 ? '' : docSoTienVN(raw);
+    }
+
+    inputEl.addEventListener('input', function () {
+      var pos = this.selectionStart;
+      var oldLen = this.value.length;
+      var raw = parseInt(this.value.replace(/\D/g, ''), 10) || 0;
+
+      this.value = raw === 0 ? '' : raw.toLocaleString('vi-VN');
+
+      var diff = this.value.length - oldLen;
+      if (pos !== null) {
+        this.setSelectionRange(pos + diff, pos + diff);
+      }
+
+      if (textEl) textEl.innerText = raw === 0 ? '' : docSoTienVN(raw);
+    });
+
+    inputEl.addEventListener('change', function () {
+      refresh();
+    });
+
+    inputEl.addEventListener('blur', function () {
+      refresh();
+    });
+
+    refresh();
+  }
+
+  return {
+    createText: createText,
+    createNumber: createNumber,
+    createMoney: createMoney,
+    createDate: createDate,
+    createTime: createTime,
+    createPassword: createPassword,
+    createSwitch: createSwitch,
+    createSelect: createSelect,
+    createQuantityHTML: createQuantityHTML,
+    docSoTienVN: docSoTienVN,
+    setupMoneyInput: setupMoneyInput
+  };
+})();
+
+
 /* --- Pagination.js --- */
 /**
  * Pagination Component
@@ -2077,286 +3048,115 @@ var UIIcon = (function () {
 })();
 
 
-/* --- UIUtils.js --- */
-var UIControls = window.UIControls || {};
-
-UIControls.utils = (function () {
-  function computeDropdownPosition(inputElement, dropdownElement) {
-    var rect = inputElement.getBoundingClientRect();
-    var navbarBottom = 0;
-    var navbar = document.querySelector('.app-navbar, .navbar, header, .top-bar');
-    if (navbar) navbarBottom = navbar.getBoundingClientRect().bottom;
-    dropdownElement.style.position = 'fixed';
-    dropdownElement.style.zIndex = '18000';
-    dropdownElement.style.transition = 'opacity 0.15s ease, visibility 0.15s ease';
-    dropdownElement.style.minWidth = rect.width + 'px';
-    dropdownElement.style.maxWidth = Math.max(rect.width, window.innerWidth > 600 ? 600 : window.innerWidth - 20) + 'px';
-    var isActive = dropdownElement.classList.contains('active');
-    if (!isActive) {
-      dropdownElement.style.maxHeight = '300px';
-      dropdownElement.style.visibility = 'hidden';
-      dropdownElement.classList.add('active');
-    }
-    var dropWidth = dropdownElement.offsetWidth;
-    var dropHeight = dropdownElement.offsetHeight;
-    var leftPos = rect.left;
-    if (leftPos + dropWidth > window.innerWidth - 10) {
-      leftPos = rect.right - dropWidth;
-    }
-    leftPos = Math.max(10, leftPos);
-    dropdownElement.style.left = leftPos + 'px';
-    var spaceBelow = window.innerHeight - rect.bottom;
-    var spaceAbove = rect.top - navbarBottom;
-    if (spaceBelow < dropHeight && spaceAbove > spaceBelow) {
-      if (spaceAbove < dropHeight) {
-        dropdownElement.style.maxHeight = (spaceAbove - 4) + 'px';
-        dropHeight = dropdownElement.offsetHeight;
-      }
-      var topPos = Math.max(rect.top - dropHeight, navbarBottom + 4);
-      dropdownElement.style.top = topPos + 'px';
-    } else {
-      if (spaceBelow < dropHeight) {
-        dropdownElement.style.maxHeight = (spaceBelow - 4) + 'px';
-      }
-      dropdownElement.style.top = rect.bottom + 'px';
-    }
-    if (!isActive) {
-      dropdownElement.classList.remove('active');
-      dropdownElement.style.visibility = '';
-    }
-  }
-  function getScrollableAncestors(el) {
-    var ancestors = [];
-    var node = el.parentElement;
-    while (node && node !== document.documentElement) {
-      var style = window.getComputedStyle(node);
-      var ov = style.overflow + style.overflowY + style.overflowX;
-      if (/auto|scroll/.test(ov)) {
-        ancestors.push(node);
-      }
-      node = node.parentElement;
-    }
-    ancestors.push(window);
-    return ancestors;
-  }
-  function createDropdownTableHTML(headers, data, colHighlightIndex, colGroupIndex) {
-    var theadHTML = headers.map(function(h) { return '<th>' + h + '</th>'; }).join('');
-    var tbodyHTML = '';
-    if (colGroupIndex !== undefined && colGroupIndex >= 0) {
-      var groups = {};
-      data.forEach(function(row, rIdx) {
-        var g = row[colGroupIndex] || 'Khác';
-        if (!groups[g]) groups[g] = [];
-        groups[g].push({ row: row, index: rIdx });
-      });
-      var colSpan = headers.length;
-      Object.keys(groups).sort().forEach(function(g) {
-         var items = groups[g];
-         tbodyHTML += '<tr class="group-header" style="font-weight:700; cursor:default; border-top:1px solid var(--border); border-bottom:1px solid var(--border);"><td colspan="' + colSpan + '" style="padding: 8px 12px; background:var(--surface); color:var(--text);">' + g + ' (' + items.length + ')</td></tr>';
-         items.forEach(function(item) {
-            var row = item.row;
-            var rIdx = item.index;
-            var cells = headers.map(function(_, cIdx) {
-              var cell = row[cIdx];
-              var cls = (cIdx === colHighlightIndex) ? 'highlight-col' : '';
-              return '<td class="' + cls + '">' + (cell != null ? cell : '') + '</td>';
-            }).join('');
-            tbodyHTML += '<tr data-index="' + rIdx + '" class="data-row">' + cells + '</tr>';
-         });
-      });
-    } else {
-      tbodyHTML = data.map(function(row, rIdx) {
-        var cells = headers.map(function(_, cIdx) {
-          var cell = row[cIdx];
-          var cls = (cIdx === colHighlightIndex) ? 'highlight-col' : '';
-          return '<td class="' + cls + '">' + (cell != null ? cell : '') + '</td>';
-        }).join('');
-        return '<tr data-index="' + rIdx + '" class="data-row">' + cells + '</tr>';
-      }).join('');
-    }
-    return '<table class="dropdown-table"><thead><tr>' + theadHTML + '</tr></thead><tbody>' + tbodyHTML + '</tbody></table>';
-  }
-  return {
-    computeDropdownPosition: computeDropdownPosition,
-    getScrollableAncestors: getScrollableAncestors,
-    createDropdownTableHTML: createDropdownTableHTML,
-    setupTableSelection: function (tableBody, onSelect) {
-      if (!tableBody) return;
-      tableBody.addEventListener('click', function (e) {
-        var tr = e.target.closest('tr');
-        if (!tr) return;
-        var isAlreadyActive = tr.classList.contains('active');
-        Array.from(tableBody.querySelectorAll('tr')).forEach(function (r) { r.classList.remove('active'); });
-        if (!isAlreadyActive) {
-          tr.classList.add('active');
-          if (typeof onSelect === 'function') onSelect(tr);
-        } else {
-          if (typeof onSelect === 'function') onSelect(null);
-        }
-      });
-    }
-  };
-})();
-
-/* --- Checkbox.js --- */
-UIControls.createCheckbox = function(options) {
-  var wrapper = document.createElement('label');
-  wrapper.className = 'modern-checkbox-wrapper';
-  var input = document.createElement('input');
-  input.type = 'checkbox';
-  input.className = 'modern-checkbox';
-  if (options.checked) input.checked = true;
-  input.addEventListener('change', function(e) {
-    if (typeof options.onChange === 'function') {
-      options.onChange(e.target.checked);
-    }
-  });
-  wrapper.appendChild(input);
-  if (options.label) {
-    var span = document.createElement('span');
-    span.innerText = options.label;
-    wrapper.appendChild(span);
-  } else {
-    wrapper.style.gap = '0';
-  }
-  return wrapper;
-};
-
-
-/* --- Button.js --- */
-/**
- * Button Component
- * Sinh Nút bấm (Button) bằng DOM manipulation.
- */
-var UIButton = (function () {
-  function create(config) {
-    var btn = document.createElement('button');
-    var typeClass = config.type ? 'btn-' + config.type : 'btn-primary';
-    if (config.type === 'tool') typeClass = 'btn-tool';
-    btn.className = 'btn ' + typeClass + (config.className ? ' ' + config.className : '');
-    if (config.id) btn.id = config.id;
-    if (config.disabled) btn.disabled = true;
-    if (config.tooltip) btn.title = config.tooltip;
-    var innerHTML = '';
-    if (config.icon) {
-      innerHTML += '<span class="material-symbols-outlined">' + config.icon + '</span>';
-    }
-    if (config.text) {
-      innerHTML += '<span>' + config.text + '</span>';
-    }
-    btn.innerHTML = innerHTML;
-    if (typeof config.onClick === 'function') {
-      btn.addEventListener('click', function(e) {
-        if (!btn.disabled) {
-          config.onClick(e);
-        }
-      });
-    }
-    return btn;
-  }
-  function createBar(buttonsConfig) {
-    var bar = document.createElement('div');
-    bar.className = 'button-bar';
-    buttonsConfig.forEach(function(cfg) {
-      if (cfg === '|') {
-        var div = document.createElement('div');
-        div.className = 'divider';
-        bar.appendChild(div);
-      } else {
-        bar.appendChild(create(cfg));
-      }
-    });
-    return bar;
-  }
-  function createHTML(config) {
-    var typeClass = config.type ? 'btn-' + config.type : 'btn-primary';
-    if (config.type === 'tool') typeClass = 'btn-tool';
-    var className = 'btn ' + typeClass + (config.className ? ' ' + config.className : '');
-    var idAttr = config.id ? ` id="${config.id}"` : '';
-    var disabledAttr = config.disabled ? ' disabled' : '';
-    var titleAttr = config.tooltip ? ` title="${config.tooltip}"` : '';
-    var onClickAttr = config.onClick ? ` onclick="${config.onClick}"` : '';
-    var styleAttr = config.style ? ` style="${config.style}"` : '';
-    var dataAttrs = '';
-    if (config.data) {
-      for (var key in config.data) {
-        dataAttrs += ` data-${key}="${config.data[key]}"`;
-      }
-    }
-    var innerHTML = '';
-    if (config.icon) {
-      var iconStyle = config.iconStyle ? ` style="${config.iconStyle}"` : '';
-      innerHTML += `<span class="material-symbols-outlined"${iconStyle}>${config.icon}</span>`;
-    }
-    if (config.text) {
-      var textStyle = config.textStyle ? ` style="${config.textStyle}"` : '';
-      innerHTML += config.icon ? ` <span${textStyle}>${config.text}</span>` : `<span${textStyle}>${config.text}</span>`;
-    }
-    return `<button class="${className}"${idAttr}${disabledAttr}${titleAttr}${onClickAttr}${styleAttr}${dataAttrs}>${innerHTML}</button>`;
-  }
-  return {
-    create: create,
-    createBar: createBar,
-    createHTML: createHTML
-  };
-})();
-
-
 /* --- NestedTabs.js --- */
 /**
  * UINestedTabs — Tab phân cấp 2 cấp (Cha → Con) + Kéo thả sắp xếp
+ * ──────────────────────────────────────────────────────────────────
+ * Nhận vào một mảng flat từ DB (giống WA_Menu):
+ *   [{ id, parent, label, [icon], [formName] }]
+ *
+ * Quy tắc xác định cha/con:
+ *   - parent === '' hoặc null/undefined → Tab CHA (root)
+ *   - parent !== ''                     → Tab CON (thuộc parent đó)
+ *
+ * API:
+ *   UINestedTabs.create(records, options?) → DOM Element
+ *   UINestedTabs.createFromDB(dbRows, options?) → DOM Element
+ *
+ * Options:
+ *   onTabChange(parentId, childId)            - callback khi đổi tab
+ *   onReorder(type, orderedIds, parentId?)    - callback khi kéo thả xong
+ *                                               type = 'parent' | 'child'
+ *   renderContent(item)                       - trả về Node | string cho panel
+ *   defaultParentId                           - tab cha active ban đầu
+ *   defaultChildId                            - tab con active ban đầu
+ *   draggable                                 - true (mặc định) để bật kéo thả
  */
 var UINestedTabs = (function () {
+
+  // ════════════════════════════════════════════════════════════
+  //  PUBLIC: create
+  // ════════════════════════════════════════════════════════════
   function create(records, options) {
     options = options || {};
-    var isDraggable = options.draggable !== false;
+    var isDraggable = options.draggable !== false; // bật mặc định
+
+    // ── 1. Phân loại cha / con ──────────────────────────────────
     var parents = records.filter(function (r) {
       return !r.parent || r.parent.trim() === '';
     });
-    var childrenMap = {};
+
+    var childrenMap = {}; // { parentId: [child, ...] }
     records.forEach(function (r) {
       if (r.parent && r.parent.trim() !== '') {
         if (!childrenMap[r.parent]) childrenMap[r.parent] = [];
         childrenMap[r.parent].push(r);
       }
     });
+
     if (parents.length === 0) {
       var empty = document.createElement('div');
       empty.className = 'ui-nested-tabs-empty';
       empty.textContent = 'Không có dữ liệu Tab';
       return empty;
     }
+
+    // ── Phân nhánh: Vertical vs Horizontal ──────────────────
     if (options.vertical) {
       return _createVertical(parents, childrenMap, options);
     }
+
+    // ── 2. Active mặc định ──────────────────────────────────────
     var defaultParentId = options.defaultParentId || parents[0].id;
     var activeParent    = parents.find(function (p) { return p.id === defaultParentId; }) || parents[0];
+
+    // ── 3. Wrapper ───────────────────────────────────────────────
     var wrapper = document.createElement('div');
     wrapper.className = 'ui-nested-tabs';
+
+    // ── 4. Parent Tab Bar ────────────────────────────────────────
     var parentBar = document.createElement('div');
     parentBar.className = 'ui-nested-tabs__parent-bar';
+
+    // ── 5. Child Area ────────────────────────────────────────────
     var childArea = document.createElement('div');
     childArea.className = 'ui-nested-tabs__child-area';
+
+    // ── 6. Render mỗi parent ────────────────────────────────────
     parents.forEach(function (parentItem) {
       var isParentActive = (parentItem.id === activeParent.id);
       var children       = childrenMap[parentItem.id] || [];
+
+      // ─ Parent button ─
       var pBtn = _buildParentBtn(parentItem, isParentActive, children.length, isDraggable);
       parentBar.appendChild(pBtn);
+
+      // ─ Child section ─
       var childSection = document.createElement('div');
       childSection.className = 'ui-nested-tabs__section' + (isParentActive ? ' active' : '');
       childSection.dataset.sectionId = parentItem.id;
+
       if (children.length > 0) {
         var defaultChildId  = isParentActive ? (options.defaultChildId || children[0].id) : children[0].id;
+
         var childBar        = document.createElement('div');
         childBar.className  = 'ui-nested-tabs__child-bar';
+
         var panelArea       = document.createElement('div');
         panelArea.className = 'ui-nested-tabs__panel-area';
+
         children.forEach(function (childItem) {
           var isChildActive = (childItem.id === defaultChildId);
+
+          // Child btn
           var cBtn = _buildChildBtn(childItem, parentItem, isChildActive, isDraggable);
           childBar.appendChild(cBtn);
+
+          // Panel
           var panel = _buildPanel(childItem, parentItem, isChildActive, options);
           panelArea.appendChild(panel);
+
+          // Click: activate child tab
           cBtn.addEventListener('click', function () {
             _activateChildTab(childBar, panelArea, cBtn, panel);
             if (typeof options.onTabChange === 'function') {
@@ -2364,16 +3164,24 @@ var UINestedTabs = (function () {
             }
           });
         });
+
+        // Drag-and-drop cho child bar
         if (isDraggable) {
           _attachDragToBar(childBar, panelArea, 'child', parentItem.id, options);
         }
+
         childSection.appendChild(childBar);
         childSection.appendChild(panelArea);
+
       } else {
+        // Không có con → panel trực tiếp
         var soloPanel = _buildPanel(parentItem, null, true, options);
         childSection.appendChild(soloPanel);
       }
+
       childArea.appendChild(childSection);
+
+      // Click: activate parent tab
       pBtn.addEventListener('click', function () {
         _activateParentTab(parentBar, childArea, pBtn, childSection);
         if (typeof options.onTabChange === 'function') {
@@ -2382,13 +3190,20 @@ var UINestedTabs = (function () {
         }
       });
     });
+
+    // Drag-and-drop cho parent bar
     if (isDraggable) {
       _attachDragToBar(parentBar, null, 'parent', null, options);
     }
+
     wrapper.appendChild(parentBar);
     wrapper.appendChild(childArea);
     return wrapper;
   }
+
+  // ════════════════════════════════════════════════════════════
+  //  PUBLIC: createFromDB
+  // ════════════════════════════════════════════════════════════
   function createFromDB(dbRows, options) {
     var records = (dbRows || []).map(function (row) {
       return {
@@ -2402,51 +3217,69 @@ var UINestedTabs = (function () {
     });
     return create(records, options);
   }
+
+  // ════════════════════════════════════════════════════════════
+  //  PRIVATE: builders
+  // ════════════════════════════════════════════════════════════
+
   function _buildParentBtn(item, isActive, childCount, isDraggable) {
     var btn = document.createElement('button');
     btn.className = 'ui-nested-tab-parent-btn' + (isActive ? ' active' : '');
     btn.dataset.parentId = item.id;
+
+    // Drag handle icon (chỉ hiện khi hover nhờ CSS)
     if (isDraggable) {
       var handle = UIIcon.create('drag_indicator', 'ui-nested-drag-handle');
       btn.appendChild(handle);
       btn.draggable = true;
       btn.dataset.dragType = 'parent';
     }
+
     if (item.icon) {
       var iconEl = UIIcon.create(item.icon);
       if (iconEl) { iconEl.style.fontSize = '18px'; btn.appendChild(iconEl); }
     }
+
     var labelSpan = document.createElement('span');
     labelSpan.textContent = item.label || item.id;
     btn.appendChild(labelSpan);
+
     if (childCount > 0) {
       var badge = document.createElement('span');
       badge.className = 'ui-nested-tab-badge';
       badge.textContent = childCount;
       btn.appendChild(badge);
     }
+
     return btn;
   }
+
   function _buildChildBtn(childItem, parentItem, isActive, isDraggable) {
     var btn = document.createElement('button');
     btn.className = 'ui-nested-tab-child-btn' + (isActive ? ' active' : '');
     btn.dataset.childId  = childItem.id;
     btn.dataset.parentId = parentItem.id;
+
     if (isDraggable) {
       var handle = UIIcon.create('drag_indicator', 'ui-nested-drag-handle ui-nested-drag-handle--child');
       btn.appendChild(handle);
+
       btn.draggable = true;
       btn.dataset.dragType = 'child';
     }
+
     var labelSpan = document.createElement('span');
     labelSpan.textContent = childItem.label || childItem.id;
     btn.appendChild(labelSpan);
+
     return btn;
   }
+
   function _buildPanel(item, parentItem, isActive, options) {
     var panel = document.createElement('div');
     panel.className = 'ui-nested-tab-panel' + (isActive ? ' active' : '');
     panel.id = 'nested-panel-' + item.id;
+
     if (typeof options.renderContent === 'function') {
       var content = options.renderContent(item);
       if (typeof content === 'string') {
@@ -2457,8 +3290,14 @@ var UINestedTabs = (function () {
     } else {
       panel.innerHTML = _defaultPanelHTML(item, parentItem);
     }
+
     return panel;
   }
+
+  // ════════════════════════════════════════════════════════════
+  //  PRIVATE: activate helpers
+  // ════════════════════════════════════════════════════════════
+
   function _activateParentTab(parentBar, childArea, activeBtn, activeSection) {
     parentBar.querySelectorAll('.ui-nested-tab-parent-btn').forEach(function (b) {
       b.classList.remove('active');
@@ -2469,6 +3308,7 @@ var UINestedTabs = (function () {
     activeBtn.classList.add('active');
     activeSection.classList.add('active');
   }
+
   function _activateChildTab(childBar, panelArea, activeBtn, activePanel) {
     childBar.querySelectorAll('.ui-nested-tab-child-btn').forEach(function (b) {
       b.classList.remove('active');
@@ -2479,31 +3319,67 @@ var UINestedTabs = (function () {
     activeBtn.classList.add('active');
     activePanel.classList.add('active');
   }
+
+  // ════════════════════════════════════════════════════════════
+  //  PRIVATE: Drag-and-drop
+  // ════════════════════════════════════════════════════════════
+
+  /**
+   * Gắn drag-and-drop vào một tab bar (parent hoặc child)
+   * @param {Element} bar          - thanh tab chứa các btn có thể kéo
+   * @param {Element|null} panelArea - vùng panel tương ứng (dùng để sync thứ tự panel)
+   * @param {string}  type         - 'parent' | 'child'
+   * @param {string|null} parentId - id của tab cha (chỉ dùng khi type='child')
+   * @param {Object}  options      - options của component
+   */
   function _attachDragToBar(bar, panelArea, type, parentId, options) {
-    var dragging    = null;
-    var placeholder = null;
-    var btnSelector = (type === 'parent') ? '.ui-nested-tab-parent-btn' : '.ui-nested-tab-child-btn';
+    var dragging    = null;  // phần tử đang kéo
+    var placeholder = null;  // dải chỉ vị trí thả
+
+    // Selector của các btn trong bar
+    var btnSelector = (type === 'parent')
+      ? '.ui-nested-tab-parent-btn'
+      : '.ui-nested-tab-child-btn';
+
+    // ── dragstart ──
     bar.addEventListener('dragstart', function (e) {
       var btn = e.target.closest(btnSelector);
       if (!btn) return;
+
       dragging = btn;
       dragging.classList.add('ui-nested-dragging');
+
+      // Tạo ghost image sạch
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('text/plain', btn.dataset.parentId || btn.dataset.childId || '');
+
+      // Tạo placeholder
       placeholder = document.createElement('div');
       placeholder.className = 'ui-nested-drop-placeholder';
       if (type === 'child') placeholder.classList.add('ui-nested-drop-placeholder--child');
     });
+
+    // ── dragover ──
     bar.addEventListener('dragover', function (e) {
       if (!dragging) return;
       e.preventDefault();
       e.dataTransfer.dropEffect = 'move';
+
       var target = e.target.closest(btnSelector);
-      if (!target || target === dragging) return;
+      if (!target || target === dragging) {
+        return;
+      }
+
+      // Xác định thả vào trước hay sau
       var rect   = target.getBoundingClientRect();
-      var offset = e.clientX - rect.left;
-      var half = rect.width / 2;
+      var offset = (type === 'parent')
+        ? e.clientX - rect.left    // ngang
+        : e.clientX - rect.left;   // ngang (child bar cũng ngang)
+      var half = (type === 'parent') ? rect.width / 2 : rect.width / 2;
+
+      // Xóa placeholder cũ nếu có
       if (placeholder.parentNode) placeholder.parentNode.removeChild(placeholder);
+
       if (offset < half) {
         bar.insertBefore(placeholder, target);
       } else {
@@ -2512,30 +3388,46 @@ var UINestedTabs = (function () {
         else bar.appendChild(placeholder);
       }
     });
+
+    // ── dragleave ──
     bar.addEventListener('dragleave', function (e) {
+      // Chỉ xóa placeholder khi ra ngoài bar
       if (!bar.contains(e.relatedTarget) && placeholder && placeholder.parentNode) {
         placeholder.parentNode.removeChild(placeholder);
       }
     });
+
+    // ── drop ──
     bar.addEventListener('drop', function (e) {
       e.preventDefault();
       if (!dragging || !placeholder || !placeholder.parentNode) return;
+
+      // Đặt btn vào vị trí placeholder
       bar.insertBefore(dragging, placeholder);
       placeholder.parentNode.removeChild(placeholder);
+
+      // Sync thứ tự panel nếu là child bar
       if (panelArea) {
         _syncPanelOrder(bar, panelArea, btnSelector);
       }
+
+      // Gọi onReorder callback
       if (typeof options.onReorder === 'function') {
         var orderedIds = Array.from(bar.querySelectorAll(btnSelector)).map(function (b) {
           return type === 'parent' ? b.dataset.parentId : b.dataset.childId;
         });
         options.onReorder(type, orderedIds, parentId);
       }
+
       _cleanup();
     });
+
+    // ── dragend ──
     bar.addEventListener('dragend', function () {
       _cleanup();
     });
+
+    // ─ cleanup local state ─
     function _cleanup() {
       if (dragging) {
         dragging.classList.remove('ui-nested-dragging');
@@ -2547,54 +3439,87 @@ var UINestedTabs = (function () {
       placeholder = null;
     }
   }
+
+  /**
+   * Sau khi kéo thả child btn, sắp xếp lại các panel theo thứ tự btn mới
+   */
   function _syncPanelOrder(childBar, panelArea, btnSelector) {
     var btns = Array.from(childBar.querySelectorAll(btnSelector));
     btns.forEach(function (btn) {
       var childId = btn.dataset.childId;
       var panel   = panelArea.querySelector('#nested-panel-' + childId);
-      if (panel) panelArea.appendChild(panel);
+      if (panel) panelArea.appendChild(panel); // appendChild tự move về cuối → đúng thứ tự
     });
   }
+
+  // ════════════════════════════════════════════════════════════
+  //  PRIVATE: default panel content
+  // ════════════════════════════════════════════════════════════
+
   function _defaultPanelHTML(item, parentItem) {
     return [
       '<div class="ui-nested-tab-default-content">',
         UIIcon.renderHtml(item.icon || 'folder_open', 'font-size:40px;opacity:0.2;display:block;margin-bottom:12px'),
         '<div style="font-weight:600;font-size:15px;margin-bottom:6px">', item.label || item.id, '</div>',
-        parentItem ? '<div style="font-size:12px;opacity:0.5">Thuộc nhóm: ' + parentItem.label + ' (' + parentItem.id + ')</div>' : '',
-        item.formName ? '<code style="font-size:11px;opacity:0.5;display:block;margin-top:8px">' + item.formName + '</code>' : '',
+        parentItem
+          ? '<div style="font-size:12px;opacity:0.5">Thuộc nhóm: ' + parentItem.label + ' (' + parentItem.id + ')</div>'
+          : '',
+        item.formName
+          ? '<code style="font-size:11px;opacity:0.5;display:block;margin-top:8px">' + item.formName + '</code>'
+          : '',
       '</div>'
     ].join('');
   }
+
+  // ════════════════════════════════════════════════════════════
+  //  PRIVATE: Vertical layout
+  // ════════════════════════════════════════════════════════════
+
   function _createVertical(parents, childrenMap, options) {
     var isDraggable = options.draggable !== false;
+
     var defaultParentId = options.defaultParentId || parents[0].id;
     var activeParent    = parents.find(function (p) { return p.id === defaultParentId; }) || parents[0];
     var defaultChildId  = options.defaultChildId  || null;
+
     var initChildren = childrenMap[activeParent.id] || [];
     var activeChildId = defaultChildId || (initChildren.length > 0 ? initChildren[0].id : null);
+
     var allContentPanels = [];
     var allSidebarBtns = [];
+
     var wrapper = document.createElement('div');
     wrapper.className = 'ui-nested-tabs ui-nested-tabs--vertical';
+
     var sidebar = document.createElement('div');
     sidebar.className = 'ui-nested-tabs__sidebar';
+
     var contentArea = document.createElement('div');
     contentArea.className = 'ui-nested-tabs__vertical-content';
+
     function _buildSidebarNode(node, level, isNodeActive, shouldOpen) {
       var children = childrenMap[node.id] || [];
       var isRoot = level === 0;
+
       var parentGroup = document.createElement('div');
       parentGroup.className = 'ui-nested-tabs__sidebar-parent level-' + level;
       if (isDraggable) {
         parentGroup.draggable = true;
         parentGroup.dataset.dragParentId = node.id;
       }
+
       var pBtn = document.createElement('button');
       pBtn.className = (isRoot ? 'ui-nested-tab-parent-btn--v' : 'ui-nested-tab-child-btn--v') + (isNodeActive ? ' active' : '');
       pBtn.dataset.nodeId = node.id;
       pBtn.dataset.parentId = node.parent || '';
-      if (!isRoot) pBtn.dataset.childId = node.id;
-      if (level > 0) pBtn.style.paddingLeft = (16 + level * 20) + 'px';
+      if (!isRoot) {
+          pBtn.dataset.childId = node.id; 
+      }
+      
+      if (level > 0) {
+        pBtn.style.paddingLeft = (16 + level * 20) + 'px';
+      }
+
       if (isDraggable) {
         var handle = UIIcon.create('drag_indicator', 'ui-nested-drag-handle' + (isRoot ? '' : ' ui-nested-drag-handle--child'));
         pBtn.appendChild(handle);
@@ -2603,48 +3528,62 @@ var UINestedTabs = (function () {
             pBtn.dataset.dragType = 'child';
         }
       }
+
       var iconWrap = document.createElement('div');
       iconWrap.style.cssText = 'width: 20px; display: flex; justify-content: center; align-items: center; flex-shrink: 0;';
       if (!isRoot) iconWrap.style.marginRight = '8px';
+
       var actualIcon = node.icon;
       if (!actualIcon || actualIcon.indexOf('icon-') === 0) actualIcon = (isRoot ? 'folder_open' : 'horizontal_rule');
+
       var iconEl = UIIcon.create(actualIcon);
       if (iconEl) {
         iconEl.style.fontSize = isRoot ? '18px' : '16px';
-        if (!node.icon || node.icon.indexOf('icon-') === 0) iconEl.style.opacity = '0.3';
+        if (!node.icon || node.icon.indexOf('icon-') === 0) {
+          iconEl.style.opacity = '0.3';
+        }
         iconWrap.appendChild(iconEl);
       }
       pBtn.appendChild(iconWrap);
+
       var lbl = document.createElement('span');
       lbl.style.cssText = 'flex:1;overflow:hidden;text-overflow:ellipsis;';
       lbl.textContent = node.label || node.id;
       pBtn.appendChild(lbl);
+
       if (children.length > 0) {
         var badge = document.createElement('span');
         badge.className = 'ui-nested-tab-badge';
         badge.style.cssText = 'min-width:18px;height:18px;font-size:10px; margin-right: 4px;';
         badge.textContent = children.length;
         pBtn.appendChild(badge);
+
         var chevron = UIIcon.create('expand_more', 'ui-nested-parent-chevron');
         pBtn.appendChild(chevron);
       }
+
       parentGroup.appendChild(pBtn);
       allSidebarBtns.push(pBtn);
+
       var childList = null;
       if (children.length > 0) {
         childList = document.createElement('div');
         childList.className = 'ui-nested-tabs__child-list' + (shouldOpen ? ' open' : '');
+
         children.forEach(function (childItem) {
            var childIsActive = isNodeActive && (childItem.id === activeChildId);
            var childShouldOpen = childIsActive;
            var cRes = _buildSidebarNode(childItem, level + 1, childIsActive, childShouldOpen);
            childList.appendChild(cRes.group);
         });
+
         parentGroup.appendChild(childList);
+
         if (isDraggable) {
           _attachVerticalDrag(childList, contentArea, node.id, options);
         }
       }
+
       var parentPanel = document.createElement('div');
       parentPanel.className = 'ui-nested-tab-panel--v' + (isNodeActive && (!activeChildId || activeChildId === '') ? ' active' : '');
       parentPanel.id = 'nested-panel-' + node.id;
@@ -2655,61 +3594,88 @@ var UINestedTabs = (function () {
       } else { parentPanel.innerHTML = _defaultPanelHTML(node, null); }
       contentArea.appendChild(parentPanel);
       allContentPanels.push(parentPanel);
+
       pBtn.addEventListener('click', function (e) {
         e.stopPropagation();
+
         var isPanelActive = parentPanel.classList.contains('active');
+
         allSidebarBtns.forEach(function(b) { b.classList.remove('active'); });
         allContentPanels.forEach(function(p) { p.classList.remove('active'); });
+
         pBtn.classList.add('active');
+
         if (!isPanelActive) {
           parentPanel.classList.add('active');
           if (childList) childList.classList.add('open');
+          
           var curr = parentGroup.parentElement;
           while(curr && curr.classList.contains('ui-nested-tabs__child-list')) {
             curr.classList.add('open');
             curr = curr.parentElement.parentElement;
           }
+
           if (typeof options.onTabChange === 'function') {
             options.onTabChange(node.id, null);
           }
         } else {
           parentPanel.classList.add('active');
-          if (childList) childList.classList.toggle('open');
+          if (childList) {
+            childList.classList.toggle('open');
+          }
         }
       });
+
       return { group: parentGroup };
     }
+
     parents.forEach(function (parentItem) {
       var isParentActive = (parentItem.id === activeParent.id);
       var res = _buildSidebarNode(parentItem, 0, isParentActive, isParentActive);
       sidebar.appendChild(res.group);
     });
+
     if (isDraggable) {
+      // NOTE: attach to sidebar directly
       _attachVerticalDragParent(sidebar, options);
     }
+
     var resizer = document.createElement('div');
     resizer.className = 'ui-nested-resizer';
     sidebar.appendChild(resizer);
     _initSidebarResizer(resizer, sidebar);
+
     wrapper.appendChild(sidebar);
     wrapper.appendChild(contentArea);
     return wrapper;
   }
+
+  /**
+   * Khởi tạo tính năng kéo giãn sidebar
+   */
   function _initSidebarResizer(resizer, sidebar) {
     var isResizing = false;
+
     resizer.addEventListener('mousedown', function (e) {
       isResizing = true;
       resizer.classList.add('is-resizing');
       document.body.style.cursor = 'col-resize';
       document.body.style.userSelect = 'none';
+      
       var onMouseMove = function (e) {
         if (!isResizing) return;
+        
+        // Tính toán độ rộng mới dựa trên vị trí chuột
         var containerRect = sidebar.parentElement.getBoundingClientRect();
         var newWidth = e.clientX - containerRect.left;
+        
+        // Giới hạn width từ 180px đến 600px
         if (newWidth < 180) newWidth = 180;
         if (newWidth > 600) newWidth = 600;
+        
         sidebar.style.width = newWidth + 'px';
       };
+
       var onMouseUp = function () {
         isResizing = false;
         resizer.classList.remove('is-resizing');
@@ -2718,13 +3684,17 @@ var UINestedTabs = (function () {
         window.removeEventListener('mousemove', onMouseMove);
         window.removeEventListener('mouseup', onMouseUp);
       };
+
       window.addEventListener('mousemove', onMouseMove);
       window.addEventListener('mouseup', onMouseUp);
     });
   }
+
+  // ── Drag dọc cho child list ──────────────────────────────
   function _attachVerticalDrag(childList, contentArea, parentId, options) {
     var dragging    = null;
     var placeholder = null;
+
     childList.addEventListener('dragstart', function (e) {
       var grp = e.target.closest('.ui-nested-tabs__sidebar-parent');
       if (!grp || grp.parentElement !== childList) return;
@@ -2735,6 +3705,7 @@ var UINestedTabs = (function () {
       placeholder.className = 'ui-nested-drop-placeholder--v';
       e.stopPropagation();
     });
+
     childList.addEventListener('dragover', function (e) {
       if (!dragging) return;
       e.preventDefault();
@@ -2746,33 +3717,44 @@ var UINestedTabs = (function () {
       if (isUpper) childList.insertBefore(placeholder, target);
       else { var nx = target.nextSibling; if (nx) childList.insertBefore(placeholder, nx); else childList.appendChild(placeholder); }
     });
+
     childList.addEventListener('dragleave', function (e) {
       if (!childList.contains(e.relatedTarget) && placeholder && placeholder.parentNode) {
         placeholder.parentNode.removeChild(placeholder);
       }
     });
+
     childList.addEventListener('drop', function (e) {
       e.preventDefault();
       e.stopPropagation();
       if (!dragging || !placeholder || !placeholder.parentNode) return;
       childList.insertBefore(dragging, placeholder);
       placeholder.parentNode.removeChild(placeholder);
+      
+      // Sync panel order for UI (if needed, but panels are all flat in contentArea)
+      // Array.from(childList.children).forEach(...) is possible, but contentArea order doesn't break CSS rendering.
+      
       if (typeof options.onReorder === 'function') {
         var ids = Array.from(childList.querySelectorAll(':scope > .ui-nested-tabs__sidebar-parent > .ui-nested-tab-child-btn--v')).map(function (b) { return b.dataset.childId || b.dataset.nodeId; });
         options.onReorder('child', ids, parentId);
       }
       _vCleanup();
     });
+
     childList.addEventListener('dragend', function(e) { e.stopPropagation(); _vCleanup(); });
+
     function _vCleanup() {
       if (dragging) { dragging.classList.remove('ui-nested-dragging'); dragging = null; }
       if (placeholder && placeholder.parentNode) placeholder.parentNode.removeChild(placeholder);
       placeholder = null;
     }
   }
+
+  // ── Drag dọc cho parent groups ───────────────────────────
   function _attachVerticalDragParent(sidebar, options) {
     var dragging    = null;
     var placeholder = null;
+
     sidebar.addEventListener('dragstart', function (e) {
       var grp = e.target.closest('.ui-nested-tabs__sidebar-parent');
       if (!grp || grp.parentElement !== sidebar) return;
@@ -2784,6 +3766,7 @@ var UINestedTabs = (function () {
       placeholder.style.margin = '2px 0';
       e.stopPropagation();
     });
+
     sidebar.addEventListener('dragover', function (e) {
       if (!dragging) return;
       e.preventDefault();
@@ -2795,11 +3778,13 @@ var UINestedTabs = (function () {
       if (isUpper) sidebar.insertBefore(placeholder, target);
       else { var nx = target.nextSibling; if (nx) sidebar.insertBefore(placeholder, nx); else sidebar.appendChild(placeholder); }
     });
+
     sidebar.addEventListener('dragleave', function (e) {
       if (!sidebar.contains(e.relatedTarget) && placeholder && placeholder.parentNode) {
         placeholder.parentNode.removeChild(placeholder);
       }
     });
+
     sidebar.addEventListener('drop', function (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -2814,51 +3799,76 @@ var UINestedTabs = (function () {
       }
       _vpCleanup();
     });
+
     sidebar.addEventListener('dragend', function(e) { e.stopPropagation(); _vpCleanup(); });
+
     function _vpCleanup() {
       if (dragging) { dragging.classList.remove('ui-nested-dragging'); dragging = null; }
       if (placeholder && placeholder.parentNode) placeholder.parentNode.removeChild(placeholder);
       placeholder = null;
     }
   }
+
+  // ════════════════════════════════════════════════════════════
+  //  EXPORTS
+  // ════════════════════════════════════════════════════════════
   return {
     create:       create,
     createFromDB: createFromDB
   };
+
 })();
+
 
 /* --- EmptyState.js --- */
 /**
  * EmptyState Component
+ * Trạng thái trống (VD: Chưa có khách hàng, chưa có hợp đồng)
  */
 var UIEmptyState = (function () {
+
+  /**
+   * Tạo màn hình rỗng
+   * @param {Object} config - { icon, title, desc, action (DOM Node) }
+   */
   function create(config) {
     var wrapper = document.createElement('div');
     wrapper.className = 'ui-empty-state';
+
     var iconSpan = document.createElement('span');
     iconSpan.className = 'material-symbols-outlined ui-empty-icon';
     iconSpan.innerText = config.icon || 'inbox';
     wrapper.appendChild(iconSpan);
+
     var titleDiv = document.createElement('div');
     titleDiv.className = 'ui-empty-title';
     titleDiv.innerText = config.title || 'Không có dữ liệu';
     wrapper.appendChild(titleDiv);
+
     if (config.desc) {
       var descDiv = document.createElement('div');
       descDiv.className = 'ui-empty-desc';
       descDiv.innerText = config.desc;
       wrapper.appendChild(descDiv);
     }
+
     if (config.action instanceof Node) {
       wrapper.appendChild(config.action);
     }
+
     return wrapper;
   }
+
+  /**
+   * Sinh chuỗi HTML trạng thái trống (Dùng cho innerHTML)
+   * @param {Object} config - { icon, title, desc, actionHtml }
+   */
   function createHTML(config) {
     var icon = config.icon || 'inbox';
     var title = config.title || 'Không có dữ liệu';
     var descHtml = config.desc ? `<div class="ui-empty-desc">${config.desc}</div>` : '';
     var actionHtml = config.actionHtml ? config.actionHtml : '';
+
     return `
       <div class="ui-empty-state">
         <span class="material-symbols-outlined ui-empty-icon">${icon}</span>
@@ -2868,10 +3878,16 @@ var UIEmptyState = (function () {
       </div>
     `;
   }
+
+  /**
+   * Sinh chuỗi HTML trạng thái trống cho Table Row
+   * @param {Object} config - { colspan, text, actionHtml }
+   */
   function createTableRowHTML(config) {
     var colspan = config.colspan || 1;
     var text = config.text || 'Chưa có dữ liệu';
     var actionHtml = config.actionHtml ? ` <span class="ms-1">${config.actionHtml}</span>` : '';
+
     return `
       <tr>
         <td colspan="${colspan}" class="text-center py-4 text-muted">
@@ -2880,6 +3896,7 @@ var UIEmptyState = (function () {
       </tr>
     `;
   }
+
   return {
     create: create,
     createHTML: createHTML,
@@ -2887,19 +3904,32 @@ var UIEmptyState = (function () {
   };
 })();
 
+
 /* --- ContextMenu.js --- */
 /**
  * Context Menu Component
+ * Bắt sự kiện Click Chuột Phải -> Hiện Menu thả xuống tùy chỉnh (Ví dụ: Tick/Bỏ Tick dòng, Đổi trạng thái)
  */
 var UIContextMenu = (function () {
+  
   var currentMenu = null;
+
+  /**
+   * Khởi tạo Menu 
+   * @param {Event} e - Sự kiện chuột phải (Dùng để lấy toạ độ X, Y)
+   * @param {Array} items - [{ label, icon, onClick }, '|' ]
+   */
   function show(e, items) {
     e.preventDefault();
     hide();
+
     var menu = document.createElement('div');
     menu.className = 'ui-context-menu';
+    
+    // Position
     menu.style.top = e.pageY + 'px';
     menu.style.left = e.pageX + 'px';
+
     items.forEach(function(item) {
       if (item === '|') {
         var div = document.createElement('div');
@@ -2908,95 +3938,121 @@ var UIContextMenu = (function () {
       } else {
         var btn = document.createElement('div');
         btn.className = 'context-menu-item';
+        
         var iconHtml = item.icon ? '<span class="material-symbols-outlined">' + item.icon + '</span>' : '';
         btn.innerHTML = iconHtml + '<span>' + item.label + '</span>';
+        
         btn.onclick = function() {
           hide();
           if (typeof item.onClick === 'function') item.onClick();
         };
+
         menu.appendChild(btn);
       }
     });
+
     document.body.appendChild(menu);
     currentMenu = menu;
+
+    // Nghe sự kiện click ngoài -> Đóng menu
     document.addEventListener('click', hideOnOutsideClick);
   }
+
   function hide() {
     if (currentMenu) {
       currentMenu.remove();
       currentMenu = null;
     }
   }
+
   function hideOnOutsideClick(e) {
     if (currentMenu && !currentMenu.contains(e.target)) {
       hide();
       document.removeEventListener('click', hideOnOutsideClick);
     }
   }
+
   return {
     show: show,
     hide: hide
   };
 })();
 
+
 /* --- Toast.js --- */
 /**
  * Toast Component
+ * Khác với Alert (Gây gián đoạn), Toast hiện lên lặng lẽ ở góc và tự biến mất sau 3s
  */
 var UIToast = (function () {
+
+  // Auto-init container
   var container = null;
   document.addEventListener('DOMContentLoaded', function() {
     container = document.createElement('div');
     container.id = 'toast-container';
     document.body.appendChild(container);
   });
+
+  /**
+   * Gọi thông báo
+   * @param {string} msg - Nội dung thông báo
+   * @param {string} type - 'success', 'error', 'warning', 'info'
+   */
   function show(msg, type) {
-    if (!container) {
-      container = document.getElementById('toast-container');
-      if (!container) {
-        container = document.createElement('div');
-        container.id = 'toast-container';
-        document.body.appendChild(container);
-      }
-    }
+    if (!container) return; // Fallback
+
     var toast = document.createElement('div');
     toast.className = 'ui-toast ' + (type || 'success');
+
     var iconMap = {
       'success': 'check_circle',
       'error': 'error',
       'warning': 'warning',
       'info': 'info'
     };
+
     var icon = document.createElement('span');
     icon.className = 'material-symbols-outlined ui-toast-icon';
     icon.innerText = iconMap[type || 'success'] || 'info';
+
     var txt = document.createElement('div');
     txt.className = 'ui-toast-content';
     txt.innerHTML = msg;
+
     toast.appendChild(icon);
     toast.appendChild(txt);
     container.appendChild(toast);
+
+    // Trigger animate in
     requestAnimationFrame(function() {
       toast.classList.add('show');
     });
+
+    // Tự động tắt sau 3 giây
     setTimeout(function() {
       toast.classList.remove('show');
+      // Đợi animation chạy xong rồi xóa node
       setTimeout(function() {
         if (toast.parentNode) toast.remove();
       }, 300);
     }, 3000);
   }
+
   return {
     show: show
   };
 })();
 
+
 /* --- Alert.js --- */
 /**
  * Alert (Toast) Component
+ * Hiển thị thông báo trượt góc phải màn hình
  */
 var Alert = (function () {
   var container = null;
+
   function init() {
     if (!document.getElementById('toast-container')) {
       container = document.createElement('div');
@@ -3006,17 +4062,28 @@ var Alert = (function () {
       container = document.getElementById('toast-container');
     }
   }
+
+  /**
+   * Hiển thị thông báo
+   * @param {string} type - 'success', 'danger', 'warning', 'info'
+   * @param {string} title - Tiêu đề
+   * @param {string} message - Nội dung
+   * @param {number} duration - Thời gian hiển thị (ms)
+   */
   function show(type, title, message, duration) {
     if (!container) init();
     duration = duration || 3000;
+
     var toast = document.createElement('div');
     toast.className = 'toast ' + type;
+
     var iconMap = {
       'success': 'check_circle',
       'danger': 'error',
       'warning': 'warning',
       'info': 'info'
     };
+
     var html = `
       <div class="toast-icon">
         <span class="material-symbols-outlined">${iconMap[type] || 'info'}</span>
@@ -3029,31 +4096,478 @@ var Alert = (function () {
         <span class="material-symbols-outlined" style="font-size:18px;">close</span>
       </button>
     `;
+
     toast.innerHTML = html;
     container.appendChild(toast);
+
     toast.querySelector('.toast-close').addEventListener('click', function() {
       removeToast(toast);
     });
+
+    // Trigger animation
     setTimeout(function() {
       toast.classList.add('show');
     }, 10);
+
+    // Auto remove
     setTimeout(function() {
       removeToast(toast);
     }, duration);
   }
+
   function removeToast(toast) {
     toast.classList.remove('show');
     setTimeout(function() {
       if (toast.parentNode) {
         toast.parentNode.removeChild(toast);
       }
-    }, 400);
+    }, 400); // Wait for transition
   }
+
   return {
     success: function(title, message, duration) { show('success', title, message, duration); },
     error: function(title, message, duration) { show('danger', title, message, duration); },
     warning: function(title, message, duration) { show('warning', title, message, duration); },
     info: function(title, message, duration) { show('info', title, message, duration); }
+  };
+})();
+
+
+/* --- Calendar.js --- */
+/**
+ * Calendar Component
+ * Sinh Lịch Tiệc cơ bản bằng JS. Không dùng thư viện nặng.
+ */
+var UICalendar = (function () {
+
+  /**
+   * Khởi tạo Lịch
+   * @param {Object} config - { year, month, events (danh sách chấm đỏ/xanh) }
+   */
+  function create(config) {
+    config = config || {};
+    var today = new Date();
+    var currentYear = (config.year !== undefined && !isNaN(config.year)) ? Number(config.year) : today.getFullYear();
+    var currentMonth = (config.month !== undefined && !isNaN(config.month)) ? Number(config.month) : today.getMonth();
+    var isFirstRender = true;
+
+    var wrapper = document.createElement('div');
+    wrapper.className = 'ui-calendar-wrapper';
+
+    function render(year, month) {
+      wrapper.innerHTML = '';
+
+      // Header
+      var header = document.createElement('div');
+      header.className = 'calendar-header';
+
+      var titleContainer = document.createElement('div');
+      titleContainer.className = 'calendar-month-picker';
+
+      var titleText = document.createElement('span');
+      titleText.innerText = 'Tháng ' + (month + 1) + ', ' + year;
+      titleContainer.appendChild(titleText);
+
+      var icon = document.createElement('span');
+      icon.className = 'material-symbols-outlined';
+      icon.innerText = 'expand_more';
+      icon.style.fontSize = '24px';
+      icon.style.color = 'var(--color-text-secondary)';
+      titleContainer.appendChild(icon);
+
+      titleContainer.onclick = function () {
+        if (document.getElementById('custom-month-picker-overlay')) return;
+
+        var overlay = document.createElement('div');
+        overlay.id = 'custom-month-picker-overlay';
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.zIndex = '999999999';
+
+        var dropdown = document.createElement('div');
+        dropdown.className = 'calendar-dropdown-picker';
+        var rect = titleContainer.getBoundingClientRect();
+        dropdown.style.top = (rect.bottom + 8) + 'px';
+        dropdown.style.left = rect.left + 'px';
+        dropdown.onclick = function (ev) { ev.stopPropagation(); };
+
+        var yearHeader = document.createElement('div');
+        yearHeader.className = 'calendar-dropdown-header';
+
+        var btnPrevYear = document.createElement('button');
+        btnPrevYear.className = 'btn btn-outline d-flex align-items-center justify-content-center p-0 rounded-circle';
+        btnPrevYear.style.width = '32px'; btnPrevYear.style.height = '32px';
+        btnPrevYear.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px;">chevron_left</span>';
+
+        var yearLabel = document.createElement('div');
+        yearLabel.className = 'calendar-dropdown-year-label';
+        yearLabel.innerText = year;
+
+        var btnNextYear = document.createElement('button');
+        btnNextYear.className = 'btn btn-outline d-flex align-items-center justify-content-center p-0 rounded-circle';
+        btnNextYear.style.width = '32px'; btnNextYear.style.height = '32px';
+        btnNextYear.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px;">chevron_right</span>';
+
+        var tempYear = year;
+
+        btnPrevYear.onclick = function () { tempYear--; yearLabel.innerText = tempYear; loadSummaryAndRender(); };
+        btnNextYear.onclick = function () { tempYear++; yearLabel.innerText = tempYear; loadSummaryAndRender(); };
+
+        yearHeader.appendChild(btnPrevYear);
+        yearHeader.appendChild(yearLabel);
+        yearHeader.appendChild(btnNextYear);
+        dropdown.appendChild(yearHeader);
+
+        var monthsGrid = document.createElement('div');
+        monthsGrid.className = 'calendar-dropdown-months-grid';
+
+        function renderMonths() {
+          monthsGrid.innerHTML = '';
+          var monthNames = ['Thg 1', 'Thg 2', 'Thg 3', 'Thg 4', 'Thg 5', 'Thg 6', 'Thg 7', 'Thg 8', 'Thg 9', 'Thg 10', 'Thg 11', 'Thg 12'];
+          var summary = (config.monthSummary && config.monthSummary[tempYear]) ? config.monthSummary[tempYear] : {};
+          for (let m = 0; m < 12; m++) {
+            var mBtn = document.createElement('button');
+            mBtn.className = 'calendar-dropdown-month-btn' + (tempYear === year && m === month ? ' active' : '');
+            mBtn.innerText = monthNames[m];
+            if (summary[m] && summary[m] > 0) {
+              mBtn.classList.add('has-events');
+              var dot = document.createElement('span');
+              dot.className = 'month-event-dot';
+              mBtn.appendChild(dot);
+            }
+            mBtn.onclick = function () {
+              document.body.removeChild(overlay);
+              currentYear = tempYear;
+              currentMonth = m;
+              if (typeof config.onChangeMonth === 'function') config.onChangeMonth(currentYear, currentMonth);
+              else render(currentYear, currentMonth);
+            };
+            monthsGrid.appendChild(mBtn);
+          }
+        }
+
+        // Load summary for current tempYear when navigating years
+        function loadSummaryAndRender() {
+          if (config.monthSummary && !config.monthSummary[tempYear] && typeof config.onLoadYearSummary === 'function') {
+            config.onLoadYearSummary(tempYear).then(function (s) {
+              config.monthSummary[tempYear] = s;
+              renderMonths();
+            });
+          } else {
+            renderMonths();
+          }
+        }
+
+        loadSummaryAndRender();
+        dropdown.appendChild(monthsGrid);
+        overlay.appendChild(dropdown);
+        overlay.onclick = function () { document.body.removeChild(overlay); };
+        document.body.appendChild(overlay);
+      };
+
+      header.appendChild(titleContainer);
+
+      var controls = document.createElement('div');
+      controls.className = 'calendar-controls d-flex align-items-center gap-2';
+
+      var btnPrev = document.createElement('button');
+      btnPrev.className = 'btn btn-outline d-flex align-items-center justify-content-center p-0 rounded-circle';
+      btnPrev.style.width = '36px';
+      btnPrev.style.height = '36px';
+      btnPrev.title = 'Tháng trước';
+      btnPrev.innerHTML = '<span class="material-symbols-outlined fs-5">chevron_left</span>';
+      btnPrev.onclick = function () {
+        var m = month - 1;
+        var y = year;
+        if (m < 0) { m = 11; y--; }
+        currentYear = y; currentMonth = m;
+        if (typeof config.onChangeMonth === 'function') config.onChangeMonth(y, m);
+        else render(y, m);
+      };
+
+      var btnToday = document.createElement('button');
+      btnToday.className = 'btn btn-outline px-3 fw-bold rounded-pill d-inline-flex align-items-center justify-content-center';
+      btnToday.style.height = '36px';
+      btnToday.innerText = 'Hôm nay';
+      btnToday.onclick = function () {
+        var y = today.getFullYear();
+        var m = today.getMonth();
+        currentYear = y; currentMonth = m;
+        if (typeof config.onChangeMonth === 'function') config.onChangeMonth(y, m);
+        else render(y, m);
+      };
+
+      var btnNext = document.createElement('button');
+      btnNext.className = 'btn btn-outline d-flex align-items-center justify-content-center p-0 rounded-circle';
+      btnNext.style.width = '36px';
+      btnNext.style.height = '36px';
+      btnNext.title = 'Tháng sau';
+      btnNext.innerHTML = '<span class="material-symbols-outlined fs-5">chevron_right</span>';
+      btnNext.onclick = function () {
+        var m = month + 1;
+        var y = year;
+        if (m > 11) { m = 0; y++; }
+        currentYear = y; currentMonth = m;
+        if (typeof config.onChangeMonth === 'function') config.onChangeMonth(y, m);
+        else render(y, m);
+      };
+
+      controls.appendChild(btnPrev);
+      controls.appendChild(btnToday);
+      controls.appendChild(btnNext);
+
+      header.appendChild(controls);
+      wrapper.appendChild(header);
+
+      var daysHeader = document.createElement('div');
+      daysHeader.className = 'calendar-days-header';
+
+      ['TH 2', 'TH 3', 'TH 4', 'TH 5', 'TH 6', 'TH 7', 'CN'].forEach(function (d) {
+        var dDiv = document.createElement('div');
+        dDiv.className = 'calendar-day-header';
+        if (d === 'CN') dDiv.classList.add('sunday');
+        dDiv.innerText = d;
+        daysHeader.appendChild(dDiv);
+      });
+      wrapper.appendChild(daysHeader);
+
+      // Days Header -> Days Grid
+      var grid = document.createElement('div');
+      grid.className = 'calendar-grid';
+
+      // Date calculations
+      var jsFirstDay = new Date(year, month, 1).getDay();
+      var firstDay = jsFirstDay === 0 ? 6 : jsFirstDay - 1;
+      var daysInMonth = new Date(year, month + 1, 0).getDate();
+      var daysInPrevMonth = new Date(year, month, 0).getDate();
+
+      var cellIndex = 0;
+
+      // Helper function to generate Lunar date HTML using native Intl API
+      function _getLunarDateHTML(y, m, d) {
+        try {
+          var formatter = new Intl.DateTimeFormat('vi-VN-u-ca-chinese', { day: 'numeric', month: 'numeric' });
+          var parts = formatter.formatToParts(new Date(y, m, d));
+          var lDay = '', lMonth = '';
+          parts.forEach(function (p) {
+            if (p.type === 'day') lDay = p.value;
+            if (p.type === 'month') lMonth = p.value;
+          });
+          var str = formatter.format(new Date(y, m, d));
+          var isLeap = str.toLowerCase().indexOf('nhuận') !== -1 || str.toLowerCase().indexOf('bis') !== -1;
+          var displayStr = lDay;
+          if (lDay === '1' || d === 1) {
+            displayStr = lDay + '/' + lMonth + (isLeap ? ' Nhuận' : '');
+          }
+          var isHighlight = (lDay === '1' || lDay === '15');
+          var highlightClass = isHighlight ? ' highlight' : '';
+          return '<span class="lunar-date' + highlightClass + '" title="Ngày âm lịch">' + displayStr + '</span>';
+        } catch (e) {
+          return '';
+        }
+      }
+
+      // ô trước ngày 1 (ngày tháng trước)
+      for (let i = 0; i < firstDay; i++) {
+        var empty = document.createElement('div');
+        empty.className = 'calendar-day empty-day';
+        if (isFirstRender) {
+          empty.classList.add('animate-pop');
+          empty.style.animationDelay = (cellIndex * 0.015) + 's';
+        }
+
+        var dNum = document.createElement('div');
+        dNum.className = 'calendar-day-number';
+        var prevDateNum = daysInPrevMonth - firstDay + i + 1;
+        var prevM = month - 1;
+        var prevY = year;
+        if (prevM < 0) { prevM = 11; prevY--; }
+        dNum.innerHTML = '<span class="solar-date">' + prevDateNum + '</span>' + _getLunarDateHTML(prevY, prevM, prevDateNum);
+        empty.appendChild(dNum);
+
+        if (config.selectedDate) {
+          var selDateObj = typeof config.selectedDate === 'string' ? new Date(config.selectedDate) : config.selectedDate;
+          if (selDateObj && !isNaN(selDateObj.getTime())) {
+            if (selDateObj.getFullYear() === prevY && selDateObj.getMonth() === prevM && selDateObj.getDate() === prevDateNum) {
+              empty.classList.add('selected');
+            }
+          }
+        }
+
+        empty.onclick = (function (d, pY, pM) {
+          return function () {
+            if (typeof config.onSelect === 'function') {
+              var dateStr = pY + '-' + (pM + 1).toString().padStart(2, '0') + '-' + d.toString().padStart(2, '0');
+              config.onSelect(dateStr, null);
+            }
+          };
+        })(prevDateNum, prevY, prevM);
+
+        grid.appendChild(empty);
+        cellIndex++;
+      }
+
+      // Các ngày trong tháng
+      for (let i = 1; i <= daysInMonth; i++) {
+        var dayCell = document.createElement('div');
+        dayCell.className = 'calendar-day';
+        if (isFirstRender) {
+          dayCell.classList.add('animate-pop');
+          dayCell.style.animationDelay = (cellIndex * 0.015) + 's';
+        }
+
+        if (today.getFullYear() === year && today.getMonth() === month && today.getDate() === i) {
+          dayCell.classList.add('today');
+        }
+
+        if (config.selectedDate) {
+          var selDateObj = typeof config.selectedDate === 'string' ? new Date(config.selectedDate) : config.selectedDate;
+          if (selDateObj && !isNaN(selDateObj.getTime())) {
+            if (selDateObj.getFullYear() === year && selDateObj.getMonth() === month && selDateObj.getDate() === i) {
+              dayCell.classList.add('selected');
+            }
+          }
+        }
+
+        var dayNum = document.createElement('div');
+        dayNum.className = 'calendar-day-number';
+        dayNum.innerHTML = '<span class="solar-date">' + i + '</span>' + _getLunarDateHTML(year, month, i);
+        dayCell.appendChild(dayNum);
+
+        // Thêm events
+        var evtDiv = document.createElement('div');
+        evtDiv.className = 'calendar-events';
+
+        var dayEvents = config.events ? config.events[i] : null;
+
+        if (dayEvents && dayEvents.length > 0) {
+          var cocCount = 0;
+          var hdCount = 0;
+
+          dayEvents.forEach(function (e) {
+            if (e.rawData) {
+              var lp = e.rawData.LoaiPhieu !== undefined ? e.rawData.LoaiPhieu : e.rawData.loaiPhieu;
+              if (lp === 1) cocCount++;
+              else hdCount++;
+            }
+          });
+
+          // Render Desktop Summary Labels với chấm tròn chỉ thị
+          if (cocCount > 0) {
+            var cocLabel = document.createElement('div');
+            cocLabel.className = 'calendar-event-label success';
+            cocLabel.title = 'Có ' + cocCount + ' Biên nhận cọc chỗ';
+            cocLabel.innerHTML = '<span class="dot"></span><span>' + cocCount + ' Cọc Chỗ</span>';
+            evtDiv.appendChild(cocLabel);
+          }
+          if (hdCount > 0) {
+            var hdLabel = document.createElement('div');
+            hdLabel.className = 'calendar-event-label primary';
+            hdLabel.title = 'Có ' + hdCount + ' Hợp đồng';
+            hdLabel.innerHTML = '<span class="dot"></span><span>' + hdCount + ' Hợp Đồng</span>';
+            evtDiv.appendChild(hdLabel);
+          }
+
+          // Render Mobile Dots
+          if (cocCount > 0) {
+            var dotCoc = document.createElement('div');
+            dotCoc.className = 'calendar-event-dot success';
+            dayCell.appendChild(dotCoc);
+          }
+          if (hdCount > 0) {
+            var dotHd = document.createElement('div');
+            dotHd.className = 'calendar-event-dot primary';
+            dayCell.appendChild(dotHd);
+          }
+        }
+        dayCell.appendChild(evtDiv);
+
+        dayCell.onclick = (function (d, evts) {
+          return function () {
+            if (typeof config.onSelect === 'function') {
+              var dateStr = year + '-' + (month + 1).toString().padStart(2, '0') + '-' + d.toString().padStart(2, '0');
+              config.onSelect(dateStr, evts);
+            }
+          };
+        })(i, dayEvents);
+
+        grid.appendChild(dayCell);
+        cellIndex++;
+      }
+
+      // ô sau ngày cuối cùng (ngày tháng sau)
+      var totalCells = firstDay + daysInMonth;
+      var remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+      for (let i = 0; i < remainingCells; i++) {
+        var emptyEnd = document.createElement('div');
+        emptyEnd.className = 'calendar-day empty-day';
+        if (isFirstRender) {
+          emptyEnd.classList.add('animate-pop');
+          emptyEnd.style.animationDelay = (cellIndex * 0.015) + 's';
+        }
+
+        var dNumEnd = document.createElement('div');
+        dNumEnd.className = 'calendar-day-number';
+        var nextDateNum = i + 1;
+        var nextM = month + 1;
+        var nextY = year;
+        if (nextM > 11) { nextM = 0; nextY++; }
+        dNumEnd.innerHTML = '<span class="solar-date">' + nextDateNum + '</span>' + _getLunarDateHTML(nextY, nextM, nextDateNum);
+        emptyEnd.appendChild(dNumEnd);
+
+        if (config.selectedDate) {
+          var selDateObj = typeof config.selectedDate === 'string' ? new Date(config.selectedDate) : config.selectedDate;
+          if (selDateObj && !isNaN(selDateObj.getTime())) {
+            if (selDateObj.getFullYear() === nextY && selDateObj.getMonth() === nextM && selDateObj.getDate() === nextDateNum) {
+              emptyEnd.classList.add('selected');
+            }
+          }
+        }
+
+        emptyEnd.onclick = (function (d, nY, nM) {
+          return function () {
+            if (typeof config.onSelect === 'function') {
+              var dateStr = nY + '-' + (nM + 1).toString().padStart(2, '0') + '-' + d.toString().padStart(2, '0');
+              config.onSelect(dateStr, null);
+            }
+          };
+        })(nextDateNum, nextY, nextM);
+
+        grid.appendChild(emptyEnd);
+        cellIndex++;
+      }
+
+      wrapper.appendChild(grid);
+      isFirstRender = false;
+    }
+
+    render(currentYear, currentMonth);
+
+    wrapper.updateEvents = function (newEvents) {
+      config.events = newEvents;
+      render(currentYear, currentMonth);
+    };
+
+    wrapper.setSelectedDate = function (newDate) {
+      config.selectedDate = newDate;
+      if (newDate) {
+        var d = typeof newDate === 'string' ? new Date(newDate) : newDate;
+        if (d && !isNaN(d.getTime())) {
+          currentYear = d.getFullYear();
+          currentMonth = d.getMonth();
+        }
+      }
+      render(currentYear, currentMonth);
+    };
+
+    return wrapper;
+  }
+
+  return {
+    create: create
   };
 })();
 
