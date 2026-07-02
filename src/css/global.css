@@ -72,9 +72,11 @@ input.date-vn {
   position: relative;
   color: transparent !important;
 }
+
 input.date-vn::-webkit-datetime-edit {
   color: transparent !important;
 }
+
 input.date-vn::before {
   content: attr(data-date);
   position: absolute;
@@ -84,13 +86,19 @@ input.date-vn::before {
   color: var(--text);
   pointer-events: none;
 }
-input.date-vn:focus, input.date-vn:active {
+
+input.date-vn:focus,
+input.date-vn:active {
   color: var(--text) !important;
 }
-input.date-vn:focus::-webkit-datetime-edit, input.date-vn:active::-webkit-datetime-edit {
+
+input.date-vn:focus::-webkit-datetime-edit,
+input.date-vn:active::-webkit-datetime-edit {
   color: var(--text) !important;
 }
-input.date-vn:focus::before, input.date-vn:active::before {
+
+input.date-vn:focus::before,
+input.date-vn:active::before {
   display: none;
 }
 
@@ -970,14 +978,17 @@ input.date-vn:focus::before, input.date-vn:active::before {
   height: 6px;
   width: 6px;
 }
+
 .tbl-wrap::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .tbl-wrap::-webkit-scrollbar-thumb {
   background: var(--border);
   border-radius: 10px;
   transition: background-color 0.2s ease;
 }
+
 .tbl-wrap::-webkit-scrollbar-thumb:hover {
   background: var(--muted);
 }
@@ -1059,6 +1070,7 @@ tbody tr:hover td {
 .tbl-wrap td {
   border-right: 1px solid var(--border);
 }
+
 .tbl-wrap th:last-child,
 .tbl-wrap td:last-child {
   border-right: none;
@@ -2753,6 +2765,7 @@ tbody tr.row-selected td:first-child {
 
 /* ---- Responsive Modals ---- */
 @media (max-width: 768px) {
+
   /* Standard modals take full width with no horizontal margins */
   .modal {
     width: 100% !important;
@@ -2779,7 +2792,8 @@ tbody tr.row-selected td:first-child {
   border-radius: 8px;
   padding: 8px 12px;
   box-shadow: none;
-  max-width: 360px; /* Even smaller width limit */
+  max-width: 360px;
+  /* Even smaller width limit */
   margin-bottom: 16px;
 }
 
@@ -2904,15 +2918,19 @@ tbody tr.row-selected td:first-child {
   .layout.mode-navbar .main {
     padding: 16px 12px !important;
   }
+
   .navbar {
     padding: 0 12px !important;
   }
+
   .navbar .logo {
     padding: 0;
   }
+
   .navbar .nav-links {
     display: none !important;
   }
+
   .menu-btn {
     display: flex !important;
   }
@@ -2922,16 +2940,20 @@ tbody tr.row-selected td:first-child {
   .orders-filter {
     gap: 8px !important;
   }
+
   .orders-date-grid input[type="date"] {
     padding: 8px 6px !important;
     font-size: 12px !important;
   }
+
   .orders-date-grid label {
     font-size: 11px !important;
   }
+
   .orders-date-grid {
     gap: 8px !important;
   }
+
   input[type="date"]::-webkit-calendar-picker-indicator {
     margin: 0;
     padding: 0;
@@ -2944,6 +2966,11 @@ tbody tr.row-selected td:first-child {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}

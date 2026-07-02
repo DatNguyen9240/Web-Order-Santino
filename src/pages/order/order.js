@@ -1562,6 +1562,12 @@ var OrderPage = (function () {
         var cust = customersList[j];
         var res = await CategoryService.saveCustomer(cust);
         if (res) {
+          var resObj = Array.isArray(res) ? res[0] : res;
+          // Cập nhật ObjectID được sinh tự động từ database
+          var generatedID = resObj.ObjectID || resObj.ObjectID_Out || resObj.id || resObj.Id || '';
+          if (generatedID) {
+            cust.ObjectID = generatedID;
+          }
           lastSavedCust = cust;
         }
       }
