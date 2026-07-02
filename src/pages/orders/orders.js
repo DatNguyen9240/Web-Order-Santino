@@ -3,7 +3,7 @@ var OrdersPage = (function () {
   var itemsPerPage = 20;
 
   function render($el) {
-    // Thêm class để trang này rộng toàn màn hình
+    // Cho phép trang này rộng tối đa theo container-order
     $el.classList.add('is-full-width');
     return Router.fetchTemplate('src/pages/orders/orders.html').then(function(html){
       $el.innerHTML = html;

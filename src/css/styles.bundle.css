@@ -242,8 +242,8 @@ input.date-vn:active::before {
 .navbar {
   display: none;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 40px;
+  justify-content: center !important;
+  padding: 0 24px !important;
   height: var(--header-h);
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -1380,31 +1380,34 @@ tbody tr.row-selected td:first-child {
 }
 
 /* ---- Toast ---- */
-.toast {
-  position: fixed;
-  top: 32px;
-  bottom: auto;
-  right: 32px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 16px 24px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: var(--shadow-lg);
-  z-index: 99999;
+#toast {
+  position: fixed !important;
+  top: 32px !important;
+  bottom: auto !important;
+  right: 32px !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  padding: 12px 18px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  box-shadow: var(--shadow-lg) !important;
+  z-index: 999999 !important;
   transform: translateY(-100px);
   opacity: 0;
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  font-weight: 600;
-  color: var(--text);
-  font-size: calc(15px * var(--text-scale, 1));
+  font-weight: 600 !important;
+  color: var(--text) !important;
+  font-size: calc(14px * var(--text-scale, 1)) !important;
+  max-width: 360px !important;
+  width: auto !important;
+  box-sizing: border-box !important;
 }
 
-.toast.show {
-  transform: translateY(0);
-  opacity: 1;
+#toast.show {
+  transform: translateY(0) !important;
+  opacity: 1 !important;
 }
 
 /* ---- Stats Row ---- */
@@ -3059,6 +3062,27 @@ tbody tr.row-selected td:first-child {
   100% {
     transform: rotate(360deg);
   }
+}
+
+.container-order {
+  max-width: 1200px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  width: 100%;
+}
+
+.container-compact {
+  max-width: 1000px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  width: 100%;
+}
+
+.container-wide {
+  max-width: 1400px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  width: 100%;
 }
 
 /* --- shared-dropdown.css --- */

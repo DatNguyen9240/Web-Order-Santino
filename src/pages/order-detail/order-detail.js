@@ -21,10 +21,10 @@ var OrderDetailPage = (function () {
     tbody.innerHTML = paginatedLines.map(function (l) {
       var sizesText = '—';
       if (l.chi_tiet_size) {
-          try {
-              var sizesArr = typeof l.chi_tiet_size === 'string' ? JSON.parse(l.chi_tiet_size) : l.chi_tiet_size;
-              sizesText = sizesArr.map(function(s) { return s.size }).join(', ');
-          } catch(e) {}
+        try {
+          var sizesArr = typeof l.chi_tiet_size === 'string' ? JSON.parse(l.chi_tiet_size) : l.chi_tiet_size;
+          sizesText = sizesArr.map(function (s) { return s.size }).join(', ');
+        } catch (e) { }
       }
       return '<tr onclick="Utils.toggleRow(this)"><td>' + (l.ten_hang_2 || '—') + '</td>' +
         '<td>' + (l.ten_hang || '—') + '</td><td style="font-size: calc(12px * var(--text-scale, 1)); color: var(--text-secondary)">' + sizesText + '</td>' +
@@ -40,7 +40,7 @@ var OrderDetailPage = (function () {
           totalItems: allLines.length,
           itemsPerPage: itemsPerPage,
           currentPage: currentPage,
-          onPageChange: function(page) {
+          onPageChange: function (page) {
             currentPage = page;
             renderLines();
           }
@@ -56,7 +56,7 @@ var OrderDetailPage = (function () {
       allLines = [];
       // Cho phép trang này hiển thị rộng tối đa màn hình
       $el.classList.add('is-full-width');
-      
+
       const html = await Router.fetchTemplate('src/pages/order-detail/order-detail.html');
       $el.innerHTML = html;
       var id = window._viewOrderId;
@@ -64,16 +64,16 @@ var OrderDetailPage = (function () {
 
       try {
         const queryObj = { Loai: 'OrderDetail', TimKiem: id };
-        
+
         var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
         var role = user.role || user.Group || '';
         var empID = user.EmployeeID || '';
         var objID = user.ObjectID || '';
         if (objID && objID !== '') {
-           empID = '';
+          empID = '';
         }
         queryObj.chinhanh = '|PAGE:1|ROLE:' + role + '|EMP:' + empID + '|OBJ:' + objID;
-        
+
         const params = { q: JSON.stringify(queryObj), _t: Date.now() };
         const res = await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, params);
 
