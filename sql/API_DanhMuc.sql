@@ -367,7 +367,8 @@ BEGIN
                     SUM(D.[TotalAmount]) AS [thanh_tien],
                     (
                         SELECT 
-                            subD.[Size] AS [size]
+                            subD.[Size] AS [size], 
+                            SUM(subD.[Quantity]) AS [qty]
                         FROM [dbo].[WEB_OrderDetailTbl] subD
                         LEFT JOIN [dbo].[CF_ItemTbl] subCI ON subD.[ItemID] = subCI.[ItemID]
                         WHERE subD.[DocumentID] = h.[DocumentID]

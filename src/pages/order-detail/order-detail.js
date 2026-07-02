@@ -23,7 +23,7 @@ var OrderDetailPage = (function () {
       if (l.chi_tiet_size) {
         try {
           var sizesArr = typeof l.chi_tiet_size === 'string' ? JSON.parse(l.chi_tiet_size) : l.chi_tiet_size;
-          sizesText = sizesArr.map(function (s) { return s.size }).join(', ');
+          sizesText = sizesArr.map(function (s) { return s.size + '(' + s.qty + ')' }).join(', ');
         } catch (e) { }
       }
       return '<tr onclick="Utils.toggleRow(this)"><td>' + (l.ten_hang_2 || '—') + '</td>' +
