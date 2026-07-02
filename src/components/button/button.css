@@ -32,7 +32,7 @@
 
 .btn-primary {
   background: var(--color-primary);
-  color: white;
+  color: var(--primary-fg, white);
   border-color: var(--color-primary);
 }
 
@@ -61,6 +61,29 @@
 .btn-danger:hover:not(:disabled) {
   background: #DC2626;
   border-color: #DC2626;
+}
+
+.btn-accent {
+  background: var(--accent);
+  color: var(--primary-fg, #18181b);
+  border-color: var(--accent);
+}
+
+.btn-accent:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+  color: var(--primary-fg, #18181b);
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--color-background);
+  border-color: var(--color-text-secondary);
 }
 
 /* BUTTON BARS */

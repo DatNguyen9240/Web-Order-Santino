@@ -515,7 +515,7 @@ input.date-vn:active::before {
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius);
   padding: 20px;
   box-shadow: var(--shadow-sm);
   transition: box-shadow 0.2s ease;
@@ -855,7 +855,7 @@ input.date-vn:active::before {
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius);
   padding: 24px;
   box-shadow: var(--shadow-sm);
   transition: box-shadow 0.2s ease;

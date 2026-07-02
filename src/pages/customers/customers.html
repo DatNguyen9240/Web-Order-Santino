@@ -1,0 +1,241 @@
+<div class="page-hdr" style="display: none;">
+  <div>
+    <h2><span data-i18n="hdr.customers">Quản Lý Khách Hàng</span></h2>
+    <p data-i18n="hdr.customers.desc">Danh sách khách hàng, thêm mới, chỉnh sửa thông tin, đặt lại mật khẩu và khóa tài khoản</p>
+  </div>
+</div>
+
+<div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:16px; align-items:center;">
+  <div class="search-wrapper" style="flex:1; min-width: 250px;">
+    <span class="material-symbols-outlined">search</span>
+    <input id="customer-search" placeholder="Tìm mã, tên, SĐT, địa chỉ..." oninput="CustomersPage.render()">
+  </div>
+  
+  <select id="customer-filter-group" style="min-width:160px; padding:10px 14px; border-radius:10px; border:1px solid var(--border); background:var(--surface); color:var(--text); outline:none; font-weight:500; box-shadow:var(--shadow-sm);" onchange="CustomersPage.render()">
+    <option value="">Tất cả Nhóm KH</option>
+  </select>
+
+  <button class="btn btn-primary" onclick="CustomersPage.openCustomerModal()" style="white-space: nowrap; height: 42px;">
+    <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">add</span>
+    <span data-i18n="btn.add">Thêm Khách Hàng</span>
+  </button>
+</div>
+
+<div class="tbl-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width: 120px;">Mã KH</th>
+        <th>Tên khách hàng</th>
+        <th style="width: 120px;">Điện thoại</th>
+        <th>Địa chỉ</th>
+        <th>Nhân viên quản lý</th>
+        <th>Nhóm khách hàng</th>
+        <th>Tài khoản</th>
+        <th style="width: 100px; text-align: center;">Trạng thái</th>
+        <th style="width: 150px; text-align: center;">Thao tác</th>
+      </tr>
+    </thead>
+    <tbody id="customers-body">
+      <tr>
+        <td colspan="9" class="text-center" style="padding: 24px;">Đang tải danh sách khách hàng...</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- MODAL: THÊM / SỬA KHÁCH HÀNG -->
+<div class="modal-overlay" id="modal-customer">
+  <div class="modal" style="max-width: 800px; width: 90%;">
+    <div class="modal-hdr">
+      <h3 id="cust-modal-title">Thêm Khách Hàng Mới</h3>
+      <button class="btn-icon" onclick="closeModal('modal-customer')">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    
+    <input type="hidden" id="cust-is-edit">
+    <div class="modal-body" style="max-height: 70vh; overflow-y: auto; padding-right: 8px;">
+      <div class="form-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+        
+        <!-- THÔNG TIN CHUNG -->
+        <div class="form-group span2" style="grid-column: span 2; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 8px;">
+          <h4 style="margin: 0; color: var(--primary);">Thông tin cơ bản</h4>
+        </div>
+        
+        <div class="form-group">
+          <label>Mã khách hàng <span style="font-size: 11px; color: var(--text-secondary);">(Bỏ trống tự động sinh)</span></label>
+          <input id="cust-id" class="ui-input" placeholder="Mã khách hàng (ObjectID)...">
+        </div>
+        
+        <div class="form-group">
+          <label>Tên khách hàng *</label>
+          <input id="cust-name" class="ui-input" placeholder="Nhập tên khách hàng..." required>
+        </div>
+        
+        <div class="form-group">
+          <label>Số điện thoại</label>
+          <input id="cust-phone" class="ui-input" placeholder="Nhập số điện thoại...">
+        </div>
+        
+        <div class="form-group">
+          <label>Nhóm khách hàng *</label>
+          <select id="cust-group" class="ui-input" required></select>
+        </div>
+
+        <div class="form-group span2" style="grid-column: span 2;">
+          <label>Địa chỉ hoạt động * <span style="font-size:11px; color:var(--text-secondary)">(Gõ tỉnh/thành phố ở cuối để tự động sinh mã vùng)</span></label>
+          <input id="cust-address" class="ui-input" placeholder="VD: Số 12 Nguyễn Trãi, Thanh Xuân, Hà Nội" required>
+        </div>
+        
+        <div class="form-group">
+          <label>Tỉnh/Thành phố * <span style="font-size:11px; color:var(--text-secondary)">(Dùng để phân loại vùng)</span></label>
+          <select id="cust-location" class="ui-input" required></select>
+        </div>
+
+        <div class="form-group">
+          <label>Quận/Huyện</label>
+          <input id="cust-quanhuyen" class="ui-input" placeholder="Nhập quận/huyện...">
+        </div>
+
+        <!-- THÔNG TIN KINH DOANH -->
+        <div class="form-group span2" style="grid-column: span 2; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-top: 12px; margin-bottom: 8px;">
+          <h4 style="margin: 0; color: var(--primary);">Cấu hình giao dịch B2B</h4>
+        </div>
+        
+        <div class="form-group">
+          <label>Nhân viên kinh doanh quản lý</label>
+          <select id="cust-employee" class="ui-input"></select>
+        </div>
+        
+        <div class="form-group">
+          <label>Chi nhánh trực thuộc</label>
+          <select id="cust-branch" class="ui-input"></select>
+        </div>
+        
+        <div class="form-group">
+          <label>Hình thức thanh toán</label>
+          <select id="cust-paytype" class="ui-input"></select>
+        </div>
+        
+        <div class="form-group">
+          <label>Điều khoản thanh toán</label>
+          <select id="cust-payterm" class="ui-input"></select>
+        </div>
+
+        <div class="form-group">
+          <label>Định mức nợ tối đa (VND)</label>
+          <input id="cust-debt" class="ui-input" type="number" placeholder="Ví dụ: 50000000">
+        </div>
+
+        <div class="form-group">
+          <label>Thời hạn thanh toán (Ngày)</label>
+          <input id="cust-due" class="ui-input" type="number" placeholder="Ví dụ: 30">
+        </div>
+
+        <div class="form-group span2" style="grid-column: span 2;">
+          <label>Sản phẩm chính quan tâm</label>
+          <input id="cust-main-prod" class="ui-input" placeholder="VD: Sơ mi, Quần tây...">
+        </div>
+
+        <!-- THÔNG TIN HÓA ĐƠN -->
+        <div class="form-group span2" style="grid-column: span 2; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-top: 12px; margin-bottom: 8px;">
+          <h4 style="margin: 0; color: var(--primary);">Thông tin thuế & Hóa đơn</h4>
+        </div>
+
+        <div class="form-group">
+          <label>Mã số thuế</label>
+          <input id="cust-tax" class="ui-input" placeholder="Nhập mã số thuế...">
+        </div>
+
+        <div class="form-group">
+          <label>Đơn vị xuất hóa đơn</label>
+          <input id="cust-invoice-company" class="ui-input" placeholder="Nhập tên doanh nghiệp mua hàng...">
+        </div>
+
+        <div class="form-group span2" style="grid-column: span 2;">
+          <label>Địa chỉ xuất hóa đơn</label>
+          <input id="cust-invoice-address" class="ui-input" placeholder="Nhập địa chỉ đăng ký kinh doanh xuất hóa đơn...">
+        </div>
+
+        <div class="form-group span2" style="grid-column: span 2;">
+          <label>Ghi chú khách hàng</label>
+          <textarea id="cust-notes" class="ui-input" rows="2" placeholder="Ghi chú về khách hàng (chính sách đặc biệt, thói quen...)" style="resize:vertical;"></textarea>
+        </div>
+
+        <!-- THÔNG TIN TÀI KHOẢN -->
+        <div class="form-group span2" id="cust-account-section" style="grid-column: span 2; margin-top: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg);">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; margin-bottom: 12px;">
+            <input type="checkbox" id="cust-has-account" onchange="CustomersPage.toggleAccountFields()">
+            <span>Tạo tài khoản đăng nhập (SY_User) liên kết</span>
+          </label>
+          
+          <div id="cust-account-fields" style="display: none; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 8px;">
+            <div class="form-group">
+              <label>Tên đăng nhập *</label>
+              <input id="cust-username" class="ui-input" placeholder="Mặc định dùng Mã khách hàng...">
+            </div>
+            <div class="form-group">
+              <label>Nhóm quyền tài khoản *</label>
+              <select id="cust-usergroup" class="ui-input">
+                <option value="DL">Đại lý (DL)</option>
+                <option value="Cua hang">Cửa hàng / Khách lẻ (Cua hang)</option>
+                <option value="NVKD">Nhân viên kinh doanh (NVKD)</option>
+              </select>
+            </div>
+            <div class="form-group span2" id="cust-initial-password-group" style="grid-column: span 2;">
+              <label>Mật khẩu khởi tạo *</label>
+              <input id="cust-password" class="ui-input" type="password" placeholder="Nhập mật khẩu tài khoản...">
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    
+    <div class="modal-actions" style="margin-top: 20px;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-customer')">Hủy bỏ</button>
+      <button class="btn btn-primary" onclick="CustomersPage.saveCustomer()">Lưu lại</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: RESET MẬT KHẨU KHÁCH HÀNG -->
+<div class="modal-overlay" id="modal-reset-password">
+  <div class="modal" style="max-width: 450px; width: 90%;">
+    <div class="modal-hdr">
+      <h3>Đặt Lại Mật Khẩu</h3>
+      <button class="btn-icon" onclick="closeModal('modal-reset-password')">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    
+    <div class="form-grid" style="display: flex; flex-direction: column; gap: 16px;">
+      <div class="form-group">
+        <label>Tên đăng nhập</label>
+        <input id="reset-username" class="ui-input" readonly style="font-weight:bold; background:var(--bg); border-color:var(--border);">
+      </div>
+      
+      <div class="form-group">
+        <label>Mật khẩu mới *</label>
+        <input id="reset-newpassword" class="ui-input" type="password" placeholder="Nhập mật khẩu mới..." required>
+      </div>
+      
+      <div class="form-group">
+        <label>Xác nhận mật khẩu mới *</label>
+        <input id="reset-newpassword2" class="ui-input" type="password" placeholder="Xác nhận mật khẩu mới..." required>
+      </div>
+      
+      <!-- Option cho Admin tự chứng thực nếu API backend bắt buộc -->
+      <div class="form-group" style="display:none;">
+        <label>Mật khẩu Admin xác nhận</label>
+        <input id="reset-adminpassword" class="ui-input" type="password" placeholder="Nhập mật khẩu của bạn để xác thực...">
+      </div>
+    </div>
+    
+    <div class="modal-actions" style="margin-top: 24px;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-reset-password')">Hủy bỏ</button>
+      <button class="btn btn-primary" onclick="CustomersPage.submitResetPassword()">Đặt lại mật khẩu</button>
+    </div>
+  </div>
+</div>

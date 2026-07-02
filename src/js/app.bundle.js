@@ -14,6 +14,7 @@ var TRANSLATIONS = {
     "nav.group.system": "Hệ thống",
     "nav.settings": "Cài đặt",
     "nav.logout": "Đăng xuất",
+    "nav.customers": "Quản lý khách hàng",
 
     // --- Page Headers ---
     "hdr.order": "Tạo Đơn Hàng Sỉ",
@@ -22,6 +23,8 @@ var TRANSLATIONS = {
     "hdr.sizes": "Quản Lý Size",
     "hdr.sku": "Cấu Hình SKU",
     "hdr.promos": "Chương Trình Khuyến Mãi",
+    "hdr.customers": "Quản Lý Khách Hàng",
+    "hdr.customers.desc": "Danh sách khách hàng, thêm mới, chỉnh sửa thông tin, đặt lại mật khẩu và khóa tài khoản",
     
     // --- Common ---
     "btn.add": "Thêm",
@@ -164,6 +167,7 @@ var TRANSLATIONS = {
     "nav.group.system": "System",
     "nav.settings": "Settings",
     "nav.logout": "Logout",
+    "nav.customers": "Customer Management",
 
     // --- Page Headers ---
     "hdr.order": "Create Wholesale Order",
@@ -173,6 +177,8 @@ var TRANSLATIONS = {
     "hdr.sizes": "Size Management",
     "hdr.sku": "SKU Configuration",
     "hdr.promos": "Promotions",
+    "hdr.customers": "Customer Management",
+    "hdr.customers.desc": "List customers, create, edit info, reset password and lock account",
 
     // --- Common ---
     "btn.add": "Add",
@@ -315,6 +321,7 @@ var TRANSLATIONS = {
     "nav.group.system": "系统",
     "nav.settings": "设置",
     "nav.logout": "登出",
+    "nav.customers": "客户管理",
 
     // --- Page Headers ---
     "hdr.order": "创建批发订单",
@@ -324,6 +331,8 @@ var TRANSLATIONS = {
     "hdr.sizes": "尺码管理",
     "hdr.sku": "SKU配置",
     "hdr.promos": "促销活动",
+    "hdr.customers": "客户管理",
+    "hdr.customers.desc": "客户列表，创建、编辑信息，重置密码和锁定账户",
 
     // --- Common ---
     "btn.add": "添加",
@@ -797,6 +806,115 @@ const CategoryService = (() => {
   }
 
   return { getCategories, saveCustomer };
+})();
+
+
+/* --- customer.service.js --- */
+/**
+ * Customer Service
+ * Quản lý các lệnh gọi API liên quan đến Khách Hàng và Tài Khoản đăng nhập của khách hàng
+ */
+const CustomerService = (() => {
+  /**
+   * Lấy danh sách khách hàng đầy đủ kèm tài khoản liên quan
+   * @param {string} searchTerm - Từ khóa tìm kiếm (Mã KH, Tên KH, SĐT, Địa chỉ)
+   * @param {string} objectGroupId - Bộ lọc Nhóm khách hàng
+   */
+  async function getAll(searchTerm = '', objectGroupId = '') {
+    if (!API_CONFIG.BASE_URL) return [];
+    try {
+      const queryObj = {};
+      if (searchTerm && searchTerm.trim()) queryObj.TimKiem = searchTerm.trim();
+      if (objectGroupId && objectGroupId.trim()) queryObj.ObjectGroupID = objectGroupId.trim();
+
+      const params = { q: JSON.stringify(queryObj) };
+      if (searchTerm || objectGroupId) params._t = Date.now();
+
+      const res = await Http.get(API_CONFIG.ENDPOINTS.CUSTOMERS.LIST, params);
+      return res.records || res || [];
+    } catch (err) {
+      console.error('[CustomerService] Lỗi lấy danh sách khách hàng:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Lưu thông tin khách hàng (Tạo mới hoặc Cập nhật)
+   * @param {Object} customerData
+   */
+  async function save(customerData) {
+    if (!API_CONFIG.BASE_URL) throw new Error('API_BASE chưa cấu hình');
+    try {
+      const params = { q: JSON.stringify(customerData) };
+      const res = await Http.post(API_CONFIG.ENDPOINTS.CUSTOMERS.SAVE, params);
+      return res;
+    } catch (err) {
+      console.error('[CustomerService] Lỗi lưu thông tin khách hàng:', err);
+      throw err;
+    }
+  }
+
+  /**
+   * Xóa khách hàng (Soft/Hard delete tùy thuộc sự tồn tại của đơn hàng)
+   * @param {string} objectId
+   */
+  async function deleteCustomer(objectId) {
+    if (!API_CONFIG.BASE_URL) throw new Error('API_BASE chưa cấu hình');
+    try {
+      const params = { ObjectID: objectId };
+      const res = await Http.post(API_CONFIG.ENDPOINTS.CUSTOMERS.DELETE, params);
+      return res;
+    } catch (err) {
+      console.error('[CustomerService] Lỗi xóa khách hàng:', err);
+      throw err;
+    }
+  }
+
+  /**
+   * Lưu tài khoản đăng nhập cho khách hàng trong bảng SY_User
+   * @param {Object} userData - { UserName, HoTen, UserGroupID, ObjectID, Disable, Password }
+   */
+  async function saveUserAccount(userData) {
+    if (!API_CONFIG.BASE_URL) throw new Error('API_BASE chưa cấu hình');
+    try {
+      const res = await Http.post(API_CONFIG.ENDPOINTS.USERS.SAVE, userData);
+      return res;
+    } catch (err) {
+      console.error('[CustomerService] Lỗi lưu tài khoản khách hàng:', err);
+      throw err;
+    }
+  }
+
+  /**
+   * Reset mật khẩu qua API /changepassword
+   * @param {string} username - Tài khoản đăng nhập
+   * @param {string} currentPassword - Mật khẩu cũ / Mật khẩu Admin
+   * @param {string} newPassword - Mật khẩu mới
+   */
+  async function resetPassword(username, currentPassword, newPassword) {
+    if (!API_CONFIG.BASE_URL) throw new Error('API_BASE chưa cấu hình');
+    try {
+      const payload = {
+        username: username,
+        password: currentPassword || '',
+        newpassword: newPassword,
+        newpassword2: newPassword
+      };
+      const res = await Http.post(API_CONFIG.ENDPOINTS.USERS.CHANGE_PW, payload);
+      return res;
+    } catch (err) {
+      console.error('[CustomerService] Lỗi reset mật khẩu:', err);
+      throw err;
+    }
+  }
+
+  return {
+    getAll,
+    save,
+    deleteCustomer,
+    saveUserAccount,
+    resetPassword
+  };
 })();
 
 
@@ -1332,6 +1450,149 @@ UIControls.utils = (function () {
     }
   };
 })();
+
+
+/* --- Button.js --- */
+/**
+ * Button Component
+ * Sinh Nút bấm (Button) bằng DOM manipulation.
+ */
+var UIButton = (function () {
+
+  /**
+   * Tạo Nút bấm mới
+   * @param {Object} config - { id, text, icon, type, className, onClick, disabled, tooltip }
+   */
+  function create(config) {
+    var btn = document.createElement('button');
+    
+    // Base class
+    var typeClass = config.type ? 'btn-' + config.type : 'btn-primary';
+    if (config.type === 'tool') typeClass = 'btn-tool'; // Special case for toolbar
+    
+    btn.className = 'btn ' + typeClass + (config.className ? ' ' + config.className : '');
+    
+    if (config.id) btn.id = config.id;
+    if (config.disabled) btn.disabled = true;
+    if (config.tooltip) btn.title = config.tooltip;
+
+    // Build nội dung
+    var innerHTML = '';
+    if (config.icon) {
+      innerHTML += '<span class="material-symbols-outlined">' + config.icon + '</span>';
+    }
+    if (config.text) {
+      innerHTML += '<span>' + config.text + '</span>';
+    }
+    btn.innerHTML = innerHTML;
+
+    // Gắn sự kiện
+    if (typeof config.onClick === 'function') {
+      btn.addEventListener('click', function(e) {
+        if (!btn.disabled) {
+          config.onClick(e);
+        }
+      });
+    }
+
+    return btn;
+  }
+
+  /**
+   * Tạo Bar chứa danh sách các nút
+   * @param {Array} buttonsConfig - Mảng config của các nút
+   */
+  function createBar(buttonsConfig) {
+    var bar = document.createElement('div');
+    bar.className = 'button-bar';
+
+    buttonsConfig.forEach(function(cfg) {
+      if (cfg === '|') {
+        var div = document.createElement('div');
+        div.className = 'divider';
+        bar.appendChild(div);
+      } else {
+        bar.appendChild(create(cfg));
+      }
+    });
+
+    return bar;
+  }
+
+  /**
+   * Sinh HTML chuỗi cho Button
+   */
+  function createHTML(config) {
+    var typeClass = config.type ? 'btn-' + config.type : 'btn-primary';
+    if (config.type === 'tool') typeClass = 'btn-tool';
+    
+    var className = 'btn ' + typeClass + (config.className ? ' ' + config.className : '');
+    var idAttr = config.id ? ` id="${config.id}"` : '';
+    var disabledAttr = config.disabled ? ' disabled' : '';
+    var titleAttr = config.tooltip ? ` title="${config.tooltip}"` : '';
+    var onClickAttr = config.onClick ? ` onclick="${config.onClick}"` : '';
+    var styleAttr = config.style ? ` style="${config.style}"` : '';
+    
+    var dataAttrs = '';
+    if (config.data) {
+      for (var key in config.data) {
+        dataAttrs += ` data-${key}="${config.data[key]}"`;
+      }
+    }
+    
+    var innerHTML = '';
+    if (config.icon) {
+      var iconStyle = config.iconStyle ? ` style="${config.iconStyle}"` : '';
+      innerHTML += `<span class="material-symbols-outlined"${iconStyle}>${config.icon}</span>`;
+    }
+    if (config.text) {
+      var textStyle = config.textStyle ? ` style="${config.textStyle}"` : '';
+      innerHTML += config.icon ? ` <span${textStyle}>${config.text}</span>` : `<span${textStyle}>${config.text}</span>`;
+    }
+
+    return `<button class="${className}"${idAttr}${disabledAttr}${titleAttr}${onClickAttr}${styleAttr}${dataAttrs}>${innerHTML}</button>`;
+  }
+
+  return {
+    create: create,
+    createBar: createBar,
+    createHTML: createHTML
+  };
+})();
+
+
+/* --- Checkbox.js --- */
+/**
+ * Custom Checkbox Component
+ */
+var UIControls = window.UIControls || {};
+
+UIControls.createCheckbox = function(options) {
+  var wrapper = document.createElement('label');
+  wrapper.className = 'modern-checkbox-wrapper';
+
+  var input = document.createElement('input');
+  input.type = 'checkbox';
+  input.className = 'modern-checkbox';
+  if (options.checked) input.checked = true;
+
+  input.addEventListener('change', function(e) {
+    if (typeof options.onChange === 'function') {
+      options.onChange(e.target.checked);
+    }
+  });
+
+  wrapper.appendChild(input);
+  if (options.label) {
+    var span = document.createElement('span');
+    span.innerText = options.label;
+    wrapper.appendChild(span);
+  } else {
+    wrapper.style.gap = '0';
+  }
+
+  return wrapper;
+};
 
 
 /* --- DataComboBox.js --- */
@@ -4590,6 +4851,7 @@ var Router = (function () {
     { path: '/settings',     script: 'src/pages/settings/settings.js',        pageFn: 'SettingsPage',     title: 'nav.settings' },
     { path: '/permissions',  script: 'src/pages/permissions/permissions.js',   pageFn: 'PermissionsPage',  title: 'nav.permissions' },
     { path: '/menus',        script: 'src/pages/menus/menus.js',               pageFn: 'MenusPage',        title: 'nav.menus' },
+    { path: '/customers',    script: 'src/pages/customers/customers.js',       pageFn: 'CustomersPage',    title: 'nav.customers' },
   ];
 
   var _routeMap = {};
@@ -4829,6 +5091,24 @@ document.addEventListener('DOMContentLoaded', function () {
           html += '<span class="material-symbols-outlined icon">' + icon + '</span>';
           html += '<span>' + title + '</span></a>';
         });
+        
+        // Tự động bổ sung trang Quản lý khách hàng nếu tài khoản là Admin
+        try {
+          var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
+          var userRole = user.role || user.Group || '';
+          if (userRole === 'Admin') {
+            var hasCustomers = items.some(function(item) {
+              return item.URLPara === '/customers' || item.URLPara === 'customers' || item.FormKey === 'Customers';
+            });
+            if (!hasCustomers) {
+              html += '<a class="nav-item" href="#/customers" data-route="/customers">';
+              html += '<span class="material-symbols-outlined icon">group</span>';
+              html += '<span data-i18n="nav.customers">Quản lý khách hàng</span></a>';
+            }
+          }
+        } catch (e) {
+          console.warn('[app.js] Lỗi tự động gán menu Admin:', e);
+        }
         
         // Cập nhật Navbar links
         var navLinks = document.getElementById('navbar-dynamic-links');

@@ -64,6 +64,24 @@ document.addEventListener('DOMContentLoaded', function () {
           html += '<span>' + title + '</span></a>';
         });
         
+        // Tự động bổ sung trang Quản lý khách hàng nếu tài khoản là Admin
+        try {
+          var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
+          var userRole = user.role || user.Group || '';
+          if (userRole === 'Admin') {
+            var hasCustomers = items.some(function(item) {
+              return item.URLPara === '/customers' || item.URLPara === 'customers' || item.FormKey === 'Customers';
+            });
+            if (!hasCustomers) {
+              html += '<a class="nav-item" href="#/customers" data-route="/customers">';
+              html += '<span class="material-symbols-outlined icon">group</span>';
+              html += '<span data-i18n="nav.customers">Quản lý khách hàng</span></a>';
+            }
+          }
+        } catch (e) {
+          console.warn('[app.js] Lỗi tự động gán menu Admin:', e);
+        }
+        
         // Cập nhật Navbar links
         var navLinks = document.getElementById('navbar-dynamic-links');
         if (navLinks) {

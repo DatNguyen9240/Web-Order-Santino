@@ -13,6 +13,7 @@ var TRANSLATIONS = {
     "nav.group.system": "Hệ thống",
     "nav.settings": "Cài đặt",
     "nav.logout": "Đăng xuất",
+    "nav.customers": "Quản lý khách hàng",
 
     // --- Page Headers ---
     "hdr.order": "Tạo Đơn Hàng Sỉ",
@@ -21,6 +22,8 @@ var TRANSLATIONS = {
     "hdr.sizes": "Quản Lý Size",
     "hdr.sku": "Cấu Hình SKU",
     "hdr.promos": "Chương Trình Khuyến Mãi",
+    "hdr.customers": "Quản Lý Khách Hàng",
+    "hdr.customers.desc": "Danh sách khách hàng, thêm mới, chỉnh sửa thông tin, đặt lại mật khẩu và khóa tài khoản",
     
     // --- Common ---
     "btn.add": "Thêm",
@@ -163,6 +166,7 @@ var TRANSLATIONS = {
     "nav.group.system": "System",
     "nav.settings": "Settings",
     "nav.logout": "Logout",
+    "nav.customers": "Customer Management",
 
     // --- Page Headers ---
     "hdr.order": "Create Wholesale Order",
@@ -172,6 +176,8 @@ var TRANSLATIONS = {
     "hdr.sizes": "Size Management",
     "hdr.sku": "SKU Configuration",
     "hdr.promos": "Promotions",
+    "hdr.customers": "Customer Management",
+    "hdr.customers.desc": "List customers, create, edit info, reset password and lock account",
 
     // --- Common ---
     "btn.add": "Add",
@@ -314,6 +320,7 @@ var TRANSLATIONS = {
     "nav.group.system": "系统",
     "nav.settings": "设置",
     "nav.logout": "登出",
+    "nav.customers": "客户管理",
 
     // --- Page Headers ---
     "hdr.order": "创建批发订单",
@@ -323,6 +330,8 @@ var TRANSLATIONS = {
     "hdr.sizes": "尺码管理",
     "hdr.sku": "SKU配置",
     "hdr.promos": "促销活动",
+    "hdr.customers": "客户管理",
+    "hdr.customers.desc": "客户列表，创建、编辑信息，重置密码和锁定账户",
 
     // --- Common ---
     "btn.add": "添加",

@@ -36,8 +36,8 @@
   /* Blue 600 */
 
   /* Radius */
-  --radius: 12px;
-  --radius-lg: 20px;
+  --radius: 8px;
+  --radius-lg: 16px;
 
   /* Shadow - Premium crisp apple-like shadows */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
@@ -51,6 +51,29 @@
   /* Layout */
   --sidebar-w: 260px;
   --header-h: 80px;
+
+  /* Bridge mapping for components using --color- prefix */
+  --color-primary: var(--primary);
+  --color-primary-dark: #d97706;
+  --color-primary-light: rgba(251, 191, 36, 0.2);
+  --color-primary-rgb: 251, 191, 36;
+  --color-text: var(--text);
+  --color-text-secondary: var(--muted);
+  --color-border: var(--border);
+  --color-border-strong: #a1a1aa;
+  --color-surface: var(--surface);
+  --color-background: var(--bg);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-info: var(--info);
+  --color-warning: #f59e0b;
+  --radius-sm: 6px;
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius-lg);
+  --font-size-sm: 12px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --transition-fast: 0.15s ease;
 }
 
 /* ---- Dark Theme Overrides (Ultra Premium Dark) ---- */
@@ -81,6 +104,10 @@
   --shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 16px 32px rgba(0, 0, 0, 0.6);
+
+  /* Dark mode overrides for bridge variables */
+  --color-border-strong: #52525b;
+  --color-primary-dark: #f59e0b;
 }
 
 /* --- global.css --- */
@@ -601,7 +628,7 @@ input.date-vn:active::before {
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius);
   padding: 20px;
   box-shadow: var(--shadow-sm);
   transition: box-shadow 0.2s ease;
@@ -941,7 +968,7 @@ input.date-vn:active::before {
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius);
   padding: 24px;
   box-shadow: var(--shadow-sm);
   transition: box-shadow 0.2s ease;
@@ -4134,6 +4161,261 @@ tbody tr.row-selected td:first-child {
 
 .toast-close:hover {
   opacity: 1;
+}
+
+
+/* --- button.css --- */
+/* ═══════════════════════════════════════════
+   BUTTON COMPONENTS
+   ═══════════════════════════════════════════ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-family: inherit;
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.btn:active {
+  background-color: var(--color-border);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: var(--primary-fg, white);
+  border-color: var(--color-primary);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+}
+
+.btn-secondary {
+  background: rgba(148, 163, 184, 0.1);
+  color: var(--color-text-secondary);
+  border-color: transparent;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #E2E8F0;
+  color: var(--color-text);
+}
+
+.btn-danger {
+  background: var(--color-danger);
+  color: white;
+  border-color: var(--color-danger);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #DC2626;
+  border-color: #DC2626;
+}
+
+.btn-accent {
+  background: var(--accent);
+  color: var(--primary-fg, #18181b);
+  border-color: var(--accent);
+}
+
+.btn-accent:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+  color: var(--primary-fg, #18181b);
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--color-background);
+  border-color: var(--color-text-secondary);
+}
+
+/* BUTTON BARS */
+.button-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-surface);
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--color-border);
+  overflow-x: auto;
+}
+
+.btn-tool {
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+}
+
+.btn-tool:hover {
+  background: var(--color-background);
+  color: var(--color-primary);
+}
+
+.btn-tool.text-danger:hover {
+  color: var(--color-danger);
+}
+
+.btn-tool .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.button-bar .divider {
+  width: 1px;
+  height: 24px;
+  background: var(--color-border);
+  margin: 0 4px;
+}
+
+
+/* --- checkbox.css --- */
+/* ═══════════════════════════════════════════
+   PREMIUM CUSTOM CONTROLS (CHECKBOX, COMBOBOX, TABLE DROPDOWN)
+   ═══════════════════════════════════════════ */
+
+/* 1. CUSTOM CHECKBOX */
+.modern-checkbox-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--color-text);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+}
+
+.modern-checkbox-wrapper:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.modern-checkbox {
+  appearance: none;
+  background-color: transparent;
+  margin: 0;
+  font: inherit;
+  color: currentColor;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-border-strong);
+  border-radius: 4px;
+  display: grid;
+  place-content: center;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.modern-checkbox::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  transform: scale(0);
+  transition: 120ms transform ease-in-out;
+  box-shadow: inset 1em 1em white;
+  background-color: transparent;
+  transform-origin: center;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+.modern-checkbox:checked {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.modern-checkbox:checked::before {
+  transform: scale(1);
+}
+
+.modern-checkbox:focus-visible {
+  outline: 2px solid var(--color-primary-light);
+  outline-offset: 2px;
+}
+
+
+
+/* --- form.css --- */
+/* ═══════════════════════════════════════════
+   FORM COMPONENTS
+   ═══════════════════════════════════════════ */
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.ui-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  outline: none;
+  font-size: var(--font-size-md);
+  font-family: inherit;
+  color: var(--color-text);
+  transition: all 0.2s;
+}
+
+.ui-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: inset 0 0 0 1px var(--color-primary), 0 0 0 3px var(--color-primary-light);
+}
+
+.ui-input:disabled {
+  background: var(--color-background);
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+}
+
+select.ui-input {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  background-size: 16px !important;
+  padding-right: 36px !important;
+  cursor: pointer !important;
 }
 
 

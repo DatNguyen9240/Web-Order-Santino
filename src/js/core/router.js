@@ -15,6 +15,7 @@ var Router = (function () {
     { path: '/settings',     script: 'src/pages/settings/settings.js',        pageFn: 'SettingsPage',     title: 'nav.settings' },
     { path: '/permissions',  script: 'src/pages/permissions/permissions.js',   pageFn: 'PermissionsPage',  title: 'nav.permissions' },
     { path: '/menus',        script: 'src/pages/menus/menus.js',               pageFn: 'MenusPage',        title: 'nav.menus' },
+    { path: '/customers',    script: 'src/pages/customers/customers.js',       pageFn: 'CustomersPage',    title: 'nav.customers' },
   ];
 
   var _routeMap = {};

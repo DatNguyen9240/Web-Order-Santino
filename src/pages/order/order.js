@@ -1338,17 +1338,75 @@ var OrderPage = (function () {
       content.id = 'form-create-customer';
       content.style.padding = '16px 0';
       content.innerHTML = `
-        <div style="overflow-x: auto; margin-bottom: 16px; border: 1px solid var(--border); border-radius: 8px;">
+        <style>
+          #customer-grid-table th {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            padding: 12px 10px !important;
+            border-bottom: 2px solid var(--border) !important;
+          }
+          #customer-grid-table td {
+            vertical-align: middle !important;
+            padding: 8px 6px !important;
+            border-bottom: 1px solid var(--border) !important;
+          }
+          .customer-grid-input {
+            width: 100% !important;
+            height: 38px !important;
+            padding: 8px 12px !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 8px !important;
+            font-size: 13px !important;
+            outline: none !important;
+            background: var(--surface) !important;
+            color: var(--text) !important;
+            transition: all 0.2s ease !important;
+            box-shadow: none !important;
+          }
+          .customer-grid-input:focus {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.15) !important;
+          }
+          select.customer-grid-input {
+            appearance: none !important;
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 10px center !important;
+            background-size: 16px !important;
+            padding-right: 32px !important;
+            cursor: pointer !important;
+          }
+          #form-create-customer .btn-add-row {
+            border: 1px dashed var(--border) !important;
+            background: transparent !important;
+            color: var(--text) !important;
+            padding: 8px 16px !important;
+            font-weight: 600 !important;
+            border-radius: 8px !important;
+            transition: all 0.2s ease !important;
+          }
+          #form-create-customer .btn-add-row:hover {
+            border-color: var(--primary) !important;
+            color: var(--primary) !important;
+            background: rgba(251, 191, 36, 0.05) !important;
+          }
+        </style>
+        <div style="overflow-x: auto; margin-bottom: 16px; border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow-sm);">
           <table class="data-table" id="customer-grid-table" style="margin: 0; width: 100%; min-width: 950px; border-collapse: collapse;">
             <thead>
               <tr style="background: var(--surface);">
-                <th style="width: 50px; text-align: center; padding: 8px; border-bottom: 2px solid var(--border);">STT</th>
-                <th style="width: 200px; padding: 8px; border-bottom: 2px solid var(--border);">Tên khách hàng <span style="color:var(--accent)">*</span></th>
-                <th style="width: 110px; padding: 8px; border-bottom: 2px solid var(--border);">Điện thoại</th>
-                <th style="width: 170px; padding: 8px; border-bottom: 2px solid var(--border);">Tỉnh/Thành phố <span style="color:var(--accent)">*</span></th>
-                <th style="width: 170px; padding: 8px; border-bottom: 2px solid var(--border);">Nhóm khách <span style="color:var(--accent)">*</span></th>
-                <th style="padding: 8px; border-bottom: 2px solid var(--border);">Địa chỉ giao hàng</th>
-                <th style="width: 60px; text-align: center; padding: 8px; border-bottom: 2px solid var(--border);">Xóa</th>
+                <th style="width: 50px; text-align: center;">STT</th>
+                <th style="width: 220px;">Tên khách hàng <span style="color:var(--accent)">*</span></th>
+                <th style="width: 140px;">Điện thoại</th>
+                <th style="width: 180px;">Tỉnh/Thành phố <span style="color:var(--accent)">*</span></th>
+                <th style="width: 180px;">Nhóm khách <span style="color:var(--accent)">*</span></th>
+                <th>Địa chỉ giao hàng</th>
+                <th style="width: 60px; text-align: center;">Xóa</th>
               </tr>
             </thead>
             <tbody style="font-size: 13px;">
@@ -1356,8 +1414,8 @@ var OrderPage = (function () {
             </tbody>
           </table>
         </div>
-        <button class="btn btn-ghost" onclick="OrderPage.addCustomerRow()" style="display: flex; align-items: center; gap: 8px;">
-          <span class="material-symbols-outlined">add</span> Thêm dòng mới
+        <button class="btn btn-add-row" onclick="OrderPage.addCustomerRow()" style="display: flex; align-items: center; gap: 8px;">
+          <span class="material-symbols-outlined" style="font-size: 18px;">add</span> Thêm dòng mới
         </button>
       `;
 
@@ -1433,11 +1491,11 @@ var OrderPage = (function () {
       var tr = document.createElement('tr');
       tr.innerHTML = `
         <td style="text-align: center; vertical-align: middle; padding: 6px; border-bottom: 1px solid var(--border);">${rowCount + 1}</td>
-        <td style="padding: 6px; border-bottom: 1px solid var(--border);"><input type="text" class="ui-input grid-input-ten" style="width: 100%;" placeholder="Tên khách hàng"></td>
-        <td style="padding: 6px; border-bottom: 1px solid var(--border);"><input type="text" class="ui-input grid-input-sdt" style="width: 100%;" placeholder="Số điện thoại"></td>
-        <td style="padding: 6px; border-bottom: 1px solid var(--border);"><select class="ui-input grid-input-tinh" style="width: 100%; height: 32px; padding: 0 8px;">${optTinh}</select></td>
-        <td style="padding: 6px; border-bottom: 1px solid var(--border);"><select class="ui-input grid-input-nhom" style="width: 100%; height: 32px; padding: 0 8px;">${optNhom}</select></td>
-        <td style="padding: 6px; border-bottom: 1px solid var(--border);"><input type="text" class="ui-input grid-input-dc" style="width: 100%;" placeholder="Địa chỉ giao hàng"></td>
+        <td style="padding: 6px; border-bottom: 1px solid var(--border);"><input type="text" class="ui-input customer-grid-input grid-input-ten" placeholder="Tên khách hàng"></td>
+        <td style="padding: 6px; border-bottom: 1px solid var(--border);"><input type="text" class="ui-input customer-grid-input grid-input-sdt" placeholder="Số điện thoại"></td>
+        <td style="padding: 6px; border-bottom: 1px solid var(--border);"><select class="ui-input customer-grid-input grid-input-tinh">${optTinh}</select></td>
+        <td style="padding: 6px; border-bottom: 1px solid var(--border);"><select class="ui-input customer-grid-input grid-input-nhom">${optNhom}</select></td>
+        <td style="padding: 6px; border-bottom: 1px solid var(--border);"><input type="text" class="ui-input customer-grid-input grid-input-dc" placeholder="Địa chỉ giao hàng"></td>
         <td style="text-align: center; vertical-align: middle; padding: 6px; border-bottom: 1px solid var(--border);">
           <button class="btn-icon text-danger btn-xoa-dong" onclick="OrderPage.removeCustomerRow(this)" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center;">
             <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>

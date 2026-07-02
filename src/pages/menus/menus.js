@@ -85,8 +85,13 @@ var MenusPage = (function () {
         allMenus = records;
         _renderNestedTabs();
       })
-      .catch(function () {
-        container.innerHTML = '<div style="text-align:center;padding:60px;color:var(--danger);">Lỗi kết nối máy chủ</div>';
+      .catch(function (err) {
+        console.error('[MenusPage] _loadMenus error:', err);
+        container.innerHTML = '<div style="text-align:center;padding:60px;color:var(--danger);">'
+          + 'Lỗi tải trang menu<br>'
+          + '<small style="color:var(--text-secondary);font-size:12px;font-family:monospace;margin-top:8px;display:inline-block;">'
+          + (err ? (err.message || err.toString()) : 'Lỗi kết nối máy chủ')
+          + '</small></div>';
       });
   }
 

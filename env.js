@@ -33,7 +33,13 @@ window.API_CONFIG = {
             DELETE: '/API_XoaDonHang'
         },
         CUSTOMERS: {
-            SAVE: '/API_KhachHang_Luu'
+            SAVE: '/API_KhachHang_Luu',
+            LIST: '/API_LayDanhSachKhachHang',
+            DELETE: '/API_KhachHang_Xoa'
+        },
+        USERS: {
+            SAVE: '/API_NguoiDung_Luu',
+            CHANGE_PW: '/changepassword'
         },
         MENU: {
             CHILDREN: '/API_GetMenuChildren'
