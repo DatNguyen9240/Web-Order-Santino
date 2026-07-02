@@ -14,7 +14,7 @@ li { margin-bottom: 8px; }
 <h1>📋 DANH SÁCH KIỂM THỬ: BẢO MẬT ĐẶT HÀNG</h1>
 <p style="text-align:center"><i>(Tất cả tài khoản đều dùng chung Mật khẩu: <b>123456</b>)</i></p>
 
-<h2>1. Quyền Kế Toán (Tài khoản: <span class="highlight">Dat</span>)</h2>
+<h2>1. Quyền Kế Toán (Tài khoản: <span class="highlight">TESTKETOAN</span>)</h2>
 <ul>
 <li><b>Tạo đơn:</b> Click ô <i>Tìm khách hàng</i> ➔ Thấy <b>TẤT CẢ</b> khách hàng trên toàn quốc.</li>
 <li><b>Lịch sử:</b> Thấy <b>TẤT CẢ</b> đơn hàng của công ty.</li>

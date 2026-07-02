@@ -1,0 +1,99 @@
+-- =========================================================================
+-- SCRIPT THIẾT LẬP DỮ LIỆU ĐỂ KIỂM THỬ PHÂN QUYỀN (TEST ACCOUNTS SETUP)
+-- =========================================================================
+
+-- -------------------------------------------------------------------------
+-- 1. CẤU HÌNH TÀI KHOẢN KẾ TOÁN (TESTKETOAN)
+-- -------------------------------------------------------------------------
+PRINT '--- 1. Cấu hình tài khoản Kế toán (TESTKETOAN) ---';
+
+-- Đảm bảo TESTKETOAN tồn tại
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SY_User] WHERE [UserName] = 'TESTKETOAN')
+BEGIN
+    INSERT INTO [dbo].[SY_User] ([UserName], [HoTen], [UserGroupID], [Disable])
+    VALUES ('TESTKETOAN', N'Kế Toán Test', 'KT Bruno', 0);
+    PRINT '-> Đã tạo mới tài khoản TESTKETOAN';
+END
+ELSE
+BEGIN
+    UPDATE [dbo].[SY_User] SET [UserGroupID] = 'KT Bruno', [Disable] = 0 WHERE [UserName] = 'TESTKETOAN';
+    PRINT '-> Đã đảm bảo TESTKETOAN thuộc nhóm KT Bruno';
+END
+
+-- Cấu hình quyền Admin trên WEB_OrderFrm cho nhóm KT Bruno
+IF EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = 'KT Bruno' AND [MenuID] = 'WEB_OrderFrm')
+BEGIN
+    UPDATE [dbo].[WA_UserGroupPermisstion]
+    SET [isAdmin] = 1, [IsRun] = 1
+    WHERE [UserGroupID] = 'KT Bruno' AND [MenuID] = 'WEB_OrderFrm';
+    PRINT '-> Đã cập nhật quyền Admin cho nhóm KT Bruno';
+END
+ELSE
+BEGIN
+    INSERT INTO [dbo].[WA_UserGroupPermisstion] ([UserGroupID], [MenuID], [IsRun], [IsAdd], [IsUpdate], [IsDelete], [isAdmin], [isManager])
+    VALUES ('KT Bruno', 'WEB_OrderFrm', 1, 1, 1, 1, 1, 0);
+    PRINT '-> Đã tạo mới phân quyền Admin cho nhóm KT Bruno';
+END
+
+
+-- -------------------------------------------------------------------------
+-- 2. CẤU HÌNH TÀI KHOẢN SALES (ST09)
+-- -------------------------------------------------------------------------
+PRINT '--- 2. Cấu hình tài khoản Sales (ST09) ---';
+
+-- Đảm bảo ST09 tồn tại và có EmployeeID là ST09
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SY_User] WHERE [UserName] = 'ST09')
+BEGIN
+    INSERT INTO [dbo].[SY_User] ([UserName], [HoTen], [UserGroupID], [EmployeeID], [Disable])
+    VALUES ('ST09', N'Test Sales ST09', 'NVKD', 'ST09', 0);
+    PRINT '-> Đã tạo mới tài khoản Sales ST09';
+END
+ELSE
+BEGIN
+    UPDATE [dbo].[SY_User] SET [EmployeeID] = 'ST09', [UserGroupID] = 'NVKD', [Disable] = 0 WHERE [UserName] = 'ST09';
+    PRINT '-> Đã cập nhật EmployeeID = ST09 cho tài khoản ST09';
+END
+
+
+-- -------------------------------------------------------------------------
+-- 3. CẤU HÌNH TÀI KHOẢN ĐẠI LÝ (A8172991)
+-- -------------------------------------------------------------------------
+PRINT '--- 3. Cấu hình tài khoản Đại lý (A8172991) ---';
+
+-- Đảm bảo tài khoản A8172991 tồn tại
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SY_User] WHERE [UserName] = 'A8172991')
+BEGIN
+    INSERT INTO [dbo].[SY_User] ([UserName], [HoTen], [UserGroupID], [Disable])
+    VALUES ('A8172991', N'Test Đại lý A8172991', 'DL', 0);
+    PRINT '-> Đã tạo mới tài khoản Đại lý A8172991';
+END
+
+-- Đảm bảo nhóm khách hàng A8172991 tồn tại trong CF_ObjectGroupTbl để tránh lỗi khóa ngoại (FK)
+IF NOT EXISTS (SELECT 1 FROM [dbo].[CF_ObjectGroupTbl] WHERE [ObjectGroupID] = 'A8172991')
+BEGIN
+    INSERT INTO [dbo].[CF_ObjectGroupTbl] ([ObjectGroupID], [ObjectGroupName])
+    VALUES ('A8172991', N'Nhóm khách hàng Đại lý A8172991');
+    PRINT '-> Đã tạo nhóm khách hàng A8172991 trong CF_ObjectGroupTbl';
+END
+
+-- Gán 2 khách hàng con làm cấp dưới của Đại lý A8172991
+UPDATE [dbo].[CF_ObjectTbl]
+SET [ObjectGroupID] = 'A8172991'
+WHERE [ObjectID] IN ('A2112080', 'A2112302');
+PRINT '-> Đã gán khách hàng A2112080 và A2112302 làm cấp dưới của Đại lý A8172991';
+
+
+-- -------------------------------------------------------------------------
+-- 4. CẤU HÌNH TÀI KHOẢN KHÁCH LẺ (A2142010)
+-- -------------------------------------------------------------------------
+PRINT '--- 4. Cấu hình tài khoản Khách lẻ (A2142010) ---';
+
+-- Đảm bảo tài khoản khách lẻ A2142010 tồn tại
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SY_User] WHERE [UserName] = 'A2142010')
+BEGIN
+    INSERT INTO [dbo].[SY_User] ([UserName], [HoTen], [UserGroupID], [Disable])
+    VALUES ('A2142010', N'Test Khách lẻ A2142010', 'Cua hang', 0);
+    PRINT '-> Đã tạo mới tài khoản Khách lẻ A2142010';
+END
+
+PRINT '=== HOÀN THÀNH CẤU HÌNH DỮ LIỆU KIỂM THỬ ===';

@@ -33,7 +33,7 @@ BEGIN
         END
         
         -- PHÂN QUYỀN LÚC TẠO ĐƠN:
-        IF NOT EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND ([isAdmin] = 1 OR [isManager] = 1))
+        IF NOT EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND [MenuID] = 'WEB_OrderFrm' AND ([isAdmin] = 1 OR [isManager] = 1))
            AND ISNULL(@UserRole, '') <> '' -- Fallback backward compatibility
         BEGIN
             DECLARE @Allowed BIT = 0;

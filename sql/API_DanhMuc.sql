@@ -161,8 +161,8 @@ BEGIN
                OR CHARINDEX(',' + @chinhanh + ',', ',' + REPLACE(ISNULL([BranchID], ''), ' ', '') + ',') > 0)
           -- PHÂN QUYỀN: Kế toán/Admin xem hết, NV KD xem KH của mình, NPP xem KH thuộc quản lý, KH tự xem mình
           AND (
-               -- CÚ CHECK TỰ ĐỘNG: Bất kỳ nhóm nào được tick isAdmin hoặc isManager thì mặc định nhả hết Khách hàng
-                EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND ([isAdmin] = 1 OR [isManager] = 1))
+               -- CÚ CHECK TỰ ĐỘNG: Bất kỳ nhóm nào được tick isAdmin hoặc isManager ở trang WEB_OrderFrm thì mặc định nhả hết Khách hàng
+                EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND [MenuID] = 'WEB_OrderFrm' AND ([isAdmin] = 1 OR [isManager] = 1))
                
                OR (@UserEmployeeID IS NOT NULL AND @UserEmployeeID <> '' AND [EmployeeID] = @UserEmployeeID)
                OR (@UserManagerID IS NOT NULL AND @UserManagerID <> '' AND [ObjectGroupID] = @UserManagerID)
@@ -297,7 +297,7 @@ BEGIN
           AND (@DenNgay IS NULL OR [DocumentDate] <= @DenNgay)
           -- BỨC TƯỜNG LỬA BẢO VỆ ĐƠN HÀNG: Chỉ Sếp mới xem hết, NV xem đơn của mình, KH xem đơn của họ
           AND (
-               EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND ([isAdmin] = 1 OR [isManager] = 1))
+               EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND [MenuID] = 'WEB_OrderFrm' AND ([isAdmin] = 1 OR [isManager] = 1))
                OR (@UserEmployeeID IS NOT NULL AND @UserEmployeeID <> '' AND [EmployeeID] = @UserEmployeeID)
                OR (@UserObjectID IS NOT NULL AND @UserObjectID <> '' AND ([ObjectID] = @UserObjectID OR ISNULL([MaDaiLy], '') = @UserObjectID))
                OR (ISNULL(@UserRole, '') = '' AND ISNULL(@UserEmployeeID, '') = '' AND ISNULL(@UserObjectID, '') = '')
@@ -363,7 +363,7 @@ BEGIN
         WHERE h.DocumentID = @TimKiem
           -- BỨC TƯỜNG LỬA CHẶN XEM LÉN CHI TIẾT ĐƠN HÀNG (Người ngoài biết mã cũng không xem được)
           AND (
-               EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND ([isAdmin] = 1 OR [isManager] = 1))
+               EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND [MenuID] = 'WEB_OrderFrm' AND ([isAdmin] = 1 OR [isManager] = 1))
                OR (@UserEmployeeID IS NOT NULL AND @UserEmployeeID <> '' AND h.[EmployeeID] = @UserEmployeeID)
                OR (@UserObjectID IS NOT NULL AND @UserObjectID <> '' AND (h.[ObjectID] = @UserObjectID OR ISNULL(h.[MaDaiLy], '') = @UserObjectID))
                OR (ISNULL(@UserRole, '') = '' AND ISNULL(@UserEmployeeID, '') = '' AND ISNULL(@UserObjectID, '') = '')
