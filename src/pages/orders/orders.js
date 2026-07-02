@@ -20,6 +20,12 @@ var OrdersPage = (function () {
 
     var orders = [];
     var totalItems = 0;
+    
+    var tbody = document.getElementById('orders-body');
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><span class="material-symbols-outlined anim-spin" style="color:var(--primary)">sync</span><span>Đang tải danh sách đơn hàng...</span></td></tr>';
+    }
+
     try {
       const queryObj = { Loai: 'Order' };
       // Gói chung vào TimKiem dạng JSON
@@ -65,10 +71,10 @@ var OrdersPage = (function () {
         '<td style="font-weight:700">'+(o.total_qty||0)+' ' + t('order.preview.sp') + '</td>'+
         '<td style="font-weight:700;color:var(--accent)">'+Utils.formatMoney(o.total_money||0)+'</td>'+
         '<td style="color:var(--muted)">'+(o.ghi_chu||'—')+'</td>'+
-        '<td style="display:flex;gap:6px">'+
+        '<td><div style="display:flex;gap:6px;align-items:center">'+
           '<button class="btn btn-ghost btn-sm" onclick="OrdersPage.view(\''+o.id+'\')">' + t('btn.detail') + '</button>'+
           '<button class="btn-icon" onclick="OrdersPage.del(\''+o.id+'\')"><span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1));color:var(--danger)">delete</span></button>'+
-        '</td></tr>';
+        '</div></td></tr>';
     }).join('');
 
     if (paginationContainer && totalItems > 0 && typeof Pagination !== 'undefined') {

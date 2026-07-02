@@ -3,6 +3,10 @@ var OrderPage = (function () {
   var multiSelectedCodes = [];
   var cachedProds = {};
   var cachedSizes = [];
+  var _createCustomerModalInstance = null;
+  var _customerModalContent = null;
+  var _cachedProvinces = [];
+  var _cachedObjectGroups = [];
 
   var _userPerm = { isAdmin: false, isManager: false, isAgent: false };
 
@@ -1308,22 +1312,41 @@ var OrderPage = (function () {
     addCustomerRow: addCustomerRow, removeCustomerRow: removeCustomerRow
   };
 
-  var _createCustomerModalInstance = null;
-  var _customerModalContent = null;
-
-  function _openCreateCustomerModal() {
+  async function _openCreateCustomerModal() {
     try {
+      showToast('Đang tải danh mục Tỉnh/Thành & Nhóm khách...', true);
+      
+      // Load Provinces
+      if (_cachedProvinces.length === 0) {
+        var res = await _searchCategory('Location', '', false, 1);
+        if (Array.isArray(res)) {
+          _cachedProvinces = res;
+        }
+      }
+      
+      // Load Object Groups
+      if (_cachedObjectGroups.length === 0) {
+        var resG = await _searchCategory('ObjectGroup', '', false, 1);
+        if (Array.isArray(resG)) {
+          _cachedObjectGroups = resG;
+        }
+      }
+      
+      showToast('', true); // Ẩn loading
+
       var content = document.createElement('div');
       content.id = 'form-create-customer';
       content.style.padding = '16px 0';
       content.innerHTML = `
         <div style="overflow-x: auto; margin-bottom: 16px; border: 1px solid var(--border); border-radius: 8px;">
-          <table class="data-table" id="customer-grid-table" style="margin: 0; width: 100%; min-width: 750px; border-collapse: collapse;">
+          <table class="data-table" id="customer-grid-table" style="margin: 0; width: 100%; min-width: 950px; border-collapse: collapse;">
             <thead>
               <tr style="background: var(--surface);">
                 <th style="width: 50px; text-align: center; padding: 8px; border-bottom: 2px solid var(--border);">STT</th>
-                <th style="width: 250px; padding: 8px; border-bottom: 2px solid var(--border);">Tên khách hàng <span style="color:var(--accent)">*</span></th>
-                <th style="width: 140px; padding: 8px; border-bottom: 2px solid var(--border);">Điện thoại</th>
+                <th style="width: 200px; padding: 8px; border-bottom: 2px solid var(--border);">Tên khách hàng <span style="color:var(--accent)">*</span></th>
+                <th style="width: 110px; padding: 8px; border-bottom: 2px solid var(--border);">Điện thoại</th>
+                <th style="width: 170px; padding: 8px; border-bottom: 2px solid var(--border);">Tỉnh/Thành phố <span style="color:var(--accent)">*</span></th>
+                <th style="width: 170px; padding: 8px; border-bottom: 2px solid var(--border);">Nhóm khách <span style="color:var(--accent)">*</span></th>
                 <th style="padding: 8px; border-bottom: 2px solid var(--border);">Địa chỉ giao hàng</th>
                 <th style="width: 60px; text-align: center; padding: 8px; border-bottom: 2px solid var(--border);">Xóa</th>
               </tr>
@@ -1367,7 +1390,7 @@ var OrderPage = (function () {
       _createCustomerModalInstance = UIModal.show({
         id: 'modal-create-customer-wrapper',
         title: 'Tạo khách hàng mới',
-        width: '850px',
+        width: '1050px',
         content: content,
         footer: footer
       });
@@ -1391,12 +1414,29 @@ var OrderPage = (function () {
       }
       if (!tbody) return;
 
+      // Options cho Tỉnh thành
+      var optTinh = '<option value="">-- Chọn Tỉnh/Thành --</option>';
+      _cachedProvinces.forEach(function (loc) {
+        optTinh += `<option value="${loc.id}">${loc.name}</option>`;
+      });
+
+      // Options cho Nhóm khách hàng
+      var optNhom = '<option value="">-- Chọn Nhóm khách --</option>';
+      _cachedObjectGroups.forEach(function (g) {
+        optNhom += `<option value="${g.id}">${g.name}</option>`;
+      });
+
+      var perm = _getUserPermission();
+      var defaultNhom = perm.isAgent ? perm.objID : ''; // Tự động chọn mã đại lý cho Agent con
+
       var rowCount = tbody.querySelectorAll('tr').length;
       var tr = document.createElement('tr');
       tr.innerHTML = `
         <td style="text-align: center; vertical-align: middle; padding: 6px; border-bottom: 1px solid var(--border);">${rowCount + 1}</td>
         <td style="padding: 6px; border-bottom: 1px solid var(--border);"><input type="text" class="ui-input grid-input-ten" style="width: 100%;" placeholder="Tên khách hàng"></td>
         <td style="padding: 6px; border-bottom: 1px solid var(--border);"><input type="text" class="ui-input grid-input-sdt" style="width: 100%;" placeholder="Số điện thoại"></td>
+        <td style="padding: 6px; border-bottom: 1px solid var(--border);"><select class="ui-input grid-input-tinh" style="width: 100%; height: 32px; padding: 0 8px;">${optTinh}</select></td>
+        <td style="padding: 6px; border-bottom: 1px solid var(--border);"><select class="ui-input grid-input-nhom" style="width: 100%; height: 32px; padding: 0 8px;">${optNhom}</select></td>
         <td style="padding: 6px; border-bottom: 1px solid var(--border);"><input type="text" class="ui-input grid-input-dc" style="width: 100%;" placeholder="Địa chỉ giao hàng"></td>
         <td style="text-align: center; vertical-align: middle; padding: 6px; border-bottom: 1px solid var(--border);">
           <button class="btn-icon text-danger btn-xoa-dong" onclick="OrderPage.removeCustomerRow(this)" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center;">
@@ -1405,6 +1445,15 @@ var OrderPage = (function () {
         </td>
       `;
       tbody.appendChild(tr);
+
+      // Pre-select group if available
+      if (defaultNhom) {
+        var selNhom = tr.querySelector('.grid-input-nhom');
+        if (selNhom) {
+          selNhom.value = defaultNhom;
+        }
+      }
+
       _reindexCustomerRows();
     } catch (err) {
       console.error('[OrderPage] Lỗi thêm dòng:', err);
@@ -1474,10 +1523,20 @@ var OrderPage = (function () {
       var tr = rows[i];
       var ten = tr.querySelector('.grid-input-ten').value.trim();
       var sdt = tr.querySelector('.grid-input-sdt').value.trim();
+      var tinh = tr.querySelector('.grid-input-tinh').value;
+      var nhom = tr.querySelector('.grid-input-nhom').value;
       var dc = tr.querySelector('.grid-input-dc').value.trim();
 
       if (!ten) {
         showToast('Dòng số ' + (i + 1) + ': Vui lòng điền Tên khách hàng', false);
+        return;
+      }
+      if (!tinh) {
+        showToast('Dòng số ' + (i + 1) + ': Vui lòng chọn Tỉnh/Thành phố', false);
+        return;
+      }
+      if (!nhom) {
+        showToast('Dòng số ' + (i + 1) + ': Vui lòng chọn Nhóm khách hàng', false);
         return;
       }
 
@@ -1486,7 +1545,8 @@ var OrderPage = (function () {
         ObjectName: ten,
         Phone: sdt,
         Address: dc,
-        ObjectGroupID: perm.isAgent ? perm.objID : '',
+        LocationID: tinh,
+        ObjectGroupID: nhom,
         EmployeeID: perm.empID || '',
         BranchID: branchId,
         isDefault: false

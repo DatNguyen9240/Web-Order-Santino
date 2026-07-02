@@ -12,10 +12,10 @@ var SizesPage = (function () {
       return '<tr><td style="font-weight:700;font-size: calc(16px * var(--text-scale, 1))">' + s.size + '</td>' +
         '<td>' + (s.ten_size || s.size) + '</td>' +
         '<td><span class="badge badge-blue">' + s.nhom_size + '</span></td>' +
-        '<td style="display:flex;gap:6px">' +
+        '<td><div style="display:flex;gap:6px;align-items:center">' +
         '<button class="btn-icon" onclick="SizesPage.openModal(\'' + s.id + '\')"><span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">edit</span></button>' +
         '<button class="btn-icon" onclick="SizesPage.del(\'' + s.id + '\')"><span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1));color:var(--danger)">delete</span></button>' +
-        '</td></tr>';
+        '</div></td></tr>';
     }).join('');
   }
   function openModal(id) {

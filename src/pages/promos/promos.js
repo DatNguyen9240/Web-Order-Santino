@@ -13,10 +13,10 @@ var PromosPage = (function () {
         '<td>' + p.ten_ctbh + '</td>' +
         '<td style="color:var(--muted)">' + (p.mo_ta || '—') + '</td>' +
         '<td><span class="badge ' + (p.active !== false ? 'badge-green' : 'badge-red') + '">' + (p.active !== false ? 'Đang áp dụng' : 'Tạm dừng') + '</span></td>' +
-        '<td style="display:flex;gap:6px">' +
+        '<td><div style="display:flex;gap:6px;align-items:center">' +
         '<button class="btn-icon" onclick="PromosPage.openModal(\'' + p.id + '\')"><span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">edit</span></button>' +
         '<button class="btn-icon" onclick="PromosPage.del(\'' + p.id + '\')"><span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1));color:var(--danger)">delete</span></button>' +
-        '</td></tr>';
+        '</div></td></tr>';
     }).join('');
   }
   function openModal(id) {

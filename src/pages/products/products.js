@@ -18,10 +18,10 @@ var ProductsPage = (function () {
         '<td style="font-weight:700;color:var(--accent)">' + Utils.formatMoney(p.don_gia) + '</td>' +
         '<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + p.ten_hang_hoa + '</td>' +
         '<td><span class="badge ' + (p.ngung_su_dung ? 'badge-red' : 'badge-green') + '">' + (p.ngung_su_dung ? 'Ngừng bán' : 'Đang bán') + '</span></td>' +
-        '<td style="display:flex;gap:6px">' +
+        '<td><div style="display:flex;gap:6px;align-items:center">' +
         '<button class="btn-icon" onclick="ProductsPage.openModal(\'' + p.id + '\')"><span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">edit</span></button>' +
         '<button class="btn-icon" onclick="ProductsPage.del(\'' + p.id + '\')"><span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1));color:var(--danger)">delete</span></button>' +
-        '</td></tr>';
+        '</div></td></tr>';
     }).join('');
   }
   function openModal(id) {

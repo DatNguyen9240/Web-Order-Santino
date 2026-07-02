@@ -59,7 +59,11 @@ BEGIN
         END
     END
 
-    IF @ObjectGroupID = '' SET @ObjectGroupID = NULL;
+    IF @ObjectGroupID IS NULL OR @ObjectGroupID = ''
+    BEGIN
+        RAISERROR (N'Lỗi: Vui lòng chọn Nhóm khách hàng!', 16, 1);
+        RETURN;
+    END
     IF @BranchID = '' SET @BranchID = NULL;
     IF @EmployeeID = '' SET @EmployeeID = NULL;
     IF @LocationID = '' SET @LocationID = NULL;

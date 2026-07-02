@@ -138,6 +138,65 @@
         }
       });
     });
+
+    // Listen to scroll events globally (capturing phase) to toggle shadow on .tbl-wrap
+    document.addEventListener('scroll', function (e) {
+      var wrap = e.target;
+      if (wrap && wrap.classList && wrap.classList.contains('tbl-wrap')) {
+        if (wrap.scrollLeft > 0) {
+          wrap.classList.add('is-scrolled');
+        } else {
+          wrap.classList.remove('is-scrolled');
+        }
+      }
+    }, true);
+
+    // Global Table Column Resizer (Event Delegation)
+    (function () {
+      var resizeTh = null, startX = 0, startWidth = 0;
+      
+      document.addEventListener('mousedown', function (e) {
+        var th = e.target.closest('.tbl-wrap th');
+        if (th) {
+          var rect = th.getBoundingClientRect();
+          // Check if click is near the right border (within 8px)
+          if (e.clientX > rect.right - 8) {
+            resizeTh = th;
+            startX = e.clientX;
+            startWidth = th.offsetWidth;
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+          }
+        }
+      });
+
+      document.addEventListener('mousemove', function (e) {
+        if (resizeTh) {
+          var width = startWidth + (e.clientX - startX);
+          resizeTh.style.width = width + 'px';
+          resizeTh.style.minWidth = width + 'px';
+        } else {
+          // Change cursor to col-resize when hovering near right border
+          var th = e.target.closest('.tbl-wrap th');
+          if (th) {
+            var rect = th.getBoundingClientRect();
+            if (e.clientX > rect.right - 8) {
+              th.style.cursor = 'col-resize';
+            } else {
+              th.style.cursor = '';
+            }
+          }
+        }
+      });
+
+      document.addEventListener('mouseup', function () {
+        if (resizeTh) {
+          resizeTh = null;
+          document.body.style.cursor = '';
+          document.body.style.userSelect = '';
+        }
+      });
+    })();
   </script>
 </body>
 

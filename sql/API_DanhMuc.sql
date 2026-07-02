@@ -75,7 +75,32 @@ BEGIN
         UNION ALL SELECT 'Remark',      N'Diễn giải (Mẫu)'
         UNION ALL SELECT 'Note',        N'Ghi chú (Mẫu)'
         UNION ALL SELECT 'DeliveryPerson', N'Người giao hàng'
+        UNION ALL SELECT 'Location',    N'Tỉnh/Thành phố'
+        UNION ALL SELECT 'ObjectGroup',  N'Nhóm khách hàng'
         ORDER BY [TenLoai];
+        RETURN;
+    END
+
+    IF @Loai = 'ObjectGroup'
+    BEGIN
+        SELECT
+            [ObjectGroupID]   AS [id],
+            [ObjectGroupName] AS [name]
+        FROM [dbo].[CF_ObjectGroupTbl]
+        WHERE (@TimKiem = '' OR [ObjectGroupName] LIKE N'%' + @TimKiem + N'%'
+                             OR [ObjectGroupID]   LIKE N'%' + @TimKiem + N'%')
+        ORDER BY [ObjectGroupName];
+        RETURN;
+    END
+
+    IF @Loai = 'Location'
+    BEGIN
+        SELECT
+            [LocationID]   AS [id],
+            [LocationName] AS [name]
+        FROM [dbo].[CF_LocationTbl]
+        WHERE (@TimKiem = '' OR [LocationName] LIKE N'%' + @TimKiem + N'%')
+        ORDER BY [LocationName];
         RETURN;
     END
 
@@ -342,8 +367,7 @@ BEGIN
                     SUM(D.[TotalAmount]) AS [thanh_tien],
                     (
                         SELECT 
-                            subD.[Size] AS [size], 
-                            SUM(subD.[Quantity]) AS [qty]
+                            subD.[Size] AS [size]
                         FROM [dbo].[WEB_OrderDetailTbl] subD
                         LEFT JOIN [dbo].[CF_ItemTbl] subCI ON subD.[ItemID] = subCI.[ItemID]
                         WHERE subD.[DocumentID] = h.[DocumentID]
