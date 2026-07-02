@@ -18,11 +18,14 @@ UIControls.createCheckbox = function(options) {
     }
   });
 
-  var span = document.createElement('span');
-  span.innerText = options.label || '';
-
   wrapper.appendChild(input);
-  wrapper.appendChild(span);
+  if (options.label) {
+    var span = document.createElement('span');
+    span.innerText = options.label;
+    wrapper.appendChild(span);
+  } else {
+    wrapper.style.gap = '0';
+  }
 
   return wrapper;
 };

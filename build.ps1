@@ -9,7 +9,12 @@ $cssFiles = @(
   "css\global.css",
   "components\ui-utils\shared-dropdown.css",
   "components\data-combobox\combobox.css",
-  "components\pagination\pagination.css"
+  "components\pagination\pagination.css",
+  "components\tabs\tabs.css",
+  "components\toast\toast.css",
+  "components\alert\alert.css",
+  "components\context-menu\context-menu.css",
+  "components\empty-state\empty-state.css"
 )
 
 # ====== DANH SACH JS (Core + Components + Data) ======
@@ -20,12 +25,21 @@ $jsFiles = @(
   "js\services\category.service.js",
   "js\services\order.service.js",
   "js\services\menu.service.js",
+  "js\services\permission.js",
+  "js\services\permissions.service.js",
+  "js\services\menus.service.js",
   "js\utils.js",
   "components\ui-utils\UIUtils.js",
   "components\data-combobox\DataComboBox.js",
   "components\confirm-modal\ConfirmModal.js",
   "components\modal\Modal.js",
   "components\pagination\Pagination.js",
+  "components\icon\Icon.js",
+  "components\tabs\NestedTabs.js",
+  "components\empty-state\EmptyState.js",
+  "components\context-menu\ContextMenu.js",
+  "components\toast\Toast.js",
+  "components\alert\Alert.js",
   "js\core\router.js",
   "js\core\sound.js",
   "js\core\app.js"

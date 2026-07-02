@@ -69,7 +69,9 @@ UIControls.createDataComboBox = function (options) {
   btnAddNew.addEventListener('click', function (e) {
     e.stopPropagation();
     hideDropdown();
-    if (typeof options.onF2 === 'function') options.onF2();
+    if (typeof options.onF2 === 'function') {
+      options.onF2();
+    }
   });
 
   var leftFooter = document.createElement('div');
@@ -135,6 +137,7 @@ UIControls.createDataComboBox = function (options) {
 
   // ── Data & Render ───────────────────────────────────────────────
   var fullData = options.data || [];
+  var cachedInitialResults = null;
 
   function renderTable(displayData) {
     if (UIControls.utils) {
@@ -197,9 +200,49 @@ UIControls.createDataComboBox = function (options) {
     currentQuery = q;
     currentPage = page;
     if (typeof options.onSearch === 'function') {
-      tableWrapper.innerHTML = '<div style="padding:12px;text-align:center;color:var(--muted,#94a3b8);font-size:13px">Đang tải...</div>';
+      if (q === '' && page === 1 && cachedInitialResults) {
+        fullData = cachedInitialResults;
+        renderTable(fullData);
+        if (options.enablePagination) {
+          paginationWrapper.style.display = 'flex';
+          lblPage.textContent = 'Trang 1 (' + fullData.length + ')';
+          btnPrev.disabled = true;
+          btnPrev.style.opacity = '0.5';
+          btnNext.disabled = (fullData.length < 200);
+          btnNext.style.opacity = (fullData.length < 200) ? '0.5' : '1';
+        }
+        if (UIControls.utils) {
+          UIControls.utils.computeDropdownPosition(container, dropdown);
+        }
+        return;
+      }
+
+      var hasTable = tableWrapper.querySelector('table');
+      if (hasTable) {
+        var overlay = tableWrapper.querySelector('.dd-loading-overlay');
+        if (!overlay) {
+          overlay = document.createElement('div');
+          overlay.className = 'dd-loading-overlay';
+          overlay.innerHTML = '<span class="material-symbols-outlined spinner-icon">sync</span><span>Đang tải...</span>';
+          tableWrapper.style.position = 'relative';
+          tableWrapper.appendChild(overlay);
+        } else {
+          overlay.querySelector('span:not(.spinner-icon)').textContent = 'Đang tải...';
+        }
+      } else {
+        tableWrapper.style.minHeight = '180px';
+        tableWrapper.innerHTML = '<div style="padding:12px;text-align:center;color:var(--muted,#94a3b8);font-size:13px">Đang tải...</div>';
+      }
+
       Promise.resolve(options.onSearch(q, page)).then(function (result) {
+        var overlay = tableWrapper.querySelector('.dd-loading-overlay');
+        if (overlay) overlay.remove();
+        tableWrapper.style.minHeight = '';
+
         if (Array.isArray(result)) {
+          if (q === '' && page === 1) {
+            cachedInitialResults = result;
+          }
           fullData = result;
           renderTable(fullData);
           if (options.enablePagination) {
@@ -215,6 +258,9 @@ UIControls.createDataComboBox = function (options) {
           }
         }
       }).catch(function () {
+        var overlay = tableWrapper.querySelector('.dd-loading-overlay');
+        if (overlay) overlay.remove();
+        tableWrapper.style.minHeight = '';
         tableWrapper.innerHTML = '<div style="padding:12px;text-align:center;color:#ef4444;font-size:13px">Lỗi tải dữ liệu</div>';
       });
     } else {
@@ -265,9 +311,25 @@ UIControls.createDataComboBox = function (options) {
     var val = searchInput.value;
 
     if (typeof options.onSearch === 'function') {
-      // Server-side: debounce 300ms rồi gọi API
       clearTimeout(_searchDebounce);
-      tableWrapper.innerHTML = '<div style="padding:12px;text-align:center;color:var(--muted,#94a3b8);font-size:13px">Đang tìm...</div>';
+      
+      var hasTable = tableWrapper.querySelector('table');
+      if (hasTable) {
+        var overlay = tableWrapper.querySelector('.dd-loading-overlay');
+        if (!overlay) {
+          overlay = document.createElement('div');
+          overlay.className = 'dd-loading-overlay';
+          overlay.innerHTML = '<span class="material-symbols-outlined spinner-icon">sync</span><span>Đang tìm...</span>';
+          tableWrapper.style.position = 'relative';
+          tableWrapper.appendChild(overlay);
+        } else {
+          overlay.querySelector('span:not(.spinner-icon)').textContent = 'Đang tìm...';
+        }
+      } else {
+        tableWrapper.style.minHeight = '180px';
+        tableWrapper.innerHTML = '<div style="padding:12px;text-align:center;color:var(--muted,#94a3b8);font-size:13px">Đang tìm...</div>';
+      }
+
       _searchDebounce = setTimeout(function () {
         loadData(val, 1);
       }, 300);
@@ -283,6 +345,16 @@ UIControls.createDataComboBox = function (options) {
   });
 
   searchInput.addEventListener('click', function (e) { e.stopPropagation(); });
+
+  searchInput.addEventListener('keydown', function (e) {
+    if (e.key === 'F2') {
+      e.preventDefault();
+      hideDropdown();
+      if (typeof options.onF2 === 'function') {
+        options.onF2();
+      }
+    }
+  });
 
   // ── Events ──────────────────────────────────────────────────────
   btnArrow.addEventListener('click', function (e) {
@@ -301,6 +373,16 @@ UIControls.createDataComboBox = function (options) {
     }
     // Ghi chú: Đã bỏ logic filter và onSearch ở đây theo yêu cầu của user. 
     // Chỉ ô tìm kiếm bên trong dropdown (searchInput) mới thực hiện filter.
+  });
+
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'F2') {
+      e.preventDefault();
+      hideDropdown();
+      if (typeof options.onF2 === 'function') {
+        options.onF2();
+      }
+    }
   });
 
   function _onDocClick(e) {
@@ -350,6 +432,10 @@ UIControls.createDataComboBox = function (options) {
 
   container.appendChild(input);
   container.appendChild(actions);
+
+  container.clearCache = function () {
+    cachedInitialResults = null;
+  };
 
   return container;
 };

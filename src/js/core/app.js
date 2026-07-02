@@ -136,7 +136,7 @@ function showToast(msg, ok, actionHtml, duration) {
   if (actionHtml) {
     m.innerHTML = msg + '&nbsp;&nbsp;' + actionHtml;
   } else {
-    m.textContent = msg;
+    m.innerHTML = msg;
   }
   
   t.classList.add('show');

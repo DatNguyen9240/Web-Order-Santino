@@ -44,7 +44,13 @@ var UIModal = (function () {
       footerWrapper.style.display = 'none';
     }
 
-    document.getElementById('modal-container').appendChild(overlay);
+    var container = document.getElementById('modal-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'modal-container';
+      document.body.appendChild(container);
+    }
+    container.appendChild(overlay);
 
     function close() {
       overlay.remove();

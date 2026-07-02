@@ -22,7 +22,7 @@ var OrderPage = (function () {
   function _getUserPermission() {
     var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
     var isPrivileged = _userPerm.isAdmin || _userPerm.isManager;
-                  
+
     return {
       user: user,
       role: (user.role || user.Group || '').toLowerCase(),
@@ -185,7 +185,7 @@ var OrderPage = (function () {
         }
 
         q.chinhanh += '|ROLE:' + role + '|EMP:' + empID + '|OBJ:' + objID;
-      } catch (e) {}
+      } catch (e) { }
     }
 
     var params = { q: JSON.stringify(q) };
@@ -332,6 +332,7 @@ var OrderPage = (function () {
           placeholder: '-- Tìm khách hàng --',
           hideDropdownOnInput: true,
           enablePagination: true,
+          showAddNew: true,
           headers: ['Khách hàng', 'Tên kh/hàng', 'Địa chỉ', 'Mã NV', 'Chi nhánh'],
           data: customers.map(function (c) { return [c.id, c.name, c.address || '', c.employee_id || '', c.branch_id || '', c.group_id || 'Khác']; }),
           colFilterIndex: 1,
@@ -369,7 +370,7 @@ var OrderPage = (function () {
             updateInfoSummary();
           },
           onF2: function () {
-            openModal('modal-create-customer');
+            _openCreateCustomerModal();
           }
         });
 
@@ -378,7 +379,7 @@ var OrderPage = (function () {
         // -------------------------------------------------------------
         try {
           var perm = _getUserPermission();
-          
+
           // KHÔNG KHÓA đối với Đại lý/NPP (Cua hang, DL, Ban dai ly) vì họ cần chọn khách con!
           if (perm.objID && perm.objID !== '' && !perm.isPrivileged && !perm.isAgent) {
             var inputEl = _combos.kh.querySelector('input');
@@ -388,12 +389,12 @@ var OrderPage = (function () {
               inputEl.style.backgroundColor = '#f1f5f9';
               inputEl.style.cursor = 'not-allowed';
             }
-            
+
             var actionBtn = _combos.kh.querySelector('.combo-action-btn');
             if (actionBtn) {
               actionBtn.innerHTML = '<span class="material-symbols-outlined" style="color:#94a3b8; font-size:18px;">lock</span>';
             }
-            
+
             // Chặn tuyệt đối mọi tương tác chuột vào Combobox
             _combos.kh.style.pointerEvents = 'none';
 
@@ -402,7 +403,7 @@ var OrderPage = (function () {
             document.getElementById('o-ma-kh').value = perm.objID;
             document.getElementById('o-kh-ten').value = name;
             _catValues.khach_hang = { id: perm.objID, name: name };
-            
+
             // Tự động map Nhân viên phụ trách
             var empId = perm.empID;
             if (empId) {
@@ -412,7 +413,7 @@ var OrderPage = (function () {
                 _catValues.nvkd = { id: e.id, name: e.name };
               }
             }
-            
+
             // Tự động map Chi nhánh
             var branchId = perm.user.BranchID || '';
             if (branchId) {
@@ -425,7 +426,7 @@ var OrderPage = (function () {
             }
             updateInfoSummary();
           }
-        } catch(e) {}
+        } catch (e) { }
 
         wrapKH.appendChild(_combos.kh);
       }
@@ -458,7 +459,7 @@ var OrderPage = (function () {
         // -------------------------------------------------------------
         try {
           var perm = _getUserPermission();
-          
+
           if (perm.objID && perm.objID !== '' && !perm.isPrivileged) {
             var inputEl = _combos.ma_dl.querySelector('input');
             if (inputEl) {
@@ -474,7 +475,7 @@ var OrderPage = (function () {
             _combos.ma_dl.style.pointerEvents = 'none';
             document.getElementById('o-ma-dl').value = perm.objID;
           }
-        } catch(e) {}
+        } catch (e) { }
 
         wrapMaDL.appendChild(_combos.ma_dl);
       }
@@ -535,7 +536,7 @@ var OrderPage = (function () {
         // -------------------------------------------------------------
         try {
           var perm = _getUserPermission();
-          
+
           if (perm.empID && perm.empID !== '' && !perm.isPrivileged) {
             var e = employees.find(x => x.id === perm.empID);
             var empName = e ? e.name : perm.empID;
@@ -553,7 +554,7 @@ var OrderPage = (function () {
             _combos.nvkd.style.pointerEvents = 'none';
             _catValues.nvkd = { id: perm.empID, name: empName };
           }
-        } catch(e) {}
+        } catch (e) { }
 
         wrapNvkd.appendChild(_combos.nvkd);
       }
@@ -717,7 +718,7 @@ var OrderPage = (function () {
     var chiNhanh = _catValues.chi_nhanh.id || _catValues.chi_nhanh.name;
 
     var perm = _getUserPermission();
-    
+
     // Nếu không phải Khách lẻ mà chưa chọn chi nhánh thì mới báo lỗi
     // (Khách lẻ mặc định bị ẩn ô chi nhánh nên không bắt buộc chọn)
     if (!chiNhanh && perm.isAdmin) {
@@ -1192,7 +1193,7 @@ var OrderPage = (function () {
 
     var chiNhanh = _catValues.chi_nhanh.id || _catValues.chi_nhanh.name;
     var perm = _getUserPermission();
-    
+
     if (!chiNhanh && perm.isAdmin) {
       showToast('Vui lòng chọn chi nhánh', false);
       return;
@@ -1303,53 +1304,227 @@ var OrderPage = (function () {
     updateQty: updateQty, removeRow: removeRow, previewOrder: previewOrder,
     saveOrder: saveOrder, clearOrder: clearOrder, clearSearch: clearSearch,
     updateInfoSummary: updateInfoSummary, calcChange: calcChange,
-    createNewCustomer: createNewCustomer, finishOrderInfo: finishOrderInfo
+    createNewCustomer: createNewCustomer, finishOrderInfo: finishOrderInfo,
+    addCustomerRow: addCustomerRow, removeCustomerRow: removeCustomerRow
   };
 
-  async function createNewCustomer() {
-    var form = document.getElementById('form-create-customer');
-    if (!form) return;
+  var _createCustomerModalInstance = null;
+  var _customerModalContent = null;
 
-    var data = {};
-    var inputs = form.querySelectorAll('input, select, textarea');
-    inputs.forEach(function (el) {
-      if (!el.name) return;
-      if (el.type === 'checkbox') {
-        data[el.name] = el.checked;
-      } else if (el.type === 'number' || el.step) {
-        data[el.name] = parseFloat(el.value) || 0;
-      } else {
-        data[el.name] = el.value.trim();
+  function _openCreateCustomerModal() {
+    try {
+      var content = document.createElement('div');
+      content.id = 'form-create-customer';
+      content.style.padding = '16px 0';
+      content.innerHTML = `
+        <div style="overflow-x: auto; margin-bottom: 16px; border: 1px solid var(--border); border-radius: 8px;">
+          <table class="data-table" id="customer-grid-table" style="margin: 0; width: 100%; min-width: 750px; border-collapse: collapse;">
+            <thead>
+              <tr style="background: var(--surface);">
+                <th style="width: 50px; text-align: center; padding: 8px; border-bottom: 2px solid var(--border);">STT</th>
+                <th style="width: 250px; padding: 8px; border-bottom: 2px solid var(--border);">Tên khách hàng <span style="color:var(--accent)">*</span></th>
+                <th style="width: 140px; padding: 8px; border-bottom: 2px solid var(--border);">Điện thoại</th>
+                <th style="padding: 8px; border-bottom: 2px solid var(--border);">Địa chỉ giao hàng</th>
+                <th style="width: 60px; text-align: center; padding: 8px; border-bottom: 2px solid var(--border);">Xóa</th>
+              </tr>
+            </thead>
+            <tbody style="font-size: 13px;">
+              <!-- Dynamic customer rows -->
+            </tbody>
+          </table>
+        </div>
+        <button class="btn btn-ghost" onclick="OrderPage.addCustomerRow()" style="display: flex; align-items: center; gap: 8px;">
+          <span class="material-symbols-outlined">add</span> Thêm dòng mới
+        </button>
+      `;
+
+      var footer = document.createElement('div');
+      footer.style.display = 'flex';
+      footer.style.gap = '12px';
+      footer.style.width = '100%';
+
+      var btnCancel = document.createElement('button');
+      btnCancel.className = 'btn btn-ghost';
+      btnCancel.style.flex = '1';
+      btnCancel.textContent = 'Hủy';
+      btnCancel.onclick = function () {
+        if (_createCustomerModalInstance) _createCustomerModalInstance.close();
+      };
+
+      var btnSave = document.createElement('button');
+      btnSave.className = 'btn btn-primary';
+      btnSave.style.flex = '2';
+      btnSave.innerHTML = '<span class="material-symbols-outlined">save</span> Lưu & Chọn khách hàng';
+      btnSave.onclick = function () {
+        createNewCustomer();
+      };
+
+      footer.appendChild(btnCancel);
+      footer.appendChild(btnSave);
+
+      _customerModalContent = content;
+
+      _createCustomerModalInstance = UIModal.show({
+        id: 'modal-create-customer-wrapper',
+        title: 'Tạo khách hàng mới',
+        width: '850px',
+        content: content,
+        footer: footer
+      });
+
+      // Thêm dòng đầu tiên
+      _addCustomerGridRow();
+    } catch (err) {
+      console.error('[OrderPage] Lỗi mở modal:', err);
+      showToast('Lỗi mở modal: ' + err.message, false);
+    }
+  }
+
+  function _addCustomerGridRow() {
+    try {
+      var tbody = null;
+      if (_customerModalContent) {
+        tbody = _customerModalContent.querySelector('#customer-grid-table tbody');
       }
-    });
+      if (!tbody) {
+        tbody = document.querySelector('#customer-grid-table tbody');
+      }
+      if (!tbody) return;
 
-    if (!data.ObjectID || !data.ObjectName) {
-      showToast('Vui lòng nhập Mã và Tên khách hàng', false);
-      return;
+      var rowCount = tbody.querySelectorAll('tr').length;
+      var tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="text-align: center; vertical-align: middle; padding: 6px; border-bottom: 1px solid var(--border);">${rowCount + 1}</td>
+        <td style="padding: 6px; border-bottom: 1px solid var(--border);"><input type="text" class="ui-input grid-input-ten" style="width: 100%;" placeholder="Tên khách hàng"></td>
+        <td style="padding: 6px; border-bottom: 1px solid var(--border);"><input type="text" class="ui-input grid-input-sdt" style="width: 100%;" placeholder="Số điện thoại"></td>
+        <td style="padding: 6px; border-bottom: 1px solid var(--border);"><input type="text" class="ui-input grid-input-dc" style="width: 100%;" placeholder="Địa chỉ giao hàng"></td>
+        <td style="text-align: center; vertical-align: middle; padding: 6px; border-bottom: 1px solid var(--border);">
+          <button class="btn-icon text-danger btn-xoa-dong" onclick="OrderPage.removeCustomerRow(this)" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center;">
+            <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+      _reindexCustomerRows();
+    } catch (err) {
+      console.error('[OrderPage] Lỗi thêm dòng:', err);
+      showToast('Lỗi thêm dòng: ' + err.message, false);
+    }
+  }
+
+  function _reindexCustomerRows() {
+    try {
+      var tbody = null;
+      if (_customerModalContent) {
+        tbody = _customerModalContent.querySelector('#customer-grid-table tbody');
+      }
+      if (!tbody) {
+        tbody = document.querySelector('#customer-grid-table tbody');
+      }
+      if (!tbody) return;
+
+      var rows = tbody.querySelectorAll('tr');
+      rows.forEach(function (tr, index) {
+        var firstCell = tr.querySelector('td');
+        if (firstCell) {
+          firstCell.textContent = index + 1;
+        }
+        var btn = tr.querySelector('.btn-xoa-dong');
+        if (btn) {
+          btn.disabled = (rows.length <= 1);
+          btn.style.opacity = (rows.length <= 1) ? '0.3' : '1';
+          btn.style.cursor = (rows.length <= 1) ? 'not-allowed' : 'pointer';
+        }
+      });
+    } catch (err) {
+      console.error('[OrderPage] Lỗi reindex dòng:', err);
+      showToast('Lỗi sắp xếp lại dòng: ' + err.message, false);
+    }
+  }
+
+  function addCustomerRow() {
+    _addCustomerGridRow();
+  }
+
+  function removeCustomerRow(btn) {
+    var tr = btn.closest('tr');
+    if (tr) {
+      tr.remove();
+      _reindexCustomerRows();
+    }
+  }
+
+  async function createNewCustomer() {
+    var tbody = null;
+    if (_customerModalContent) {
+      tbody = _customerModalContent.querySelector('#customer-grid-table tbody');
+    }
+    if (!tbody) {
+      tbody = document.querySelector('#customer-grid-table tbody');
+    }
+    if (!tbody) return;
+    var rows = tbody.querySelectorAll('tr');
+    if (rows.length === 0) return;
+
+    var customersList = [];
+    var perm = _getUserPermission();
+    var branchId = perm.user.BranchID || '';
+
+    for (var i = 0; i < rows.length; i++) {
+      var tr = rows[i];
+      var ten = tr.querySelector('.grid-input-ten').value.trim();
+      var sdt = tr.querySelector('.grid-input-sdt').value.trim();
+      var dc = tr.querySelector('.grid-input-dc').value.trim();
+
+      if (!ten) {
+        showToast('Dòng số ' + (i + 1) + ': Vui lòng điền Tên khách hàng', false);
+        return;
+      }
+
+      customersList.push({
+        ObjectID: '',
+        ObjectName: ten,
+        Phone: sdt,
+        Address: dc,
+        ObjectGroupID: perm.isAgent ? perm.objID : '',
+        EmployeeID: perm.empID || '',
+        BranchID: branchId,
+        isDefault: false
+      });
     }
 
+    // 2. Tiến hành lưu từng dòng
     try {
-      var res = await CategoryService.saveCustomer(data);
+      showToast('Đang lưu danh sách khách hàng...', true);
+      var lastSavedCust = null;
 
-      if (res) {
+      for (var j = 0; j < customersList.length; j++) {
+        var cust = customersList[j];
+        var res = await CategoryService.saveCustomer(cust);
+        if (res) {
+          lastSavedCust = cust;
+        }
+      }
 
-        showToast('Đã tạo khách hàng: ' + data.ObjectName, true);
+      showToast('Đã tạo thành công ' + customersList.length + ' khách hàng', true);
 
-
-        // Tự động chọn khách hàng này cho đơn hàng
-        document.getElementById('o-ma-kh').value = data.ObjectID;
-        document.getElementById('o-kh-ten').value = data.ObjectName;
-        document.getElementById('o-kh-dc').value = data.Address || '';
+      // Tự động chọn khách hàng cuối cùng vừa tạo cho đơn hàng
+      if (lastSavedCust) {
+        document.getElementById('o-ma-kh').value = lastSavedCust.ObjectID;
+        document.getElementById('o-kh-ten').value = lastSavedCust.ObjectName;
+        document.getElementById('o-kh-dc').value = lastSavedCust.Address || '';
 
         if (_combos.kh) {
-          _combos.kh.querySelector('input').value = data.ObjectName;
+          if (typeof _combos.kh.clearCache === 'function') {
+            _combos.kh.clearCache();
+          }
+          _combos.kh.querySelector('input').value = lastSavedCust.ObjectName;
         }
-
-        closeModal('modal-create-customer');
         updateInfoSummary();
+      }
 
-        // Clear form
-        inputs.forEach(el => { if (el.type === 'checkbox') el.checked = false; else el.value = ''; });
+      if (_createCustomerModalInstance) {
+        _createCustomerModalInstance.close();
       }
     } catch (err) {
       showToast('Lỗi khi lưu khách hàng: ' + err.message, false);

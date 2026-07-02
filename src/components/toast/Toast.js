@@ -36,7 +36,7 @@ var UIToast = (function () {
 
     var txt = document.createElement('div');
     txt.className = 'ui-toast-content';
-    txt.innerText = msg;
+    txt.innerHTML = msg;
 
     toast.appendChild(icon);
     toast.appendChild(txt);

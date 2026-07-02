@@ -37,6 +37,18 @@ window.API_CONFIG = {
         },
         MENU: {
             CHILDREN: '/API_GetMenuChildren'
+        },
+        PERMISSIONS: {
+            SYNC: '/API_DongBoQuyenTruyCap',
+            GET_ALL_MENUS_FOR_GROUP: '/API_LayQuyenNhomDayDu',
+            SAVE_GROUP_PERMISSIONS: '/API_LuuQuyenCuaNhom',
+            GET_GROUP_LIST: '/API_LayDanhSachNhom'
+        },
+        MENUS: {
+            GET_ALL: '/API_LayDanhSachMenuTatCa',
+            SAVE: '/API_LuuMenu',
+            DELETE: '/API_XoaMenu',
+            UPDATE_ORDER: '/API_LuuThuTuMenu'
         }
     }
 };

@@ -13,6 +13,8 @@ var Router = (function () {
     { path: '/sku',          script: 'src/pages/sku/sku.js',                   pageFn: 'SkuPage',          title: 'nav.sku' },
     { path: '/promos',       script: 'src/pages/promos/promos.js',             pageFn: 'PromosPage',       title: 'nav.promos' },
     { path: '/settings',     script: 'src/pages/settings/settings.js',        pageFn: 'SettingsPage',     title: 'nav.settings' },
+    { path: '/permissions',  script: 'src/pages/permissions/permissions.js',   pageFn: 'PermissionsPage',  title: 'nav.permissions' },
+    { path: '/menus',        script: 'src/pages/menus/menus.js',               pageFn: 'MenusPage',        title: 'nav.menus' },
   ];
 
   var _routeMap = {};
