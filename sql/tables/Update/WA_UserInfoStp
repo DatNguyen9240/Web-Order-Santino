@@ -1,0 +1,61 @@
+USE [X23STN_TEST26]
+GO
+/****** Object:  StoredProcedure [dbo].[WA_UserInfoStp]    Script Date: 02/07/2026 10:46:40 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+ALTER PROCEDURE [dbo].[WA_UserInfoStp]
+@UserName VARCHAR(50) 
+
+AS
+
+SET NOCOUNT ON
+
+DECLARE @EmployeeID VARCHAR(50)
+DECLARE @ManagerID VARCHAR(50)
+
+SELECT @EmployeeID = COALESCE(EmployeeID,''), @ManagerID = COALESCE(ManagerID,'') 
+FROM dbo.SY_User WHERE  UserName = @UserName
+
+
+
+SELECT UserName, HoTen, BranchID, EmployeeID, ManagerID, ObjectID 
+FROM dbo.SY_User WHERE  UserName = @UserName
+
+/*
+SELECT ObjectName AS [Quản lý trực thuộc] , ObjectID ManagerID
+FROM CF_ObjectTbl
+WHERE ObjectID IN (
+SELECT ManagerID FROM AR_ManagerEmployeeTbl WHERE EmployeeID = @EmployeeID )
+
+SELECT COUNT(*) AS [Tổng số đơn hàng]  ,  CONVERT(VARCHAR(6), DocumentDate, 112) AS Thang
+FROM dbo.AR_InvoiceTbl 
+	WHERE ( EmployeeID = @EmployeeID  OR @EmployeeID = '' )
+	AND DocumentDate >= '2017-1-1'
+	
+GROUP BY CONVERT(VARCHAR(6), DocumentDate, 112)
+ORDER BY CONVERT(VARCHAR(6), DocumentDate, 112) DESC
+
+
+
+
+SELECT  ItemID [Sản phẩm đang quản lý],  ItemGroupName
+  FROM AR_ItemGroupEmployeeTbl A 
+	LEFT JOIN dbo.AR_ItemGroupTbl B ON B.ItemGroupCode = A.ItemGroupCode 
+	LEFT JOIN dbo.AR_ItemGroupDetailTbl C ON C.ItemGroupCode = A.ItemGroupCode 
+	WHERE EmployeeID = @EmployeeID
+	ORDER BY ItemID
+
+
+SELECT ObjectName AS [Khách hàng đang quản lý], B.ObjectID, X.ObjectGroupName
+		 FROM AR_ObjectGroupEmployeeTbl A
+		LEFT JOIN dbo.AR_ObjectGroupDetailTbl B ON B.ObjectGroupCode = A.ObjectGroupCode
+		LEFT JOIN dbo.AR_ObjectGroupTbl X ON X.ObjectGroupCode = A.ObjectGroupCode
+		LEFT JOIN dbo.CF_ObjectTbl O ON O.ObjectID = B.ObjectID
+	WHERE EmployeeID = @EmployeeID
+	
+	*/
+	

@@ -2,6 +2,16 @@
 -- SCRIPT THIẾT LẬP DỮ LIỆU ĐỂ KIỂM THỬ PHÂN QUYỀN (TEST ACCOUNTS SETUP)
 -- =========================================================================
 
+-- Đảm bảo cột ObjectID tồn tại trong bảng SY_User
+IF NOT EXISTS (
+    SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS 
+    WHERE TABLE_NAME = 'SY_User' AND COLUMN_NAME = 'ObjectID'
+)
+BEGIN
+    ALTER TABLE [dbo].[SY_User] ADD [ObjectID] VARCHAR(50) NULL;
+    PRINT '-> Đã bổ sung cột ObjectID vào bảng SY_User';
+END
+
 -- -------------------------------------------------------------------------
 -- 1. CẤU HÌNH TÀI KHOẢN KẾ TOÁN (TESTKETOAN)
 -- -------------------------------------------------------------------------
@@ -63,9 +73,14 @@ PRINT '--- 3. Cấu hình tài khoản Đại lý (A8172991) ---';
 -- Đảm bảo tài khoản A8172991 tồn tại
 IF NOT EXISTS (SELECT 1 FROM [dbo].[SY_User] WHERE [UserName] = 'A8172991')
 BEGIN
-    INSERT INTO [dbo].[SY_User] ([UserName], [HoTen], [UserGroupID], [Disable])
-    VALUES ('A8172991', N'Test Đại lý A8172991', 'DL', 0);
+    INSERT INTO [dbo].[SY_User] ([UserName], [HoTen], [UserGroupID], [ObjectID], [Disable])
+    VALUES ('A8172991', N'Test Đại lý A8172991', 'DL', 'A8172991', 0);
     PRINT '-> Đã tạo mới tài khoản Đại lý A8172991';
+END
+ELSE
+BEGIN
+    UPDATE [dbo].[SY_User] SET [ObjectID] = 'A8172991', [Disable] = 0 WHERE [UserName] = 'A8172991';
+    PRINT '-> Đã đảm bảo tài khoản A8172991 có ObjectID = A8172991';
 END
 
 -- Đảm bảo nhóm khách hàng A8172991 tồn tại trong CF_ObjectGroupTbl để tránh lỗi khóa ngoại (FK)
@@ -91,9 +106,14 @@ PRINT '--- 4. Cấu hình tài khoản Khách lẻ (A2142010) ---';
 -- Đảm bảo tài khoản khách lẻ A2142010 tồn tại
 IF NOT EXISTS (SELECT 1 FROM [dbo].[SY_User] WHERE [UserName] = 'A2142010')
 BEGIN
-    INSERT INTO [dbo].[SY_User] ([UserName], [HoTen], [UserGroupID], [Disable])
-    VALUES ('A2142010', N'Test Khách lẻ A2142010', 'Cua hang', 0);
+    INSERT INTO [dbo].[SY_User] ([UserName], [HoTen], [UserGroupID], [ObjectID], [Disable])
+    VALUES ('A2142010', N'Test Khách lẻ A2142010', 'Cua hang', 'A2142010', 0);
     PRINT '-> Đã tạo mới tài khoản Khách lẻ A2142010';
+END
+ELSE
+BEGIN
+    UPDATE [dbo].[SY_User] SET [ObjectID] = 'A2142010', [Disable] = 0 WHERE [UserName] = 'A2142010';
+    PRINT '-> Đã đảm bảo tài khoản A2142010 có ObjectID = A2142010';
 END
 
 PRINT '=== HOÀN THÀNH CẤU HÌNH DỮ LIỆU KIỂM THỬ ===';

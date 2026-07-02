@@ -134,8 +134,7 @@ var OrderPage = (function () {
 
     var sel = document.getElementById('o-ctbh');
     if (sel) {
-      sel.innerHTML = '<option value="">-- Không áp dụng CTKM --</option>';
-      if (sel.options.length > 0) sel.selectedIndex = 0;
+      sel.value = '';
     }
 
     renderMatrix();
@@ -229,19 +228,19 @@ var OrderPage = (function () {
 
   async function _loadCategories() {
     try {
-      const [branches, employees, payTypes, payTerms, customers, promotions, vehicles, remarks, notes, deliveryPersons, sources] = await Promise.all([
-        CategoryService.getCategories('Branch'),
+      const [employees, customers, promotions, remarks, notes] = await Promise.all([
         CategoryService.getCategories('Employee'),
-        CategoryService.getCategories('PaymentType'),
-        CategoryService.getCategories('PaymentTerm'),
         CategoryService.getCategories('Customer'),
         CategoryService.getCategories('Promotion'),
-        CategoryService.getCategories('PTGiaoHang'),
         CategoryService.getCategories('Remark'),
-        CategoryService.getCategories('Note'),
-        CategoryService.getCategories('DeliveryPerson'),
-        CategoryService.getCategories('OrderSource')
+        CategoryService.getCategories('Note')
       ]);
+      const branches = [];
+      const payTypes = [];
+      const payTerms = [];
+      const vehicles = [];
+      const deliveryPersons = [];
+      const sources = [];
 
       // ── Diễn giải (MỚI) ──────────────────────────────────────────
       var wrapRemark = document.getElementById('wrap-remark');
@@ -351,12 +350,13 @@ var OrderPage = (function () {
             _catValues.khach_hang = { id: id, name: name };
 
             // Tự động tìm và set cho Chi nhánh
-            if (branchId && _combos.branch) {
+            if (branchId) {
               var b = branches.find(x => x.id === branchId);
-              if (b) {
-                _combos.branch.querySelector('input').value = b.name;
-                _catValues.chi_nhanh = { id: b.id, name: b.name };
+              var branchName = b ? b.name : branchId;
+              if (_combos.branch) {
+                _combos.branch.querySelector('input').value = branchName;
               }
+              _catValues.chi_nhanh = { id: branchId, name: branchName };
             }
             // Tự động tìm và set cho Nhân viên
             if (empId && _combos.nvkd) {
@@ -417,10 +417,11 @@ var OrderPage = (function () {
             var branchId = perm.user.BranchID || '';
             if (branchId) {
               var b = branches.find(x => x.id === branchId);
-              if (b && _combos.branch) {
-                _combos.branch.querySelector('input').value = b.name;
-                _catValues.chi_nhanh = { id: b.id, name: b.name };
+              var branchName = b ? b.name : branchId;
+              if (_combos.branch) {
+                _combos.branch.querySelector('input').value = branchName;
               }
+              _catValues.chi_nhanh = { id: branchId, name: branchName };
             }
             updateInfoSummary();
           }
@@ -663,8 +664,6 @@ var OrderPage = (function () {
         });
         wrapPT.appendChild(_combos.pt_giao);
       }
-
-      _initCTKM(promotions);
     } catch (err) {
       console.warn('[OrderPage] Lỗi load danh mục:', err);
     }
