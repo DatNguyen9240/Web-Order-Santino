@@ -55,11 +55,13 @@
           // Lưu toàn bộ thông tin User trừ token vào LocalStorage
           const { access_token, refresh_token, code, msg, ...userInfo } = data;
           
+          const finalObjectID = data.ObjectID || ( (!data.EmployeeID || data.EmployeeID === '') ? data.UserName : '' );
           localStorage.setItem('santino_user', JSON.stringify({ 
             name: data.DisplayName || user, 
             id: data.UserName || user,
             role: data.Group || '',
-            ...userInfo // Lưu BranchID, StoreHouseID, v.v.
+            ...userInfo, // Lưu BranchID, StoreHouseID, v.v.
+            ObjectID: finalObjectID
           }));
           
           // Lưu access_token và refresh_token vào Cookie (hạn 7 ngày)

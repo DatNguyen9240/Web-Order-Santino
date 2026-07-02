@@ -101,8 +101,8 @@ BEGIN
             CAST(ISNULL((SELECT TOP 1 [isAdmin] FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND [MenuID] = 'WEB_OrderFrm'), 0) AS BIT) AS [isAdmin],
             -- Check xem group có quyền manager ở chức năng Đơn hàng không
             CAST(ISNULL((SELECT TOP 1 [isManager] FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND [MenuID] = 'WEB_OrderFrm'), 0) AS BIT) AS [isManager],
-            -- Check xem có phải nhóm Đại lý/Cửa hàng không
-            CAST(CASE WHEN @UserRole IN ('DL', 'Cua hang', 'cửa hàng', 'Ban dai ly') THEN 1 ELSE 0 END AS BIT) AS [isAgent]
+            -- Check xem có phải nhóm Đại lý hay không
+            CAST(CASE WHEN @UserRole IN ('DL', 'Ban dai ly') THEN 1 ELSE 0 END AS BIT) AS [isAgent]
         RETURN;
     END
 
