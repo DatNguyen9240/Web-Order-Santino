@@ -77,6 +77,7 @@ BEGIN
         UNION ALL SELECT 'DeliveryPerson', N'Người giao hàng'
         UNION ALL SELECT 'Location',    N'Tỉnh/Thành phố'
         UNION ALL SELECT 'ObjectGroup',  N'Nhóm khách hàng'
+        UNION ALL SELECT 'UserGroup',   N'Nhóm quyền'
         ORDER BY [TenLoai];
         RETURN;
     END
@@ -90,6 +91,18 @@ BEGIN
         WHERE (@TimKiem = '' OR [ObjectGroupName] LIKE N'%' + @TimKiem + N'%'
                              OR [ObjectGroupID]   LIKE N'%' + @TimKiem + N'%')
         ORDER BY [ObjectGroupName];
+        RETURN;
+    END
+
+    IF @Loai = 'UserGroup'
+    BEGIN
+        SELECT
+            [UserGroupID]   AS [id],
+            [UserGroupName] AS [name]
+        FROM [dbo].[SY_UserGroup]
+        WHERE (@TimKiem = '' OR [UserGroupName] LIKE N'%' + @TimKiem + N'%'
+                             OR [UserGroupID]   LIKE N'%' + @TimKiem + N'%')
+        ORDER BY [UserGroupName];
         RETURN;
     END
 

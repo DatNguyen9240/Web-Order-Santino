@@ -2865,17 +2865,17 @@ tbody tr.row-selected td:first-child {
 
 /* ---- Toast Mobile Centering ---- */
 @media (max-width: 768px) {
-  .toast {
-    right: auto;
-    left: 50%;
-    transform: translateX(-50%) translateY(-100px);
-    width: 90%;
-    max-width: 400px;
-    justify-content: center;
+  .toast, #toast {
+    right: 16px !important;
+    left: 16px !important;
+    transform: translateY(-100px) !important;
+    width: auto !important;
+    max-width: none !important;
+    justify-content: center !important;
   }
 
-  .toast.show {
-    transform: translateX(-50%) translateY(0);
+  .toast.show, #toast.show {
+    transform: translateY(0) !important;
   }
 }
 
@@ -3099,7 +3099,7 @@ tbody tr.row-selected td:first-child {
 }
 
 .container-compact {
-  max-width: 1000px !important;
+  max-width: 800px !important;
   margin-left: auto !important;
   margin-right: auto !important;
   width: 100%;

@@ -84,9 +84,13 @@ const CustomerService = (() => {
     try {
       const payload = {
         username: username,
+        UserName: username,
         password: currentPassword || '',
+        Password: currentPassword || '',
         newpassword: newPassword,
-        newpassword2: newPassword
+        NewPassword: newPassword,
+        newpassword2: newPassword,
+        NewPassword2: newPassword
       };
       const res = await Http.post(API_CONFIG.ENDPOINTS.USERS.CHANGE_PW, payload);
       return res;

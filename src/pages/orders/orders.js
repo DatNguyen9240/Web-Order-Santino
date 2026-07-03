@@ -5,9 +5,9 @@ var OrdersPage = (function () {
   function render($el) {
     // Cho phép trang này rộng tối đa theo container-order
     $el.classList.add('is-full-width');
-    return Router.fetchTemplate('src/pages/orders/orders.html').then(function(html){
+    return Router.fetchTemplate('src/pages/orders/orders.html').then(function (html) {
       $el.innerHTML = html;
-      
+
       // Tính toán giá trị mặc định: Từ ngày = Đầu tháng, Đến ngày = Hôm nay
       var now = new Date();
       var y = now.getFullYear();
@@ -41,7 +41,7 @@ var OrdersPage = (function () {
         if (hiddenFrom) hiddenFrom.addEventListener('change', filter);
         if (hiddenTo) hiddenTo.addEventListener('change', filter);
       }
-      
+
       _render();
     });
   }
@@ -49,14 +49,14 @@ var OrdersPage = (function () {
     var qInput = document.getElementById('orders-search');
     var fromInput = document.getElementById('orders-from');
     var toInput = document.getElementById('orders-to');
-    
+
     var q = qInput ? qInput.value : '';
     var fromDate = fromInput ? fromInput.value : '';
     var toDate = toInput ? toInput.value : '';
 
     var orders = [];
     var totalItems = 0;
-    
+
     var tbody = document.getElementById('orders-body');
     if (tbody) {
       tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><span class="material-symbols-outlined anim-spin" style="color:var(--primary)">sync</span><span>Đang tải danh sách đơn hàng...</span></td></tr>';
@@ -69,9 +69,9 @@ var OrdersPage = (function () {
       if (q && q.trim()) timKiemData.q = q.trim();
       if (fromDate) timKiemData.from = fromDate;
       if (toDate) timKiemData.to = toDate;
-      
+
       queryObj.TimKiem = JSON.stringify(timKiemData);
-      
+
       var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
       var role = user.role || user.Group || '';
       var empID = user.EmployeeID || '';
@@ -80,13 +80,13 @@ var OrdersPage = (function () {
          empID = '';
       }
       queryObj.chinhanh = '|PAGE:1|ROLE:' + role + '|EMP:' + empID + '|OBJ:' + objID;
-      
+
       const params = { q: JSON.stringify(queryObj), _t: Date.now() };
-      
+
       const res = await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, params);
       orders = res.records || res;
       if (!Array.isArray(orders)) orders = [];
-      
+
       if (orders.length > 0 && orders[0].total_rows) {
         totalItems = orders[0].total_rows;
       }
@@ -97,19 +97,19 @@ var OrdersPage = (function () {
     var paginationContainer = document.getElementById('orders-pagination');
     if (paginationContainer) paginationContainer.innerHTML = '';
 
-    if(!orders || !orders.length){
-      tbody.innerHTML='<tr><td colspan="8" class="empty-state"><span class="material-symbols-outlined">receipt_long</span><span data-i18n="orders.search.empty">Không có đơn hàng nào</span></td></tr>';
+    if (!orders || !orders.length) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><span class="material-symbols-outlined">receipt_long</span><span data-i18n="orders.search.empty">Không có đơn hàng nào</span></td></tr>';
       return;
     }
-    tbody.innerHTML = orders.map(function(o){
-      return '<tr onclick="Utils.toggleRow(this)"><td><strong>'+o.so_ct+'</strong></td><td>'+o.ngay_ct+'</td><td>'+o.chi_nhanh+'</td>'+
-        '<td>'+(o.ma_ctbh ? '<span class="badge badge-yellow">'+o.ma_ctbh+'</span>' : '<span style="color:var(--muted)">—</span>')+'</td>'+
-        '<td style="font-weight:700">'+(o.total_qty||0)+' ' + t('order.preview.sp') + '</td>'+
-        '<td style="font-weight:700;color:var(--accent)">'+Utils.formatMoney(o.total_money||0)+'</td>'+
-        '<td style="color:var(--muted)">'+(o.ghi_chu||'—')+'</td>'+
-        '<td><div style="display:flex;gap:6px;align-items:center">'+
-          '<button class="btn btn-ghost btn-sm" onclick="OrdersPage.view(\''+o.id+'\')">' + t('btn.detail') + '</button>'+
-          '<button class="btn-icon" onclick="OrdersPage.del(\''+o.id+'\')"><span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1));color:var(--danger)">delete</span></button>'+
+    tbody.innerHTML = orders.map(function (o) {
+      return '<tr onclick="Utils.toggleRow(this)"><td><strong>' + o.so_ct + '</strong></td><td>' + o.ngay_ct + '</td><td>' + o.chi_nhanh + '</td>' +
+        '<td>' + (o.ma_ctbh ? '<span class="badge badge-yellow">' + o.ma_ctbh + '</span>' : '<span style="color:var(--muted)">—</span>') + '</td>' +
+        '<td style="font-weight:700">' + (o.total_qty || 0) + ' ' + t('order.preview.sp') + '</td>' +
+        '<td style="font-weight:700;color:var(--accent)">' + Utils.formatMoney(o.total_money || 0) + '</td>' +
+        '<td style="color:var(--muted)">' + (o.ghi_chu || '—') + '</td>' +
+        '<td><div style="display:flex;gap:6px;align-items:center">' +
+        '<button class="btn btn-ghost btn-sm" onclick="OrdersPage.view(\'' + o.id + '\')">' + t('btn.detail') + '</button>' +
+        '<button class="btn-icon" onclick="OrdersPage.del(\'' + o.id + '\')"><span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1));color:var(--danger)">delete</span></button>' +
         '</div></td></tr>';
     }).join('');
 
@@ -118,7 +118,7 @@ var OrdersPage = (function () {
         totalItems: totalItems,
         itemsPerPage: itemsPerPage,
         currentPage: currentPage,
-        onPageChange: function(page) {
+        onPageChange: function (page) {
           currentPage = page;
           _render();
         }
@@ -127,9 +127,9 @@ var OrdersPage = (function () {
     }
   }
   var _searchTimeout = null;
-  function filter() { 
+  function filter() {
     if (_searchTimeout) clearTimeout(_searchTimeout);
-    _searchTimeout = setTimeout(function() {
+    _searchTimeout = setTimeout(function () {
       currentPage = 1;
       _render();
     }, 500);
@@ -140,13 +140,13 @@ var OrdersPage = (function () {
       message: 'Bạn có chắc chắn muốn xóa đơn hàng <strong>' + id + '</strong> không?',
       confirmText: t('btn.delete') || 'Xóa',
       confirmClass: 'btn-danger',
-      onConfirm: async function() {
+      onConfirm: async function () {
         try {
           const res = await OrderService.deleteOrder(id);
           // Hỗ trợ cả 2 dạng: Array trực tiếp hoặc Object { records: [...] }
           let success = false;
           let msg = 'Không thể xóa đơn hàng ' + id;
-          
+
           if (Array.isArray(res) && res.length > 0) {
             success = (res[0].Success == '1' || res[0].Success === 1);
             msg = res[0].Message || msg;
@@ -178,5 +178,5 @@ var OrdersPage = (function () {
     window._viewOrderId = id;
     Router.go('/order-detail?id=' + id);
   }
-  return { render:render, filter:filter, del:del, view:view };
+  return { render: render, filter: filter, del: del, view: view };
 })();

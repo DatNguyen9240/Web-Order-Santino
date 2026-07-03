@@ -7,6 +7,7 @@ var CustomersPage = (function () {
   var branches = [];
   var payTypes = [];
   var payTerms = [];
+  var userGroups = [];
 
   function render(containerElement) {
     $container = containerElement;
@@ -21,13 +22,14 @@ var CustomersPage = (function () {
   async function _init() {
     try {
       // 1. Tải toàn bộ danh mục cho dropdowns
-      const [groupsData, empsData, locsData, branchData, payTypeData, payTermData] = await Promise.all([
+      const [groupsData, empsData, locsData, branchData, payTypeData, payTermData, userGroupData] = await Promise.all([
         CategoryService.getCategories('ObjectGroup'),
         CategoryService.getCategories('Employee'),
         CategoryService.getCategories('Location'),
         CategoryService.getCategories('Branch'),
         CategoryService.getCategories('PaymentType'),
-        CategoryService.getCategories('PaymentTerm')
+        CategoryService.getCategories('PaymentTerm'),
+        CategoryService.getCategories('UserGroup')
       ]);
 
       objectGroups = groupsData;
@@ -36,6 +38,7 @@ var CustomersPage = (function () {
       branches = branchData;
       payTypes = payTypeData;
       payTerms = payTermData;
+      userGroups = userGroupData;
 
       // 2. Populate dữ liệu vào các combobox dropdown
       _populateDropdowns();
@@ -71,8 +74,12 @@ var CustomersPage = (function () {
 
     const empEl = document.getElementById('cust-employee');
     if (empEl) {
-      empEl.innerHTML = '<option value="">-- Chọn nhân viên kinh doanh quản lý --</option>' +
-        employees.map(e => `<option value="${e.id}">${e.name || e.id}</option>`).join('');
+      if (employees) {
+        empEl.innerHTML = '<option value="">-- Chọn nhân viên --</option>' +
+          employees.map(e => `<option value="${e.id}">${e.id} - ${e.name}</option>`).join('');
+      } else {
+        empEl.innerHTML = '<option value="">-- Trống --</option>';
+      }
     }
 
     const branchEl = document.getElementById('cust-branch');
@@ -83,14 +90,27 @@ var CustomersPage = (function () {
 
     const payTypeEl = document.getElementById('cust-paytype');
     if (payTypeEl) {
-      payTypeEl.innerHTML = '<option value="">-- Chọn hình thức thanh toán --</option>' +
-        payTypes.map(p => `<option value="${p.id}">${p.name || p.id}</option>`).join('');
+      if (payTypes) {
+        payTypeEl.innerHTML = '<option value="">-- Hình thức --</option>' +
+          payTypes.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+      }
     }
 
     const payTermEl = document.getElementById('cust-payterm');
     if (payTermEl) {
-      payTermEl.innerHTML = '<option value="">-- Chọn điều khoản thanh toán --</option>' +
-        payTerms.map(p => `<option value="${p.id}">${p.name || p.id}</option>`).join('');
+      if (payTerms) {
+        payTermEl.innerHTML = '<option value="">-- Điều khoản --</option>' +
+          payTerms.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+      }
+    }
+
+    const userGroupEl = document.getElementById('cust-usergroup');
+    if (userGroupEl) {
+      if (userGroups && userGroups.length > 0) {
+        userGroupEl.innerHTML = userGroups.map(ug => `<option value="${ug.id}">${ug.name}</option>`).join('');
+      } else {
+        userGroupEl.innerHTML = '<option value="">-- Trống --</option>';
+      }
     }
   }
 
@@ -115,25 +135,29 @@ var CustomersPage = (function () {
     }
 
     tbody.innerHTML = customers.map(c => {
-      const activeBadge = c.is_disable 
-        ? '<span class="badge badge-red">Đã khóa</span>' 
+      // Ép kiểu boolean chính xác cho các giá trị trạng thái từ API (tránh lỗi nhận chuỗi "0" làm truthy)
+      const isDisabled = c.is_disable === true || c.is_disable == 1 || c.is_disable === 'true' || c.is_disable === '1';
+      const isUserDisabled = c.user_disable === true || c.user_disable == 1 || c.user_disable === 'true' || c.user_disable === '1';
+
+      const activeBadge = isDisabled
+        ? '<span class="badge badge-red">Đã khóa</span>'
         : '<span class="badge badge-green">Hoạt động</span>';
 
-      const accountCell = c.username 
+      const accountCell = c.username
         ? `<div style="display:flex; flex-direction:column; gap:2px;">
              <strong>${c.username}</strong>
-             ${c.user_disable ? '<span style="font-size:10px; color:var(--danger)">[TK Bị Khóa]</span>' : '<span style="font-size:10px; color:var(--success)">[TK Mở]</span>'}
-           </div>` 
+             ${isUserDisabled ? '<span style="font-size:10px; color:var(--danger)">[TK Bị Khóa]</span>' : '<span style="font-size:10px; color:var(--success)">[TK Mở]</span>'}
+           </div>`
         : '<span style="color:var(--text-secondary); font-style:italic;">Chưa tạo</span>';
 
       const btnToggleLock = c.username
-        ? `<button class="btn-icon" onclick="CustomersPage.toggleLockAccount('${c.username}', '${c.name}', ${c.user_disable}, '${c.group_id}', '${c.customer_id}')" title="${c.user_disable ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}">
-             <span class="material-symbols-outlined" style="font-size:16px; color:${c.user_disable ? 'var(--success)' : 'var(--warning)'}">${c.user_disable ? 'lock_open' : 'lock'}</span>
+        ? `<button class="btn-icon" style="padding: 6px; border-radius: 6px;" onclick="CustomersPage.toggleLockAccount('${c.username}', '${c.name}', ${isUserDisabled}, '${c.usergroup_id || 'DL'}', '${c.customer_id}')" title="${isUserDisabled ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}">
+             <span class="material-symbols-outlined" style="font-size:16px; color:${isUserDisabled ? 'var(--success)' : 'var(--warning)'}">${isUserDisabled ? 'lock_open' : 'lock'}</span>
            </button>`
         : '';
 
       const btnResetPw = c.username
-        ? `<button class="btn-icon" onclick="CustomersPage.openResetPasswordModal('${c.username}')" title="Đặt lại mật khẩu">
+        ? `<button class="btn-icon" style="padding: 6px; border-radius: 6px;" onclick="CustomersPage.openResetPasswordModal('${c.username}')" title="Đặt lại mật khẩu">
              <span class="material-symbols-outlined" style="font-size:16px; color:var(--primary)">key</span>
            </button>`
         : '';
@@ -149,13 +173,13 @@ var CustomersPage = (function () {
           <td>${accountCell}</td>
           <td class="text-center">${activeBadge}</td>
           <td>
-            <div style="display:flex; justify-content:center; gap:8px; align-items:center;">
-              <button class="btn-icon" onclick="CustomersPage.openCustomerModal('${c.customer_id}')" title="Sửa thông tin khách hàng">
+            <div style="display:flex; justify-content:center; gap:4px; align-items:center;">
+              <button class="btn-icon" style="padding: 6px; border-radius: 6px;" onclick="CustomersPage.openCustomerModal('${c.customer_id}')" title="Sửa thông tin khách hàng">
                 <span class="material-symbols-outlined" style="font-size:16px; color:var(--text)">edit</span>
               </button>
               ${btnResetPw}
               ${btnToggleLock}
-              <button class="btn-icon" onclick="CustomersPage.deleteCustomer('${c.customer_id}')" title="Xóa khách hàng">
+              <button class="btn-icon" style="padding: 6px; border-radius: 6px;" onclick="CustomersPage.deleteCustomer('${c.customer_id}')" title="Xóa khách hàng">
                 <span class="material-symbols-outlined" style="font-size:16px; color:var(--danger)">delete</span>
               </button>
             </div>
@@ -173,14 +197,12 @@ var CustomersPage = (function () {
     document.getElementById('cust-modal-title').textContent = isEdit ? 'Chỉnh Sửa Thông Tin Khách Hàng' : 'Thêm Khách Hàng Mới';
 
     // Reset các trường
-    const fieldIds = [
-      'cust-id', 'cust-name', 'cust-phone', 'cust-address', 'cust-group', 'cust-location', 
-      'cust-quanhuyen', 'cust-employee', 'cust-branch', 'cust-paytype', 'cust-payterm', 
-      'cust-debt', 'cust-due', 'cust-main-prod', 'cust-tax', 'cust-invoice-company', 
-      'cust-invoice-address', 'cust-notes', 'cust-username', 'cust-password'
+    const fieldsToClear = [
+      'cust-id', 'cust-name', 'cust-group', 'cust-phone', 'cust-email', 'cust-address',
+      'cust-location', 'cust-quanhuyen', 'cust-notes', 'cust-username', 'cust-password'
     ];
-    fieldIds.forEach(fid => {
-      const el = document.getElementById(fid);
+    fieldsToClear.forEach(id => {
+      const el = document.getElementById(id);
       if (el) el.value = '';
     });
 
@@ -204,17 +226,17 @@ var CustomersPage = (function () {
         document.getElementById('cust-address').value = c.address || '';
         document.getElementById('cust-group').value = c.group_id || '';
         document.getElementById('cust-location').value = c.location_id || '';
-        document.getElementById('cust-quanhuyen').value = c.quan_huyen || '';
-        document.getElementById('cust-employee').value = c.employee_id || '';
-        document.getElementById('cust-branch').value = c.branch_id || '';
-        document.getElementById('cust-paytype').value = c.payment_type_id || '';
-        document.getElementById('cust-payterm').value = c.payment_term_id || '';
-        document.getElementById('cust-debt').value = c.dinh_muc_no != null ? c.dinh_muc_no : '';
-        document.getElementById('cust-due').value = c.thoi_han_thanh_toan != null ? c.thoi_han_thanh_toan : '';
-        document.getElementById('cust-main-prod').value = c.san_pham_chinh || '';
-        document.getElementById('cust-tax').value = c.tax_code || '';
-        document.getElementById('cust-invoice-company').value = c.don_vi_mua_hang || '';
-        document.getElementById('cust-invoice-address').value = c.address_hd || '';
+        if (document.getElementById('cust-quanhuyen')) document.getElementById('cust-quanhuyen').value = c.quan_huyen || '';
+        if (document.getElementById('cust-employee')) document.getElementById('cust-employee').value = c.employee_id || '';
+        if (document.getElementById('cust-branch')) document.getElementById('cust-branch').value = c.branch_id || '';
+        if (document.getElementById('cust-paytype')) document.getElementById('cust-paytype').value = c.payment_type_id || '';
+        if (document.getElementById('cust-payterm')) document.getElementById('cust-payterm').value = c.payment_term_id || '';
+        if (document.getElementById('cust-debt')) document.getElementById('cust-debt').value = c.dinh_muc_no != null ? c.dinh_muc_no : '';
+        if (document.getElementById('cust-due')) document.getElementById('cust-due').value = c.thoi_han_thanh_toan != null ? c.thoi_han_thanh_toan : '';
+        if (document.getElementById('cust-main-prod')) document.getElementById('cust-main-prod').value = c.san_pham_chinh || '';
+        if (document.getElementById('cust-tax')) document.getElementById('cust-tax').value = c.tax_code || '';
+        if (document.getElementById('cust-invoice-company')) document.getElementById('cust-invoice-company').value = c.don_vi_mua_hang || '';
+        if (document.getElementById('cust-invoice-address')) document.getElementById('cust-invoice-address').value = c.address_hd || '';
         document.getElementById('cust-notes').value = c.notes || '';
 
         // Xử lý tài khoản
@@ -254,7 +276,7 @@ var CustomersPage = (function () {
 
   async function saveCustomer() {
     const isEdit = document.getElementById('cust-is-edit').value === '1';
-    
+
     // Validate thông tin bắt buộc
     const name = document.getElementById('cust-name').value.trim();
     const address = document.getElementById('cust-address').value.trim();
@@ -287,17 +309,17 @@ var CustomersPage = (function () {
       Address: address,
       ObjectGroupID: group_id,
       LocationID: location_id,
-      QuanHuyen: document.getElementById('cust-quanhuyen').value.trim(),
-      EmployeeID: document.getElementById('cust-employee').value,
-      BranchID: document.getElementById('cust-branch').value,
-      PaymentTypeID: document.getElementById('cust-paytype').value,
-      PaymentTermID: document.getElementById('cust-payterm').value,
-      DinhMucNo: parseFloat(document.getElementById('cust-debt').value) || 0,
-      ThoiHanThanhToan: parseFloat(document.getElementById('cust-due').value) || 0,
-      SanPhamChinh: document.getElementById('cust-main-prod').value.trim(),
-      TaxCode: document.getElementById('cust-tax').value.trim(),
-      DonViMuaHang: document.getElementById('cust-invoice-company').value.trim(),
-      AddressHD: document.getElementById('cust-invoice-address').value.trim(),
+      QuanHuyen: document.getElementById('cust-quanhuyen')?.value?.trim() || '',
+      EmployeeID: document.getElementById('cust-employee')?.value || '',
+      BranchID: document.getElementById('cust-branch')?.value || '',
+      PaymentTypeID: document.getElementById('cust-paytype')?.value || '',
+      PaymentTermID: document.getElementById('cust-payterm')?.value || '',
+      DinhMucNo: parseFloat(document.getElementById('cust-debt')?.value || 0) || 0,
+      ThoiHanThanhToan: parseFloat(document.getElementById('cust-due')?.value || 0) || 0,
+      SanPhamChinh: document.getElementById('cust-main-prod')?.value?.trim() || '',
+      TaxCode: document.getElementById('cust-tax')?.value?.trim() || '',
+      DonViMuaHang: document.getElementById('cust-invoice-company')?.value?.trim() || '',
+      AddressHD: document.getElementById('cust-invoice-address')?.value?.trim() || '',
       Notes: document.getElementById('cust-notes').value.trim(),
       UserLogin: curUser.id || curUser.UserName || 'Admin'
     };
@@ -305,7 +327,7 @@ var CustomersPage = (function () {
     try {
       // 1. Lưu thông tin khách hàng
       const res = await CustomerService.save(customerData);
-      
+
       // Lấy ObjectID vừa được thêm (hoặc sửa)
       const objectId = res.id || res.ObjectID || customerData.ObjectID;
       const message = res.message || (isEdit ? 'Cập nhật khách hàng thành công' : 'Thêm khách hàng thành công');
@@ -322,7 +344,7 @@ var CustomersPage = (function () {
         };
         // Tạo bản ghi tài khoản trước
         await CustomerService.saveUserAccount(userData);
-        
+
         // Thiết lập mật khẩu ban đầu thông qua API /changepassword
         if (password) {
           try {
@@ -345,7 +367,7 @@ var CustomersPage = (function () {
 
   function deleteCustomer(objectId) {
     if (!objectId) return;
-    
+
     ConfirmModal.show({
       title: 'Xóa Khách Hàng',
       message: `Bạn chắc chắn muốn xóa khách hàng <strong>${objectId}</strong>? Thao tác này sẽ tự động khóa hoặc xóa tài khoản liên kết.`,
@@ -365,15 +387,26 @@ var CustomersPage = (function () {
 
   async function toggleLockAccount(username, fullname, currentDisable, groupUser, objectId) {
     try {
-      const nextDisable = currentDisable ? 0 : 1;
+      // Parse currentDisable robustly (có thể là boolean, số, hoặc string từ HTML)
+      let isCurrentlyDisabled = false;
+      if (typeof currentDisable === 'string') {
+        isCurrentlyDisabled = (currentDisable === 'true' || currentDisable === '1');
+      } else {
+        isCurrentlyDisabled = !!currentDisable;
+      }
+      const nextDisable = !isCurrentlyDisabled; // true nếu cần khóa, false nếu cần mở khóa
+      
       const userData = {
         UserName: username,
         HoTen: fullname,
         UserGroupID: groupUser || 'DL',
         ObjectID: objectId,
-        Disable: nextDisable
+        Disable: nextDisable ? 1 : 0 // Cần gửi 0 hoặc 1 nếu backend SQL nhận bit, hoặc gửi true/false. Ta gửi boolean để C# map tốt nhất:
       };
       
+      // Để chắc ăn cho cả C# và SQL, ta gửi boolean true/false
+      userData.Disable = nextDisable;
+
       await CustomerService.saveUserAccount(userData);
       showToast(`${nextDisable ? 'Đã khóa' : 'Đã mở khóa'} tài khoản ${username} thành công.`, true);
       _fetchAndRender();
@@ -386,7 +419,7 @@ var CustomersPage = (function () {
     document.getElementById('reset-username').value = username;
     document.getElementById('reset-newpassword').value = '';
     document.getElementById('reset-newpassword2').value = '';
-    
+
     window.openModal('modal-reset-password');
   }
 

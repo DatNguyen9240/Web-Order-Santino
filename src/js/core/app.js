@@ -145,10 +145,17 @@ function toggleTheme() {
 
 
 function showToast(msg, ok, actionHtml, duration) {
-  if (ok === undefined) ok = true;
   var t = document.getElementById('toast');
   var m = document.getElementById('toast-msg');
   if (!t || !m) return;
+
+  if (!msg) {
+    t.classList.remove('show');
+    clearTimeout(t._timer);
+    return;
+  }
+
+  if (ok === undefined) ok = true;
   t.querySelector('.material-symbols-outlined').textContent = ok ? 'check_circle' : 'error';
   
   if (actionHtml) {

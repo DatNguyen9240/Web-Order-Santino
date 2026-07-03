@@ -1315,7 +1315,7 @@ var OrderPage = (function () {
   async function _openCreateCustomerModal() {
     try {
       showToast('Đang tải danh mục Tỉnh/Thành & Nhóm khách...', true);
-      
+
       // Load Provinces
       if (_cachedProvinces.length === 0) {
         var res = await _searchCategory('Location', '', false, 1);
@@ -1323,7 +1323,7 @@ var OrderPage = (function () {
           _cachedProvinces = res;
         }
       }
-      
+
       // Load Object Groups
       if (_cachedObjectGroups.length === 0) {
         var resG = await _searchCategory('ObjectGroup', '', false, 1);
@@ -1331,8 +1331,9 @@ var OrderPage = (function () {
           _cachedObjectGroups = resG;
         }
       }
-      
-      showToast('', true); // Ẩn loading
+
+      var _t = document.getElementById('toast');
+      if (_t) _t.classList.remove('show'); // Ẩn loading
 
       var content = document.createElement('div');
       content.id = 'form-create-customer';
@@ -1404,8 +1405,8 @@ var OrderPage = (function () {
                 <th style="width: 220px;">Tên khách hàng <span style="color:var(--accent)">*</span></th>
                 <th style="width: 140px;">Điện thoại</th>
                 <th style="width: 180px;">Tỉnh/Thành phố <span style="color:var(--accent)">*</span></th>
+                <th>Địa chỉ</th>
                 <th style="width: 180px;">Nhóm khách <span style="color:var(--accent)">*</span></th>
-                <th>Địa chỉ giao hàng</th>
                 <th style="width: 60px; text-align: center;">Xóa</th>
               </tr>
             </thead>
@@ -1494,8 +1495,8 @@ var OrderPage = (function () {
         <td style="padding: 6px; border-bottom: 1px solid var(--border);"><input type="text" class="ui-input customer-grid-input grid-input-ten" placeholder="Tên khách hàng"></td>
         <td style="padding: 6px; border-bottom: 1px solid var(--border);"><input type="text" class="ui-input customer-grid-input grid-input-sdt" placeholder="Số điện thoại"></td>
         <td style="padding: 6px; border-bottom: 1px solid var(--border);"><select class="ui-input customer-grid-input grid-input-tinh">${optTinh}</select></td>
+        <td style="padding: 6px; border-bottom: 1px solid var(--border);"><input type="text" class="ui-input customer-grid-input grid-input-dc" placeholder="Địa chỉ"></td>
         <td style="padding: 6px; border-bottom: 1px solid var(--border);"><select class="ui-input customer-grid-input grid-input-nhom">${optNhom}</select></td>
-        <td style="padding: 6px; border-bottom: 1px solid var(--border);"><input type="text" class="ui-input customer-grid-input grid-input-dc" placeholder="Địa chỉ giao hàng"></td>
         <td style="text-align: center; vertical-align: middle; padding: 6px; border-bottom: 1px solid var(--border);">
           <button class="btn-icon text-danger btn-xoa-dong" onclick="OrderPage.removeCustomerRow(this)" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center;">
             <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>

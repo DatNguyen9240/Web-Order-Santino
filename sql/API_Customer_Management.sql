@@ -24,6 +24,7 @@ BEGIN
     BEGIN
         UPDATE [dbo].[SY_User]
         SET [HoTen] = @HoTen,
+            [TenNgan] = @HoTen,
             [UserGroupID] = @UserGroupID,
             [ObjectID] = @ObjectID,
             [Disable] = @Disable
@@ -33,8 +34,8 @@ BEGIN
     END
     ELSE
     BEGIN
-        INSERT INTO [dbo].[SY_User] ([UserName], [HoTen], [UserGroupID], [ObjectID], [Disable])
-        VALUES (@UserName, @HoTen, @UserGroupID, @ObjectID, @Disable);
+        INSERT INTO [dbo].[SY_User] ([UserName], [HoTen], [TenNgan], [UserGroupID], [ObjectID], [Disable])
+        VALUES (@UserName, @HoTen, @HoTen, @UserGroupID, @ObjectID, @Disable);
         
         SELECT @UserName AS [id], N'Tạo mới tài khoản người dùng thành công' AS [message];
     END

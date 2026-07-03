@@ -83,80 +83,18 @@
           <select id="cust-group" class="ui-input" required></select>
         </div>
 
-        <div class="form-group span2" style="grid-column: span 2;">
-          <label>Địa chỉ hoạt động * <span style="font-size:11px; color:var(--text-secondary)">(Gõ tỉnh/thành phố ở cuối để tự động sinh mã vùng)</span></label>
-          <input id="cust-address" class="ui-input" placeholder="VD: Số 12 Nguyễn Trãi, Thanh Xuân, Hà Nội" required>
-        </div>
-        
-        <div class="form-group">
-          <label>Tỉnh/Thành phố * <span style="font-size:11px; color:var(--text-secondary)">(Dùng để phân loại vùng)</span></label>
-          <select id="cust-location" class="ui-input" required></select>
-        </div>
-
-        <div class="form-group">
-          <label>Quận/Huyện</label>
-          <input id="cust-quanhuyen" class="ui-input" placeholder="Nhập quận/huyện...">
+        <div class="form-group span2" style="grid-column: span 2; display: grid; grid-template-columns: 1fr 2fr; gap: 16px; align-items: end;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label>Tỉnh/Thành phố * <span style="font-size:11px; color:var(--text-secondary)">(Phân loại)</span></label>
+            <select id="cust-location" class="ui-input" required></select>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label>Địa chỉ * <span style="font-size:11px; color:var(--text-secondary)">(Gõ tỉnh/thành phố ở cuối để tự sinh mã vùng)</span></label>
+            <input id="cust-address" class="ui-input" placeholder="VD: Số 12 Nguyễn Trãi, Thanh Xuân, Hà Nội" required>
+          </div>
         </div>
 
-        <!-- THÔNG TIN KINH DOANH -->
-        <div class="form-group span2" style="grid-column: span 2; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-top: 12px; margin-bottom: 8px;">
-          <h4 style="margin: 0; color: var(--primary);">Cấu hình giao dịch B2B</h4>
-        </div>
-        
-        <div class="form-group">
-          <label>Nhân viên kinh doanh quản lý</label>
-          <select id="cust-employee" class="ui-input"></select>
-        </div>
-        
-        <div class="form-group">
-          <label>Chi nhánh trực thuộc</label>
-          <select id="cust-branch" class="ui-input"></select>
-        </div>
-        
-        <div class="form-group">
-          <label>Hình thức thanh toán</label>
-          <select id="cust-paytype" class="ui-input"></select>
-        </div>
-        
-        <div class="form-group">
-          <label>Điều khoản thanh toán</label>
-          <select id="cust-payterm" class="ui-input"></select>
-        </div>
 
-        <div class="form-group">
-          <label>Định mức nợ tối đa (VND)</label>
-          <input id="cust-debt" class="ui-input" type="number" placeholder="Ví dụ: 50000000">
-        </div>
-
-        <div class="form-group">
-          <label>Thời hạn thanh toán (Ngày)</label>
-          <input id="cust-due" class="ui-input" type="number" placeholder="Ví dụ: 30">
-        </div>
-
-        <div class="form-group span2" style="grid-column: span 2;">
-          <label>Sản phẩm chính quan tâm</label>
-          <input id="cust-main-prod" class="ui-input" placeholder="VD: Sơ mi, Quần tây...">
-        </div>
-
-        <!-- THÔNG TIN HÓA ĐƠN -->
-        <div class="form-group span2" style="grid-column: span 2; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-top: 12px; margin-bottom: 8px;">
-          <h4 style="margin: 0; color: var(--primary);">Thông tin thuế & Hóa đơn</h4>
-        </div>
-
-        <div class="form-group">
-          <label>Mã số thuế</label>
-          <input id="cust-tax" class="ui-input" placeholder="Nhập mã số thuế...">
-        </div>
-
-        <div class="form-group">
-          <label>Đơn vị xuất hóa đơn</label>
-          <input id="cust-invoice-company" class="ui-input" placeholder="Nhập tên doanh nghiệp mua hàng...">
-        </div>
-
-        <div class="form-group span2" style="grid-column: span 2;">
-          <label>Địa chỉ xuất hóa đơn</label>
-          <input id="cust-invoice-address" class="ui-input" placeholder="Nhập địa chỉ đăng ký kinh doanh xuất hóa đơn...">
-        </div>
 
         <div class="form-group span2" style="grid-column: span 2;">
           <label>Ghi chú khách hàng</label>
@@ -165,8 +103,8 @@
 
         <!-- THÔNG TIN TÀI KHOẢN -->
         <div class="form-group span2" id="cust-account-section" style="grid-column: span 2; margin-top: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg);">
-          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; margin-bottom: 12px;">
-            <input type="checkbox" id="cust-has-account" onchange="CustomersPage.toggleAccountFields()">
+          <label style="display: flex; align-items: center; justify-content: flex-start; gap: 8px; cursor: pointer; font-weight: 600; margin-bottom: 12px;">
+            <input type="checkbox" id="cust-has-account" style="width: auto; height: auto; margin: 0; cursor: pointer;" onchange="CustomersPage.toggleAccountFields()">
             <span>Tạo tài khoản đăng nhập (SY_User) liên kết</span>
           </label>
           
@@ -177,11 +115,7 @@
             </div>
             <div class="form-group">
               <label>Nhóm quyền tài khoản *</label>
-              <select id="cust-usergroup" class="ui-input">
-                <option value="DL">Đại lý (DL)</option>
-                <option value="Cua hang">Cửa hàng / Khách lẻ (Cua hang)</option>
-                <option value="NVKD">Nhân viên kinh doanh (NVKD)</option>
-              </select>
+              <select id="cust-usergroup" class="ui-input"></select>
             </div>
             <div class="form-group span2" id="cust-initial-password-group" style="grid-column: span 2;">
               <label>Mật khẩu khởi tạo *</label>
