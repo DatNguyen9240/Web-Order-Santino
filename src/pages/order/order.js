@@ -9,6 +9,7 @@ var OrderPage = (function () {
   var _cachedObjectGroups = [];
 
   var _userPerm = { isAdmin: false, isManager: false, isAgent: false };
+  var _canAddCustomer = false;
 
   async function _loadUserPermission() {
     try {
@@ -25,6 +26,24 @@ var OrderPage = (function () {
       }
     } catch (err) {
       console.warn('[OrderPage] Lỗi load quyền người dùng:', err);
+    }
+
+    try {
+      var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
+      var role = user.role || user.Group || user.GroupUser || user.GroupID;
+      if (role && typeof PermissionsService !== 'undefined') {
+        var records = await PermissionsService.getFullMenusByGroup(role);
+        if (Array.isArray(records)) {
+          var customerMenu = records.find(function (item) {
+            var menuId = item.id || item.Id || item.MenuId || '';
+            return menuId.toLowerCase() === 'web_customerfrm';
+          });
+          _canAddCustomer = customerMenu ? (customerMenu.IsAdd == 1 || customerMenu.isAdd == 1) : false;
+        }
+      }
+    } catch (e) {
+      console.warn('[OrderPage] Lỗi load quyền thêm khách hàng:', e);
+      _canAddCustomer = false;
     }
   }
 
@@ -344,7 +363,7 @@ var OrderPage = (function () {
           placeholder: '-- Tìm khách hàng --',
           hideDropdownOnInput: true,
           enablePagination: true,
-          showAddNew: true,
+          showAddNew: _canAddCustomer,
           headers: ['Khách hàng', 'Tên kh/hàng', 'Địa chỉ', 'Mã NV', 'Chi nhánh'],
           data: customers.map(function (c) { return [c.id, c.name, c.address || '', c.employee_id || '', c.branch_id || '', c.group_id || 'Khác']; }),
           colFilterIndex: 1,
@@ -1316,8 +1335,7 @@ var OrderPage = (function () {
     updateQty: updateQty, removeRow: removeRow, previewOrder: previewOrder,
     saveOrder: saveOrder, clearOrder: clearOrder, clearSearch: clearSearch,
     updateInfoSummary: updateInfoSummary, calcChange: calcChange,
-    createNewCustomer: createNewCustomer, finishOrderInfo: finishOrderInfo,
-    addCustomerRow: addCustomerRow, removeCustomerRow: removeCustomerRow
+    createNewCustomer: createNewCustomer, finishOrderInfo: finishOrderInfo
   };
 
   async function _openCreateCustomerModal() {
@@ -1340,6 +1358,12 @@ var OrderPage = (function () {
         }
       }
 
+      // Load Dealers & UserGroups
+      var [dealers, userGroups] = await Promise.all([
+        CategoryService.getCategories('Dealer'),
+        CategoryService.getCategories('UserGroup')
+      ]);
+
       var _t = document.getElementById('toast');
       if (_t) _t.classList.remove('show'); // Ẩn loading
 
@@ -1347,86 +1371,122 @@ var OrderPage = (function () {
       content.id = 'form-create-customer';
       content.style.padding = '16px 0';
       content.innerHTML = `
-        <style>
-          #customer-grid-table th {
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--text);
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-            padding: 12px 10px !important;
-            border-bottom: 2px solid var(--border) !important;
-          }
-          #customer-grid-table td {
-            vertical-align: middle !important;
-            padding: 8px 6px !important;
-            border-bottom: 1px solid var(--border) !important;
-          }
-          .customer-grid-input {
-            width: 100% !important;
-            height: 38px !important;
-            padding: 8px 12px !important;
-            border: 1px solid var(--border) !important;
-            border-radius: 8px !important;
-            font-size: 13px !important;
-            outline: none !important;
-            background: var(--surface) !important;
-            color: var(--text) !important;
-            transition: all 0.2s ease !important;
-            box-shadow: none !important;
-          }
-          .customer-grid-input:focus {
-            border-color: var(--primary) !important;
-            box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.15) !important;
-          }
-          select.customer-grid-input {
-            appearance: none !important;
-            -webkit-appearance: none !important;
-            -moz-appearance: none !important;
-            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>") !important;
-            background-repeat: no-repeat !important;
-            background-position: right 10px center !important;
-            background-size: 16px !important;
-            padding-right: 32px !important;
-            cursor: pointer !important;
-          }
-          #form-create-customer .btn-add-row {
-            border: 1px dashed var(--border) !important;
-            background: transparent !important;
-            color: var(--text) !important;
-            padding: 8px 16px !important;
-            font-weight: 600 !important;
-            border-radius: 8px !important;
-            transition: all 0.2s ease !important;
-          }
-          #form-create-customer .btn-add-row:hover {
-            border-color: var(--primary) !important;
-            color: var(--primary) !important;
-            background: rgba(251, 191, 36, 0.05) !important;
-          }
-        </style>
-        <div style="overflow-x: auto; margin-bottom: 16px; border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow-sm);">
-          <table class="data-table" id="customer-grid-table" style="margin: 0; width: 100%; min-width: 950px; border-collapse: collapse;">
-            <thead>
-              <tr style="background: var(--surface);">
-                <th style="width: 50px; text-align: center;">STT</th>
-                <th style="width: 220px;">Tên khách hàng <span style="color:var(--accent)">*</span></th>
-                <th style="width: 140px;">Điện thoại</th>
-                <th style="width: 180px;">Tỉnh/Thành phố <span style="color:var(--accent)">*</span></th>
-                <th>Địa chỉ</th>
-                <th style="width: 180px;">Nhóm khách <span style="color:var(--accent)">*</span></th>
-                <th style="width: 60px; text-align: center;">Xóa</th>
-              </tr>
-            </thead>
-            <tbody style="font-size: 13px;">
-              <!-- Dynamic customer rows -->
-            </tbody>
-          </table>
+        <div class="modal-body" style="padding-right: 8px;">
+          <div class="form-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+
+            <!-- THÔNG TIN CHUNG -->
+            <div class="form-group span2"
+              style="grid-column: span 2; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 8px;">
+              <h4 style="margin: 0; color: var(--primary);">Thông tin cơ bản</h4>
+            </div>
+
+            <div class="form-group">
+              <label>Tên khách hàng *</label>
+              <input id="cust-name" class="ui-input" placeholder="Nhập tên khách hàng..." required>
+            </div>
+
+            <div class="form-group">
+              <label>Số điện thoại</label>
+              <input id="cust-phone" class="ui-input" placeholder="Nhập số điện thoại...">
+            </div>
+
+            <div class="form-group">
+              <label>Nhóm khách hàng *</label>
+              <select id="cust-group" class="ui-input" required>
+                <option value="" disabled selected>-- Chọn nhóm khách hàng --</option>
+                ${_cachedObjectGroups.map(g => `<option value="${g.id}">${g.name || g.id}</option>`).join('')}
+              </select>
+            </div>
+
+            <div class="form-group" id="cust-dealer-group" style="display: none;">
+              <label>Đại lý / NPP quản lý</label>
+              <select id="cust-dealer" class="ui-input">
+                <option value="">-- Chọn đại lý quản lý --</option>
+                ${dealers.map(d => `<option value="${d.id}">${d.name || d.id}</option>`).join('')}
+              </select>
+            </div>
+
+            <div class="form-group span2"
+              style="grid-column: span 2; display: grid; grid-template-columns: 1fr 2fr; gap: 16px; align-items: end;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label>Tỉnh/Thành phố * <span style="font-size:11px; color:var(--text-secondary)">(Phân loại)</span></label>
+                <select id="cust-location" class="ui-input" required>
+                  <option value="" disabled selected>-- Chọn Tỉnh/Thành phố --</option>
+                  ${_cachedProvinces.map(l => `<option value="${l.id}">${l.name || l.id}</option>`).join('')}
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label>Địa chỉ * <span style="font-size:11px; color:var(--text-secondary)">(Gõ tỉnh/thành phố ở cuối để tự sinh mã vùng)</span></label>
+                <input id="cust-address" class="ui-input" placeholder="VD: Số 12 Nguyễn Trãi, Thanh Xuân, Hà Nội" required>
+              </div>
+            </div>
+
+            <div class="form-group span2" style="grid-column: span 2;">
+              <label>Ghi chú khách hàng</label>
+              <textarea id="cust-notes" class="ui-input" rows="2"
+                placeholder="Ghi chú về khách hàng (chính sách đặc biệt, thói quen...)" style="resize:vertical;"></textarea>
+            </div>
+
+            <!-- THÔNG TIN TÀI KHOẢN -->
+            <div class="form-group span2" id="cust-account-section"
+              style="grid-column: span 2; margin-top: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg);">
+              <label
+                style="display: flex; align-items: center; justify-content: flex-start; gap: 8px; cursor: pointer; font-weight: 600; margin-bottom: 12px;">
+                <input type="checkbox" id="cust-has-account" style="width: auto; height: auto; margin: 0; cursor: pointer;">
+                <span>Tạo tài khoản đăng nhập liên kết</span>
+              </label>
+
+              <div id="cust-account-fields"
+                style="display: none; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 8px;">
+                <div class="form-group">
+                  <label>Tên đăng nhập *</label>
+                  <input id="cust-username" class="ui-input" placeholder="Mặc định dùng Mã khách hàng...">
+                </div>
+                <div class="form-group">
+                  <label>Nhóm quyền tài khoản *</label>
+                  <select id="cust-usergroup" class="ui-input">
+                    ${userGroups.map(ug => `<option value="${ug.id}">${ug.name}</option>`).join('')}
+                  </select>
+                </div>
+                <div class="form-group span2" id="cust-initial-password-group" style="grid-column: span 2;">
+                  <label>Mật khẩu khởi tạo *</label>
+                  <input id="cust-password" class="ui-input" type="password" placeholder="Nhập mật khẩu tài khoản...">
+                </div>
+              </div>
+            </div>
+
+          </div>
         </div>
-        <button class="btn btn-add-row" onclick="OrderPage.addCustomerRow()" style="display: flex; align-items: center; gap: 8px;">
-          <span class="material-symbols-outlined" style="font-size: 18px;">add</span> Thêm dòng mới
-        </button>
       `;
+
+      // Thiết lập ẩn/hiện ô chọn đại lý cấp trên dựa vào quyền hạn
+      var curUser = JSON.parse(localStorage.getItem('santino_user') || '{}');
+      var curRole = (curUser.role || curUser.Group || '').toLowerCase();
+      var dealerGroupEl = content.querySelector('#cust-dealer-group');
+      if (dealerGroupEl) {
+        if (curRole === 'admin' || curRole === 'ketoan' || curRole === 'sales' || curRole === 'nvkd') {
+          dealerGroupEl.style.display = 'block';
+        } else {
+          dealerGroupEl.style.display = 'none';
+        }
+      }
+
+      // Chọn nhóm mặc định nếu là Agent con
+      var perm = _getUserPermission();
+      var defaultNhom = perm.isAgent ? perm.objID : '';
+      if (defaultNhom) {
+        var selectGroup = content.querySelector('#cust-group');
+        if (selectGroup) {
+          selectGroup.value = defaultNhom;
+        }
+      }
+
+      // Xử lý sự kiện checkbox account
+      var chkHasAcc = content.querySelector('#cust-has-account');
+      var fieldsDiv = content.querySelector('#cust-account-fields');
+      chkHasAcc.addEventListener('change', function () {
+        fieldsDiv.style.display = chkHasAcc.checked ? 'grid' : 'none';
+      });
 
       var footer = document.createElement('div');
       footer.style.display = 'flex';
@@ -1457,209 +1517,131 @@ var OrderPage = (function () {
       _createCustomerModalInstance = UIModal.show({
         id: 'modal-create-customer-wrapper',
         title: 'Tạo khách hàng mới',
-        width: '1050px',
+        width: '800px',
         content: content,
         footer: footer
       });
 
-      // Thêm dòng đầu tiên
-      _addCustomerGridRow();
     } catch (err) {
       console.error('[OrderPage] Lỗi mở modal:', err);
       showToast('Lỗi mở modal: ' + err.message, false);
     }
   }
 
-  function _addCustomerGridRow() {
-    try {
-      var tbody = null;
-      if (_customerModalContent) {
-        tbody = _customerModalContent.querySelector('#customer-grid-table tbody');
-      }
-      if (!tbody) {
-        tbody = document.querySelector('#customer-grid-table tbody');
-      }
-      if (!tbody) return;
-
-      // Options cho Tỉnh thành
-      var optTinh = '<option value="">-- Chọn Tỉnh/Thành --</option>';
-      _cachedProvinces.forEach(function (loc) {
-        optTinh += `<option value="${loc.id}">${loc.name}</option>`;
-      });
-
-      // Options cho Nhóm khách hàng
-      var optNhom = '<option value="">-- Chọn Nhóm khách --</option>';
-      _cachedObjectGroups.forEach(function (g) {
-        optNhom += `<option value="${g.id}">${g.name}</option>`;
-      });
-
-      var perm = _getUserPermission();
-      var defaultNhom = perm.isAgent ? perm.objID : ''; // Tự động chọn mã đại lý cho Agent con
-
-      var rowCount = tbody.querySelectorAll('tr').length;
-      var tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td style="text-align: center; vertical-align: middle; padding: 6px; border-bottom: 1px solid var(--border);">${rowCount + 1}</td>
-        <td style="padding: 6px; border-bottom: 1px solid var(--border);"><input type="text" class="ui-input customer-grid-input grid-input-ten" placeholder="Tên khách hàng"></td>
-        <td style="padding: 6px; border-bottom: 1px solid var(--border);"><input type="text" class="ui-input customer-grid-input grid-input-sdt" placeholder="Số điện thoại"></td>
-        <td style="padding: 6px; border-bottom: 1px solid var(--border);"><select class="ui-input customer-grid-input grid-input-tinh">${optTinh}</select></td>
-        <td style="padding: 6px; border-bottom: 1px solid var(--border);"><input type="text" class="ui-input customer-grid-input grid-input-dc" placeholder="Địa chỉ"></td>
-        <td style="padding: 6px; border-bottom: 1px solid var(--border);"><select class="ui-input customer-grid-input grid-input-nhom">${optNhom}</select></td>
-        <td style="text-align: center; vertical-align: middle; padding: 6px; border-bottom: 1px solid var(--border);">
-          <button class="btn-icon text-danger btn-xoa-dong" onclick="OrderPage.removeCustomerRow(this)" style="padding: 4px; display: inline-flex; align-items: center; justify-content: center;">
-            <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
-          </button>
-        </td>
-      `;
-      tbody.appendChild(tr);
-
-      // Pre-select group if available
-      if (defaultNhom) {
-        var selNhom = tr.querySelector('.grid-input-nhom');
-        if (selNhom) {
-          selNhom.value = defaultNhom;
-        }
-      }
-
-      _reindexCustomerRows();
-    } catch (err) {
-      console.error('[OrderPage] Lỗi thêm dòng:', err);
-      showToast('Lỗi thêm dòng: ' + err.message, false);
-    }
-  }
-
-  function _reindexCustomerRows() {
-    try {
-      var tbody = null;
-      if (_customerModalContent) {
-        tbody = _customerModalContent.querySelector('#customer-grid-table tbody');
-      }
-      if (!tbody) {
-        tbody = document.querySelector('#customer-grid-table tbody');
-      }
-      if (!tbody) return;
-
-      var rows = tbody.querySelectorAll('tr');
-      rows.forEach(function (tr, index) {
-        var firstCell = tr.querySelector('td');
-        if (firstCell) {
-          firstCell.textContent = index + 1;
-        }
-        var btn = tr.querySelector('.btn-xoa-dong');
-        if (btn) {
-          btn.disabled = (rows.length <= 1);
-          btn.style.opacity = (rows.length <= 1) ? '0.3' : '1';
-          btn.style.cursor = (rows.length <= 1) ? 'not-allowed' : 'pointer';
-        }
-      });
-    } catch (err) {
-      console.error('[OrderPage] Lỗi reindex dòng:', err);
-      showToast('Lỗi sắp xếp lại dòng: ' + err.message, false);
-    }
-  }
-
-  function addCustomerRow() {
-    _addCustomerGridRow();
-  }
-
-  function removeCustomerRow(btn) {
-    var tr = btn.closest('tr');
-    if (tr) {
-      tr.remove();
-      _reindexCustomerRows();
-    }
-  }
-
   async function createNewCustomer() {
-    var tbody = null;
-    if (_customerModalContent) {
-      tbody = _customerModalContent.querySelector('#customer-grid-table tbody');
-    }
-    if (!tbody) {
-      tbody = document.querySelector('#customer-grid-table tbody');
-    }
-    if (!tbody) return;
-    var rows = tbody.querySelectorAll('tr');
-    if (rows.length === 0) return;
+    var form = _customerModalContent;
+    if (!form) return;
 
-    var customersList = [];
+    var name = form.querySelector('#cust-name').value.trim();
+    var phone = form.querySelector('#cust-phone').value.trim();
+    var group_id = form.querySelector('#cust-group').value;
+    var location_id = form.querySelector('#cust-location').value;
+    var address = form.querySelector('#cust-address').value.trim();
+    var notes = form.querySelector('#cust-notes').value.trim();
+
+    if (!name) { showToast('Vui lòng nhập Tên khách hàng!', false); return; }
+    if (!group_id) { showToast('Vui lòng chọn Nhóm khách hàng!', false); return; }
+    if (!location_id) { showToast('Vui lòng chọn Tỉnh/Thành phố hợp lệ!', false); return; }
+    if (!address) { showToast('Vui lòng nhập Địa chỉ khách hàng!', false); return; }
+
+    var hasAccount = form.querySelector('#cust-has-account').checked;
+    var username = form.querySelector('#cust-username').value.trim();
+    var usergroup = form.querySelector('#cust-usergroup').value;
+    var password = form.querySelector('#cust-password').value;
+
+    if (hasAccount) {
+      if (!password) { showToast('Vui lòng nhập mật khẩu khởi tạo tài khoản!', false); return; }
+      if (password.length < 4) { showToast('Mật khẩu tối thiểu phải từ 4 ký tự!', false); return; }
+    }
+
+    var curUser = JSON.parse(localStorage.getItem('santino_user') || '{}');
+    var curRole = (curUser.role || curUser.Group || '').toLowerCase();
+
+    var nhaPhanPhoi = '';
+    if (curRole === 'dl' || curRole === 'ban dai ly') {
+      nhaPhanPhoi = curUser.ObjectID || '';
+    } else {
+      var dealerSelect = form.querySelector('#cust-dealer');
+      nhaPhanPhoi = dealerSelect ? dealerSelect.value : '';
+    }
+
     var perm = _getUserPermission();
     var branchId = perm.user.BranchID || '';
 
-    for (var i = 0; i < rows.length; i++) {
-      var tr = rows[i];
-      var ten = tr.querySelector('.grid-input-ten').value.trim();
-      var sdt = tr.querySelector('.grid-input-sdt').value.trim();
-      var tinh = tr.querySelector('.grid-input-tinh').value;
-      var nhom = tr.querySelector('.grid-input-nhom').value;
-      var dc = tr.querySelector('.grid-input-dc').value.trim();
+    // Dữ liệu khách hàng để gửi API
+    var customerData = {
+      ObjectID: '',
+      ObjectName: name,
+      Phone: phone,
+      Address: address,
+      ObjectGroupID: group_id,
+      LocationID: location_id,
+      EmployeeID: perm.empID || '',
+      BranchID: branchId,
+      Notes: notes,
+      NhaPhanPhoi: nhaPhanPhoi,
+      UserLogin: curUser.id || curUser.UserName || 'Admin'
+    };
 
-      if (!ten) {
-        showToast('Dòng số ' + (i + 1) + ': Vui lòng điền Tên khách hàng', false);
-        return;
-      }
-      if (!tinh) {
-        showToast('Dòng số ' + (i + 1) + ': Vui lòng chọn Tỉnh/Thành phố', false);
-        return;
-      }
-      if (!nhom) {
-        showToast('Dòng số ' + (i + 1) + ': Vui lòng chọn Nhóm khách hàng', false);
-        return;
-      }
-
-      customersList.push({
-        ObjectID: '',
-        ObjectName: ten,
-        Phone: sdt,
-        Address: dc,
-        LocationID: tinh,
-        ObjectGroupID: nhom,
-        EmployeeID: perm.empID || '',
-        BranchID: branchId,
-        isDefault: false
-      });
-    }
-
-    // 2. Tiến hành lưu từng dòng
     try {
-      showToast('Đang lưu danh sách khách hàng...', true);
-      var lastSavedCust = null;
+      showToast('Đang lưu thông tin khách hàng...', true);
+      // 1. Lưu khách hàng
+      var res = await CustomerService.save(customerData);
 
-      for (var j = 0; j < customersList.length; j++) {
-        var cust = customersList[j];
-        var res = await CategoryService.saveCustomer(cust);
-        if (res) {
-          var resObj = Array.isArray(res) ? res[0] : res;
-          // Cập nhật ObjectID được sinh tự động từ database
-          var generatedID = resObj.ObjectID || resObj.ObjectID_Out || resObj.id || resObj.Id || '';
-          if (generatedID) {
-            cust.ObjectID = generatedID;
+      var generatedID = '';
+      if (res) {
+        var resObj = Array.isArray(res) ? res[0] : res;
+        generatedID = resObj.ObjectID || resObj.ObjectID_Out || resObj.id || resObj.Id || '';
+      }
+
+      if (!generatedID) {
+        throw new Error('Không nhận được mã khách hàng mới từ hệ thống!');
+      }
+
+      // 2. Tạo tài khoản nếu được chọn
+      if (hasAccount) {
+        var finalUsername = username || generatedID;
+        var userData = {
+          UserName: finalUsername,
+          HoTen: name,
+          UserGroupID: usergroup,
+          ObjectID: generatedID,
+          Disable: 0
+        };
+        await CustomerService.saveUserAccount(userData);
+
+        if (password) {
+          try {
+            await CustomerService.resetPassword(finalUsername, '', password);
+          } catch (pwErr) {
+            console.warn('[OrderPage] Khởi tạo mật khẩu thất bại:', pwErr);
+            showToast('Tài khoản đã tạo nhưng thiết lập mật khẩu khởi tạo gặp lỗi!', false);
           }
-          lastSavedCust = cust;
         }
       }
 
-      showToast('Đã tạo thành công ' + customersList.length + ' khách hàng', true);
+      showToast('Thêm khách hàng mới thành công!', true);
 
-      // Tự động chọn khách hàng cuối cùng vừa tạo cho đơn hàng
-      if (lastSavedCust) {
-        document.getElementById('o-ma-kh').value = lastSavedCust.ObjectID;
-        document.getElementById('o-kh-ten').value = lastSavedCust.ObjectName;
-        document.getElementById('o-kh-dc').value = lastSavedCust.Address || '';
+      // Tự động chọn khách hàng mới này cho đơn hàng
+      document.getElementById('o-ma-kh').value = generatedID;
+      document.getElementById('o-kh-ten').value = name;
+      document.getElementById('o-kh-dc').value = address;
+      _catValues.khach_hang = { id: generatedID, name: name };
 
-        if (_combos.kh) {
-          if (typeof _combos.kh.clearCache === 'function') {
-            _combos.kh.clearCache();
-          }
-          _combos.kh.querySelector('input').value = lastSavedCust.ObjectName;
+      if (_combos.kh) {
+        if (typeof _combos.kh.clearCache === 'function') {
+          _combos.kh.clearCache();
         }
-        updateInfoSummary();
+        var inputEl = _combos.kh.querySelector('input');
+        if (inputEl) inputEl.value = name;
       }
+      updateInfoSummary();
 
       if (_createCustomerModalInstance) {
         _createCustomerModalInstance.close();
       }
     } catch (err) {
+      console.error(err);
       showToast('Lỗi khi lưu khách hàng: ' + err.message, false);
     }
   }
