@@ -43,12 +43,9 @@ BEGIN
             BEGIN
                 SET @Allowed = 1;
             END
-            -- 2. Nhà phân phối tạo cho KH thuộc Group
-            IF (@UserManagerID IS NOT NULL AND @UserManagerID <> ''
-               AND EXISTS (SELECT 1 FROM [dbo].[CF_ObjectTbl] WHERE ObjectID = @MaKH AND ObjectGroupID = @UserManagerID))
-               OR 
-               (@UserObjectID IS NOT NULL AND @UserObjectID <> ''
-               AND EXISTS (SELECT 1 FROM [dbo].[CF_ObjectTbl] WHERE ObjectID = @MaKH AND ObjectGroupID = @UserObjectID))
+            -- 2. Nhà phân phối tạo cho KH thuộc quản lý
+            IF @UserObjectID IS NOT NULL AND @UserObjectID <> ''
+               AND EXISTS (SELECT 1 FROM [dbo].[CF_ObjectTbl] WHERE ObjectID = @MaKH AND NhaPhanPhoi = @UserObjectID)
             BEGIN
                 SET @Allowed = 1;
             END

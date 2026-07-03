@@ -30,7 +30,7 @@ var Router = (function () {
     return new Promise(function (resolve, reject) {
       if (_loadedScripts[src]) { resolve(); return; }
       var el = document.createElement('script');
-      el.src = src;
+      el.src = src + '?v=' + Date.now();
       el.onload = function () { _loadedScripts[src] = true; resolve(); };
       el.onerror = function () { reject(new Error('Load failed: ' + src)); };
       document.body.appendChild(el);

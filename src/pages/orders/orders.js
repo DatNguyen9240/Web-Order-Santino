@@ -42,17 +42,63 @@ var OrdersPage = (function () {
         if (hiddenTo) hiddenTo.addEventListener('change', filter);
       }
 
-      _render();
+      _loadSubordinateCustomers().then(function () {
+        _render();
+      });
     });
   }
+
+  async function _loadSubordinateCustomers() {
+    try {
+      var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
+      var role = user.role || user.Group || '';
+      var empID = user.EmployeeID || '';
+      var objID = user.ObjectID || '';
+      if (objID && objID !== '') {
+        empID = '';
+      }
+
+      const queryObj = { 
+        Loai: 'Customer',
+        chinhanh: '|PAGE:1|ROLE:' + role + '|EMP:' + empID + '|OBJ:' + objID
+      };
+
+      const params = { q: JSON.stringify(queryObj), _t: Date.now() };
+      const res = await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, params);
+      const list = res.records || res;
+
+      var select = document.getElementById('orders-filter-subordinate');
+      var wrapper = document.getElementById('sub-customer-filter-wrapper');
+
+      if (select && wrapper && Array.isArray(list) && list.length > 1) {
+        select.innerHTML = '<option value="">-- Tất cả khách hàng --</option>';
+        list.forEach(function (c) {
+          var id = c.id || c.Id || '';
+          var name = c.name || c.Name || '';
+          var option = document.createElement('option');
+          option.value = id;
+          option.textContent = name + ' (' + id + ')';
+          select.appendChild(option);
+        });
+        wrapper.style.display = 'block';
+      } else if (wrapper) {
+        wrapper.style.display = 'none';
+      }
+    } catch (e) {
+      console.warn('Lỗi load danh sách khách hàng cấp dưới:', e);
+    }
+  }
+
   async function _render() {
     var qInput = document.getElementById('orders-search');
     var fromInput = document.getElementById('orders-from');
     var toInput = document.getElementById('orders-to');
+    var subSelect = document.getElementById('orders-filter-subordinate');
 
     var q = qInput ? qInput.value : '';
     var fromDate = fromInput ? fromInput.value : '';
     var toDate = toInput ? toInput.value : '';
+    var subCustomerId = subSelect ? subSelect.value : '';
 
     var orders = [];
     var totalItems = 0;
@@ -64,11 +110,11 @@ var OrdersPage = (function () {
 
     try {
       const queryObj = { Loai: 'Order' };
-      // Gói chung vào TimKiem dạng JSON
       const timKiemData = { page: currentPage, limit: itemsPerPage };
       if (q && q.trim()) timKiemData.q = q.trim();
       if (fromDate) timKiemData.from = fromDate;
       if (toDate) timKiemData.to = toDate;
+      if (subCustomerId) timKiemData.customer_id = subCustomerId;
 
       queryObj.TimKiem = JSON.stringify(timKiemData);
 

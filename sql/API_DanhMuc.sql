@@ -38,7 +38,7 @@ BEGIN
         BEGIN
             DECLARE @roleStr NVARCHAR(50) = SUBSTRING(@MetaString, CHARINDEX('|ROLE:', @MetaString) + 6, LEN(@MetaString));
             IF CHARINDEX('|', @roleStr) > 0 SET @roleStr = SUBSTRING(@roleStr, 1, CHARINDEX('|', @roleStr) - 1);
-            SET @UserRole = @roleStr;
+            SET @UserRole = UPPER(@roleStr);
         END
 
         -- Parse EMP
@@ -78,6 +78,7 @@ BEGIN
         UNION ALL SELECT 'Location',    N'Tỉnh/Thành phố'
         UNION ALL SELECT 'ObjectGroup',  N'Nhóm khách hàng'
         UNION ALL SELECT 'UserGroup',   N'Nhóm quyền'
+        UNION ALL SELECT 'Dealer',      N'Đại lý/NPP'
         ORDER BY [TenLoai];
         RETURN;
     END
@@ -103,6 +104,19 @@ BEGIN
         WHERE (@TimKiem = '' OR [UserGroupName] LIKE N'%' + @TimKiem + N'%'
                              OR [UserGroupID]   LIKE N'%' + @TimKiem + N'%')
         ORDER BY [UserGroupName];
+        RETURN;
+    END
+
+    ELSE IF @Loai = 'Dealer'
+    BEGIN
+        SELECT
+            [ObjectID]     AS [id],
+            [ObjectName]   AS [name]
+        FROM [dbo].[CF_ObjectTbl]
+        WHERE ([isDisable] = 0 OR [isDisable] IS NULL)
+          AND [ObjectID] IN (SELECT DISTINCT [ObjectID] FROM [dbo].[SY_User] WHERE [UserGroupID] IN ('DL', 'Ban dai ly'))
+          AND (@TimKiem = '' OR [ObjectName] LIKE N'%' + @TimKiem + N'%' OR [ObjectID] LIKE N'%' + @TimKiem + N'%')
+        ORDER BY [ObjectName];
         RETURN;
     END
 
@@ -140,7 +154,7 @@ BEGIN
             -- Check xem group có quyền manager ở chức năng Đơn hàng không
             CAST(ISNULL((SELECT TOP 1 [isManager] FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND [MenuID] = 'WEB_OrderFrm'), 0) AS BIT) AS [isManager],
             -- Check xem có phải nhóm Đại lý hay không
-            CAST(CASE WHEN @UserRole IN ('DL', 'Ban dai ly') THEN 1 ELSE 0 END AS BIT) AS [isAgent]
+            CAST(CASE WHEN UPPER(@UserRole) IN ('DL', 'BAN DAI LY') THEN 1 ELSE 0 END AS BIT) AS [isAgent]
         RETURN;
     END
 
@@ -202,12 +216,11 @@ BEGIN
                -- CÚ CHECK TỰ ĐỘNG: Bất kỳ nhóm nào được tick isAdmin hoặc isManager ở trang WEB_OrderFrm thì mặc định nhả hết Khách hàng
                 EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND [MenuID] = 'WEB_OrderFrm' AND ([isAdmin] = 1 OR [isManager] = 1))
                
-               OR (@UserEmployeeID IS NOT NULL AND @UserEmployeeID <> '' AND [EmployeeID] = @UserEmployeeID)
-               OR (@UserManagerID IS NOT NULL AND @UserManagerID <> '' AND [ObjectGroupID] = @UserManagerID)
-               OR (@UserObjectID IS NOT NULL AND @UserObjectID <> '' AND [ObjectGroupID] = @UserObjectID) -- NPP quản lý nhóm khách
-               OR (@UserObjectID IS NOT NULL AND @UserObjectID <> '' AND [ObjectID] = @UserObjectID)
+                OR (@UserEmployeeID IS NOT NULL AND @UserEmployeeID <> '' AND [EmployeeID] = @UserEmployeeID)
+                OR (@UserObjectID IS NOT NULL AND @UserObjectID <> '' AND [NhaPhanPhoi] = @UserObjectID) -- NPP quản lý khách hàng
+                OR (@UserObjectID IS NOT NULL AND @UserObjectID <> '' AND [ObjectID] = @UserObjectID)
                -- Fallback: Nếu không truyền phân quyền gì cả, cứ xem như admin để backward-compatibility
-               OR (ISNULL(@UserRole, '') = '' AND ISNULL(@UserEmployeeID, '') = '' AND ISNULL(@UserManagerID, '') = '' AND ISNULL(@UserObjectID, '') = '')
+               OR (ISNULL(@UserRole, '') = '' AND ISNULL(@UserEmployeeID, '') = '' AND ISNULL(@UserObjectID, '') = '')
           )
         ORDER BY [ObjectName]
         OFFSET (@Page - 1) * 200 ROWS
@@ -295,6 +308,7 @@ BEGIN
         DECLARE @TuKhoa NVARCHAR(100) = @TimKiem;
         DECLARE @TuNgay DATETIME = NULL;
         DECLARE @DenNgay DATETIME = NULL;
+        DECLARE @FilterCustomerID NVARCHAR(50) = NULL;
 
         IF LEFT(@TimKiem, 1) = '{' AND ISJSON(@TimKiem) = 1
         BEGIN
@@ -304,6 +318,7 @@ BEGIN
             SET @chinhanh = JSON_VALUE(@TimKiem, '$.chinhanh');
             SET @Page = ISNULL(CAST(JSON_VALUE(@TimKiem, '$.page') AS INT), @Page);
             SET @PageSize = ISNULL(CAST(JSON_VALUE(@TimKiem, '$.limit') AS INT), @PageSize);
+            SET @FilterCustomerID = JSON_VALUE(@TimKiem, '$.customer_id');
             IF @strTuNgay IS NOT NULL AND @strTuNgay <> '' SET @TuNgay = TRY_CAST(@strTuNgay AS DATETIME);
             IF @strDenNgay IS NOT NULL AND @strDenNgay <> '' SET @DenNgay = TRY_CAST(@strDenNgay AS DATETIME);
         END
@@ -330,14 +345,22 @@ BEGIN
             COUNT(*) OVER() AS [total_rows]
         FROM [dbo].[WEB_OrderTbl] o
         WHERE (@TuKhoa = '' OR [DocumentID] LIKE N'%' + @TuKhoa + N'%' OR [ObjectName] LIKE N'%' + @TuKhoa + N'%')
+          AND (@FilterCustomerID IS NULL OR @FilterCustomerID = '' OR [ObjectID] = @FilterCustomerID)
           AND (@chinhanh IS NULL OR @chinhanh = '' OR [BranchID] = @chinhanh)
           AND (@TuNgay IS NULL OR [DocumentDate] >= @TuNgay)
           AND (@DenNgay IS NULL OR [DocumentDate] <= @DenNgay)
-          -- BỨC TƯỜNG LỬA BẢO VỆ ĐƠN HÀNG: Chỉ Sếp mới xem hết, NV xem đơn của mình, KH xem đơn của họ
+          -- BỨC TƯỜNG LỬA BẢO VỆ ĐƠN HÀNG: Chỉ Sếp mới xem hết, NV xem đơn của mình, KH/Đại lý xem đơn của họ và cấp dưới
           AND (
                EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND [MenuID] = 'WEB_OrderFrm' AND ([isAdmin] = 1 OR [isManager] = 1))
                OR (@UserEmployeeID IS NOT NULL AND @UserEmployeeID <> '' AND [EmployeeID] = @UserEmployeeID)
-               OR (@UserObjectID IS NOT NULL AND @UserObjectID <> '' AND ([ObjectID] = @UserObjectID OR ISNULL([MaDaiLy], '') = @UserObjectID))
+               OR (@UserObjectID IS NOT NULL AND @UserObjectID <> '' AND (
+                    [ObjectID] = @UserObjectID 
+                    OR ISNULL([MaDaiLy], '') = @UserObjectID
+                    -- Khách hàng của đơn thuộc cấp dưới (quản lý bởi NPP/Đại lý này)
+                    OR EXISTS (SELECT 1 FROM [dbo].[CF_ObjectTbl] subC WHERE subC.ObjectID = o.ObjectID AND subC.NhaPhanPhoi = @UserObjectID)
+                    -- Đại lý của đơn thuộc cấp dưới (quản lý bởi NPP/Đại lý này)
+                    OR EXISTS (SELECT 1 FROM [dbo].[CF_ObjectTbl] subD WHERE subD.ObjectID = o.MaDaiLy AND subD.NhaPhanPhoi = @UserObjectID)
+                  ))
                OR (ISNULL(@UserRole, '') = '' AND ISNULL(@UserEmployeeID, '') = '' AND ISNULL(@UserObjectID, '') = '')
           )
         ORDER BY [DateCreate] DESC
@@ -403,7 +426,14 @@ BEGIN
           AND (
                EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND [MenuID] = 'WEB_OrderFrm' AND ([isAdmin] = 1 OR [isManager] = 1))
                OR (@UserEmployeeID IS NOT NULL AND @UserEmployeeID <> '' AND h.[EmployeeID] = @UserEmployeeID)
-               OR (@UserObjectID IS NOT NULL AND @UserObjectID <> '' AND (h.[ObjectID] = @UserObjectID OR ISNULL(h.[MaDaiLy], '') = @UserObjectID))
+               OR (@UserObjectID IS NOT NULL AND @UserObjectID <> '' AND (
+                    h.[ObjectID] = @UserObjectID 
+                    OR ISNULL(h.[MaDaiLy], '') = @UserObjectID
+                    -- Khách hàng của đơn thuộc cấp dưới (quản lý bởi NPP/Đại lý này)
+                    OR EXISTS (SELECT 1 FROM [dbo].[CF_ObjectTbl] subC WHERE subC.ObjectID = h.ObjectID AND subC.NhaPhanPhoi = @UserObjectID)
+                    -- Đại lý của đơn thuộc cấp dưới (quản lý bởi NPP/Đại lý này)
+                    OR EXISTS (SELECT 1 FROM [dbo].[CF_ObjectTbl] subD WHERE subD.ObjectID = h.MaDaiLy AND subD.NhaPhanPhoi = @UserObjectID)
+                  ))
                OR (ISNULL(@UserRole, '') = '' AND ISNULL(@UserEmployeeID, '') = '' AND ISNULL(@UserObjectID, '') = '')
           );
         RETURN;

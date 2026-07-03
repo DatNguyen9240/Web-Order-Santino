@@ -44,6 +44,13 @@
     <div id="orders-from-container"></div>
     <div id="orders-to-container"></div>
   </div>
+  <div class="search-wrapper" style="width: 250px; max-width: 100%; flex: none; display: none; position: relative;" id="sub-customer-filter-wrapper">
+    <span class="material-symbols-outlined" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted);">person</span>
+    <select id="orders-filter-subordinate" style="width: 100%; height: 42px; padding: 0 36px 0 40px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text); outline: none; font-weight: 500; cursor: pointer; appearance: none; -webkit-appearance: none; -moz-appearance: none; font-size: 14px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;" onchange="OrdersPage.filter()">
+      <option value="">-- Tất cả khách hàng --</option>
+    </select>
+    <span class="material-symbols-outlined" style="position: absolute; right: 12px; left: auto; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted);">expand_more</span>
+  </div>
   <div class="search-wrapper" style="width: 300px; max-width: 100%; flex: none;">
     <span class="material-symbols-outlined">search</span>
     <input id="orders-search" placeholder="Tìm số CT hoặc Khách hàng..." data-i18n-placeholder="orders.search.placeholder" oninput="OrdersPage.filter()">

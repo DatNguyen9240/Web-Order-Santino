@@ -896,11 +896,11 @@ const CustomerService = (() => {
     try {
       const payload = {
         username: username,
-        password: currentPassword || '',
         newpassword: newPassword,
-        newpassword2: newPassword
+        newpassword2: newPassword,
+        userkey: 'abcd1234'
       };
-      const res = await Http.post(API_CONFIG.ENDPOINTS.USERS.CHANGE_PW, payload);
+      const res = await Http.post(API_CONFIG.ENDPOINTS.USERS.RESET_PW, payload);
       return res;
     } catch (err) {
       console.error('[CustomerService] Lỗi reset mật khẩu:', err);
@@ -976,9 +976,11 @@ const MenuService = (() => {
   async function getChildren(parentID) {
     if (!API_CONFIG || !API_CONFIG.BASE_URL) return [];
     try {
-      const queryObj = { Parent: parentID };
-      const params = { q: JSON.stringify(queryObj) };
-      const res = await Http.get(API_CONFIG.ENDPOINTS.MENU.CHILDREN, params);
+      var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
+      var role = user.role || user.Group || '';
+      var queryObj = { Parent: parentID, UserRole: role };
+      var params = { q: JSON.stringify(queryObj) };
+      var res = await Http.get(API_CONFIG.ENDPOINTS.MENU.CHILDREN, params);
       return res.data || res.records || res || [];
     } catch (err) {
       console.error('Lỗi tải danh sách menu con:', err);
@@ -4866,7 +4868,7 @@ var Router = (function () {
     return new Promise(function (resolve, reject) {
       if (_loadedScripts[src]) { resolve(); return; }
       var el = document.createElement('script');
-      el.src = src;
+      el.src = src + '?v=' + Date.now();
       el.onload = function () { _loadedScripts[src] = true; resolve(); };
       el.onerror = function () { reject(new Error('Load failed: ' + src)); };
       document.body.appendChild(el);
@@ -5045,37 +5047,41 @@ document.addEventListener('DOMContentLoaded', function () {
   } else {
     document.documentElement.classList.remove('dark-theme');
   }
-  
+
   var zoom = localStorage.getItem('santino_zoom');
   if (zoom === null) zoom = '115';
-  document.documentElement.style.setProperty('--text-scale', (parseInt(zoom)/100).toString());
+  document.documentElement.style.setProperty('--text-scale', (parseInt(zoom) / 100).toString());
 
   var font = localStorage.getItem('santino_font');
-  if(font) document.documentElement.style.setProperty('--font', '"' + font + '", sans-serif');
+  if (font) document.documentElement.style.setProperty('--font', '"' + font + '", sans-serif');
 
   var color = localStorage.getItem('santino_color');
-  if(color) {
+  if (color) {
     document.documentElement.style.setProperty('--accent', color);
     var colorFg = localStorage.getItem('santino_color_fg');
-    if(colorFg) document.documentElement.style.setProperty('--accent-fg', colorFg);
+    if (colorFg) document.documentElement.style.setProperty('--accent-fg', colorFg);
   }
   Router.init();
 
   // 3. Khởi tạo Load Menu động
   if (typeof MenuService !== 'undefined') {
-    MenuService.getChildren('02').then(function(items) {
+    MenuService.getChildren('').then(function (items) {
       if (Array.isArray(items) && items.length > 0) {
         var html = '';
-        items.forEach(function(item) {
+        items.forEach(function (item) {
+          // Bỏ qua các menu bị ẩn (isDisable = 1)
+          if (String(item.isDisable) === '1' || item.isDisable === true) return;
+
           // Map URLPara hoặc FormKey sang route
           var route = item.URLPara ? item.URLPara : '';
           if (!route) {
             if (item.FormName === 'WEB_OrderDetailFrm' || item.FormKey === 'List') route = '/orders';
             else if (item.FormName === 'WEB_OrderFrm' || item.FormKey === 'Null') route = '/order';
-            else route = '/' + (item.FormKey || '').toLowerCase();
+            else if (item.FormKey && item.FormKey !== '') route = '/' + item.FormKey.toLowerCase();
           }
+          if (!route || route === '/' || route === '/null') return;
           if (!route.startsWith('/')) route = '/' + route;
-          
+
           // Map IconClass
           var icon = item.IconClass;
           // Fallback mapping in case DB uses 'icon-grid' for both but we want specific icons
@@ -5084,46 +5090,28 @@ document.addEventListener('DOMContentLoaded', function () {
             if (route === '/order') icon = 'shopping_bag';
           }
           if (!icon) icon = 'label';
-          
+
           var title = item.VN || item.FormName;
-          
+
           html += '<a class="nav-item" href="#' + route + '" data-route="' + route + '">';
           html += '<span class="material-symbols-outlined icon">' + icon + '</span>';
           html += '<span>' + title + '</span></a>';
         });
-        
-        // Tự động bổ sung trang Quản lý khách hàng nếu tài khoản là Admin
-        try {
-          var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
-          var userRole = user.role || user.Group || '';
-          if (userRole === 'Admin') {
-            var hasCustomers = items.some(function(item) {
-              return item.URLPara === '/customers' || item.URLPara === 'customers' || item.FormKey === 'Customers';
-            });
-            if (!hasCustomers) {
-              html += '<a class="nav-item" href="#/customers" data-route="/customers">';
-              html += '<span class="material-symbols-outlined icon">group</span>';
-              html += '<span data-i18n="nav.customers">Quản lý khách hàng</span></a>';
-            }
-          }
-        } catch (e) {
-          console.warn('[app.js] Lỗi tự động gán menu Admin:', e);
-        }
-        
+
         // Cập nhật Navbar links
         var navLinks = document.getElementById('navbar-dynamic-links');
         if (navLinks) {
           navLinks.innerHTML = html;
         }
-        
+
         // Cập nhật Sidebar links
         var sidebarLinks = document.getElementById('sidebar-dynamic-links');
         if (sidebarLinks) {
           sidebarLinks.innerHTML = html;
-          
+
           // Gắn sự kiện auto-close cho mobile
-          sidebarLinks.querySelectorAll('.nav-item').forEach(function(el) {
-            el.addEventListener('click', function() {
+          sidebarLinks.querySelectorAll('.nav-item').forEach(function (el) {
+            el.addEventListener('click', function () {
               if (window.innerWidth <= 1024) {
                 var sidebar = document.querySelector('.sidebar');
                 var overlay = document.querySelector('.sidebar-overlay');
@@ -5134,14 +5122,14 @@ document.addEventListener('DOMContentLoaded', function () {
             });
           });
         }
-        
+
         // Re-apply language if needed
         applyLanguage();
         // Cập nhật trạng thái active
         if (typeof Router !== 'undefined' && Router._highlightActive) {
-           Router._highlightActive();
+          Router._highlightActive();
         } else {
-           _highlightActiveNav();
+          _highlightActiveNav();
         }
       }
     });
@@ -5185,13 +5173,13 @@ function showToast(msg, ok, actionHtml, duration) {
 
   if (ok === undefined) ok = true;
   t.querySelector('.material-symbols-outlined').textContent = ok ? 'check_circle' : 'error';
-  
+
   if (actionHtml) {
     m.innerHTML = msg + '&nbsp;&nbsp;' + actionHtml;
   } else {
     m.innerHTML = msg;
   }
-  
+
   t.classList.add('show');
   clearTimeout(t._timer);
   var hideTime = duration ? duration : (actionHtml ? 7000 : 3000);
@@ -5246,14 +5234,14 @@ function t(key) {
 function applyLanguage() {
   var lang = localStorage.getItem('santino_lang') || 'vi';
   var dict = typeof TRANSLATIONS !== 'undefined' ? TRANSLATIONS[lang] || TRANSLATIONS['vi'] : {};
-  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+  document.querySelectorAll('[data-i18n]').forEach(function (el) {
     var key = el.getAttribute('data-i18n');
     if (dict[key]) {
       // Dùng innerHTML hoặc textContent, tuỳ yêu cầu. Dùng textContent an toàn hơn.
       el.textContent = dict[key];
     }
   });
-  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
     var key = el.getAttribute('data-i18n-placeholder');
     if (dict[key]) {
       el.placeholder = dict[key];

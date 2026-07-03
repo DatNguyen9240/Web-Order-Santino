@@ -25,6 +25,7 @@ BEGIN
     DECLARE @DonViMuaHang NVARCHAR(255) = JSON_VALUE(@q, '$.DonViMuaHang');
     DECLARE @AddressHD NVARCHAR(500) = JSON_VALUE(@q, '$.AddressHD');
     DECLARE @UserLogin NVARCHAR(50)  = JSON_VALUE(@q, '$.UserLogin');
+    DECLARE @NhaPhanPhoi NVARCHAR(50) = JSON_VALUE(@q, '$.NhaPhanPhoi');
 
     -- 2. Tự động sinh mã khách hàng (nếu rỗng)
     IF ISNULL(@ObjectID, '') = ''
@@ -92,6 +93,7 @@ BEGIN
             [TaxCode] = @TaxCode,
             [DonViMuaHang] = @DonViMuaHang,
             [AddressHD] = @AddressHD,
+            [NhaPhanPhoi] = @NhaPhanPhoi,
             [UserUpdate] = @UserLogin,
             [DateUpdate] = GETDATE()
         WHERE [ObjectID] = @ObjectID;
@@ -105,14 +107,14 @@ BEGIN
             [ObjectGroupID], [LocationID], [QuanHuyen], [SanPhamChinh],
             [EmployeeID], [isDefault], [DinhMucNo], [ThoiHanThanhToan],
             [PaymentTypeID], [PaymentTermID], [TaxCode], [DonViMuaHang], [AddressHD],
-            [UserCreate], [DateCreate], [isDisable]
+            [NhaPhanPhoi], [UserCreate], [DateCreate], [isDisable]
         )
         VALUES (
             @ObjectID, @ObjectName, @BranchID, @Address, @Phone, @Notes,
             @ObjectGroupID, @LocationID, @QuanHuyen, @SanPhamChinh,
             @EmployeeID, @isDefault, @DinhMucNo, @ThoiHanThanhToan,
             @PaymentTypeID, @PaymentTermID, @TaxCode, @DonViMuaHang, @AddressHD,
-            @UserLogin, GETDATE(), 0
+            @NhaPhanPhoi, @UserLogin, GETDATE(), 0
         );
         
         SELECT @ObjectID AS [id], N'Tạo mới khách hàng thành công' AS [message];

@@ -84,15 +84,11 @@ const CustomerService = (() => {
     try {
       const payload = {
         username: username,
-        UserName: username,
-        password: currentPassword || '',
-        Password: currentPassword || '',
         newpassword: newPassword,
-        NewPassword: newPassword,
         newpassword2: newPassword,
-        NewPassword2: newPassword
+        userkey: 'abcd1234'
       };
-      const res = await Http.post(API_CONFIG.ENDPOINTS.USERS.CHANGE_PW, payload);
+      const res = await Http.post(API_CONFIG.ENDPOINTS.USERS.RESET_PW, payload);
       return res;
     } catch (err) {
       console.error('[CustomerService] Lỗi reset mật khẩu:', err);

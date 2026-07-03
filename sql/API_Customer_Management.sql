@@ -50,18 +50,17 @@ IF OBJECT_ID('dbo.API_LayDanhSachKhachHang') IS NOT NULL
 GO
 
 CREATE PROCEDURE [dbo].[API_LayDanhSachKhachHang]
-    @q NVARCHAR(MAX) = NULL
+    @q NVARCHAR(MAX) = NULL,
+    @TimKiem NVARCHAR(255) = NULL,
+    @ObjectGroupID NVARCHAR(50) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
     
-    DECLARE @TimKiem NVARCHAR(255) = NULL;
-    DECLARE @ObjectGroupID NVARCHAR(50) = NULL;
-    
     IF @q IS NOT NULL AND ISJSON(@q) = 1
     BEGIN
-        SET @TimKiem = JSON_VALUE(@q, '$.TimKiem');
-        SET @ObjectGroupID = JSON_VALUE(@q, '$.ObjectGroupID');
+        SET @TimKiem = ISNULL(@TimKiem, JSON_VALUE(@q, '$.TimKiem'));
+        SET @ObjectGroupID = ISNULL(@ObjectGroupID, JSON_VALUE(@q, '$.ObjectGroupID'));
     END
     
     SELECT 
@@ -90,6 +89,7 @@ BEGIN
         c.[DonViMuaHang] AS [don_vi_mua_hang],
         c.[AddressHD] AS [address_hd],
         COALESCE(c.[isDisable], 0) AS [is_disable],
+        c.[NhaPhanPhoi] AS [nha_phan_phoi],
         u.[UserName] AS [username],
         COALESCE(u.[Disable], 0) AS [user_disable],
         u.[UserGroupID] AS [usergroup_id]

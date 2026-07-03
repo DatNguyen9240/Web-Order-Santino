@@ -14,9 +14,14 @@ var OrderPage = (function () {
     try {
       var res = await _searchCategory('UserPermission', '', false, 1);
       if (res && res[0]) {
-        _userPerm.isAdmin = !!res[0].isAdmin;
-        _userPerm.isManager = !!res[0].isManager;
-        _userPerm.isAgent = !!res[0].isAgent;
+        var parseBool = function (val) {
+          if (!val) return false;
+          var s = String(val).toLowerCase().trim();
+          return s === '1' || s === 'true';
+        };
+        _userPerm.isAdmin = parseBool(res[0].isAdmin);
+        _userPerm.isManager = parseBool(res[0].isManager);
+        _userPerm.isAgent = parseBool(res[0].isAgent);
       }
     } catch (err) {
       console.warn('[OrderPage] Lỗi load quyền người dùng:', err);
@@ -159,8 +164,8 @@ var OrderPage = (function () {
   function _searchCategory(loai, timKiem, ignoreBranchFilter, page) {
     var q = { Loai: loai };
     if (timKiem && timKiem.trim()) q.TimKiem = timKiem.trim();
-    if (loai === 'Customer') {
-      if (!ignoreBranchFilter && _catValues && _catValues.chi_nhanh && _catValues.chi_nhanh.id) {
+    if (loai === 'Customer' || loai === 'UserPermission') {
+      if (loai === 'Customer' && !ignoreBranchFilter && _catValues && _catValues.chi_nhanh && _catValues.chi_nhanh.id) {
         q.chinhanh = _catValues.chi_nhanh.id;
       } else {
         q.chinhanh = ''; // ensure chinhanh is defined
@@ -200,6 +205,9 @@ var OrderPage = (function () {
       .then(function (res) {
         var data = res.records || res;
         if (!Array.isArray(data)) return [];
+        if (loai === 'UserPermission') {
+          return data;
+        }
         return data.map(function (item) {
           return {
             id: item.id || item.Id || '',

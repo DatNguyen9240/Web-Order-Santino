@@ -39,7 +39,8 @@ window.API_CONFIG = {
         },
         USERS: {
             SAVE: '/API_NguoiDung_Luu',
-            CHANGE_PW: '/changepassword'
+            CHANGE_PW: '/changepassword',
+            RESET_PW: '/resetpassword'
         },
         MENU: {
             CHILDREN: '/API_GetMenuChildren'

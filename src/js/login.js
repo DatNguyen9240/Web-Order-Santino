@@ -57,7 +57,7 @@
           localStorage.setItem('santino_user', JSON.stringify({
             name: data.DisplayName || user,
             id: data.UserName || user,
-            role: data.Group || '',
+            role: data.UserGroupID || data.Group || '',
             ...userInfo,
           }));
 

@@ -235,15 +235,31 @@ var PermissionsPage = (function () {
       return getLevel(map[parent], depth + 1);
     }
 
-    // ── Bước 4: Sắp xếp để parent luôn render trước con ──
-    records.sort(function (a, b) {
-      if (a._id === '00_ROOT') return -1;
-      if (b._id === '00_ROOT') return 1;
-      return (a._id || '').localeCompare(b._id || '');
+    // ── Bước 4: Xây dựng cấu trúc cây cha-con ──
+    var childrenMap = {};
+    records.forEach(function (item) {
+      var parent = String(item.parent || item.Parent || '');
+      if (item._id === '00_ROOT') return;
+      if (!childrenMap[parent]) childrenMap[parent] = [];
+      childrenMap[parent].push(item);
     });
 
-    // ── Bước 5: Render từng dòng ──
-    records.forEach(function (item) {
+    // Sắp xếp các con trong cùng một cha theo thứ tự bảng chữ cái
+    Object.keys(childrenMap).forEach(function (parent) {
+      childrenMap[parent].sort(function (a, b) {
+        var aName = a.label || a.Label || a.VN || a.TenMenu || a._id || '';
+        var bName = b.label || b.Label || b.VN || b.TenMenu || b._id || '';
+        return aName.localeCompare(bName);
+      });
+    });
+
+    // ── Bước 5: Render đệ quy (DFS) ──
+    var renderedIds = {};
+
+    function renderNode(nodeId) {
+      var item = map[nodeId];
+      if (!item) return;
+
       var modId  = item._id;
       var modName = item.label || item.Label || item.VN || item.TenMenu || modId;
       var parent  = String(item.parent || item.Parent || '');
@@ -251,14 +267,12 @@ var PermissionsPage = (function () {
       var level    = getLevel(item);
       var isFolder = !!folderIds[modId];
 
-      // Icon: ưu tiên dùng trực tiếp từ DB (Material Symbol name), fallback theo loại
       var rawIcon = String(item.icon || item.IconClass || '').toLowerCase().trim();
       var parsedIcon = isFolder ? 'folder' : 'description';
       if (rawIcon && rawIcon.indexOf(' ') === -1 && rawIcon.indexOf('-') === -1) {
-        parsedIcon = rawIcon; // Tên Material Symbol hợp lệ
+        parsedIcon = rawIcon;
       }
 
-      // Chỉ leaf node mới có checkbox, folder chỉ là tiêu đề nhóm
       var perms = isFolder ? null : {
         xem:          item.IsRun        == 1,
         them:         item.IsAdd        == 1,
@@ -284,6 +298,24 @@ var PermissionsPage = (function () {
         hidden:   false,
         perms:    perms
       });
+
+      renderedIds[modId] = true;
+
+      // Đệ quy render các con của node này
+      var children = childrenMap[modId] || [];
+      children.forEach(function (child) {
+        renderNode(child._id);
+      });
+    }
+
+    // Bắt đầu render từ node gốc 00_ROOT
+    renderNode('00_ROOT');
+
+    // Failsafe: Render bất kỳ node mồ côi nào chưa được render
+    records.forEach(function (item) {
+      if (!renderedIds[item._id]) {
+        renderNode(item._id);
+      }
     });
   }
 

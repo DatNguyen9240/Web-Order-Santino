@@ -8,6 +8,7 @@ var CustomersPage = (function () {
   var payTypes = [];
   var payTerms = [];
   var userGroups = [];
+  var dealers = [];
 
   function render(containerElement) {
     $container = containerElement;
@@ -22,14 +23,15 @@ var CustomersPage = (function () {
   async function _init() {
     try {
       // 1. Tải toàn bộ danh mục cho dropdowns
-      const [groupsData, empsData, locsData, branchData, payTypeData, payTermData, userGroupData] = await Promise.all([
+      const [groupsData, empsData, locsData, branchData, payTypeData, payTermData, userGroupData, dealersData] = await Promise.all([
         CategoryService.getCategories('ObjectGroup'),
         CategoryService.getCategories('Employee'),
         CategoryService.getCategories('Location'),
         CategoryService.getCategories('Branch'),
         CategoryService.getCategories('PaymentType'),
         CategoryService.getCategories('PaymentTerm'),
-        CategoryService.getCategories('UserGroup')
+        CategoryService.getCategories('UserGroup'),
+        CategoryService.getCategories('Dealer')
       ]);
 
       objectGroups = groupsData;
@@ -39,6 +41,7 @@ var CustomersPage = (function () {
       payTypes = payTypeData;
       payTerms = payTermData;
       userGroups = userGroupData;
+      dealers = dealersData;
 
       // 2. Populate dữ liệu vào các combobox dropdown
       _populateDropdowns();
@@ -112,6 +115,12 @@ var CustomersPage = (function () {
         userGroupEl.innerHTML = '<option value="">-- Trống --</option>';
       }
     }
+
+    const dealerEl = document.getElementById('cust-dealer');
+    if (dealerEl) {
+      dealerEl.innerHTML = '<option value="">-- Chọn đại lý quản lý --</option>' +
+        dealers.map(d => `<option value="${d.id}">${d.name || d.id}</option>`).join('');
+    }
   }
 
   async function _fetchAndRender() {
@@ -128,6 +137,11 @@ var CustomersPage = (function () {
 
     const customers = await CustomerService.getAll(search, groupId);
     customersList = customers;
+
+    const countEl = document.getElementById('customers-count');
+    if (countEl) {
+      countEl.textContent = `Tổng số: ${customers.length} khách hàng`;
+    }
 
     if (customers.length === 0) {
       tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><span class="material-symbols-outlined">group_off</span><span data-i18n="table.empty">Không tìm thấy khách hàng nào</span></td></tr>';
@@ -199,7 +213,7 @@ var CustomersPage = (function () {
     // Reset các trường
     const fieldsToClear = [
       'cust-id', 'cust-name', 'cust-group', 'cust-phone', 'cust-email', 'cust-address',
-      'cust-location', 'cust-quanhuyen', 'cust-notes', 'cust-username', 'cust-password'
+      'cust-location', 'cust-quanhuyen', 'cust-notes', 'cust-username', 'cust-password', 'cust-dealer'
     ];
     fieldsToClear.forEach(id => {
       const el = document.getElementById(id);
@@ -217,6 +231,18 @@ var CustomersPage = (function () {
     }
     toggleAccountFields();
 
+    // Ẩn/hiện ô chọn đại lý cấp trên dựa vào quyền hạn
+    var curUser = JSON.parse(localStorage.getItem('santino_user') || '{}');
+    var curRole = (curUser.role || curUser.Group || '').toLowerCase();
+    var dealerGroupEl = document.getElementById('cust-dealer-group');
+    if (dealerGroupEl) {
+      if (curRole === 'admin' || curRole === 'ketoan' || curRole === 'sales' || curRole === 'nvkd') {
+        dealerGroupEl.style.display = 'block';
+      } else {
+        dealerGroupEl.style.display = 'none';
+      }
+    }
+
     if (isEdit) {
       const c = customersList.find(x => x.customer_id === id);
       if (c) {
@@ -226,6 +252,7 @@ var CustomersPage = (function () {
         document.getElementById('cust-address').value = c.address || '';
         document.getElementById('cust-group').value = c.group_id || '';
         document.getElementById('cust-location').value = c.location_id || '';
+        if (document.getElementById('cust-dealer')) document.getElementById('cust-dealer').value = c.nha_phan_phoi || c.NhaPhanPhoi || '';
         if (document.getElementById('cust-quanhuyen')) document.getElementById('cust-quanhuyen').value = c.quan_huyen || '';
         if (document.getElementById('cust-employee')) document.getElementById('cust-employee').value = c.employee_id || '';
         if (document.getElementById('cust-branch')) document.getElementById('cust-branch').value = c.branch_id || '';
@@ -246,19 +273,39 @@ var CustomersPage = (function () {
             hasAccCheck.disabled = true; // Không cho phép tắt checkbox nếu tài khoản đã tồn tại
           }
           toggleAccountFields();
-          document.getElementById('cust-username').value = c.username;
+          
+          const usernameInput = document.getElementById('cust-username');
+          if (usernameInput) {
+            usernameInput.value = c.username;
+            usernameInput.readOnly = true;
+            usernameInput.style.backgroundColor = '#f1f5f9';
+            usernameInput.style.cursor = 'not-allowed';
+          }
+          
           // Lấy user group từ database
           document.getElementById('cust-usergroup').value = c.usergroup_id || 'DL';
           // Ẩn trường mật khẩu khởi tạo khi edit (nếu muốn reset thì đã có modal reset riêng biệt)
           const initialPwGroup = document.getElementById('cust-initial-password-group');
           if (initialPwGroup) initialPwGroup.style.display = 'none';
         } else {
+          const usernameInput = document.getElementById('cust-username');
+          if (usernameInput) {
+            usernameInput.readOnly = false;
+            usernameInput.style.backgroundColor = '';
+            usernameInput.style.cursor = '';
+          }
           const initialPwGroup = document.getElementById('cust-initial-password-group');
           if (initialPwGroup) initialPwGroup.style.display = 'block';
         }
       }
     } else {
       // Trường hợp thêm mới
+      const usernameInput = document.getElementById('cust-username');
+      if (usernameInput) {
+        usernameInput.readOnly = false;
+        usernameInput.style.backgroundColor = '';
+        usernameInput.style.cursor = '';
+      }
       const initialPwGroup = document.getElementById('cust-initial-password-group');
       if (initialPwGroup) initialPwGroup.style.display = 'block';
     }
@@ -301,6 +348,16 @@ var CustomersPage = (function () {
 
     const curUser = JSON.parse(localStorage.getItem('santino_user') || '{}');
 
+    // Xác định nhà phân phối/đại lý cấp trên
+    let nhaPhanPhoi = '';
+    const curRole = (curUser.role || curUser.Group || '').toLowerCase();
+    if (curRole === 'dl' || curRole === 'ban dai ly') {
+      nhaPhanPhoi = curUser.ObjectID || ''; // Tự động gán chính đại lý đó
+    } else {
+      const dealerSelect = document.getElementById('cust-dealer');
+      nhaPhanPhoi = dealerSelect ? dealerSelect.value : '';
+    }
+
     // Dữ liệu khách hàng để gửi API
     const customerData = {
       ObjectID: document.getElementById('cust-id').value.trim(),
@@ -321,6 +378,7 @@ var CustomersPage = (function () {
       DonViMuaHang: document.getElementById('cust-invoice-company')?.value?.trim() || '',
       AddressHD: document.getElementById('cust-invoice-address')?.value?.trim() || '',
       Notes: document.getElementById('cust-notes').value.trim(),
+      NhaPhanPhoi: nhaPhanPhoi,
       UserLogin: curUser.id || curUser.UserName || 'Admin'
     };
 
@@ -332,8 +390,8 @@ var CustomersPage = (function () {
       const objectId = res.id || res.ObjectID || customerData.ObjectID;
       const message = res.message || (isEdit ? 'Cập nhật khách hàng thành công' : 'Thêm khách hàng thành công');
 
-      // 2. Nếu tick tạo tài khoản và chưa có tài khoản trước đó
-      if (hasAccount && (!isEdit || !customersList.find(x => x.customer_id === objectId)?.username)) {
+      // 2. Nếu tick tạo tài khoản (hoặc tài khoản đã tồn tại)
+      if (hasAccount) {
         const finalUsername = username || objectId; // Nếu không nhập username thì mặc định lấy mã ObjectID làm username
         const userData = {
           UserName: finalUsername,
@@ -342,11 +400,12 @@ var CustomersPage = (function () {
           ObjectID: objectId,
           Disable: 0
         };
-        // Tạo bản ghi tài khoản trước
+        // Tạo mới hoặc Cập nhật tài khoản liên kết (nhóm quyền, họ tên)
         await CustomerService.saveUserAccount(userData);
 
-        // Thiết lập mật khẩu ban đầu thông qua API /changepassword
-        if (password) {
+        // Thiết lập mật khẩu ban đầu (chỉ khi tài khoản chưa tồn tại trước đó)
+        const isNewAccount = !customersList.find(x => x.customer_id === objectId)?.username;
+        if (isNewAccount && password) {
           try {
             await CustomerService.resetPassword(finalUsername, '', password);
           } catch (pwErr) {
@@ -443,8 +502,17 @@ var CustomersPage = (function () {
     }
   }
 
+  var _searchTimeout = null;
+  function filter() {
+    if (_searchTimeout) clearTimeout(_searchTimeout);
+    _searchTimeout = setTimeout(function () {
+      _fetchAndRender();
+    }, 450);
+  }
+
   return {
     render: render,
+    filter: filter,
     openCustomerModal: openCustomerModal,
     toggleAccountFields: toggleAccountFields,
     saveCustomer: saveCustomer,

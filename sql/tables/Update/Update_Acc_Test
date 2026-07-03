@@ -117,3 +117,6 @@ BEGIN
 END
 
 PRINT '=== HOÀN THÀNH CẤU HÌNH DỮ LIỆU KIỂM THỬ ===';
+
+UPDATE [dbo].[CF_ObjectTbl] SET NhaPhanPhoi = 'A8172991' WHERE ObjectID = 'A2112080';
+UPDATE [dbo].[CF_ObjectTbl] SET NhaPhanPhoi = 'A8172991' WHERE ObjectID = 'A2112302';
