@@ -42,55 +42,6 @@ var PermissionsPage = (function () {
               #perm-ctx-menu .ctx-item.danger { color: var(--danger, #ef4444); }
               #perm-ctx-menu .ctx-item.danger:hover { background: rgba(239,68,68,0.08); }
               #perm-ctx-menu .ctx-divider { border: none; border-top: 1px solid var(--border, #e2e8f0); margin: 3px 0; }
-
-              /* Tối ưu Responsive cho màn hình nhỏ */
-              @media (max-width: 767.98px) {
-                #role-list-container {
-                  display: flex;
-                  flex-direction: row;
-                  overflow-x: auto;
-                  gap: 8px;
-                  padding: 8px !important;
-                  white-space: nowrap;
-                  scrollbar-width: none; 
-                }
-                #role-list-container::-webkit-scrollbar { display: none; }
-                .role-tab {
-                  flex: 0 0 auto;
-                  margin-bottom: 0;
-                  padding: 8px 16px;
-                  font-size: 13px;
-                  border: 1px solid var(--border);
-                }
-                
-                .card-header.d-flex.justify-content-between {
-                  flex-direction: column;
-                  align-items: flex-start !important;
-                  gap: 12px;
-                }
-                .card-header h3 {
-                  font-size: 14px !important;
-                  white-space: normal;
-                  line-height: 1.4;
-                }
-                #btn-sync-permission {
-                  width: 100%;
-                }
-
-                .data-table th, .data-table td {
-                  padding: 8px 4px !important;
-                  font-size: 12px !important;
-                }
-                .tree-cell {
-                  gap: 4px;
-                }
-                .tree-icon, .tree-toggle {
-                  font-size: 16px !important;
-                }
-                .tree-toggle {
-                  width: 16px;
-                }
-              }
             `;
             document.head.appendChild(style);
           }
@@ -196,9 +147,9 @@ var PermissionsPage = (function () {
     }
 
     // Inject Root Node for global batch granting
-    var hasRoot = records.some(function(r) { return r.id === '00_ROOT' || r.Id === '00_ROOT' || r.MenuId === '00_ROOT'; });
+    var hasRoot = records.some(function (r) { return r.id === '00_ROOT' || r.Id === '00_ROOT' || r.MenuId === '00_ROOT'; });
     if (!hasRoot) {
-      records.forEach(function(item) {
+      records.forEach(function (item) {
         if (!item.parent && !item.Parent) {
           item.parent = '00_ROOT';
         }
@@ -260,11 +211,11 @@ var PermissionsPage = (function () {
       var item = map[nodeId];
       if (!item) return;
 
-      var modId  = item._id;
+      var modId = item._id;
       var modName = item.label || item.Label || item.VN || item.TenMenu || modId;
-      var parent  = String(item.parent || item.Parent || '');
+      var parent = String(item.parent || item.Parent || '');
       var parentId = parent || null;
-      var level    = getLevel(item);
+      var level = getLevel(item);
       var isFolder = !!folderIds[modId];
 
       var rawIcon = String(item.icon || item.IconClass || '').toLowerCase().trim();
@@ -274,29 +225,29 @@ var PermissionsPage = (function () {
       }
 
       var perms = isFolder ? null : {
-        xem:          item.IsRun        == 1,
-        them:         item.IsAdd        == 1,
-        sua:          item.IsUpdate     == 1,
-        xoa:          item.IsDelete     == 1,
-        isManager:    item.isManager    == 1,
-        isAdmin:      item.isAdmin      == 1,
-        isAutoLock:   item.isAutoLock   == 1,
+        xem: item.IsRun == 1,
+        them: item.IsAdd == 1,
+        sua: item.IsUpdate == 1,
+        xoa: item.IsDelete == 1,
+        isManager: item.isManager == 1,
+        isAdmin: item.isAdmin == 1,
+        isAutoLock: item.isAutoLock == 1,
         isHideAmount: item.isHideAmount == 1,
-        isLockDoc:    item.isLockDoc    == 1,
-        isUnLockDoc:  item.isUnLockDoc  == 1,
-        isExportExcel:item.isExportExcel== 1
+        isLockDoc: item.isLockDoc == 1,
+        isUnLockDoc: item.isUnLockDoc == 1,
+        isExportExcel: item.isExportExcel == 1
       };
 
       _appendRow(tbody, {
-        id:       modId,
+        id: modId,
         parentId: parentId,
-        level:    level,
-        label:    modName,
-        icon:     parsedIcon,
+        level: level,
+        label: modName,
+        icon: parsedIcon,
         isFolder: isFolder,
         expanded: true,
-        hidden:   false,
-        perms:    perms
+        hidden: false,
+        perms: perms
       });
 
       renderedIds[modId] = true;
@@ -350,10 +301,10 @@ var PermissionsPage = (function () {
 
   function _setupAutoSave() {
     var tbody = $container.querySelector('#permission-tree-table tbody');
-    tbody.addEventListener('change', function(e) {
+    tbody.addEventListener('change', function (e) {
       if (e.target.classList.contains('perm-chk')) {
-         var tr = e.target.closest('tr');
-         if(tr) _saveSingleRowPermission(tr);
+        var tr = e.target.closest('tr');
+        if (tr) _saveSingleRowPermission(tr);
       }
     });
   }
@@ -408,7 +359,7 @@ var PermissionsPage = (function () {
       tr.appendChild(_createCheckboxTd(data.perms.them, 'them'));
       tr.appendChild(_createCheckboxTd(data.perms.sua, 'sua'));
       tr.appendChild(_createCheckboxTd(data.perms.xoa, 'xoa'));
-      
+
       tr.appendChild(_createCheckboxTd(data.perms.isManager, 'isManager'));
       tr.appendChild(_createCheckboxTd(data.perms.isAdmin, 'isAdmin'));
       tr.appendChild(_createCheckboxTd(data.perms.isAutoLock, 'isAutoLock'));
@@ -455,7 +406,7 @@ var PermissionsPage = (function () {
     var them = tr.querySelector('.perm-chk[data-action="them"]')?.checked || false;
     var sua = tr.querySelector('.perm-chk[data-action="sua"]')?.checked || false;
     var xoa = tr.querySelector('.perm-chk[data-action="xoa"]')?.checked || false;
-    
+
     var isManager = tr.querySelector('.perm-chk[data-action="isManager"]')?.checked || false;
     var isAdmin = tr.querySelector('.perm-chk[data-action="isAdmin"]')?.checked || false;
     var isAutoLock = tr.querySelector('.perm-chk[data-action="isAutoLock"]')?.checked || false;
@@ -465,7 +416,7 @@ var PermissionsPage = (function () {
     var isExportExcel = tr.querySelector('.perm-chk[data-action="isExportExcel"]')?.checked || false;
 
     var payload = {
-      NhomNguoiDangThaoTac: (function() {
+      NhomNguoiDangThaoTac: (function () {
         var u = JSON.parse(localStorage.getItem('santino_user') || '{}');
         return u.role || u.Group || u.GroupUser || u.GroupID || 'Admin';
       })(),
@@ -486,16 +437,16 @@ var PermissionsPage = (function () {
 
     var label = tr.querySelector('.tree-label') ? tr.querySelector('.tree-label').innerText : id;
 
-    return PermissionsService.savePermission(payload).then(function(res) {
-        if (res && res.code === 0) {
-           if (!suppressToast) UIToast.show('Đã cập nhật quyền: <b>' + label + '</b>', 'success');
-        } else {
-           if (!suppressToast) UIToast.show(res.msg || 'Lỗi cập nhật quyền', 'error');
-        }
-        return res;
-    }).catch(function() {
-        if (!suppressToast) UIToast.show('Lỗi kết nối khi cập nhật quyền', 'error');
-        return null;
+    return PermissionsService.savePermission(payload).then(function (res) {
+      if (res && res.code === 0) {
+        if (!suppressToast) UIToast.show('Đã cập nhật quyền: <b>' + label + '</b>', 'success');
+      } else {
+        if (!suppressToast) UIToast.show(res.msg || 'Lỗi cập nhật quyền', 'error');
+      }
+      return res;
+    }).catch(function () {
+      if (!suppressToast) UIToast.show('Lỗi kết nối khi cập nhật quyền', 'error');
+      return null;
     });
   }
 
@@ -534,25 +485,25 @@ var PermissionsPage = (function () {
     if (!ctxMenu) return;
 
     var PRESETS = [
-      { label: 'Cấm truy cập',                       icon: 'block',           cls: 'danger', p: { xem:0, them:0, sua:0, xoa:0, isManager:0, isAdmin:0, isAutoLock:0, isHideAmount:0, isLockDoc:0, isUnLockDoc:0, isExportExcel:0 } },
+      { label: 'Cấm truy cập', icon: 'block', cls: 'danger', p: { xem: 0, them: 0, sua: 0, xoa: 0, isManager: 0, isAdmin: 0, isAutoLock: 0, isHideAmount: 0, isLockDoc: 0, isUnLockDoc: 0, isExportExcel: 0 } },
       { divider: true },
-      { label: 'Cho quyền xem',                       icon: 'visibility',      p: { xem:1, them:0, sua:0, xoa:0, isManager:0, isAdmin:0 } },
-      { label: 'Cho quyền thêm',                      icon: 'add_circle',      p: { xem:1, them:1, sua:0, xoa:0, isManager:0, isAdmin:0 } },
-      { label: 'Cho quyền sửa',                       icon: 'edit',            p: { xem:1, them:0, sua:1, xoa:0, isManager:0, isAdmin:0 } },
-      { label: 'Cho quyền xóa',                       icon: 'delete',          p: { xem:1, them:0, sua:0, xoa:1, isManager:0, isAdmin:0 } },
-      { label: 'Cho quyền xem + thêm + sửa + xóa',   icon: 'done_all',        p: { xem:1, them:1, sua:1, xoa:1, isManager:0, isAdmin:0 } },
+      { label: 'Cho quyền xem', icon: 'visibility', p: { xem: 1, them: 0, sua: 0, xoa: 0, isManager: 0, isAdmin: 0 } },
+      { label: 'Cho quyền thêm', icon: 'add_circle', p: { xem: 1, them: 1, sua: 0, xoa: 0, isManager: 0, isAdmin: 0 } },
+      { label: 'Cho quyền sửa', icon: 'edit', p: { xem: 1, them: 0, sua: 1, xoa: 0, isManager: 0, isAdmin: 0 } },
+      { label: 'Cho quyền xóa', icon: 'delete', p: { xem: 1, them: 0, sua: 0, xoa: 1, isManager: 0, isAdmin: 0 } },
+      { label: 'Cho quyền xem + thêm + sửa + xóa', icon: 'done_all', p: { xem: 1, them: 1, sua: 1, xoa: 1, isManager: 0, isAdmin: 0 } },
       { divider: true },
-      { label: 'Cho quyền Manager',                   icon: 'manage_accounts', p: { xem:1, them:1, sua:1, xoa:1, isManager:1, isAdmin:0, isExportExcel:1 } },
-      { label: 'Cho quyền Admin (tất cả)',             icon: 'shield',          p: { xem:1, them:1, sua:1, xoa:1, isManager:1, isAdmin:1, isAutoLock:1, isHideAmount:1, isLockDoc:1, isUnLockDoc:1, isExportExcel:1 } },
+      { label: 'Cho quyền Manager', icon: 'manage_accounts', p: { xem: 1, them: 1, sua: 1, xoa: 1, isManager: 1, isAdmin: 0, isExportExcel: 1 } },
+      { label: 'Cho quyền Admin (tất cả)', icon: 'shield', p: { xem: 1, them: 1, sua: 1, xoa: 1, isManager: 1, isAdmin: 1, isAutoLock: 1, isHideAmount: 1, isLockDoc: 1, isUnLockDoc: 1, isExportExcel: 1 } },
       { divider: true },
-      { label: 'Tắt/Mở tự động khóa sau In phiếu',   icon: 'lock_clock',      toggle: 'isAutoLock' },
-      { label: 'Cho/Cấm xem cột số tiền',             icon: 'attach_money',    toggle: 'isHideAmount' },
-      { label: 'Quyền khóa / Mở khóa chứng từ',      icon: 'lock',            toggle: 'isLockDoc', alsoToggle: 'isUnLockDoc' },
-      { label: 'Quyền xuất Excel',                    icon: 'file_download',   toggle: 'isExportExcel' },
+      { label: 'Tắt/Mở tự động khóa sau In phiếu', icon: 'lock_clock', toggle: 'isAutoLock' },
+      { label: 'Cho/Cấm xem cột số tiền', icon: 'attach_money', toggle: 'isHideAmount' },
+      { label: 'Quyền khóa / Mở khóa chứng từ', icon: 'lock', toggle: 'isLockDoc', alsoToggle: 'isUnLockDoc' },
+      { label: 'Quyền xuất Excel', icon: 'file_download', toggle: 'isExportExcel' },
     ];
 
     // Build menu HTML
-    ctxMenu.innerHTML = PRESETS.map(function(item, idx) {
+    ctxMenu.innerHTML = PRESETS.map(function (item, idx) {
       if (item.divider) return '<hr class="ctx-divider">';
       var icon = item.icon
         ? '<span class="material-symbols-outlined" style="font-size:18px; flex-shrink:0;">' + item.icon + '</span>'
@@ -561,9 +512,9 @@ var PermissionsPage = (function () {
     }).join('');
 
     // Hide on click outside (left click)
-    document.addEventListener('click', function() { ctxMenu.style.display = 'none'; });
+    document.addEventListener('click', function () { ctxMenu.style.display = 'none'; });
     // Hide on right-click outside — but skip if inside the table
-    document.addEventListener('contextmenu', function(e) {
+    document.addEventListener('contextmenu', function (e) {
       if (!e.target.closest('#perm-ctx-menu') && !e.target.closest('#permission-tree-table')) {
         ctxMenu.style.display = 'none';
       }
@@ -571,7 +522,7 @@ var PermissionsPage = (function () {
 
     // Show menu on right-click on a row
     var tbody = $container.querySelector('#permission-tree-table tbody');
-    tbody.addEventListener('contextmenu', function(e) {
+    tbody.addEventListener('contextmenu', function (e) {
       var tr = e.target.closest('tr.tree-row');
       if (!tr) return;
       e.preventDefault();
@@ -579,29 +530,29 @@ var PermissionsPage = (function () {
 
       var x = e.clientX, y = e.clientY;
       ctxMenu.style.visibility = 'hidden';
-      ctxMenu.style.display    = 'block';
-      var menuW = ctxMenu.offsetWidth  || 280;
+      ctxMenu.style.display = 'block';
+      var menuW = ctxMenu.offsetWidth || 280;
       var menuH = ctxMenu.offsetHeight || 360;
       ctxMenu.style.visibility = '';
-      
-      if (x + menuW > window.innerWidth  - 8) x = x - menuW;
+
+      if (x + menuW > window.innerWidth - 8) x = x - menuW;
       if (y + menuH > window.innerHeight - 8) y = y - menuH;
-      
+
       x = Math.max(4, x);
       y = Math.max(4, y);
-      ctxMenu.style.left    = x + 'px';
-      ctxMenu.style.top     = y + 'px';
+      ctxMenu.style.left = x + 'px';
+      ctxMenu.style.top = y + 'px';
       ctxMenu.style.display = 'block';
-      ctxMenu._targetRow    = tr;
+      ctxMenu._targetRow = tr;
     });
 
     // Handle menu item click
-    ctxMenu.addEventListener('click', function(e) {
+    ctxMenu.addEventListener('click', function (e) {
       var item = e.target.closest('.ctx-item');
       if (!item) return;
-      var idx    = parseInt(item.getAttribute('data-idx'));
+      var idx = parseInt(item.getAttribute('data-idx'));
       var preset = PRESETS[idx];
-      var tr     = ctxMenu._targetRow;
+      var tr = ctxMenu._targetRow;
       if (!preset || !tr) return;
       ctxMenu.style.display = 'none';
       _applyPreset(tr, preset);
@@ -611,7 +562,7 @@ var PermissionsPage = (function () {
   function _applyPreset(tr, preset) {
     var isFolder = tr.getAttribute('data-is-folder') === 'true';
     var targetRows = [];
-    
+
     if (isFolder) {
       var level = parseInt(tr.getAttribute('data-level') || '0', 10);
       var nextTr = tr.nextElementSibling;
@@ -630,7 +581,7 @@ var PermissionsPage = (function () {
     var suppressToast = targetRows.length > 1;
     var promises = [];
 
-    targetRows.forEach(function(targetTr) {
+    targetRows.forEach(function (targetTr) {
       function setChk(action, val) {
         var chk = targetTr.querySelector('.perm-chk[data-action="' + action + '"]');
         if (chk) chk.checked = !!val;
@@ -645,14 +596,14 @@ var PermissionsPage = (function () {
         setChk(preset.toggle, newVal);
         if (preset.alsoToggle) setChk(preset.alsoToggle, newVal);
       } else if (preset.p) {
-        Object.keys(preset.p).forEach(function(k) { setChk(k, preset.p[k]); });
+        Object.keys(preset.p).forEach(function (k) { setChk(k, preset.p[k]); });
       }
 
       promises.push(_saveSingleRowPermission(targetTr, suppressToast));
     });
 
     if (suppressToast && promises.length > 0) {
-      Promise.all(promises).then(function() {
+      Promise.all(promises).then(function () {
         var label = tr.querySelector('.tree-label') ? tr.querySelector('.tree-label').innerText : 'Nhóm này';
         UIToast.show('Đã cập nhật quyền hàng loạt cho: <b>' + label + '</b>', 'success');
       });

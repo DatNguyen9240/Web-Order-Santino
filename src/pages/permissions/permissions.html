@@ -1,6 +1,6 @@
 <div style="display: flex; gap: 16px; flex-wrap: wrap; animation: slideUp 0.3s ease forwards;">
   <!-- CỘT TRÁI: DANH SÁCH NHÓM QUYỀN -->
-  <div style="flex: 0 0 250px; min-width: 200px;">
+  <div class="role-list-col" style="flex: 0 0 250px; min-width: 200px;">
     <div class="card" style="padding: 0; overflow: hidden;">
       <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--bg);">
         <h3 style="margin: 0; font-size: 15px; font-weight: 600;">Nhóm quyền</h3>
@@ -14,45 +14,60 @@
   <!-- CỘT PHẢI: CHI TIẾT PHÂN QUYỀN -->
   <div style="flex: 1 1 500px; min-width: 300px;">
     <div class="card d-flex flex-column" style="min-height: 400px; padding: 0; overflow: hidden;">
-      <div style="padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--bg); display: flex; justify-content: space-between; align-items: center;">
+      <div class="permissions-header"
+        style="padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--bg); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
         <h3 style="display: flex; align-items: center; gap: 8px; margin: 0; font-size: 15px; font-weight: 600;">
           <span class="material-symbols-outlined" style="font-size: 20px;">account_tree</span>
           Chi tiết Phân quyền: <span id="current-role-name" style="color: var(--primary); font-weight: 600;"></span>
         </h3>
         <div>
-          <button class="btn btn-outline btn-sm" id="btn-sync-permission" style="padding: 6px 12px; font-size: 12px; white-space: nowrap;">Đồng Bộ Menu</button>
+          <button class="btn btn-outline btn-sm" id="btn-sync-permission"
+            style="padding: 6px 12px; font-size: 12px; white-space: nowrap;">Đồng Bộ Menu</button>
         </div>
       </div>
-      <div style="overflow: auto; max-height: calc(100vh - 200px); -webkit-overflow-scrolling: touch;">
-        <table class="data-table" id="permission-tree-table" style="margin: 0; width: 100%; min-width: 950px; border-collapse: collapse; table-layout: fixed;">
+      <div class="tbl-wrap" style="overflow: auto; max-height: calc(100vh - 200px); -webkit-overflow-scrolling: touch;">
+        <table class="data-table" id="permission-tree-table"
+          style="margin: 0; width: 100%; min-width: 950px; border-collapse: collapse; table-layout: fixed;">
           <colgroup>
-            <col style="width: 34%;">
-            <col style="width: 6%;">
-            <col style="width: 6%;">
-            <col style="width: 6%;">
-            <col style="width: 6%;">
-            <col style="width: 6%;">
-            <col style="width: 6%;">
-            <col style="width: 6%;">
-            <col style="width: 6%;">
-            <col style="width: 6%;">
-            <col style="width: 6%;">
-            <col style="width: 6%;">
+            <col class="col-tree" style="width: 34%;">
+            <col class="col-check" style="width: 6%;">
+            <col class="col-check" style="width: 6%;">
+            <col class="col-check" style="width: 6%;">
+            <col class="col-check" style="width: 6%;">
+            <col class="col-check" style="width: 6%;">
+            <col class="col-check" style="width: 6%;">
+            <col class="col-check" style="width: 6%;">
+            <col class="col-check" style="width: 6%;">
+            <col class="col-check" style="width: 6%;">
+            <col class="col-check" style="width: 6%;">
+            <col class="col-check" style="width: 6%;">
           </colgroup>
           <thead>
             <tr>
-              <th style="text-align: left; padding: 10px; border-bottom: 2px solid var(--border);">Cấu trúc Phân quyền</th>
-              <th style="font-size: 11px; text-align: center; padding: 10px; border-bottom: 2px solid var(--border);">Xem</th>
-              <th style="font-size: 11px; text-align: center; padding: 10px; border-bottom: 2px solid var(--border);">Thêm</th>
-              <th style="font-size: 11px; text-align: center; padding: 10px; border-bottom: 2px solid var(--border);">Sửa</th>
-              <th style="font-size: 11px; text-align: center; padding: 10px; border-bottom: 2px solid var(--border);">Xóa</th>
-              <th style="font-size: 11px; text-align: center; padding: 10px; border-bottom: 2px solid var(--border);">Quản lý</th>
-              <th style="font-size: 11px; text-align: center; padding: 10px; border-bottom: 2px solid var(--border);">Admin</th>
-              <th style="font-size: 11px; text-align: center; padding: 10px; border-bottom: 2px solid var(--border);" title="Khóa Tự Động">Khóa TĐ</th>
-              <th style="font-size: 11px; text-align: center; padding: 10px; border-bottom: 2px solid var(--border);" title="Ẩn Số Tiền">Ẩn T.Tiền</th>
-              <th style="font-size: 11px; text-align: center; padding: 10px; border-bottom: 2px solid var(--border);" title="Khóa Chứng Từ">Khóa CT</th>
-              <th style="font-size: 11px; text-align: center; padding: 10px; border-bottom: 2px solid var(--border);" title="Mở Chứng Từ">Mở CT</th>
-              <th style="font-size: 11px; text-align: center; padding: 10px; border-bottom: 2px solid var(--border);" title="Xuất Excel">Xuất Excel</th>
+              <th style="text-align: left; padding: 10px; border-bottom: 2px solid var(--border);">Cấu trúc Phân quyền
+              </th>
+              <th style="font-size: 11px; text-align: center; padding: 10px; border-bottom: 2px solid var(--border);">
+                Xem</th>
+              <th style="font-size: 11px; text-align: center; padding: 10px; border-bottom: 2px solid var(--border);">
+                Thêm</th>
+              <th style="font-size: 11px; text-align: center; padding: 10px; border-bottom: 2px solid var(--border);">
+                Sửa</th>
+              <th style="font-size: 11px; text-align: center; padding: 10px; border-bottom: 2px solid var(--border);">
+                Xóa</th>
+              <th style="font-size: 11px; text-align: center; padding: 10px; border-bottom: 2px solid var(--border);">
+                Quản lý</th>
+              <th style="font-size: 11px; text-align: center; padding: 10px; border-bottom: 2px solid var(--border);">
+                Admin</th>
+              <th style="font-size: 11px; text-align: center; padding: 10px; border-bottom: 2px solid var(--border);"
+                title="Khóa Tự Động">Khóa TĐ</th>
+              <th style="font-size: 11px; text-align: center; padding: 10px; border-bottom: 2px solid var(--border);"
+                title="Ẩn Số Tiền">Ẩn T.Tiền</th>
+              <th style="font-size: 11px; text-align: center; padding: 10px; border-bottom: 2px solid var(--border);"
+                title="Khóa Chứng Từ">Khóa CT</th>
+              <th style="font-size: 11px; text-align: center; padding: 10px; border-bottom: 2px solid var(--border);"
+                title="Mở Chứng Từ">Mở CT</th>
+              <th style="font-size: 11px; text-align: center; padding: 10px; border-bottom: 2px solid var(--border);"
+                title="Xuất Excel">Xuất Excel</th>
             </tr>
           </thead>
           <tbody style="font-size: 13px;">
@@ -63,3 +78,107 @@
     </div>
   </div>
 </div>
+
+<style>
+/* Tối ưu Responsive cho trang Phân quyền trên Mobile */
+@media (max-width: 767.98px) {
+  .role-list-col {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+  }
+  
+  #role-list-container {
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    gap: 8px !important;
+    padding: 8px !important;
+    white-space: nowrap !important;
+    scrollbar-width: none; 
+    max-height: none !important;
+  }
+  #role-list-container::-webkit-scrollbar { display: none; }
+  
+  .role-tab {
+    flex: 0 0 auto !important;
+    margin-bottom: 0 !important;
+    padding: 8px 16px !important;
+    font-size: 13px !important;
+    border: 1px solid var(--border) !important;
+  }
+  
+  .permissions-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+  .permissions-header h3 {
+    font-size: 14px !important;
+    white-space: normal !important;
+    line-height: 1.4 !important;
+  }
+  #btn-sync-permission {
+    width: 100% !important;
+  }
+
+  .tbl-wrap {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  #permission-tree-table {
+    width: 950px !important;
+    min-width: 950px !important;
+    table-layout: fixed !important;
+  }
+  
+  /* Cưỡng ép độ rộng của col đầu tiên bằng class để ghi đè colgroup */
+  .col-tree {
+    width: 180px !important;
+  }
+  
+  .col-check {
+    width: 70px !important;
+  }
+
+  /* Sticky first column for permissions tree table */
+  #permission-tree-table th:first-child,
+  #permission-tree-table td:first-child {
+    position: sticky !important;
+    left: 0 !important;
+    z-index: 3 !important;
+    background: var(--surface, #fff) !important;
+    border-right: 1px solid var(--border, #e2e8f0) !important;
+    width: 180px !important;
+    min-width: 180px !important;
+    max-width: 180px !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+  }
+  
+  #permission-tree-table td:first-child .tree-cell,
+  #permission-tree-table td:first-child .tree-label {
+    white-space: normal !important;
+  }
+  
+  body.dark-theme #permission-tree-table td:first-child,
+  body.dark-theme #permission-tree-table th:first-child {
+    background: #18181b !important;
+  }
+
+  .data-table th, .data-table td {
+    padding: 8px 4px !important;
+    font-size: 12px !important;
+  }
+  .tree-cell {
+    gap: 4px !important;
+  }
+  .tree-icon, .tree-toggle {
+    font-size: 16px !important;
+  }
+  .tree-toggle {
+    width: 16px !important;
+  }
+}
+</style>
