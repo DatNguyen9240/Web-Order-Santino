@@ -342,7 +342,7 @@ input.date-vn:active::before {
 
 .navbar .nav-item.active {
   color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  background: rgba(79, 70, 229, 0.08);
   font-weight: 700;
 }
 
@@ -709,7 +709,7 @@ input.date-vn:active::before {
 }
 
 .sidebar .nav-item.active {
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  background: rgba(79, 70, 229, 0.12);
   color: var(--accent);
   box-shadow: inset 4px 0 0 var(--accent);
   font-weight: 700;
@@ -3417,9 +3417,9 @@ tbody tr.row-selected td:first-child {
 .pagination-wrapper {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 24px;
   padding: 16px 24px;
   border-top: 1px solid var(--border, #e2e8f0);
   background: var(--surface, #ffffff);
@@ -3545,6 +3545,45 @@ tbody tr.row-selected td:first-child {
     white-space: nowrap;
   }
 }
+
+/* --- screen-capture.css --- */
+/* ═══════════════════════════════════════════
+   SCREEN CAPTURE COMPONENT CSS
+   ═══════════════════════════════════════════ */
+
+.screen-capture-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 999990;
+  cursor: crosshair;
+  user-select: none;
+}
+
+.screen-capture-toolbar button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text, #1f2937);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.screen-capture-toolbar button:hover {
+  background: var(--bg, #f3f4f6);
+  color: var(--accent, #4f46ed);
+}
+
+.screen-capture-toolbar button .material-symbols-outlined {
+  font-size: 18px;
+}
+
 
 /* --- tabs.css --- */
 /* ═══════════════════════════════════════════
