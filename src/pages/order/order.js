@@ -35,8 +35,11 @@ var OrderPage = (function () {
         var records = await PermissionsService.getFullMenusByGroup(role);
         if (Array.isArray(records)) {
           var customerMenu = records.find(function (item) {
-            var menuId = item.id || item.Id || item.MenuId || '';
-            return menuId.toLowerCase() === 'web_customerfrm';
+            var formName = item.formName || item.FormName || '';
+            var formKey = item.formKey || item.FormKey || '';
+            return formName.toLowerCase() === 'web_customerfrm' || 
+                   formName.toLowerCase() === 'customers' ||
+                   formKey.toLowerCase() === 'customers';
           });
           _canAddCustomer = customerMenu ? (customerMenu.IsAdd == 1 || customerMenu.isAdd == 1) : false;
         }

@@ -20,8 +20,8 @@ PRINT '--- 1. Cấu hình tài khoản Kế toán (TESTKETOAN) ---';
 -- Đảm bảo TESTKETOAN tồn tại
 IF NOT EXISTS (SELECT 1 FROM [dbo].[SY_User] WHERE [UserName] = 'TESTKETOAN')
 BEGIN
-    INSERT INTO [dbo].[SY_User] ([UserName], [HoTen], [UserGroupID], [Disable])
-    VALUES ('TESTKETOAN', N'Kế Toán Test', 'KT Bruno', 0);
+    INSERT INTO [dbo].[SY_User] ([UserName], [HoTen], [TenNgan], [UserGroupID], [Disable])
+    VALUES ('TESTKETOAN', N'Kế Toán Test', N'Kế Toán Test', 'KT Bruno', 0);
     PRINT '-> Đã tạo mới tài khoản TESTKETOAN';
 END
 ELSE
