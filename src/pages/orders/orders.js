@@ -4,6 +4,7 @@ var OrdersPage = (function () {
   var gridApi = null;
 
   function render($el) {
+    gridApi = null;
     // Cho phép trang này rộng tối đa theo container-order
     $el.classList.add('is-full-width');
     return Router.fetchTemplate('src/pages/orders/orders.html').then(function (html) {
@@ -233,6 +234,9 @@ var OrdersPage = (function () {
         currentPage: currentPage,
         onPageChange: function (page) {
           currentPage = page;
+          _render();
+        },
+        onRefresh: function () {
           _render();
         }
       });

@@ -13,6 +13,7 @@ var CustomersPage = (function () {
   var dealers = [];
 
   function render(containerElement) {
+    gridApi = null;
     $container = containerElement;
     $container.classList.add('is-full-width');
 
@@ -267,6 +268,9 @@ var CustomersPage = (function () {
           currentPage: currentPage,
           onPageChange: function (page) {
             currentPage = page;
+            _fetchAndRender();
+          },
+          onRefresh: function () {
             _fetchAndRender();
           }
         });

@@ -3,6 +3,7 @@ var OrderDetailPage = (function () {
   var allLines = [];
   var currentPage = 1;
   var itemsPerPage = 10;
+  var $container = null;
 
   function renderLines() {
     var container = document.getElementById('detail-grid-container');
@@ -82,6 +83,9 @@ var OrderDetailPage = (function () {
           onPageChange: function (page) {
             currentPage = page;
             renderLines();
+          },
+          onRefresh: function () {
+            loadOrderDetailData();
           }
         });
         paginationContainer.appendChild(pag);
@@ -90,53 +94,72 @@ var OrderDetailPage = (function () {
   }
 
   async function render($el) {
+    $container = $el;
     try {
+      gridApi = null;
       allLines = [];
       currentPage = 1;
-      $el.classList.add('is-full-width');
+      $container.classList.add('is-full-width');
 
       const html = await Router.fetchTemplate('src/pages/order-detail/order-detail.html');
-      $el.innerHTML = html;
-      var id = window._viewOrderId;
-      var o = null;
+      $container.innerHTML = html;
 
-      try {
-        const queryObj = { Loai: 'OrderDetail', TimKiem: id };
+      await loadOrderDetailData();
+    } catch (e) {
+      console.warn('Lỗi render order detail:', e);
+    }
+  }
 
-        var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
-        var role = user.role || user.Group || '';
-        var empID = user.EmployeeID || '';
-        var objID = user.ObjectID || '';
-        if (objID && objID !== '') {
-          empID = '';
-        }
-        queryObj.chinhanh = '|PAGE:1|ROLE:' + role + '|EMP:' + empID + '|OBJ:' + objID;
+  async function loadOrderDetailData() {
+    if (gridApi) {
+      gridApi.showLoadingOverlay();
+    }
+    var id = window._viewOrderId;
+    var o = null;
 
-        const params = { q: JSON.stringify(queryObj), _t: Date.now() };
-        const res = await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, params);
+    try {
+      const queryObj = { Loai: 'OrderDetail', TimKiem: id };
 
-        if (res && res.records && res.records.length > 0) {
-          o = res.records[0];
-        } else if (res && res.length > 0) {
-          o = res[0];
-        }
+      var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
+      var role = user.role || user.Group || '';
+      var empID = user.EmployeeID || '';
+      var objID = user.ObjectID || '';
+      if (objID && objID !== '') {
+        empID = '';
+      }
+      queryObj.chinhanh = '|PAGE:1|ROLE:' + role + '|EMP:' + empID + '|OBJ:' + objID;
 
-        if (o && typeof o.lines === 'string') {
-          try { o.lines = JSON.parse(o.lines); } catch (e) { }
-        }
-      } catch (err) {
-        console.warn('Lỗi tải chi tiết đơn hàng:', err);
+      const params = { q: JSON.stringify(queryObj), _t: Date.now() };
+      const res = await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, params);
+
+      if (res && res.records && res.records.length > 0) {
+        o = res.records[0];
+      } else if (res && res.length > 0) {
+        o = res[0];
       }
 
-      if (!o) {
-        $el.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">search_off</span><p>' + t('order.not_found') + '</p></div>';
-        return;
+      if (o && typeof o.lines === 'string') {
+        try { o.lines = JSON.parse(o.lines); } catch (e) { }
       }
+    } catch (err) {
+      console.warn('Lỗi tải chi tiết đơn hàng:', err);
+    }
 
-      allLines = o.lines || [];
+    if (!o) {
+      if ($container) {
+        $container.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">search_off</span><p>' + t('order.not_found') + '</p></div>';
+      }
+      return;
+    }
 
-      document.getElementById('detail-title').textContent = t('btn.detail') + ': ' + o.so_ct;
-      document.getElementById('detail-info').innerHTML = `
+    allLines = o.lines || [];
+
+    var titleEl = document.getElementById('detail-title');
+    if (titleEl) titleEl.textContent = t('btn.detail') + ': ' + o.so_ct;
+
+    var infoEl = document.getElementById('detail-info');
+    if (infoEl) {
+      infoEl.innerHTML = `
         <table>
           <tbody>
             <tr>
@@ -176,11 +199,9 @@ var OrderDetailPage = (function () {
           </tbody>
         </table>
       `;
-
-      renderLines();
-    } catch (e) {
-      console.warn('Lỗi render order detail:', e);
     }
+
+    renderLines();
   }
 
   return { render: render };
