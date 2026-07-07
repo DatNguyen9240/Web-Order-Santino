@@ -5,9 +5,9 @@
 .pagination-wrapper {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 24px;
   padding: 16px 24px;
   border-top: 1px solid var(--border, #e2e8f0);
   background: var(--surface, #ffffff);
