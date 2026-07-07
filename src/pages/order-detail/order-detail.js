@@ -1,21 +1,23 @@
 var OrderDetailPage = (function () {
   var gridApi = null;
   var allLines = [];
+  var currentPage = 1;
+  var itemsPerPage = 10;
 
   function renderLines() {
     var container = document.getElementById('detail-grid-container');
     if (!container) return;
 
+    var pageLines = allLines.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
     var gridOptions = {
-      pagination: true,
-      paginationPageSize: 10,
-      paginationPageSizeSelector: [10, 20, 50],
+      pagination: false,
       columnDefs: [
-        { field: 'ten_hang_2', headerName: 'Tên hàng 2', cellStyle: { fontWeight: '700' } },
-        { field: 'ten_hang', headerName: 'Tên hàng hóa', minWidth: 150 },
+        { field: 'ten_hang_2', headerName: (typeof t !== 'undefined' ? t('table.col.name2') : 'Tên hàng 2'), cellStyle: { fontWeight: '700' } },
+        { field: 'ten_hang', headerName: (typeof t !== 'undefined' ? t('table.col.product_name') : 'Tên hàng hóa'), minWidth: 150 },
         { 
           field: 'chi_tiet_size', 
-          headerName: 'Size',
+          headerName: (typeof t !== 'undefined' ? t('table.col.size') : 'Size'),
           minWidth: 150,
           cellStyle: { color: 'var(--text-secondary, #6b7280)', fontSize: '13px' },
           cellRenderer: function(params) {
@@ -34,12 +36,12 @@ var OrderDetailPage = (function () {
         },
         { 
           field: 'so_luong', 
-          headerName: 'SL',
+          headerName: (typeof t !== 'undefined' ? t('order.col.qty') : 'SL'),
           cellStyle: { color: 'var(--accent, #4F46E5)', fontWeight: '700' }
         },
         { 
           field: 'don_gia', 
-          headerName: 'Đơn giá',
+          headerName: (typeof t !== 'undefined' ? t('table.col.price') : 'Đơn giá'),
           valueFormatter: function(params) {
             if (typeof Utils !== 'undefined' && Utils.formatMoney) {
               return Utils.formatMoney(params.value || 0);
@@ -49,7 +51,7 @@ var OrderDetailPage = (function () {
         },
         { 
           field: 'thanh_tien', 
-          headerName: 'Thành tiền',
+          headerName: (typeof t !== 'undefined' ? t('order.total.money') : 'Thành tiền'),
           cellStyle: { fontWeight: '700' },
           valueFormatter: function(params) {
             if (typeof Utils !== 'undefined' && Utils.formatMoney) {
@@ -59,15 +61,38 @@ var OrderDetailPage = (function () {
           }
         }
       ],
-      rowData: allLines
+      rowData: pageLines
     };
 
-    gridApi = AppGrid.create(container, gridOptions);
+    if (!gridApi) {
+      gridApi = AppGrid.create(container, gridOptions);
+    } else {
+      gridApi.setGridOption('rowData', pageLines);
+    }
+
+    // Render custom Pagination
+    var paginationContainer = document.getElementById('detail-pagination');
+    if (paginationContainer) {
+      paginationContainer.innerHTML = '';
+      if (allLines.length > 0 && typeof Pagination !== 'undefined') {
+        var pag = Pagination.create({
+          totalItems: allLines.length,
+          itemsPerPage: itemsPerPage,
+          currentPage: currentPage,
+          onPageChange: function (page) {
+            currentPage = page;
+            renderLines();
+          }
+        });
+        paginationContainer.appendChild(pag);
+      }
+    }
   }
 
   async function render($el) {
     try {
       allLines = [];
+      currentPage = 1;
       $el.classList.add('is-full-width');
 
       const html = await Router.fetchTemplate('src/pages/order-detail/order-detail.html');

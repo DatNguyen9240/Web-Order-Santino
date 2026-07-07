@@ -35,6 +35,9 @@ var TRANSLATIONS = {
     "btn.close": "Đóng",
     "btn.preview": "Xem trước",
     "table.empty": "Không có dữ liệu",
+    "pager.info": "Hiển thị {0} - {1} trong số {2} bản ghi",
+    "pager.page": "Trang",
+    "pager.total_count": "Tổng số: {0} khách hàng",
     
     // --- Order Page ---
     "order.info": "Thông tin chung",
@@ -151,7 +154,23 @@ var TRANSLATIONS = {
     "order.delete.title": "Xóa đơn hàng",
     "order.delete.msg": "Xóa đơn này?",
     "btn.detail": "Chi tiết",
-    "btn.back": "Quay lại"
+    "btn.back": "Quay lại",
+    "customers.col.id": "Mã KH",
+    "customers.col.name": "Tên khách hàng",
+    "customers.col.phone": "Điện thoại",
+    "customers.col.address": "Địa chỉ",
+    "customers.col.employee": "Nhân viên quản lý",
+    "customers.col.group": "Nhóm khách hàng",
+    "customers.col.username": "Tài khoản",
+    "customers.col.status": "Trạng thái",
+    "customers.status.no_account": "Chưa tạo",
+    "customers.status.locked_account": "[TK Bị Khóa]",
+    "customers.status.active_account": "[TK Mở]",
+    "customers.status.locked": "Đã khóa",
+    "customers.status.active": "Hoạt động",
+    "customers.action.unlock": "Mở khóa tài khoản",
+    "customers.action.lock": "Khóa tài khoản",
+    "customers.action.reset_pw": "Đặt lại mật khẩu"
   },
   en: {
     // --- Sidebar ---
@@ -189,6 +208,9 @@ var TRANSLATIONS = {
     "btn.close": "Close",
     "btn.preview": "Preview",
     "table.empty": "No data available",
+    "pager.info": "Showing {0} - {1} of {2} records",
+    "pager.page": "Page",
+    "pager.total_count": "Total: {0} customers",
 
     // --- Order Page ---
     "order.info": "General Info",
@@ -305,7 +327,23 @@ var TRANSLATIONS = {
     "order.delete.title": "Delete Order",
     "order.delete.msg": "Delete this order?",
     "btn.detail": "Details",
-    "btn.back": "Back"
+    "btn.back": "Back",
+    "customers.col.id": "Customer ID",
+    "customers.col.name": "Customer Name",
+    "customers.col.phone": "Phone",
+    "customers.col.address": "Address",
+    "customers.col.employee": "Managing Staff",
+    "customers.col.group": "Customer Group",
+    "customers.col.username": "Username",
+    "customers.col.status": "Status",
+    "customers.status.no_account": "Not created",
+    "customers.status.locked_account": "[Disabled]",
+    "customers.status.active_account": "[Active]",
+    "customers.status.locked": "Locked",
+    "customers.status.active": "Active",
+    "customers.action.unlock": "Unlock account",
+    "customers.action.lock": "Lock account",
+    "customers.action.reset_pw": "Reset password"
   },
   zh: {
     // --- Sidebar ---
@@ -459,7 +497,23 @@ var TRANSLATIONS = {
     "order.delete.title": "删除订单",
     "order.delete.msg": "删除此订单？",
     "btn.detail": "详情",
-    "btn.back": "返回"
+    "btn.back": "返回",
+    "customers.col.id": "客户ID",
+    "customers.col.name": "客户姓名",
+    "customers.col.phone": "电话",
+    "customers.col.address": "地址",
+    "customers.col.employee": "管理员工",
+    "customers.col.group": "客户群",
+    "customers.col.username": "用户名",
+    "customers.col.status": "状态",
+    "customers.status.no_account": "未创建",
+    "customers.status.locked_account": "[被锁账户]",
+    "customers.status.active_account": "[已启用]",
+    "customers.status.locked": "已锁定",
+    "customers.status.active": "活动",
+    "customers.action.unlock": "解锁账户",
+    "customers.action.lock": "锁定账户",
+    "customers.action.reset_pw": "重置密码"
   }
 };
 
@@ -3209,7 +3263,11 @@ var Pagination = (function () {
 
     var info = document.createElement('div');
     info.className = 'pagination-info';
-    info.innerText = `Hiển thị ${startItem}-${endItem} trong số ${options.totalItems} bản ghi`;
+    var infoTemplate = (typeof t !== 'undefined') ? t('pager.info') : 'Hiển thị {0} - {1} trong số {2} bản ghi';
+    info.innerText = infoTemplate
+      .replace('{0}', startItem)
+      .replace('{1}', endItem)
+      .replace('{2}', options.totalItems);
 
     var controls = document.createElement('div');
     controls.className = 'pagination-controls';
@@ -3277,7 +3335,8 @@ var Pagination = (function () {
     // Mobile Page Indicator
     var mobileIndicator = document.createElement('span');
     mobileIndicator.className = 'pager-mobile-indicator';
-    mobileIndicator.innerText = `Trang ${currentPage} / ${totalPages}`;
+    var pageLabel = (typeof t !== 'undefined') ? t('pager.page') : 'Trang';
+    mobileIndicator.innerText = `${pageLabel} ${currentPage} / ${totalPages}`;
     controls.appendChild(mobileIndicator);
 
     // Next Button

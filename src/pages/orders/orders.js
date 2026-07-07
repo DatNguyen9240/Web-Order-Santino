@@ -97,19 +97,19 @@ var OrdersPage = (function () {
     const gridOptions = {
       pagination: false, // Dung pagination ngoai nhu cu
       columnDefs: [
-        { field: 'so_ct', headerName: 'Số CT', cellStyle: { fontWeight: '700' }, width: 150, minWidth: 120 },
-        { field: 'ngay_ct', headerName: 'Ngày CT', width: 120, minWidth: 100 },
-        { field: 'chi_nhanh', headerName: 'Chi nhánh', minWidth: 130 },
+        { field: 'so_ct', headerName: (typeof t !== 'undefined' ? t('table.col.no') : 'Số CT'), cellStyle: { fontWeight: '700' }, width: 150, minWidth: 120 },
+        { field: 'ngay_ct', headerName: (typeof t !== 'undefined' ? t('table.col.date') : 'Ngày CT'), width: 120, minWidth: 100 },
+        { field: 'chi_nhanh', headerName: (typeof t !== 'undefined' ? t('table.col.branch') : 'Chi nhánh'), minWidth: 130 },
         {
           field: 'ma_ctbh',
-          headerName: 'CTKM',
+          headerName: (typeof t !== 'undefined' ? t('table.col.promo') : 'CTKM'),
           cellRenderer: function (params) {
             return params.value ? '<span class="badge badge-yellow">' + params.value + '</span>' : '<span style="color:var(--muted, #6b7280)">—</span>';
           }
         },
         {
           field: 'total_qty',
-          headerName: 'Tổng SP',
+          headerName: (typeof t !== 'undefined' ? t('table.col.total_qty') : 'Tổng SP'),
           cellStyle: { fontWeight: '700' },
           valueFormatter: function (params) {
             var label = (typeof t !== 'undefined') ? t('order.preview.sp') : 'SP';
@@ -118,7 +118,7 @@ var OrdersPage = (function () {
         },
         {
           field: 'total_money',
-          headerName: 'Tổng tiền',
+          headerName: (typeof t !== 'undefined' ? t('table.col.total_money') : 'Tổng tiền'),
           cellStyle: { color: 'var(--accent, #4F46E5)', fontWeight: '700' },
           valueFormatter: function (params) {
             if (typeof Utils !== 'undefined' && Utils.formatMoney) {
@@ -129,12 +129,12 @@ var OrdersPage = (function () {
         },
         {
           field: 'ghi_chu',
-          headerName: 'Ghi chú',
+          headerName: (typeof t !== 'undefined' ? t('table.col.note') : 'Ghi chú'),
           minWidth: 150,
           valueFormatter: params => params.value || '—'
         },
         {
-          headerName: 'Thao tác',
+          headerName: (typeof t !== 'undefined' ? t('table.col.action') : 'Thao tác'),
           sortable: false,
           filter: false,
           floatingFilter: false,

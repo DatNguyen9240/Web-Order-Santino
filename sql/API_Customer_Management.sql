@@ -11,7 +11,7 @@ GO
 CREATE PROCEDURE [dbo].[API_NguoiDung_Luu]
     @UserName NVARCHAR(50),
     @HoTen NVARCHAR(250),
-    @UserGroupID NVARCHAR(50),
+    @UserGroupID NVARCHAR(50) = NULL,
     @ObjectID NVARCHAR(50),
     @Disable BIT = 0
 AS
@@ -19,6 +19,7 @@ BEGIN
     SET NOCOUNT ON;
     
     IF @Disable IS NULL SET @Disable = 0;
+    IF @UserGroupID IS NULL OR @UserGroupID = '' SET @UserGroupID = 'KHACH';
     
     IF EXISTS (SELECT 1 FROM [dbo].[SY_User] WHERE [UserName] = @UserName)
     BEGIN

@@ -134,56 +134,66 @@ var CustomersPage = (function () {
     const gridOptions = {
       pagination: false,
       columnDefs: [
-        { field: 'customer_id', headerName: 'Mã KH', cellStyle: { fontWeight: '700' }, width: 120, minWidth: 100 },
-        { field: 'name', headerName: 'Tên khách hàng', minWidth: 160 },
-        { field: 'phone', headerName: 'Điện thoại', width: 130, minWidth: 110, valueFormatter: p => p.value || '-' },
-        { field: 'address', headerName: 'Địa chỉ', minWidth: 200, tooltipField: 'address' },
-        { field: 'employee_name', headerName: 'Nhân viên quản lý', minWidth: 150, valueFormatter: p => p.value || p.data.employee_id || '-' },
-        { field: 'group_name', headerName: 'Nhóm khách hàng', minWidth: 140, valueFormatter: p => p.value || p.data.group_id || '-' },
-        { 
-          field: 'username', 
-          headerName: 'Tài khoản', 
+        { field: 'customer_id', headerName: (typeof t !== 'undefined' ? t('customers.col.id') : 'Mã KH'), cellStyle: { fontWeight: '700' }, width: 120, minWidth: 100 },
+        { field: 'name', headerName: (typeof t !== 'undefined' ? t('customers.col.name') : 'Tên khách hàng'), minWidth: 160 },
+        { field: 'phone', headerName: (typeof t !== 'undefined' ? t('customers.col.phone') : 'Điện thoại'), width: 130, minWidth: 110, valueFormatter: p => p.value || '-' },
+        { field: 'address', headerName: (typeof t !== 'undefined' ? t('customers.col.address') : 'Địa chỉ'), minWidth: 200, tooltipField: 'address' },
+        { field: 'employee_name', headerName: (typeof t !== 'undefined' ? t('customers.col.employee') : 'Nhân viên quản lý'), minWidth: 150, valueFormatter: p => p.value || p.data.employee_id || '-' },
+        { field: 'group_name', headerName: (typeof t !== 'undefined' ? t('customers.col.group') : 'Nhóm khách hàng'), minWidth: 140, valueFormatter: p => p.value || p.data.group_id || '-' },
+        {
+          field: 'username',
+          headerName: (typeof t !== 'undefined' ? t('customers.col.username') : 'Tài khoản'),
           minWidth: 140,
-          cellRenderer: function(params) {
+          cellRenderer: function (params) {
             const c = params.data;
-            if (!c.username) return '<span style="color:var(--text-secondary, #6b7280); font-style:italic;">Chưa tạo</span>';
+            if (!c.username) return '<span style="color:var(--text-secondary, #6b7280); font-style:italic;">' + (typeof t !== 'undefined' ? t('customers.status.no_account') : 'Chưa tạo') + '</span>';
             const isUserDisabled = c.user_disable === true || c.user_disable == 1 || c.user_disable === 'true' || c.user_disable === '1';
+            const statusLabel = isUserDisabled
+              ? (typeof t !== 'undefined' ? t('customers.status.locked_account') : '[TK Bị Khóa]')
+              : (typeof t !== 'undefined' ? t('customers.status.active_account') : '[TK Mở]');
             return `<div style="display:flex; flex-direction:column; gap:2px; line-height: 1.2; padding: 4px 0;">
                       <strong>${c.username}</strong>
-                      ${isUserDisabled ? '<span style="font-size:10px; color:var(--danger, #ef4444)">[TK Bị Khóa]</span>' : '<span style="font-size:10px; color:var(--success, #10b981)">[TK Mở]</span>'}
+                      <span style="font-size:10px; color:${isUserDisabled ? 'var(--danger, #ef4444)' : 'var(--success, #10b981)'}">${statusLabel}</span>
                     </div>`;
           }
         },
-        { 
-          field: 'is_disable', 
-          headerName: 'Trạng thái', 
+        {
+          field: 'is_disable',
+          headerName: (typeof t !== 'undefined' ? t('customers.col.status') : 'Trạng thái'),
           width: 120,
-          cellRenderer: function(params) {
+          cellRenderer: function (params) {
             const c = params.data;
             const isDisabled = c.is_disable === true || c.is_disable == 1 || c.is_disable === 'true' || c.is_disable === '1';
+            const label = isDisabled
+              ? (typeof t !== 'undefined' ? t('customers.status.locked') : 'Đã khóa')
+              : (typeof t !== 'undefined' ? t('customers.status.active') : 'Hoạt động');
             return isDisabled
-              ? '<span class="badge badge-red">Đã khóa</span>'
-              : '<span class="badge badge-green">Hoạt động</span>';
+              ? `<span class="badge badge-red">${label}</span>`
+              : `<span class="badge badge-green">${label}</span>`;
           }
         },
         {
-          headerName: 'Thao tác',
+          headerName: (typeof t !== 'undefined' ? t('table.col.action') : 'Thao tác'),
           sortable: false,
           filter: false,
           floatingFilter: false,
           width: 160,
-          cellRenderer: function(params) {
+          cellRenderer: function (params) {
             const c = params.data;
             const isUserDisabled = c.user_disable === true || c.user_disable == 1 || c.user_disable === 'true' || c.user_disable === '1';
-            
+
+            const unlockTitle = typeof t !== 'undefined' ? t('customers.action.unlock') : 'Mở khóa tài khoản';
+            const lockTitle = typeof t !== 'undefined' ? t('customers.action.lock') : 'Khóa tài khoản';
+            const resetPwTitle = typeof t !== 'undefined' ? t('customers.action.reset_pw') : 'Đặt lại mật khẩu';
+
             const btnToggleLock = c.username
-              ? `<button class="btn-icon" style="padding: 6px; border-radius: 6px;" onclick="CustomersPage.toggleLockAccount('${c.username}', '${c.name}', ${isUserDisabled}, '${c.usergroup_id || 'DL'}', '${c.customer_id}')" title="${isUserDisabled ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}">
+              ? `<button class="btn-icon" style="padding: 6px; border-radius: 6px;" onclick="CustomersPage.toggleLockAccount('${c.username}', '${c.name}', ${isUserDisabled}, '${c.usergroup_id || 'DL'}', '${c.customer_id}')" title="${isUserDisabled ? unlockTitle : lockTitle}">
                    <span class="material-symbols-outlined" style="font-size:16px; color:${isUserDisabled ? 'var(--success)' : 'var(--warning)'}">${isUserDisabled ? 'lock_open' : 'lock'}</span>
                  </button>`
               : '';
 
             const btnResetPw = c.username
-              ? `<button class="btn-icon" style="padding: 6px; border-radius: 6px;" onclick="CustomersPage.openResetPasswordModal('${c.username}')" title="Đặt lại mật khẩu">
+              ? `<button class="btn-icon" style="padding: 6px; border-radius: 6px;" onclick="CustomersPage.openResetPasswordModal('${c.username}')" title="${resetPwTitle}">
                    <span class="material-symbols-outlined" style="font-size:16px; color:var(--primary)">key</span>
                  </button>`
               : '';
@@ -335,7 +345,7 @@ var CustomersPage = (function () {
             hasAccCheck.disabled = true; // Không cho phép tắt checkbox nếu tài khoản đã tồn tại
           }
           toggleAccountFields();
-          
+
           const usernameInput = document.getElementById('cust-username');
           if (usernameInput) {
             usernameInput.value = c.username;
@@ -343,9 +353,10 @@ var CustomersPage = (function () {
             usernameInput.style.backgroundColor = '#f1f5f9';
             usernameInput.style.cursor = 'not-allowed';
           }
-          
+
           // Lấy user group từ database
-          document.getElementById('cust-usergroup').value = c.usergroup_id || 'DL';
+          const userGroupEl = document.getElementById('cust-usergroup');
+          if (userGroupEl) userGroupEl.value = c.usergroup_id || 'DL';
           // Ẩn trường mật khẩu khởi tạo khi edit (nếu muốn reset thì đã có modal reset riêng biệt)
           const initialPwGroup = document.getElementById('cust-initial-password-group');
           if (initialPwGroup) initialPwGroup.style.display = 'none';
@@ -400,7 +411,8 @@ var CustomersPage = (function () {
     // Validate Account fields
     const hasAccount = document.getElementById('cust-has-account').checked;
     const username = document.getElementById('cust-username').value.trim();
-    const usergroup = document.getElementById('cust-usergroup').value;
+    const userGroupEl = document.getElementById('cust-usergroup');
+    const usergroup = userGroupEl ? userGroupEl.value : '';
     const password = document.getElementById('cust-password').value;
 
     if (hasAccount && !isEdit) {
@@ -516,7 +528,7 @@ var CustomersPage = (function () {
         isCurrentlyDisabled = !!currentDisable;
       }
       const nextDisable = !isCurrentlyDisabled; // true nếu cần khóa, false nếu cần mở khóa
-      
+
       const userData = {
         UserName: username,
         HoTen: fullname,
@@ -524,7 +536,7 @@ var CustomersPage = (function () {
         ObjectID: objectId,
         Disable: nextDisable ? 1 : 0 // Cần gửi 0 hoặc 1 nếu backend SQL nhận bit, hoặc gửi true/false. Ta gửi boolean để C# map tốt nhất:
       };
-      
+
       // Để chắc ăn cho cả C# và SQL, ta gửi boolean true/false
       userData.Disable = nextDisable;
 
