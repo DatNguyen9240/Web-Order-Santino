@@ -386,6 +386,37 @@ var CustomersPage = (function () {
     window.openModal('modal-customer');
   }
 
+  function copyCustomer() {
+    if (!gridApi) return;
+    var selectedRows = gridApi.getSelectedRows();
+    if (!selectedRows || selectedRows.length === 0) {
+      showToast('Vui lòng chọn một dòng để sao chép!', false);
+      return;
+    }
+    var c = selectedRows[0];
+    openCustomerModal(''); // Open as Add mode
+
+    // Pre-populate values except ID & Account username (since they must be unique)
+    document.getElementById('cust-name').value = c.name ? (c.name + ' - Copy') : '';
+    document.getElementById('cust-phone').value = c.phone || '';
+    document.getElementById('cust-address').value = c.address || '';
+    document.getElementById('cust-group').value = c.group_id || '';
+    document.getElementById('cust-location').value = c.location_id || '';
+    if (document.getElementById('cust-dealer')) document.getElementById('cust-dealer').value = c.nha_phan_phoi || c.NhaPhanPhoi || '';
+    if (document.getElementById('cust-quanhuyen')) document.getElementById('cust-quanhuyen').value = c.quan_huyen || '';
+    if (document.getElementById('cust-employee')) document.getElementById('cust-employee').value = c.employee_id || '';
+    if (document.getElementById('cust-branch')) document.getElementById('cust-branch').value = c.branch_id || '';
+    if (document.getElementById('cust-paytype')) document.getElementById('cust-paytype').value = c.payment_type_id || '';
+    if (document.getElementById('cust-payterm')) document.getElementById('cust-payterm').value = c.payment_term_id || '';
+    if (document.getElementById('cust-debt')) document.getElementById('cust-debt').value = c.dinh_muc_no != null ? c.dinh_muc_no : '';
+    if (document.getElementById('cust-due')) document.getElementById('cust-due').value = c.thoi_han_thanh_toan != null ? c.thoi_han_thanh_toan : '';
+    if (document.getElementById('cust-main-prod')) document.getElementById('cust-main-prod').value = c.san_pham_chinh || '';
+    if (document.getElementById('cust-tax')) document.getElementById('cust-tax').value = c.tax_code || '';
+    if (document.getElementById('cust-invoice-company')) document.getElementById('cust-invoice-company').value = c.don_vi_mua_hang || '';
+    if (document.getElementById('cust-invoice-address')) document.getElementById('cust-invoice-address').value = c.address_hd || '';
+    document.getElementById('cust-notes').value = c.notes || '';
+  }
+
   function toggleAccountFields() {
     const hasAcc = document.getElementById('cust-has-account').checked;
     const fieldsDiv = document.getElementById('cust-account-fields');
@@ -589,6 +620,7 @@ var CustomersPage = (function () {
     render: render,
     filter: filter,
     openCustomerModal: openCustomerModal,
+    copyCustomer: copyCustomer,
     toggleAccountFields: toggleAccountFields,
     saveCustomer: saveCustomer,
     deleteCustomer: deleteCustomer,

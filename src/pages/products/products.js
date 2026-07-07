@@ -33,26 +33,26 @@ var ProductsPage = (function () {
       columnDefs: [
         { field: 'ten_hang_2', headerName: 'Tên hàng 2', cellStyle: { fontWeight: '700' } },
         { field: 'nhom_hang', headerName: 'Nhóm hàng' },
-        { 
-          field: 'form', 
+        {
+          field: 'form',
           headerName: 'Form',
-          cellRenderer: function(params) {
+          cellRenderer: function (params) {
             return params.value ? '<span class="badge badge-blue">' + params.value + '</span>' : '—';
           }
         },
         { field: 'mau', headerName: 'Design/Màu' },
-        { 
-          field: 'nhom_size', 
+        {
+          field: 'nhom_size',
           headerName: 'Nhóm size',
-          cellRenderer: function(params) {
+          cellRenderer: function (params) {
             return params.value ? '<span class="badge badge-green">' + params.value + '</span>' : '—';
           }
         },
-        { 
-          field: 'don_gia', 
+        {
+          field: 'don_gia',
           headerName: 'Đơn giá',
           cellStyle: { color: 'var(--accent, #4F46E5)', fontWeight: '700' },
-          valueFormatter: function(params) {
+          valueFormatter: function (params) {
             if (typeof Utils !== 'undefined' && Utils.formatMoney) {
               return Utils.formatMoney(params.value);
             }
@@ -60,10 +60,10 @@ var ProductsPage = (function () {
           }
         },
         { field: 'ten_hang_hoa', headerName: 'Tên hàng hóa', tooltipField: 'ten_hang_hoa' },
-        { 
-          field: 'ngung_su_dung', 
+        {
+          field: 'ngung_su_dung',
           headerName: 'Trạng thái',
-          cellRenderer: function(params) {
+          cellRenderer: function (params) {
             var stopped = !!params.value;
             var badgeClass = stopped ? 'badge-red' : 'badge-green';
             var badgeText = stopped ? 'Ngừng bán' : 'Đang bán';
@@ -75,7 +75,7 @@ var ProductsPage = (function () {
           sortable: false,
           filter: false,
           floatingFilter: false,
-          cellRenderer: function(params) {
+          cellRenderer: function (params) {
             var p = params.data;
             var wrapper = document.createElement('div');
             wrapper.style.display = 'flex';
@@ -103,7 +103,7 @@ var ProductsPage = (function () {
     var p = prodsData.find(item => item.id === id);
     document.getElementById('pm-title').textContent = p ? 'Sửa Sản Phẩm' : 'Thêm Sản Phẩm';
     document.getElementById('pm-id').value = p ? p.id : '';
-    
+
     var ns = document.getElementById('pm-nhom-size');
     if (typeof getAllSizeGroupNames !== 'undefined') {
       ns.innerHTML = getAllSizeGroupNames().map(function (g) { return '<option>' + g + '</option>'; }).join('');
@@ -130,6 +130,30 @@ var ProductsPage = (function () {
       document.getElementById('pm-ngung').selectedIndex = 0;
     }
     window.openModal('modal-product');
+  }
+
+  function copyProduct() {
+    if (!gridApi) return;
+    var selectedRows = gridApi.getSelectedRows();
+    if (!selectedRows || selectedRows.length === 0) {
+      showToast('Vui lòng chọn một dòng để sao chép!', false);
+      return;
+    }
+    var p = selectedRows[0];
+    openModal(''); // Open as Add mode
+
+    // Pre-populate values
+    document.getElementById('pm-ten').value = p.ten_hang_2 ? (p.ten_hang_2 + ' - Copy') : '';
+    document.getElementById('pm-nhom').value = p.nhom_hang || 'SKU102';
+    document.getElementById('pm-form').value = p.form || 'AMC';
+    document.getElementById('pm-design').value = p.design || '';
+    document.getElementById('pm-mau').value = p.mau || '';
+    var ns = document.getElementById('pm-nhom-size');
+    if (ns) ns.value = p.nhom_size || '';
+    document.getElementById('pm-gia').value = p.don_gia || '';
+    document.getElementById('pm-tenhh').value = p.ten_hang_hoa || '';
+    document.getElementById('pm-tennhom').value = p.ten_nhom_hang || 'SỔ MI NGẮN TAY';
+    document.getElementById('pm-ngung').value = String(!!p.ngung_su_dung);
   }
 
   function save() {
@@ -174,7 +198,7 @@ var ProductsPage = (function () {
       message: 'Xóa sản phẩm này?',
       confirmText: 'Xóa',
       confirmClass: 'btn-danger',
-      onConfirm: function() {
+      onConfirm: function () {
         prodsData = prodsData.filter(item => item.id !== id);
         if (gridApi) {
           gridApi.setGridOption('rowData', prodsData);
@@ -198,16 +222,16 @@ var ProductsPage = (function () {
           filterType: 'text',
           type: 'equals',
           filter: val
-        }).then(function() {
+        }).then(function () {
           gridApi.onFilterChanged();
         });
       } else {
-        gridApi.setColumnFilterModel('form', null).then(function() {
+        gridApi.setColumnFilterModel('form', null).then(function () {
           gridApi.onFilterChanged();
         });
       }
     }
   }
 
-  return { render: render, openModal: openModal, save: save, del: del, onSearch: onSearch, onFormFilter: onFormFilter };
+  return { render: render, openModal: openModal, copyProduct: copyProduct, save: save, del: del, onSearch: onSearch, onFormFilter: onFormFilter };
 })();

@@ -24,24 +24,24 @@ var PromosPage = (function () {
 
     var gridOptions = {
       columnDefs: [
-        { 
-          field: 'ma_ctbh', 
-          headerName: 'Mã CTBH', 
-          cellStyle: { fontFamily: 'monospace', fontWeight: 'bold' } 
+        {
+          field: 'ma_ctbh',
+          headerName: 'Mã CTBH',
+          cellStyle: { fontFamily: 'monospace', fontWeight: 'bold' }
         },
         { field: 'ten_ctbh', headerName: 'Tên CTBH' },
-        { 
-          field: 'mo_ta', 
+        {
+          field: 'mo_ta',
           headerName: 'Mô tả',
           cellStyle: { color: 'var(--color-text-secondary, #6b7280)' },
-          cellRenderer: function(params) {
+          cellRenderer: function (params) {
             return params.value || '—';
           }
         },
-        { 
-          field: 'active', 
+        {
+          field: 'active',
           headerName: 'Trạng thái',
-          cellRenderer: function(params) {
+          cellRenderer: function (params) {
             var active = params.value !== false;
             var badgeClass = active ? 'badge-green' : 'badge-red';
             var badgeText = active ? 'Đang áp dụng' : 'Tạm dừng';
@@ -53,7 +53,7 @@ var PromosPage = (function () {
           sortable: false,
           filter: false,
           floatingFilter: false,
-          cellRenderer: function(params) {
+          cellRenderer: function (params) {
             var p = params.data;
             var wrapper = document.createElement('div');
             wrapper.style.display = 'flex';
@@ -127,7 +127,7 @@ var PromosPage = (function () {
       message: 'Xóa CTKM này?',
       confirmText: 'Xóa',
       confirmClass: 'btn-danger',
-      onConfirm: function() {
+      onConfirm: function () {
         promosData = promosData.filter(item => item.id !== id);
         if (gridApi) {
           gridApi.setGridOption('rowData', promosData);
@@ -137,5 +137,22 @@ var PromosPage = (function () {
     });
   }
 
-  return { render: render, openModal: openModal, save: save, del: del };
+  function copyPromo() {
+    if (!gridApi) return;
+    var selectedRows = gridApi.getSelectedRows();
+    if (!selectedRows || selectedRows.length === 0) {
+      showToast('Vui lòng chọn một dòng để sao chép!', false);
+      return;
+    }
+    var p = selectedRows[0];
+    openModal(''); // Open as Add mode
+
+    // Pre-populate values
+    document.getElementById('prom-ma').value = p.ma_ctbh ? (p.ma_ctbh + 'CP') : '';
+    document.getElementById('prom-ten').value = p.ten_ctbh ? (p.ten_ctbh + ' - Copy') : '';
+    document.getElementById('prom-mota').value = p.mo_ta || '';
+    document.getElementById('prom-active').value = String(p.active !== false);
+  }
+
+  return { render: render, openModal: openModal, copyPromo: copyPromo, save: save, del: del };
 })();

@@ -3,9 +3,14 @@
     <h2><span data-i18n="hdr.sizes">Quản Lý Size</span></h2>
     <p data-i18n="hdr.sizes.desc">CRUD size và nhóm size</p>
   </div>
-  <button class="btn btn-primary" onclick="SizesPage.openModal()">
-    <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">add</span><span data-i18n="btn.add">Thêm size</span>
-  </button>
+  <div style="display: flex; gap: 8px; align-items: center;">
+    <button class="btn btn-primary" onclick="SizesPage.openModal()">
+      <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">add</span><span data-i18n="btn.add">Thêm size</span>
+    </button>
+    <button class="btn btn-secondary" onclick="SizesPage.copySize()">
+      <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">content_copy</span><span>Sao chép</span>
+    </button>
+  </div>
 </div>
 <div id="sizes-grid-container" style="height: 400px; width: 100%;"></div>
 

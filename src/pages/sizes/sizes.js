@@ -33,10 +33,10 @@ var SizesPage = (function () {
       columnDefs: [
         { field: 'size', headerName: 'Size', cellStyle: { fontWeight: '700' } },
         { field: 'ten_size', headerName: 'Tên size' },
-        { 
-          field: 'nhom_size', 
+        {
+          field: 'nhom_size',
           headerName: 'Nhóm size',
-          cellRenderer: function(params) {
+          cellRenderer: function (params) {
             return '<span class="badge badge-blue">' + params.value + '</span>';
           }
         },
@@ -45,7 +45,7 @@ var SizesPage = (function () {
           sortable: false,
           filter: false,
           floatingFilter: false,
-          cellRenderer: function(params) {
+          cellRenderer: function (params) {
             var s = params.data;
             var wrapper = document.createElement('div');
             wrapper.style.display = 'flex';
@@ -83,12 +83,12 @@ var SizesPage = (function () {
     var id = document.getElementById('sm-id').value;
     var sz = parseInt(document.getElementById('sm-size').value);
     if (!sz) { showToast('Vui lòng nhập size!', false); return; }
-    
-    var sizeItem = { 
-      id: id || String(Date.now()), 
-      size: sz, 
-      ten_size: document.getElementById('sm-ten').value || String(sz), 
-      nhom_size: document.getElementById('sm-nhom').value.trim() || 'Nhóm 3' 
+
+    var sizeItem = {
+      id: id || String(Date.now()),
+      size: sz,
+      ten_size: document.getElementById('sm-ten').value || String(sz),
+      nhom_size: document.getElementById('sm-nhom').value.trim() || 'Nhóm 3'
     };
 
     if (id) {
@@ -113,7 +113,7 @@ var SizesPage = (function () {
       message: 'Xóa size này?',
       confirmText: 'Xóa',
       confirmClass: 'btn-danger',
-      onConfirm: function() {
+      onConfirm: function () {
         sizesData = sizesData.filter(item => item.id !== id);
         if (gridApi) {
           gridApi.setGridOption('rowData', sizesData);
@@ -123,5 +123,21 @@ var SizesPage = (function () {
     });
   }
 
-  return { render: render, openModal: openModal, save: save, del: del };
+  function copySize() {
+    if (!gridApi) return;
+    var selectedRows = gridApi.getSelectedRows();
+    if (!selectedRows || selectedRows.length === 0) {
+      showToast('Vui lòng chọn một dòng để sao chép!', false);
+      return;
+    }
+    var s = selectedRows[0];
+    openModal(''); // Open as Add mode
+
+    // Pre-populate values
+    document.getElementById('sm-size').value = s.size || '';
+    document.getElementById('sm-ten').value = s.ten_size ? (s.ten_size + ' - Copy') : '';
+    document.getElementById('sm-nhom').value = s.nhom_size || 'Nhóm 3';
+  }
+
+  return { render: render, openModal: openModal, copySize: copySize, save: save, del: del };
 })();
