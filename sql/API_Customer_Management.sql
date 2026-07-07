@@ -52,7 +52,9 @@ GO
 CREATE PROCEDURE [dbo].[API_LayDanhSachKhachHang]
     @q NVARCHAR(MAX) = NULL,
     @TimKiem NVARCHAR(255) = NULL,
-    @ObjectGroupID NVARCHAR(50) = NULL
+    @ObjectGroupID NVARCHAR(50) = NULL,
+    @Page INT = NULL,
+    @Limit INT = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -61,7 +63,12 @@ BEGIN
     BEGIN
         SET @TimKiem = ISNULL(@TimKiem, JSON_VALUE(@q, '$.TimKiem'));
         SET @ObjectGroupID = ISNULL(@ObjectGroupID, JSON_VALUE(@q, '$.ObjectGroupID'));
+        SET @Page = TRY_CAST(JSON_VALUE(@q, '$.page') AS INT);
+        SET @Limit = TRY_CAST(JSON_VALUE(@q, '$.limit') AS INT);
     END
+    
+    IF @Page IS NULL OR @Page <= 0 SET @Page = 1;
+    IF @Limit IS NULL OR @Limit <= 0 SET @Limit = 20;
     
     SELECT 
         c.[ObjectID] AS [id],
@@ -92,7 +99,8 @@ BEGIN
         c.[NhaPhanPhoi] AS [nha_phan_phoi],
         u.[UserName] AS [username],
         COALESCE(u.[Disable], 0) AS [user_disable],
-        u.[UserGroupID] AS [usergroup_id]
+        u.[UserGroupID] AS [usergroup_id],
+        COUNT(*) OVER() AS [total_rows]
     FROM [dbo].[CF_ObjectTbl] c
     LEFT JOIN [dbo].[CF_LocationTbl] l ON c.[LocationID] = l.[LocationID]
     LEFT JOIN [dbo].[CF_ObjectGroupTbl] g ON c.[ObjectGroupID] = g.[ObjectGroupID]
@@ -105,7 +113,9 @@ BEGIN
            OR c.[Phone] LIKE '%' + @TimKiem + '%'
            OR c.[Address] LIKE N'%' + @TimKiem + '%')
       AND (@ObjectGroupID IS NULL OR @ObjectGroupID = '' OR c.[ObjectGroupID] = @ObjectGroupID)
-    ORDER BY c.[DateCreate] DESC, c.[ObjectID] DESC;
+    ORDER BY c.[DateCreate] DESC, c.[ObjectID] DESC
+    OFFSET (@Page - 1) * @Limit ROWS
+    FETCH NEXT @Limit ROWS ONLY;
 END;
 GO
 

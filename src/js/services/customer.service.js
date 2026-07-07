@@ -8,15 +8,18 @@ const CustomerService = (() => {
    * @param {string} searchTerm - Từ khóa tìm kiếm (Mã KH, Tên KH, SĐT, Địa chỉ)
    * @param {string} objectGroupId - Bộ lọc Nhóm khách hàng
    */
-  async function getAll(searchTerm = '', objectGroupId = '') {
+  async function getAll(searchTerm = '', objectGroupId = '', page = 1, limit = 20) {
     if (!API_CONFIG.BASE_URL) return [];
     try {
-      const queryObj = {};
+      const queryObj = {
+        page: page,
+        limit: limit
+      };
       if (searchTerm && searchTerm.trim()) queryObj.TimKiem = searchTerm.trim();
       if (objectGroupId && objectGroupId.trim()) queryObj.ObjectGroupID = objectGroupId.trim();
 
       const params = { q: JSON.stringify(queryObj) };
-      if (searchTerm || objectGroupId) params._t = Date.now();
+      params._t = Date.now();
 
       const res = await Http.get(API_CONFIG.ENDPOINTS.CUSTOMERS.LIST, params);
       return res.records || res || [];

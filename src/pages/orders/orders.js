@@ -59,7 +59,7 @@ var OrdersPage = (function () {
         empID = '';
       }
 
-      const queryObj = { 
+      const queryObj = {
         Loai: 'Customer',
         chinhanh: '|PAGE:1|ROLE:' + role + '|EMP:' + empID + '|OBJ:' + objID
       };
@@ -100,36 +100,36 @@ var OrdersPage = (function () {
         { field: 'so_ct', headerName: 'Số CT', cellStyle: { fontWeight: '700' }, width: 150, minWidth: 120 },
         { field: 'ngay_ct', headerName: 'Ngày CT', width: 120, minWidth: 100 },
         { field: 'chi_nhanh', headerName: 'Chi nhánh', minWidth: 130 },
-        { 
-          field: 'ma_ctbh', 
+        {
+          field: 'ma_ctbh',
           headerName: 'CTKM',
-          cellRenderer: function(params) {
+          cellRenderer: function (params) {
             return params.value ? '<span class="badge badge-yellow">' + params.value + '</span>' : '<span style="color:var(--muted, #6b7280)">—</span>';
           }
         },
-        { 
-          field: 'total_qty', 
+        {
+          field: 'total_qty',
           headerName: 'Tổng SP',
           cellStyle: { fontWeight: '700' },
-          valueFormatter: function(params) {
+          valueFormatter: function (params) {
             var label = (typeof t !== 'undefined') ? t('order.preview.sp') : 'SP';
             return (params.value || 0) + ' ' + label;
           }
         },
-        { 
-          field: 'total_money', 
+        {
+          field: 'total_money',
           headerName: 'Tổng tiền',
           cellStyle: { color: 'var(--accent, #4F46E5)', fontWeight: '700' },
-          valueFormatter: function(params) {
+          valueFormatter: function (params) {
             if (typeof Utils !== 'undefined' && Utils.formatMoney) {
               return Utils.formatMoney(params.value || 0);
             }
             return params.value;
           }
         },
-        { 
-          field: 'ghi_chu', 
-          headerName: 'Ghi chú', 
+        {
+          field: 'ghi_chu',
+          headerName: 'Ghi chú',
           minWidth: 150,
           valueFormatter: params => params.value || '—'
         },
@@ -139,7 +139,7 @@ var OrdersPage = (function () {
           filter: false,
           floatingFilter: false,
           width: 150,
-          cellRenderer: function(params) {
+          cellRenderer: function (params) {
             var o = params.data;
             var detailText = (typeof t !== 'undefined') ? t('btn.detail') : 'Chi tiết';
             var wrapper = document.createElement('div');
@@ -195,7 +195,7 @@ var OrdersPage = (function () {
       var empID = user.EmployeeID || '';
       var objID = user.ObjectID || '';
       if (objID && objID !== '') {
-         empID = '';
+        empID = '';
       }
       queryObj.chinhanh = '|PAGE:1|ROLE:' + role + '|EMP:' + empID + '|OBJ:' + objID;
 

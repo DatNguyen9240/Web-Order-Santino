@@ -34,6 +34,9 @@ var TRANSLATIONS = {
     "btn.close": "Đóng",
     "btn.preview": "Xem trước",
     "table.empty": "Không có dữ liệu",
+    "pager.info": "Hiển thị {0} - {1} trong số {2} bản ghi",
+    "pager.page": "Trang",
+    "pager.total_count": "Tổng số: {0} khách hàng",
     
     // --- Order Page ---
     "order.info": "Thông tin chung",
@@ -188,6 +191,9 @@ var TRANSLATIONS = {
     "btn.close": "Close",
     "btn.preview": "Preview",
     "table.empty": "No data available",
+    "pager.info": "Showing {0} - {1} of {2} records",
+    "pager.page": "Page",
+    "pager.total_count": "Total: {0} customers",
 
     // --- Order Page ---
     "order.info": "General Info",

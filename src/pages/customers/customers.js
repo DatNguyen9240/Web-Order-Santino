@@ -1,5 +1,7 @@
 var CustomersPage = (function () {
   var $container;
+  var currentPage = 1;
+  var itemsPerPage = 20;
   var customersList = [];
   var objectGroups = [];
   var employees = [];
@@ -130,6 +132,7 @@ var CustomersPage = (function () {
     if (!container) return;
 
     const gridOptions = {
+      pagination: false,
       columnDefs: [
         { field: 'customer_id', headerName: 'Mã KH', cellStyle: { fontWeight: '700' }, width: 120, minWidth: 100 },
         { field: 'name', headerName: 'Tên khách hàng', minWidth: 160 },
@@ -217,18 +220,48 @@ var CustomersPage = (function () {
     const search = searchInput ? searchInput.value.trim() : '';
     const groupId = filterGroup ? filterGroup.value : '';
 
-    const customers = await CustomerService.getAll(search, groupId);
+    if (gridApi) {
+      gridApi.showLoadingOverlay();
+    }
+
+    const customers = await CustomerService.getAll(search, groupId, currentPage, itemsPerPage);
     customersList = customers;
+
+    var totalItems = (customers.length > 0 && customers[0].total_rows) ? customers[0].total_rows : 0;
 
     const countEl = document.getElementById('customers-count');
     if (countEl) {
-      countEl.textContent = `Tổng số: ${customers.length} khách hàng`;
+      var countLabel = (typeof t !== 'undefined') ? t('pager.total_count') : 'Tổng số: {0} khách hàng';
+      countEl.textContent = countLabel.replace('{0}', totalItems);
     }
 
     if (!gridApi) {
       _initGrid(customers);
     } else {
       gridApi.setGridOption('rowData', customers);
+      if (customers.length === 0) {
+        gridApi.showNoRowsOverlay();
+      } else {
+        gridApi.hideOverlay();
+      }
+    }
+
+    // Render custom Pagination
+    var paginationContainer = document.getElementById('customers-pagination');
+    if (paginationContainer) {
+      paginationContainer.innerHTML = '';
+      if (totalItems > 0 && typeof Pagination !== 'undefined') {
+        var pag = Pagination.create({
+          totalItems: totalItems,
+          itemsPerPage: itemsPerPage,
+          currentPage: currentPage,
+          onPageChange: function (page) {
+            currentPage = page;
+            _fetchAndRender();
+          }
+        });
+        paginationContainer.appendChild(pag);
+      }
     }
 
     if (typeof applyLanguage === 'function') applyLanguage();
@@ -535,6 +568,7 @@ var CustomersPage = (function () {
   function filter() {
     if (_searchTimeout) clearTimeout(_searchTimeout);
     _searchTimeout = setTimeout(function () {
+      currentPage = 1;
       _fetchAndRender();
     }, 450);
   }
