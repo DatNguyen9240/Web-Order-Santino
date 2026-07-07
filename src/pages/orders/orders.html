@@ -56,18 +56,6 @@
     <input id="orders-search" placeholder="Tìm số CT hoặc Khách hàng..." data-i18n-placeholder="orders.search.placeholder" oninput="OrdersPage.filter()">
   </div>
 </div>
-<div class="tbl-wrap">
-  <table>
-    <thead><tr>
-      <th data-i18n="table.col.no">Số CT</th><th data-i18n="table.col.date">Ngày CT</th><th data-i18n="table.col.branch">Chi nhánh</th><th data-i18n="table.col.promo">CTKM</th>
-      <th data-i18n="table.col.total_qty">Tổng SP</th><th data-i18n="table.col.total_money">Tổng tiền</th><th data-i18n="table.col.note">Ghi chú</th><th data-i18n="table.col.action">Thao tác</th>
-    </tr></thead>
-    <tbody id="orders-body">
-      <tr><td colspan="8" class="empty-state">
-        <span class="material-symbols-outlined">receipt_long</span><span data-i18n="orders.search.empty">Chưa có đơn hàng nào</span>
-      </td></tr>
-    </tbody>
-  </table>
-</div>
+<div id="orders-grid-container" style="height: 550px; width: 100%;"></div>
 <div id="orders-pagination" style="margin-top: 16px; display: flex; justify-content: flex-end;"></div>
 </div>

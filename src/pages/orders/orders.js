@@ -1,6 +1,7 @@
 var OrdersPage = (function () {
   var currentPage = 1;
   var itemsPerPage = 20;
+  var gridApi = null;
 
   function render($el) {
     // Cho phép trang này rộng tối đa theo container-order
@@ -89,6 +90,78 @@ var OrdersPage = (function () {
     }
   }
 
+  function _initGrid(orders) {
+    const container = document.getElementById('orders-grid-container');
+    if (!container) return;
+
+    const gridOptions = {
+      pagination: false, // Dung pagination ngoai nhu cu
+      columnDefs: [
+        { field: 'so_ct', headerName: 'Số CT', cellStyle: { fontWeight: '700' }, width: 150, minWidth: 120 },
+        { field: 'ngay_ct', headerName: 'Ngày CT', width: 120, minWidth: 100 },
+        { field: 'chi_nhanh', headerName: 'Chi nhánh', minWidth: 130 },
+        { 
+          field: 'ma_ctbh', 
+          headerName: 'CTKM',
+          cellRenderer: function(params) {
+            return params.value ? '<span class="badge badge-yellow">' + params.value + '</span>' : '<span style="color:var(--muted, #6b7280)">—</span>';
+          }
+        },
+        { 
+          field: 'total_qty', 
+          headerName: 'Tổng SP',
+          cellStyle: { fontWeight: '700' },
+          valueFormatter: function(params) {
+            var label = (typeof t !== 'undefined') ? t('order.preview.sp') : 'SP';
+            return (params.value || 0) + ' ' + label;
+          }
+        },
+        { 
+          field: 'total_money', 
+          headerName: 'Tổng tiền',
+          cellStyle: { color: 'var(--accent, #4F46E5)', fontWeight: '700' },
+          valueFormatter: function(params) {
+            if (typeof Utils !== 'undefined' && Utils.formatMoney) {
+              return Utils.formatMoney(params.value || 0);
+            }
+            return params.value;
+          }
+        },
+        { 
+          field: 'ghi_chu', 
+          headerName: 'Ghi chú', 
+          minWidth: 150,
+          valueFormatter: params => params.value || '—'
+        },
+        {
+          headerName: 'Thao tác',
+          sortable: false,
+          filter: false,
+          floatingFilter: false,
+          width: 150,
+          cellRenderer: function(params) {
+            var o = params.data;
+            var detailText = (typeof t !== 'undefined') ? t('btn.detail') : 'Chi tiết';
+            var wrapper = document.createElement('div');
+            wrapper.style.display = 'flex';
+            wrapper.style.gap = '6px';
+            wrapper.style.alignItems = 'center';
+            wrapper.innerHTML = `
+              <button class="btn btn-ghost btn-sm" onclick="OrdersPage.view('${o.id}')">${detailText}</button>
+              <button class="btn-icon" onclick="OrdersPage.del('${o.id}')">
+                <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1));color:var(--danger)">delete</span>
+              </button>
+            `;
+            return wrapper;
+          }
+        }
+      ],
+      rowData: orders
+    };
+
+    gridApi = AppGrid.create(container, gridOptions);
+  }
+
   async function _render() {
     var qInput = document.getElementById('orders-search');
     var fromInput = document.getElementById('orders-from');
@@ -103,9 +176,8 @@ var OrdersPage = (function () {
     var orders = [];
     var totalItems = 0;
 
-    var tbody = document.getElementById('orders-body');
-    if (tbody) {
-      tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><span class="material-symbols-outlined anim-spin" style="color:var(--primary)">sync</span><span>Đang tải danh sách đơn hàng...</span></td></tr>';
+    if (gridApi) {
+      gridApi.showLoadingOverlay();
     }
 
     try {
@@ -139,25 +211,20 @@ var OrdersPage = (function () {
     } catch (err) {
       console.warn('Lỗi tải danh sách đơn hàng:', err);
     }
-    var tbody = document.getElementById('orders-body');
+
     var paginationContainer = document.getElementById('orders-pagination');
     if (paginationContainer) paginationContainer.innerHTML = '';
 
-    if (!orders || !orders.length) {
-      tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><span class="material-symbols-outlined">receipt_long</span><span data-i18n="orders.search.empty">Không có đơn hàng nào</span></td></tr>';
-      return;
+    if (!gridApi) {
+      _initGrid(orders);
+    } else {
+      gridApi.setGridOption('rowData', orders);
+      if (orders.length === 0) {
+        gridApi.showNoRowsOverlay();
+      } else {
+        gridApi.hideOverlay();
+      }
     }
-    tbody.innerHTML = orders.map(function (o) {
-      return '<tr onclick="Utils.toggleRow(this)"><td><strong>' + o.so_ct + '</strong></td><td>' + o.ngay_ct + '</td><td>' + o.chi_nhanh + '</td>' +
-        '<td>' + (o.ma_ctbh ? '<span class="badge badge-yellow">' + o.ma_ctbh + '</span>' : '<span style="color:var(--muted)">—</span>') + '</td>' +
-        '<td style="font-weight:700">' + (o.total_qty || 0) + ' ' + t('order.preview.sp') + '</td>' +
-        '<td style="font-weight:700;color:var(--accent)">' + Utils.formatMoney(o.total_money || 0) + '</td>' +
-        '<td style="color:var(--muted)">' + (o.ghi_chu || '—') + '</td>' +
-        '<td><div style="display:flex;gap:6px;align-items:center">' +
-        '<button class="btn btn-ghost btn-sm" onclick="OrdersPage.view(\'' + o.id + '\')">' + t('btn.detail') + '</button>' +
-        '<button class="btn-icon" onclick="OrdersPage.del(\'' + o.id + '\')"><span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1));color:var(--danger)">delete</span></button>' +
-        '</div></td></tr>';
-    }).join('');
 
     if (paginationContainer && totalItems > 0 && typeof Pagination !== 'undefined') {
       var pag = Pagination.create({

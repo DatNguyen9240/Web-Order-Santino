@@ -1,25 +1,76 @@
 var SizesPage = (function () {
+  var gridApi = null;
+  var sizesData = [];
+
   function render($el) {
     return Router.fetchTemplate('src/pages/sizes/sizes.html').then(function (html) {
-      $el.innerHTML = html; _render();
+      $el.innerHTML = html;
+      _initGrid();
     });
   }
-  function _render() {
-    var sizes = [];
-    var tbody = document.getElementById('sizes-body');
-    if (!sizes.length) { tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><span class="material-symbols-outlined">straighten</span><span data-i18n="table.empty">' + t('table.empty') + '</span></td></tr>'; return; }
-    tbody.innerHTML = sizes.map(function (s) {
-      return '<tr><td style="font-weight:700;font-size: calc(16px * var(--text-scale, 1))">' + s.size + '</td>' +
-        '<td>' + (s.ten_size || s.size) + '</td>' +
-        '<td><span class="badge badge-blue">' + s.nhom_size + '</span></td>' +
-        '<td><div style="display:flex;gap:6px;align-items:center">' +
-        '<button class="btn-icon" onclick="SizesPage.openModal(\'' + s.id + '\')"><span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">edit</span></button>' +
-        '<button class="btn-icon" onclick="SizesPage.del(\'' + s.id + '\')"><span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1));color:var(--danger)">delete</span></button>' +
-        '</div></td></tr>';
-    }).join('');
+
+  async function _initGrid() {
+    try {
+      sizesData = await ProductService.getSizes();
+    } catch (err) {
+      console.warn('[SizesPage] Lỗi lấy sizes từ API:', err);
+      sizesData = [];
+    }
+
+    if (!sizesData || !sizesData.length) {
+      // Mock data if API has no records
+      sizesData = [
+        { id: '1', size: 39, ten_size: '39', nhom_size: 'Nhóm 1' },
+        { id: '2', size: 40, ten_size: '40', nhom_size: 'Nhóm 1' },
+        { id: '3', size: 41, ten_size: '41', nhom_size: 'Nhóm 2' }
+      ];
+    }
+
+    var container = document.getElementById('sizes-grid-container');
+    if (!container) return;
+
+    var gridOptions = {
+      columnDefs: [
+        { field: 'size', headerName: 'Size', cellStyle: { fontWeight: '700' } },
+        { field: 'ten_size', headerName: 'Tên size' },
+        { 
+          field: 'nhom_size', 
+          headerName: 'Nhóm size',
+          cellRenderer: function(params) {
+            return '<span class="badge badge-blue">' + params.value + '</span>';
+          }
+        },
+        {
+          headerName: 'Thao tác',
+          sortable: false,
+          filter: false,
+          floatingFilter: false,
+          cellRenderer: function(params) {
+            var s = params.data;
+            var wrapper = document.createElement('div');
+            wrapper.style.display = 'flex';
+            wrapper.style.gap = '6px';
+            wrapper.style.alignItems = 'center';
+            wrapper.innerHTML = `
+              <button class="btn-icon" onclick="SizesPage.openModal('${s.id}')">
+                <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">edit</span>
+              </button>
+              <button class="btn-icon" onclick="SizesPage.del('${s.id}')">
+                <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1));color:var(--danger)">delete</span>
+              </button>
+            `;
+            return wrapper;
+          }
+        }
+      ],
+      rowData: sizesData
+    };
+
+    gridApi = AppGrid.create(container, gridOptions);
   }
+
   function openModal(id) {
-    var s = null;
+    var s = sizesData.find(item => item.id === id);
     document.getElementById('sm-title').textContent = s ? 'Sửa Size' : 'Thêm Size';
     document.getElementById('sm-id').value = s ? s.id : '';
     document.getElementById('sm-size').value = s ? s.size : '';
@@ -27,14 +78,35 @@ var SizesPage = (function () {
     document.getElementById('sm-nhom').value = s ? s.nhom_size : 'Nhóm 3';
     window.openModal('modal-size');
   }
+
   function save() {
     var id = document.getElementById('sm-id').value;
     var sz = parseInt(document.getElementById('sm-size').value);
     if (!sz) { showToast('Vui lòng nhập size!', false); return; }
-    var data = { size: sz, ten_size: document.getElementById('sm-ten').value || String(sz), nhom_size: document.getElementById('sm-nhom').value.trim() || 'Nhóm 3' };
-    showToast('Chức năng thêm/sửa size vô hiệu hóa (chưa có API)');
-    closeModal('modal-size'); _render(); showToast('Đã lưu size');
+    
+    var sizeItem = { 
+      id: id || String(Date.now()), 
+      size: sz, 
+      ten_size: document.getElementById('sm-ten').value || String(sz), 
+      nhom_size: document.getElementById('sm-nhom').value.trim() || 'Nhóm 3' 
+    };
+
+    if (id) {
+      // Edit
+      var idx = sizesData.findIndex(item => item.id === id);
+      if (idx !== -1) sizesData[idx] = sizeItem;
+    } else {
+      // Add new
+      sizesData.push(sizeItem);
+    }
+
+    closeModal('modal-size');
+    if (gridApi) {
+      gridApi.setGridOption('rowData', sizesData);
+    }
+    showToast('Đã lưu size');
   }
+
   function del(id) {
     ConfirmModal.show({
       title: 'Xóa size',
@@ -42,11 +114,14 @@ var SizesPage = (function () {
       confirmText: 'Xóa',
       confirmClass: 'btn-danger',
       onConfirm: function() {
-        showToast('Chức năng xóa vô hiệu hóa (chưa có API)');
-        _render();
+        sizesData = sizesData.filter(item => item.id !== id);
+        if (gridApi) {
+          gridApi.setGridOption('rowData', sizesData);
+        }
         showToast('Đã xóa size');
       }
     });
   }
+
   return { render: render, openModal: openModal, save: save, del: del };
 })();

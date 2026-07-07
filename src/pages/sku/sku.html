@@ -2,12 +2,7 @@
   <div><h2><span data-i18n="hdr.sku">Cấu Hình SKU</span></h2><p data-i18n="hdr.sku.desc">Xem mapping: Tên hàng 2 → SKU theo size</p></div>
   <div class="search-wrapper">
     <span class="material-symbols-outlined">search</span>
-    <input id="sku-search" placeholder="Tìm tên hàng 2..." data-i18n-placeholder="sku.search.placeholder" oninput="SkuPage.render()">
+    <input id="sku-search" placeholder="Tìm kiếm nhanh..." oninput="SkuPage.onSearch(this.value)">
   </div>
 </div>
-<div class="tbl-wrap">
-  <table>
-    <thead><tr><th data-i18n="table.col.name2">Tên hàng 2</th><th data-i18n="table.col.form">Form</th><th data-i18n="table.col.design">Design</th><th data-i18n="table.col.size_group">Nhóm size</th><th data-i18n="table.col.price">Đơn giá</th><th data-i18n="table.col.skus_generated">SKUs sinh ra</th></tr></thead>
-    <tbody id="sku-body"></tbody>
-  </table>
-</div>
+<div id="sku-grid-container" style="height: 500px; width: 100%;"></div>

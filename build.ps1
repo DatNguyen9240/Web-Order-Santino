@@ -49,6 +49,7 @@ $jsFiles = @(
   "components\toast\Toast.js",
   "components\alert\Alert.js",
   "components\calendar\Calendar.js",
+  "components\app-grid\AppGrid.js",
   "js\core\router.js",
   "js\core\sound.js",
   "js\core\app.js"

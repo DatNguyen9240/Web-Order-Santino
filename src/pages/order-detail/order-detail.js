@@ -1,60 +1,73 @@
 var OrderDetailPage = (function () {
-  var currentPage = 1;
-  var itemsPerPage = 10;
+  var gridApi = null;
   var allLines = [];
 
   function renderLines() {
-    var tbody = document.getElementById('detail-body');
-    var paginationContainer = document.getElementById('detail-pagination');
-    if (!tbody) return;
+    var container = document.getElementById('detail-grid-container');
+    if (!container) return;
 
-    var startIndex = (currentPage - 1) * itemsPerPage;
-    var endIndex = startIndex + itemsPerPage;
-    var paginatedLines = allLines.slice(startIndex, endIndex);
-
-    if (paginatedLines.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><span class="material-symbols-outlined">inbox</span><p>' + t('table.empty') + '</p></td></tr>';
-      if (paginationContainer) paginationContainer.innerHTML = '';
-      return;
-    }
-
-    tbody.innerHTML = paginatedLines.map(function (l) {
-      var sizesText = '—';
-      if (l.chi_tiet_size) {
-        try {
-          var sizesArr = typeof l.chi_tiet_size === 'string' ? JSON.parse(l.chi_tiet_size) : l.chi_tiet_size;
-          sizesText = sizesArr.map(function (s) { return s.size + '(' + s.qty + ')' }).join(', ');
-        } catch (e) { }
-      }
-      return '<tr onclick="Utils.toggleRow(this)"><td>' + (l.ten_hang_2 || '—') + '</td>' +
-        '<td>' + (l.ten_hang || '—') + '</td><td style="font-size: calc(12px * var(--text-scale, 1)); color: var(--text-secondary)">' + sizesText + '</td>' +
-        '<td style="font-weight:700;color:var(--accent)">' + l.so_luong + '</td>' +
-        '<td>' + Utils.formatMoney(l.don_gia) + '</td>' +
-        '<td style="font-weight:700">' + Utils.formatMoney(l.thanh_tien) + '</td></tr>';
-    }).join('');
-
-    if (paginationContainer) {
-      paginationContainer.innerHTML = '';
-      if (allLines.length > 0 && typeof Pagination !== 'undefined') {
-        var pag = Pagination.create({
-          totalItems: allLines.length,
-          itemsPerPage: itemsPerPage,
-          currentPage: currentPage,
-          onPageChange: function (page) {
-            currentPage = page;
-            renderLines();
+    var gridOptions = {
+      pagination: true,
+      paginationPageSize: 10,
+      paginationPageSizeSelector: [10, 20, 50],
+      columnDefs: [
+        { field: 'ten_hang_2', headerName: 'Tên hàng 2', cellStyle: { fontWeight: '700' } },
+        { field: 'ten_hang', headerName: 'Tên hàng hóa', minWidth: 150 },
+        { 
+          field: 'chi_tiet_size', 
+          headerName: 'Size',
+          minWidth: 150,
+          cellStyle: { color: 'var(--text-secondary, #6b7280)', fontSize: '13px' },
+          cellRenderer: function(params) {
+            var val = params.value;
+            if (!val) return '—';
+            try {
+              var arr = typeof val === 'string' ? JSON.parse(val) : val;
+              if (Array.isArray(arr)) {
+                return arr.map(function(s) { return s.size + '(' + s.qty + ')'; }).join(', ');
+              }
+            } catch (e) {
+              console.warn('Error parsing size details:', e);
+            }
+            return val;
           }
-        });
-        paginationContainer.appendChild(pag);
-      }
-    }
+        },
+        { 
+          field: 'so_luong', 
+          headerName: 'SL',
+          cellStyle: { color: 'var(--accent, #4F46E5)', fontWeight: '700' }
+        },
+        { 
+          field: 'don_gia', 
+          headerName: 'Đơn giá',
+          valueFormatter: function(params) {
+            if (typeof Utils !== 'undefined' && Utils.formatMoney) {
+              return Utils.formatMoney(params.value || 0);
+            }
+            return params.value;
+          }
+        },
+        { 
+          field: 'thanh_tien', 
+          headerName: 'Thành tiền',
+          cellStyle: { fontWeight: '700' },
+          valueFormatter: function(params) {
+            if (typeof Utils !== 'undefined' && Utils.formatMoney) {
+              return Utils.formatMoney(params.value || 0);
+            }
+            return params.value;
+          }
+        }
+      ],
+      rowData: allLines
+    };
+
+    gridApi = AppGrid.create(container, gridOptions);
   }
 
   async function render($el) {
     try {
-      currentPage = 1;
       allLines = [];
-      // Cho phép trang này hiển thị rộng tối đa màn hình
       $el.classList.add('is-full-width');
 
       const html = await Router.fetchTemplate('src/pages/order-detail/order-detail.html');
@@ -144,5 +157,6 @@ var OrderDetailPage = (function () {
       console.warn('Lỗi render order detail:', e);
     }
   }
+
   return { render: render };
 })();

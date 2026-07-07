@@ -123,12 +123,94 @@ var CustomersPage = (function () {
     }
   }
 
+  var gridApi = null;
+
+  function _initGrid(customers) {
+    const container = document.getElementById('customers-grid-container');
+    if (!container) return;
+
+    const gridOptions = {
+      columnDefs: [
+        { field: 'customer_id', headerName: 'Mã KH', cellStyle: { fontWeight: '700' }, width: 120, minWidth: 100 },
+        { field: 'name', headerName: 'Tên khách hàng', minWidth: 160 },
+        { field: 'phone', headerName: 'Điện thoại', width: 130, minWidth: 110, valueFormatter: p => p.value || '-' },
+        { field: 'address', headerName: 'Địa chỉ', minWidth: 200, tooltipField: 'address' },
+        { field: 'employee_name', headerName: 'Nhân viên quản lý', minWidth: 150, valueFormatter: p => p.value || p.data.employee_id || '-' },
+        { field: 'group_name', headerName: 'Nhóm khách hàng', minWidth: 140, valueFormatter: p => p.value || p.data.group_id || '-' },
+        { 
+          field: 'username', 
+          headerName: 'Tài khoản', 
+          minWidth: 140,
+          cellRenderer: function(params) {
+            const c = params.data;
+            if (!c.username) return '<span style="color:var(--text-secondary, #6b7280); font-style:italic;">Chưa tạo</span>';
+            const isUserDisabled = c.user_disable === true || c.user_disable == 1 || c.user_disable === 'true' || c.user_disable === '1';
+            return `<div style="display:flex; flex-direction:column; gap:2px; line-height: 1.2; padding: 4px 0;">
+                      <strong>${c.username}</strong>
+                      ${isUserDisabled ? '<span style="font-size:10px; color:var(--danger, #ef4444)">[TK Bị Khóa]</span>' : '<span style="font-size:10px; color:var(--success, #10b981)">[TK Mở]</span>'}
+                    </div>`;
+          }
+        },
+        { 
+          field: 'is_disable', 
+          headerName: 'Trạng thái', 
+          width: 120,
+          cellRenderer: function(params) {
+            const c = params.data;
+            const isDisabled = c.is_disable === true || c.is_disable == 1 || c.is_disable === 'true' || c.is_disable === '1';
+            return isDisabled
+              ? '<span class="badge badge-red">Đã khóa</span>'
+              : '<span class="badge badge-green">Hoạt động</span>';
+          }
+        },
+        {
+          headerName: 'Thao tác',
+          sortable: false,
+          filter: false,
+          floatingFilter: false,
+          width: 160,
+          cellRenderer: function(params) {
+            const c = params.data;
+            const isUserDisabled = c.user_disable === true || c.user_disable == 1 || c.user_disable === 'true' || c.user_disable === '1';
+            
+            const btnToggleLock = c.username
+              ? `<button class="btn-icon" style="padding: 6px; border-radius: 6px;" onclick="CustomersPage.toggleLockAccount('${c.username}', '${c.name}', ${isUserDisabled}, '${c.usergroup_id || 'DL'}', '${c.customer_id}')" title="${isUserDisabled ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}">
+                   <span class="material-symbols-outlined" style="font-size:16px; color:${isUserDisabled ? 'var(--success)' : 'var(--warning)'}">${isUserDisabled ? 'lock_open' : 'lock'}</span>
+                 </button>`
+              : '';
+
+            const btnResetPw = c.username
+              ? `<button class="btn-icon" style="padding: 6px; border-radius: 6px;" onclick="CustomersPage.openResetPasswordModal('${c.username}')" title="Đặt lại mật khẩu">
+                   <span class="material-symbols-outlined" style="font-size:16px; color:var(--primary)">key</span>
+                 </button>`
+              : '';
+
+            const wrapper = document.createElement('div');
+            wrapper.style.display = 'flex';
+            wrapper.style.gap = '4px';
+            wrapper.style.alignItems = 'center';
+            wrapper.style.justifyContent = 'center';
+            wrapper.innerHTML = `
+              <button class="btn-icon" style="padding: 6px; border-radius: 6px;" onclick="CustomersPage.openCustomerModal('${c.customer_id}')" title="Sửa thông tin khách hàng">
+                <span class="material-symbols-outlined" style="font-size:16px; color:var(--text)">edit</span>
+              </button>
+              ${btnResetPw}
+              ${btnToggleLock}
+              <button class="btn-icon" style="padding: 6px; border-radius: 6px;" onclick="CustomersPage.deleteCustomer('${c.customer_id}')" title="Xóa khách hàng">
+                <span class="material-symbols-outlined" style="font-size:16px; color:var(--danger)">delete</span>
+              </button>
+            `;
+            return wrapper;
+          }
+        }
+      ],
+      rowData: customers
+    };
+
+    gridApi = AppGrid.create(container, gridOptions);
+  }
+
   async function _fetchAndRender() {
-    const tbody = document.getElementById('customers-body');
-    if (!tbody) return;
-
-    tbody.innerHTML = '<tr><td colspan="9" class="text-center" style="padding:24px;">Đang tải dữ liệu...</td></tr>';
-
     const searchInput = document.getElementById('customer-search');
     const filterGroup = document.getElementById('customer-filter-group');
 
@@ -143,64 +225,11 @@ var CustomersPage = (function () {
       countEl.textContent = `Tổng số: ${customers.length} khách hàng`;
     }
 
-    if (customers.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><span class="material-symbols-outlined">group_off</span><span data-i18n="table.empty">Không tìm thấy khách hàng nào</span></td></tr>';
-      return;
+    if (!gridApi) {
+      _initGrid(customers);
+    } else {
+      gridApi.setGridOption('rowData', customers);
     }
-
-    tbody.innerHTML = customers.map(c => {
-      // Ép kiểu boolean chính xác cho các giá trị trạng thái từ API (tránh lỗi nhận chuỗi "0" làm truthy)
-      const isDisabled = c.is_disable === true || c.is_disable == 1 || c.is_disable === 'true' || c.is_disable === '1';
-      const isUserDisabled = c.user_disable === true || c.user_disable == 1 || c.user_disable === 'true' || c.user_disable === '1';
-
-      const activeBadge = isDisabled
-        ? '<span class="badge badge-red">Đã khóa</span>'
-        : '<span class="badge badge-green">Hoạt động</span>';
-
-      const accountCell = c.username
-        ? `<div style="display:flex; flex-direction:column; gap:2px;">
-             <strong>${c.username}</strong>
-             ${isUserDisabled ? '<span style="font-size:10px; color:var(--danger)">[TK Bị Khóa]</span>' : '<span style="font-size:10px; color:var(--success)">[TK Mở]</span>'}
-           </div>`
-        : '<span style="color:var(--text-secondary); font-style:italic;">Chưa tạo</span>';
-
-      const btnToggleLock = c.username
-        ? `<button class="btn-icon" style="padding: 6px; border-radius: 6px;" onclick="CustomersPage.toggleLockAccount('${c.username}', '${c.name}', ${isUserDisabled}, '${c.usergroup_id || 'DL'}', '${c.customer_id}')" title="${isUserDisabled ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}">
-             <span class="material-symbols-outlined" style="font-size:16px; color:${isUserDisabled ? 'var(--success)' : 'var(--warning)'}">${isUserDisabled ? 'lock_open' : 'lock'}</span>
-           </button>`
-        : '';
-
-      const btnResetPw = c.username
-        ? `<button class="btn-icon" style="padding: 6px; border-radius: 6px;" onclick="CustomersPage.openResetPasswordModal('${c.username}')" title="Đặt lại mật khẩu">
-             <span class="material-symbols-outlined" style="font-size:16px; color:var(--primary)">key</span>
-           </button>`
-        : '';
-
-      return `
-        <tr>
-          <td><strong>${c.customer_id}</strong></td>
-          <td>${c.name}</td>
-          <td>${c.phone || '<span class="text-secondary">-</span>'}</td>
-          <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${c.address}">${c.address}</td>
-          <td>${c.employee_name || c.employee_id || '<span class="text-secondary">-</span>'}</td>
-          <td>${c.group_name || c.group_id || '<span class="text-secondary">-</span>'}</td>
-          <td>${accountCell}</td>
-          <td class="text-center">${activeBadge}</td>
-          <td>
-            <div style="display:flex; justify-content:center; gap:4px; align-items:center;">
-              <button class="btn-icon" style="padding: 6px; border-radius: 6px;" onclick="CustomersPage.openCustomerModal('${c.customer_id}')" title="Sửa thông tin khách hàng">
-                <span class="material-symbols-outlined" style="font-size:16px; color:var(--text)">edit</span>
-              </button>
-              ${btnResetPw}
-              ${btnToggleLock}
-              <button class="btn-icon" style="padding: 6px; border-radius: 6px;" onclick="CustomersPage.deleteCustomer('${c.customer_id}')" title="Xóa khách hàng">
-                <span class="material-symbols-outlined" style="font-size:16px; color:var(--danger)">delete</span>
-              </button>
-            </div>
-          </td>
-        </tr>
-      `;
-    }).join('');
 
     if (typeof applyLanguage === 'function') applyLanguage();
   }

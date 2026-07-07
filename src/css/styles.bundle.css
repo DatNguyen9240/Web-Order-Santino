@@ -3112,6 +3112,19 @@ tbody tr.row-selected td:first-child {
   width: 100%;
 }
 
+/* Fix badge overflow inside AG Grid cells */
+.ag-cell .badge,
+.ag-cell .status-badge {
+  padding: 2px 8px !important;
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  vertical-align: middle !important;
+  margin: 0 !important;
+}
+
 /* --- shared-dropdown.css --- */
 /* 3. DATAGRID DROPDOWN MENU (FOR COMBOBOX/GRID CELL) */
 .data-dropdown-menu {

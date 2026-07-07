@@ -7,9 +7,9 @@
 <div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:16px; align-items:center;">
   <div class="search-wrapper" style="flex:1; min-width: 250px;">
     <span class="material-symbols-outlined">search</span>
-    <input id="product-search" placeholder="Tìm tên hàng 2..." data-i18n-placeholder="products.search.placeholder" oninput="ProductsPage.render()">
+    <input id="product-search" placeholder="Tìm kiếm nhanh..." oninput="ProductsPage.onSearch(this.value)">
   </div>
-  <select id="product-filter-form" style="min-width:140px; padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);outline:none;font-weight:500;box-shadow:var(--shadow-sm);" onchange="ProductsPage.render()">
+  <select id="product-filter-form" style="min-width:140px; padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);outline:none;font-weight:500;box-shadow:var(--shadow-sm);" onchange="ProductsPage.onFormFilter(this.value)">
     <option value="">Tất cả Form</option>
     <option>AMC</option>
     <option>ARC</option>
@@ -18,24 +18,7 @@
     <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">add</span><span data-i18n="btn.add">Thêm</span>
   </button>
 </div>
-<div class="tbl-wrap">
-  <table>
-    <thead>
-      <tr>
-        <th data-i18n="table.col.name2">Tên hàng 2</th>
-        <th data-i18n="table.col.product_group">Nhóm hàng</th>
-        <th data-i18n="table.col.form">Form</th>
-        <th data-i18n="table.col.design_color">Design/Màu</th>
-        <th data-i18n="table.col.size_group">Nhóm size</th>
-        <th data-i18n="table.col.price">Đơn giá</th>
-        <th data-i18n="table.col.product_name">Tên hàng hóa</th>
-        <th data-i18n="table.col.status">Trạng thái</th>
-        <th data-i18n="table.col.action">Thao tác</th>
-      </tr>
-    </thead>
-    <tbody id="products-body"></tbody>
-  </table>
-</div>
+<div id="products-grid-container" style="height: 550px; width: 100%;"></div>
 
 <!-- Modal: Sản phẩm -->
 <div class="modal-overlay" id="modal-product">
