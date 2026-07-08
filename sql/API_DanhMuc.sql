@@ -276,7 +276,7 @@ BEGIN
             SET @TuKhoa = ISNULL(JSON_VALUE(@TimKiem, '$.q'), '');
             DECLARE @strTuNgay NVARCHAR(20) = JSON_VALUE(@TimKiem, '$.from');
             DECLARE @strDenNgay NVARCHAR(20) = JSON_VALUE(@TimKiem, '$.to');
-            SET @chinhanh = JSON_VALUE(@TimKiem, '$.chinhanh');
+            SET @chinhanh = ISNULL(JSON_VALUE(@TimKiem, '$.chinhanh'), @chinhanh);
             SET @Page = ISNULL(CAST(JSON_VALUE(@TimKiem, '$.page') AS INT), @Page);
             SET @PageSize = ISNULL(CAST(JSON_VALUE(@TimKiem, '$.limit') AS INT), @PageSize);
             SET @FilterCustomerID = JSON_VALUE(@TimKiem, '$.customer_id');
