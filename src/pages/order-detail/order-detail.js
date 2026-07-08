@@ -127,7 +127,11 @@ var OrderDetailPage = (function () {
       if (objID && objID !== '') {
         empID = '';
       }
-      queryObj.chinhanh = '|PAGE:1|ROLE:' + role + '|EMP:' + empID + '|OBJ:' + objID;
+      queryObj.chinhanh = '';
+      queryObj.UserRole = role;
+      queryObj.UserEmployeeID = empID;
+      queryObj.UserObjectID = objID;
+      queryObj.Page = 1;
 
       const params = { q: JSON.stringify(queryObj), _t: Date.now() };
       const res = await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, params);

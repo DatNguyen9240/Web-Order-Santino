@@ -37,9 +37,9 @@ var OrderPage = (function () {
           var customerMenu = records.find(function (item) {
             var formName = item.formName || item.FormName || '';
             var formKey = item.formKey || item.FormKey || '';
-            return formName.toLowerCase() === 'web_customerfrm' || 
-                   formName.toLowerCase() === 'customers' ||
-                   formKey.toLowerCase() === 'customers';
+            return formName.toLowerCase() === 'web_customerfrm' ||
+              formName.toLowerCase() === 'customers' ||
+              formKey.toLowerCase() === 'customers';
           });
           _canAddCustomer = customerMenu ? (customerMenu.IsAdd == 1 || customerMenu.isAdd == 1) : false;
         }
@@ -1358,11 +1358,8 @@ var OrderPage = (function () {
         }
       }
 
-      // Load Dealers & UserGroups
-      var [dealers, userGroups] = await Promise.all([
-        CategoryService.getCategories('Dealer'),
-        CategoryService.getCategories('UserGroup')
-      ]);
+      // Load Dealers
+      var dealers = await CategoryService.getCategories('Dealer');
 
       var _t = document.getElementById('toast');
       if (_t) _t.classList.remove('show'); // Ẩn loading
@@ -1442,13 +1439,7 @@ var OrderPage = (function () {
                   <label>Tên đăng nhập *</label>
                   <input id="cust-username" class="ui-input" placeholder="Mặc định dùng Mã khách hàng...">
                 </div>
-                <div class="form-group">
-                  <label>Nhóm quyền tài khoản *</label>
-                  <select id="cust-usergroup" class="ui-input">
-                    ${userGroups.map(ug => `<option value="${ug.id}">${ug.name}</option>`).join('')}
-                  </select>
-                </div>
-                <div class="form-group span2" id="cust-initial-password-group" style="grid-column: span 2;">
+                <div class="form-group" id="cust-initial-password-group">
                   <label>Mật khẩu khởi tạo *</label>
                   <input id="cust-password" class="ui-input" type="password" placeholder="Nhập mật khẩu tài khoản...">
                 </div>
@@ -1459,12 +1450,11 @@ var OrderPage = (function () {
         </div>
       `;
 
-      // Thiết lập ẩn/hiện ô chọn đại lý cấp trên dựa vào quyền hạn
-      var curUser = JSON.parse(localStorage.getItem('santino_user') || '{}');
-      var curRole = (curUser.role || curUser.Group || '').toLowerCase();
+      var perm = _getUserPermission();
       var dealerGroupEl = content.querySelector('#cust-dealer-group');
       if (dealerGroupEl) {
-        if (curRole === 'admin' || curRole === 'ketoan' || curRole === 'sales' || curRole === 'nvkd') {
+        // Chỉ cho phép nhân viên nội bộ (không phải Đại lý/Agent) chọn Đại lý quản lý
+        if (!perm.isAgent) {
           dealerGroupEl.style.display = 'block';
         } else {
           dealerGroupEl.style.display = 'none';
@@ -1472,7 +1462,6 @@ var OrderPage = (function () {
       }
 
       // Chọn nhóm mặc định nếu là Agent con
-      var perm = _getUserPermission();
       var defaultNhom = perm.isAgent ? perm.objID : '';
       if (defaultNhom) {
         var selectGroup = content.querySelector('#cust-group');
@@ -1546,7 +1535,7 @@ var OrderPage = (function () {
 
     var hasAccount = form.querySelector('#cust-has-account').checked;
     var username = form.querySelector('#cust-username').value.trim();
-    var usergroup = form.querySelector('#cust-usergroup').value;
+    var usergroup = ''; // SQL tự gán là KHACH
     var password = form.querySelector('#cust-password').value;
 
     if (hasAccount) {
@@ -1554,18 +1543,16 @@ var OrderPage = (function () {
       if (password.length < 4) { showToast('Mật khẩu tối thiểu phải từ 4 ký tự!', false); return; }
     }
 
-    var curUser = JSON.parse(localStorage.getItem('santino_user') || '{}');
-    var curRole = (curUser.role || curUser.Group || '').toLowerCase();
-
+    var perm = _getUserPermission();
+    var curUser = perm.user;
     var nhaPhanPhoi = '';
-    if (curRole === 'dl' || curRole === 'ban dai ly') {
-      nhaPhanPhoi = curUser.ObjectID || '';
+    if (perm.isAgent) {
+      nhaPhanPhoi = perm.objID || '';
     } else {
       var dealerSelect = form.querySelector('#cust-dealer');
       nhaPhanPhoi = dealerSelect ? dealerSelect.value : '';
     }
 
-    var perm = _getUserPermission();
     var branchId = perm.user.BranchID || '';
 
     // Dữ liệu khách hàng để gửi API

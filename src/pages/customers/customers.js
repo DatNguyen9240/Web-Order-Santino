@@ -11,6 +11,7 @@ var CustomersPage = (function () {
   var payTerms = [];
   var userGroups = [];
   var dealers = [];
+  var _userPerm = { isAdmin: false, isManager: false, isAgent: false };
 
   function render(containerElement) {
     gridApi = null;
@@ -23,8 +24,36 @@ var CustomersPage = (function () {
     });
   }
 
+  async function _loadUserPermission() {
+    try {
+      var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
+      var queryObj = {
+        Loai: 'UserPermission',
+        UserRole: user.role || user.Group || '',
+        UserEmployeeID: user.EmployeeID || '',
+        UserManagerID: user.ManagerID || '',
+        UserObjectID: user.ObjectID || ''
+      };
+      var res = await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, { q: JSON.stringify(queryObj) });
+      var data = res.records || res;
+      if (data && data[0]) {
+        var parseBool = function (val) {
+          if (!val) return false;
+          var s = String(val).toLowerCase().trim();
+          return s === '1' || s === 'true';
+        };
+        _userPerm.isAdmin = parseBool(data[0].isAdmin);
+        _userPerm.isManager = parseBool(data[0].isManager);
+        _userPerm.isAgent = parseBool(data[0].isAgent);
+      }
+    } catch (err) {
+      console.warn('[CustomersPage] Lỗi load quyền người dùng:', err);
+    }
+  }
+
   async function _init() {
     try {
+      await _loadUserPermission();
       // 1. Tải toàn bộ danh mục cho dropdowns
       const [groupsData, empsData, locsData, branchData, payTypeData, payTermData, userGroupData, dealersData] = await Promise.all([
         CategoryService.getCategories('ObjectGroup'),
@@ -188,7 +217,7 @@ var CustomersPage = (function () {
             const resetPwTitle = typeof t !== 'undefined' ? t('customers.action.reset_pw') : 'Đặt lại mật khẩu';
 
             const btnToggleLock = c.username
-              ? `<button class="btn-icon" style="padding: 6px; border-radius: 6px;" onclick="CustomersPage.toggleLockAccount('${c.username}', '${c.name}', ${isUserDisabled}, '${c.usergroup_id || 'DL'}', '${c.customer_id}')" title="${isUserDisabled ? unlockTitle : lockTitle}">
+              ? `<button class="btn-icon" style="padding: 6px; border-radius: 6px;" onclick="CustomersPage.toggleLockAccount('${c.username}', '${c.name}', ${isUserDisabled}, '${c.usergroup_id || ''}', '${c.customer_id}')" title="${isUserDisabled ? unlockTitle : lockTitle}">
                    <span class="material-symbols-outlined" style="font-size:16px; color:${isUserDisabled ? 'var(--success)' : 'var(--warning)'}">${isUserDisabled ? 'lock_open' : 'lock'}</span>
                  </button>`
               : '';
@@ -308,11 +337,9 @@ var CustomersPage = (function () {
     toggleAccountFields();
 
     // Ẩn/hiện ô chọn đại lý cấp trên dựa vào quyền hạn
-    var curUser = JSON.parse(localStorage.getItem('santino_user') || '{}');
-    var curRole = (curUser.role || curUser.Group || '').toLowerCase();
     var dealerGroupEl = document.getElementById('cust-dealer-group');
     if (dealerGroupEl) {
-      if (curRole === 'admin' || curRole === 'ketoan' || curRole === 'sales' || curRole === 'nvkd') {
+      if (!_userPerm.isAgent) {
         dealerGroupEl.style.display = 'block';
       } else {
         dealerGroupEl.style.display = 'none';
@@ -459,8 +486,7 @@ var CustomersPage = (function () {
 
     // Xác định nhà phân phối/đại lý cấp trên
     let nhaPhanPhoi = '';
-    const curRole = (curUser.role || curUser.Group || '').toLowerCase();
-    if (curRole === 'dl' || curRole === 'ban dai ly') {
+    if (_userPerm.isAgent) {
       nhaPhanPhoi = curUser.ObjectID || ''; // Tự động gán chính đại lý đó
     } else {
       const dealerSelect = document.getElementById('cust-dealer');
@@ -567,7 +593,7 @@ var CustomersPage = (function () {
       const userData = {
         UserName: username,
         HoTen: fullname,
-        UserGroupID: groupUser || 'DL',
+        UserGroupID: groupUser || '',
         ObjectID: objectId,
         Disable: nextDisable ? 1 : 0 // Cần gửi 0 hoặc 1 nếu backend SQL nhận bit, hoặc gửi true/false. Ta gửi boolean để C# map tốt nhất:
       };

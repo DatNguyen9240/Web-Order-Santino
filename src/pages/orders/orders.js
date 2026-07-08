@@ -62,7 +62,11 @@ var OrdersPage = (function () {
 
       const queryObj = {
         Loai: 'Customer',
-        chinhanh: '|PAGE:1|ROLE:' + role + '|EMP:' + empID + '|OBJ:' + objID
+        chinhanh: '',
+        UserRole: role,
+        UserEmployeeID: empID,
+        UserObjectID: objID,
+        Page: 1
       };
 
       const params = { q: JSON.stringify(queryObj), _t: Date.now() };
@@ -198,7 +202,11 @@ var OrdersPage = (function () {
       if (objID && objID !== '') {
         empID = '';
       }
-      queryObj.chinhanh = '|PAGE:1|ROLE:' + role + '|EMP:' + empID + '|OBJ:' + objID;
+      queryObj.chinhanh = '';
+      queryObj.UserRole = role;
+      queryObj.UserEmployeeID = empID;
+      queryObj.UserObjectID = objID;
+      queryObj.Page = 1;
 
       const params = { q: JSON.stringify(queryObj), _t: Date.now() };
 
