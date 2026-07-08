@@ -210,7 +210,6 @@ var CustomersPage = (function () {
           width: 180,
           minWidth: 180,
           suppressSizeToFit: true,
-          pinned: 'right',
           cellRenderer: function (params) {
             const c = params.data;
             const isUserDisabled = c.user_disable === true || c.user_disable == 1 || c.user_disable === 'true' || c.user_disable === '1';
