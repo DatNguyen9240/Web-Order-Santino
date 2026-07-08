@@ -207,7 +207,10 @@ var CustomersPage = (function () {
           sortable: false,
           filter: false,
           floatingFilter: false,
-          width: 160,
+          width: 180,
+          minWidth: 180,
+          suppressSizeToFit: true,
+          pinned: 'right',
           cellRenderer: function (params) {
             const c = params.data;
             const isUserDisabled = c.user_disable === true || c.user_disable == 1 || c.user_disable === 'true' || c.user_disable === '1';
@@ -217,29 +220,29 @@ var CustomersPage = (function () {
             const resetPwTitle = typeof t !== 'undefined' ? t('customers.action.reset_pw') : 'Đặt lại mật khẩu';
 
             const btnToggleLock = c.username
-              ? `<button class="btn-icon" style="padding: 6px; border-radius: 6px;" onclick="CustomersPage.toggleLockAccount('${c.username}', '${c.name}', ${isUserDisabled}, '${c.usergroup_id || ''}', '${c.customer_id}')" title="${isUserDisabled ? unlockTitle : lockTitle}">
+              ? `<button class="btn-icon" style="padding: 4px; border-radius: 6px;" onclick="CustomersPage.toggleLockAccount('${c.username}', '${c.name}', ${isUserDisabled}, '${c.usergroup_id || ''}', '${c.customer_id}')" title="${isUserDisabled ? unlockTitle : lockTitle}">
                    <span class="material-symbols-outlined" style="font-size:16px; color:${isUserDisabled ? 'var(--success)' : 'var(--warning)'}">${isUserDisabled ? 'lock_open' : 'lock'}</span>
                  </button>`
               : '';
 
             const btnResetPw = c.username
-              ? `<button class="btn-icon" style="padding: 6px; border-radius: 6px;" onclick="CustomersPage.openResetPasswordModal('${c.username}')" title="${resetPwTitle}">
+              ? `<button class="btn-icon" style="padding: 4px; border-radius: 6px;" onclick="CustomersPage.openResetPasswordModal('${c.username}')" title="${resetPwTitle}">
                    <span class="material-symbols-outlined" style="font-size:16px; color:var(--primary)">key</span>
                  </button>`
               : '';
 
             const wrapper = document.createElement('div');
             wrapper.style.display = 'flex';
-            wrapper.style.gap = '4px';
+            wrapper.style.gap = '6px';
             wrapper.style.alignItems = 'center';
             wrapper.style.justifyContent = 'center';
             wrapper.innerHTML = `
-              <button class="btn-icon" style="padding: 6px; border-radius: 6px;" onclick="CustomersPage.openCustomerModal('${c.customer_id}')" title="Sửa thông tin khách hàng">
+              <button class="btn-icon" style="padding: 4px; border-radius: 6px;" onclick="CustomersPage.openCustomerModal('${c.customer_id}')" title="Sửa thông tin khách hàng">
                 <span class="material-symbols-outlined" style="font-size:16px; color:var(--text)">edit</span>
               </button>
               ${btnResetPw}
               ${btnToggleLock}
-              <button class="btn-icon" style="padding: 6px; border-radius: 6px;" onclick="CustomersPage.deleteCustomer('${c.customer_id}')" title="Xóa khách hàng">
+              <button class="btn-icon" style="padding: 4px; border-radius: 6px;" onclick="CustomersPage.deleteCustomer('${c.customer_id}')" title="Xóa khách hàng">
                 <span class="material-symbols-outlined" style="font-size:16px; color:var(--danger)">delete</span>
               </button>
             `;
