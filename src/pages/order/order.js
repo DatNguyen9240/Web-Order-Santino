@@ -193,9 +193,9 @@ var OrderPage = (function () {
         q.chinhanh = ''; // ensure chinhanh is defined
       }
       if (page) {
-        q.chinhanh += '|PAGE:' + page;
+        q.Page = page;
       }
-      // TRÙM CUỐI: Bọc tham số quyền vào chinhanh để lách qua C# Backend
+      // Truyền tham số quyền chuẩn qua JSON thay vì nhồi vào biến chinhanh
       try {
         var perm = _getUserPermission();
         var role = perm.user.role || perm.user.Group || '';
@@ -210,12 +210,9 @@ var OrderPage = (function () {
           empID = '';
         }
 
-        // Đảm bảo phải có mỏ neo |PAGE: để SQL API_DanhMuc có thể parse
-        if (!page) {
-          q.chinhanh += '|PAGE:1';
-        }
-
-        q.chinhanh += '|ROLE:' + role + '|EMP:' + empID + '|OBJ:' + objID;
+        q.UserRole = role;
+        q.UserEmployeeID = empID;
+        q.UserObjectID = objID;
       } catch (e) { }
     }
 

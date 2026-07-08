@@ -19,45 +19,6 @@ BEGIN
 
     SET @TimKiem = LTRIM(RTRIM(ISNULL(@TimKiem, '')));
 
-    IF CHARINDEX('|PAGE:', ISNULL(@chinhanh, '')) > 0
-    BEGIN
-        -- Lấy ra chuỗi PAGE và các tham số khác đằng sau nó
-        DECLARE @MetaString NVARCHAR(MAX) = SUBSTRING(@chinhanh, CHARINDEX('|PAGE:', @chinhanh), LEN(@chinhanh));
-        SET @chinhanh = SUBSTRING(@chinhanh, 1, CHARINDEX('|PAGE:', @chinhanh) - 1);
-
-        -- Parse PAGE
-        IF CHARINDEX('|PAGE:', @MetaString) > 0
-        BEGIN
-            DECLARE @pageStr NVARCHAR(50) = SUBSTRING(@MetaString, CHARINDEX('|PAGE:', @MetaString) + 6, LEN(@MetaString));
-            IF CHARINDEX('|', @pageStr) > 0 SET @pageStr = SUBSTRING(@pageStr, 1, CHARINDEX('|', @pageStr) - 1);
-            SET @Page = CAST(@pageStr AS INT);
-        END
-
-        -- Parse ROLE
-        IF CHARINDEX('|ROLE:', @MetaString) > 0
-        BEGIN
-            DECLARE @roleStr NVARCHAR(50) = SUBSTRING(@MetaString, CHARINDEX('|ROLE:', @MetaString) + 6, LEN(@MetaString));
-            IF CHARINDEX('|', @roleStr) > 0 SET @roleStr = SUBSTRING(@roleStr, 1, CHARINDEX('|', @roleStr) - 1);
-            SET @UserRole = UPPER(@roleStr);
-        END
-
-        -- Parse EMP
-        IF CHARINDEX('|EMP:', @MetaString) > 0
-        BEGIN
-            DECLARE @empStr NVARCHAR(50) = SUBSTRING(@MetaString, CHARINDEX('|EMP:', @MetaString) + 5, LEN(@MetaString));
-            IF CHARINDEX('|', @empStr) > 0 SET @empStr = SUBSTRING(@empStr, 1, CHARINDEX('|', @empStr) - 1);
-            SET @UserEmployeeID = @empStr;
-        END
-
-        -- Parse OBJ
-        IF CHARINDEX('|OBJ:', @MetaString) > 0
-        BEGIN
-            DECLARE @objStr NVARCHAR(50) = SUBSTRING(@MetaString, CHARINDEX('|OBJ:', @MetaString) + 5, LEN(@MetaString));
-            IF CHARINDEX('|', @objStr) > 0 SET @objStr = SUBSTRING(@objStr, 1, CHARINDEX('|', @objStr) - 1);
-            SET @UserObjectID = @objStr;
-        END
-    END
-
     SET @Page = ISNULL(@Page, 1);
     SET @PageSize = ISNULL(@PageSize, 50);
     IF @Page < 1 SET @Page = 1;
