@@ -746,16 +746,7 @@ var OrderPage = (function () {
 
   function finishOrderInfo() {
     var maKH = document.getElementById('o-ma-kh').value.trim();
-    var chiNhanh = _catValues.chi_nhanh.id || _catValues.chi_nhanh.name;
 
-    var perm = _getUserPermission();
-
-    // Nếu không phải Khách lẻ mà chưa chọn chi nhánh thì mới báo lỗi
-    // (Khách lẻ mặc định bị ẩn ô chi nhánh nên không bắt buộc chọn)
-    if (!chiNhanh && perm.isAdmin) {
-      showToast('Vui lòng chọn chi nhánh', false);
-      return;
-    }
     if (!maKH) {
       showToast('Vui lòng chọn khách hàng', false);
       return;
@@ -1219,14 +1210,6 @@ var OrderPage = (function () {
     var lines = _buildLines();
     if (!lines || lines.length === 0) {
       showToast('Vui lòng chọn ít nhất 1 sản phẩm', false);
-      return;
-    }
-
-    var chiNhanh = _catValues.chi_nhanh.id || _catValues.chi_nhanh.name;
-    var perm = _getUserPermission();
-
-    if (!chiNhanh && perm.isAdmin) {
-      showToast('Vui lòng chọn chi nhánh', false);
       return;
     }
 
