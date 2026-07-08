@@ -36,8 +36,6 @@ BEGIN
             AND (
                 -- Nếu menu không cần check quyền, cho hiển thị
                 M.[isNotCheckPermission] = 1
-                -- Hoặc tài khoản là Admin thì hiển thị tất cả
-                OR @UserRole = 'Admin'
                 -- Hoặc nhóm quyền tương ứng của user được bật 'IsRun = 1'
                 OR EXISTS (
                     SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] P
