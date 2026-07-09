@@ -12,7 +12,8 @@ ALTER PROCEDURE [dbo].[API_DanhMuc]
     @UserRole       NVARCHAR(50)   = NULL,
     @UserEmployeeID NVARCHAR(50)   = NULL,
     @UserManagerID  NVARCHAR(50)   = NULL,
-    @UserObjectID   NVARCHAR(50)   = NULL
+    @UserObjectID   NVARCHAR(50)   = NULL,
+    @NhaPhanPhoi    NVARCHAR(50)   = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -31,6 +32,7 @@ BEGIN
             SET @UserEmployeeID = ISNULL(@UserEmployeeID, JSON_VALUE(@TimKiem, '$.UserEmployeeID'));
             SET @UserManagerID = ISNULL(@UserManagerID, JSON_VALUE(@TimKiem, '$.UserManagerID'));
             SET @UserObjectID = ISNULL(@UserObjectID, JSON_VALUE(@TimKiem, '$.UserObjectID'));
+            SET @NhaPhanPhoi = ISNULL(@NhaPhanPhoi, JSON_VALUE(@TimKiem, '$.NhaPhanPhoi'));
             
             -- Giải nén từ khóa tìm kiếm thực tế trong JSON
             SET @TimKiem = ISNULL(JSON_VALUE(@TimKiem, '$.TimKiem'), '');
@@ -272,6 +274,8 @@ BEGIN
           AND (@chinhanh IS NULL OR @chinhanh = '' 
                OR ISNULL([BranchID], '') = ''
                OR CHARINDEX(',' + @chinhanh + ',', ',' + REPLACE(ISNULL([BranchID], ''), ' ', '') + ',') > 0)
+          -- Lọc theo Nhà Phân Phối nếu được chọn ở ô Khách hàng
+          AND (@NhaPhanPhoi IS NULL OR @NhaPhanPhoi = '' OR [NhaPhanPhoi] = @NhaPhanPhoi)
           -- PHÂN QUYỀN: Kế toán/Admin xem hết, NV KD xem KH của mình, NPP xem KH thuộc quản lý, KH tự xem mình
           AND (
                -- CÚ CHECK TỰ ĐỘNG: Bất kỳ nhóm nào được tick isAdmin hoặc isManager ở trang WEB_OrderFrm thì mặc định nhả hết Khách hàng

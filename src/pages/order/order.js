@@ -183,9 +183,10 @@ var OrderPage = (function () {
 
   // Tìm kiếm danh mục server-side — gọi Http trực tiếp,
   // tránh dùng CategoryService cũ có thể đang trong bundle cũ.
-  function _searchCategory(loai, timKiem, ignoreBranchFilter, page) {
+  function _searchCategory(loai, timKiem, ignoreBranchFilter, page, nhaPhanPhoi) {
     var q = { Loai: loai };
     if (timKiem && timKiem.trim()) q.TimKiem = timKiem.trim();
+    if (nhaPhanPhoi) q.NhaPhanPhoi = nhaPhanPhoi;
     if (loai === 'Customer' || loai === 'UserPermission') {
       if (loai === 'Customer' && !ignoreBranchFilter && _catValues && _catValues.chi_nhanh && _catValues.chi_nhanh.id) {
         q.chinhanh = _catValues.chi_nhanh.id;
@@ -476,7 +477,8 @@ var OrderPage = (function () {
           colHighlightIndex: 1,
           colGroupIndex: 3,
           onSearch: function (q, page) {
-            return _searchCategory('Customer', q, true, page).then(function (list) {
+            var selectedNPP = document.getElementById('o-ma-kh').value || '';
+            return _searchCategory('Customer', q, true, page, selectedNPP).then(function (list) {
               return list.map(function (c) { return [c.id, c.name, c.address || '', c.group_id || 'Khác']; });
             });
           },
