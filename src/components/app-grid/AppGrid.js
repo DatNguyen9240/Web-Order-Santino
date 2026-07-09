@@ -150,6 +150,55 @@ var AppGrid = {
       }
     };
 
+    // Responsive auto-sizing columns strategy
+    function adjustColumnWidths(api) {
+      if (!api) return;
+      api.autoSizeAllColumns(false);
+
+      var isMobile = window.innerWidth < 768;
+      if (isMobile) {
+        var cols = api.getColumnState();
+        var totalColWidth = 0;
+        cols.forEach(function (colState) {
+          if (!colState.hide) {
+            var col = api.getColumn(colState.colId);
+            if (col) {
+              totalColWidth += col.getActualWidth();
+            }
+          }
+        });
+
+        var containerWidth = container.offsetWidth;
+        if (totalColWidth > 0 && containerWidth > 0 && totalColWidth < containerWidth) {
+          api.sizeColumnsToFit();
+        }
+      }
+    }
+
+    var originalOnGridSizeChanged = mergedOptions.onGridSizeChanged;
+    mergedOptions.onGridSizeChanged = function (event) {
+      adjustColumnWidths(event.api);
+      if (typeof originalOnGridSizeChanged === 'function') {
+        originalOnGridSizeChanged(event);
+      }
+    };
+
+    var originalOnFirstDataRendered = mergedOptions.onFirstDataRendered;
+    mergedOptions.onFirstDataRendered = function (event) {
+      adjustColumnWidths(event.api);
+      if (typeof originalOnFirstDataRendered === 'function') {
+        originalOnFirstDataRendered(event);
+      }
+    };
+
+    var originalOnModelUpdated = mergedOptions.onModelUpdated;
+    mergedOptions.onModelUpdated = function (event) {
+      adjustColumnWidths(event.api);
+      if (typeof originalOnModelUpdated === 'function') {
+        originalOnModelUpdated(event);
+      }
+    };
+
     var gridApi = agGrid.createGrid(container, mergedOptions);
 
     // Create column selector floating button if it doesn't exist
