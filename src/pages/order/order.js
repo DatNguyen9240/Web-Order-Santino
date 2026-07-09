@@ -188,11 +188,7 @@ var OrderPage = (function () {
     if (timKiem && timKiem.trim()) q.TimKiem = timKiem.trim();
     if (nhaPhanPhoi) q.NhaPhanPhoi = nhaPhanPhoi;
     if (loai === 'Customer' || loai === 'UserPermission') {
-      if (loai === 'Customer' && !ignoreBranchFilter && _catValues && _catValues.chi_nhanh && _catValues.chi_nhanh.id) {
-        q.chinhanh = _catValues.chi_nhanh.id;
-      } else {
-        q.chinhanh = ''; // ensure chinhanh is defined
-      }
+      q.chinhanh = ''; // Bỏ hẳn logic lọc theo chi nhánh khi tìm kiếm khách hàng
       if (page) {
         q.Page = page;
       }
@@ -371,7 +367,7 @@ var OrderPage = (function () {
           colHighlightIndex: 1,
           colGroupIndex: 5,
           onSearch: function (q, page) {
-            return _searchCategory('Customer', q, false, page).then(function (list) {
+            return _searchCategory('Customer', q, true, page).then(function (list) {
               return list.map(function (c) { return [c.id, c.name, c.address || '', c.employee_id || '', c.branch_id || '', c.group_id || 'Khác']; });
             });
           },
