@@ -399,6 +399,16 @@ var OrderPage = (function () {
                 _catValues.nvkd = { id: e.id, name: e.name };
               }
             }
+            // Xóa cache của ô đại lý để truy vấn lại theo NPP mới chọn
+            if (_combos.ma_dl && typeof _combos.ma_dl.clearCache === 'function') {
+              _combos.ma_dl.clearCache();
+              // Reset giá trị hiển thị của ô đại lý về trống (nếu không bị khóa)
+              var dlInput = _combos.ma_dl.querySelector('input');
+              if (dlInput && !dlInput.readOnly) {
+                dlInput.value = '';
+                document.getElementById('o-ma-dl').value = '';
+              }
+            }
             updateInfoSummary();
           },
           onF2: function () {
