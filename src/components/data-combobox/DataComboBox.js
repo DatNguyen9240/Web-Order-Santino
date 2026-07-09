@@ -3,6 +3,16 @@
  */
 var UIControls = window.UIControls || {};
 
+function stringToColor(str) {
+  if (!str) return '#ccc';
+  var hash = 0;
+  for (var i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  var h = Math.abs(hash % 360);
+  return 'hsl(' + h + ', 70%, 55%)';
+}
+
 UIControls.createDataComboBox = function (options) {
   var container = document.createElement('div');
   container.className = 'combo-box-container';
@@ -13,6 +23,42 @@ UIControls.createDataComboBox = function (options) {
   input.className = 'ui-input';
   input.placeholder = options.placeholder || '';
   if (options.id) input.id = options.id;
+
+  // Swatch màu sắc cho trường Màu sắc
+  var swatch = null;
+  if (options.id && options.id.includes('MauSac')) {
+    swatch = document.createElement('div');
+    swatch.className = 'combo-color-swatch';
+    swatch.style.cssText = 'position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.15); pointer-events: none; background-color: transparent; display: none; transition: all 0.2s;';
+    input.style.paddingLeft = '34px'; // Nhường chỗ cho ô tròn hiển thị màu
+    container.style.position = 'relative';
+    container.appendChild(swatch);
+  }
+
+  function updateSwatchColor(val) {
+    if (!swatch) return;
+    var cleaned = val ? val.trim() : '';
+    if (cleaned && !cleaned.startsWith('-- Chọn')) {
+      swatch.style.backgroundColor = stringToColor(cleaned);
+      swatch.style.display = 'block';
+    } else {
+      swatch.style.display = 'none';
+    }
+  }
+
+  // Ghi đè Property Descriptor của input.value để cập nhật màu sắc lập tức khi gán bằng JS
+  if (swatch) {
+    var nativeValueDesc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+    Object.defineProperty(input, 'value', {
+      get: function() {
+        return nativeValueDesc.get.call(input);
+      },
+      set: function(val) {
+        nativeValueDesc.set.call(input, val);
+        updateSwatchColor(val);
+      }
+    });
+  }
 
   // Actions block – chỉ giữ nút mũi tên
   var actions = document.createElement('div');
@@ -149,7 +195,18 @@ UIControls.createDataComboBox = function (options) {
 
       rows.forEach(function (row) {
         var dataRow = displayData[row.getAttribute('data-index')];
-        var rowVal = (dataRow[options.colFilterIndex || 0] || '').toString().toLowerCase();
+        var cellVal = dataRow[options.colFilterIndex || 0];
+        
+        // Nếu là ô chọn màu sắc, chèn thêm chấm màu bên cạnh chữ
+        if (options.id && options.id.includes('MauSac') && cellVal) {
+          var firstTd = row.querySelector('td');
+          if (firstTd) {
+            var colorDot = '<span style="display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:8px; vertical-align:middle; border:1px solid rgba(0,0,0,0.15); background-color:' + stringToColor(cellVal) + ';"></span>';
+            firstTd.innerHTML = colorDot + firstTd.innerHTML;
+          }
+        }
+
+        var rowVal = (cellVal || '').toString().toLowerCase();
 
         if (currentInputVal && rowVal === currentInputVal) {
           row.classList.add('active');

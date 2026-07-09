@@ -206,17 +206,20 @@ var OrdersPage = (function () {
       queryObj.UserRole = role;
       queryObj.UserEmployeeID = empID;
       queryObj.UserObjectID = objID;
-      queryObj.Page = 1;
+      queryObj.Page = currentPage;
 
-      const params = { q: JSON.stringify(queryObj), _t: Date.now() };
+      const params = {
+        page: currentPage,
+        limit: itemsPerPage,
+        q: JSON.stringify(queryObj),
+        _t: Date.now()
+      };
 
       const res = await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, params);
       orders = res.records || res;
       if (!Array.isArray(orders)) orders = [];
 
-      if (orders.length > 0 && orders[0].total_rows) {
-        totalItems = orders[0].total_rows;
-      }
+      totalItems = res._recordtotal || orders.length;
     } catch (err) {
       console.warn('Lỗi tải danh sách đơn hàng:', err);
     }

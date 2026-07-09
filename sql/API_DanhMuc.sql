@@ -17,6 +17,22 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+    -- HỖ TRỢ PHÂN TÍCH JSON: Nếu tham số truyền vào gói trong JSON (qua biến q / @TimKiem từ Gateway)
+    IF @TimKiem IS NOT NULL AND @TimKiem <> '' AND LEFT(LTRIM(@TimKiem), 1) = '{' AND ISJSON(@TimKiem) = 1
+    BEGIN
+        SET @Loai = ISNULL(@Loai, JSON_VALUE(@TimKiem, '$.Loai'));
+        SET @chinhanh = ISNULL(@chinhanh, JSON_VALUE(@TimKiem, '$.chinhanh'));
+        SET @Page = ISNULL(CAST(JSON_VALUE(@TimKiem, '$.Page') AS INT), @Page);
+        SET @PageSize = ISNULL(CAST(JSON_VALUE(@TimKiem, '$.PageSize') AS INT), @PageSize);
+        SET @UserRole = ISNULL(@UserRole, JSON_VALUE(@TimKiem, '$.UserRole'));
+        SET @UserEmployeeID = ISNULL(@UserEmployeeID, JSON_VALUE(@TimKiem, '$.UserEmployeeID'));
+        SET @UserManagerID = ISNULL(@UserManagerID, JSON_VALUE(@TimKiem, '$.UserManagerID'));
+        SET @UserObjectID = ISNULL(@UserObjectID, JSON_VALUE(@TimKiem, '$.UserObjectID'));
+        
+        -- Giải nén từ khóa tìm kiếm thực tế trong JSON
+        SET @TimKiem = ISNULL(JSON_VALUE(@TimKiem, '$.TimKiem'), '');
+    END
+
     SET @TimKiem = LTRIM(RTRIM(ISNULL(@TimKiem, '')));
 
     SET @Page = ISNULL(@Page, 1);
@@ -53,6 +69,86 @@ BEGIN
         WHERE (@TimKiem = '' OR [ObjectGroupName] LIKE N'%' + @TimKiem + N'%'
                              OR [ObjectGroupID]   LIKE N'%' + @TimKiem + N'%')
         ORDER BY [ObjectGroupName];
+        RETURN;
+    END
+
+    IF @Loai = 'nhom_hang'
+    BEGIN
+        SELECT DISTINCT
+            [CategoryID] AS [id],
+            [CategoryName] AS [name]
+        FROM [dbo].[CF_CategoryTbl]
+        WHERE [CategoryID] IS NOT NULL AND [CategoryID] <> ''
+          AND (@TimKiem = '' OR [CategoryName] LIKE N'%' + @TimKiem + N'%'
+                             OR [CategoryID]   LIKE N'%' + @TimKiem + N'%')
+        ORDER BY [id];
+        RETURN;
+    END
+
+    IF @Loai = 'form'
+    BEGIN
+        SELECT DISTINCT
+            [Form]     AS [id],
+            [FormName] AS [name]
+        FROM [dbo].[CF_TenHang2Tbl]
+        WHERE [Form] IS NOT NULL AND [Form] <> ''
+          AND (@TimKiem = '' OR [FormName] LIKE N'%' + @TimKiem + N'%'
+                             OR [Form]     LIKE N'%' + @TimKiem + N'%')
+        UNION
+        SELECT 'AMC' AS [id], N'Modern Fit' AS [name] WHERE @TimKiem = '' OR N'Modern Fit' LIKE N'%' + @TimKiem + N'%' OR 'AMC' LIKE N'%' + @TimKiem + N'%'
+        UNION
+        SELECT 'ARC' AS [id], N'Regular' AS [name] WHERE @TimKiem = '' OR N'Regular' LIKE N'%' + @TimKiem + N'%' OR 'ARC' LIKE N'%' + @TimKiem + N'%'
+        UNION
+        SELECT 'APC' AS [id], N'Slim Fit' AS [name] WHERE @TimKiem = '' OR N'Slim Fit' LIKE N'%' + @TimKiem + N'%' OR 'APC' LIKE N'%' + @TimKiem + N'%'
+        ORDER BY [id];
+        RETURN;
+    END
+
+    IF @Loai = 'nhom_size'
+    BEGIN
+        SELECT DISTINCT
+            [NhomSize] AS [id],
+            [NhomSize] AS [name]
+        FROM [dbo].[CF_NhomSizeTbl]
+        WHERE [NhomSize] IS NOT NULL AND [NhomSize] <> ''
+          AND (@TimKiem = '' OR [NhomSize] LIKE N'%' + @TimKiem + N'%')
+        ORDER BY [id];
+        RETURN;
+    END
+
+    IF @Loai = 'ten_nhom_hang'
+    BEGIN
+        SELECT DISTINCT
+            [CategoryName] AS [id],
+            [CategoryName] AS [name]
+        FROM [dbo].[CF_CategoryTbl]
+        WHERE [CategoryName] IS NOT NULL AND [CategoryName] <> ''
+          AND (@TimKiem = '' OR [CategoryName] LIKE N'%' + @TimKiem + N'%')
+        ORDER BY [id];
+        RETURN;
+    END
+
+    IF @Loai = 'mau'
+    BEGIN
+        SELECT DISTINCT
+            [MauSac] AS [id],
+            [MauSac] AS [name]
+        FROM [dbo].[CF_TenHang2Tbl]
+        WHERE [MauSac] IS NOT NULL AND [MauSac] <> ''
+          AND (@TimKiem = '' OR [MauSac] LIKE N'%' + @TimKiem + N'%')
+        ORDER BY [id];
+        RETURN;
+    END
+
+    IF @Loai = 'design'
+    BEGIN
+        SELECT DISTINCT
+            [Design] AS [id],
+            [Design] AS [name]
+        FROM [dbo].[CF_TenHang2Tbl]
+        WHERE [Design] IS NOT NULL AND [Design] <> ''
+          AND (@TimKiem = '' OR [Design] LIKE N'%' + @TimKiem + N'%')
+        ORDER BY [id];
         RETURN;
     END
 
@@ -192,12 +288,26 @@ BEGIN
     ELSE IF @Loai = 'Promotion'
     BEGIN
         SELECT
-            [ChietKhau] AS [id],
-            [CTKM]      AS [name]
+            [CTKM]      AS [id],
+            [ChietKhau] AS [name]
         FROM [dbo].[CF_CTKMTbl]
-        WHERE (@TimKiem = '' OR [CTKM] LIKE N'%' + @TimKiem + N'%')
+        WHERE (@TimKiem = '' OR [CTKM] LIKE N'%' + @TimKiem + N'%' OR [ChietKhau] LIKE N'%' + @TimKiem + N'%')
           AND ([NgayKetThuc] IS NULL OR [NgayKetThuc] >= CAST(GETDATE() AS DATE))
         ORDER BY [CTKM];
+        RETURN;
+    END
+
+    ELSE IF @Loai = 'SKU'
+    BEGIN
+        SELECT
+            [ItemID]    AS [id],
+            [ItemName]  AS [name],
+            [UnitPrice] AS [price]
+        FROM [dbo].[CF_ItemTbl]
+        WHERE (@TimKiem = '' 
+           OR [ItemID]   LIKE N'%' + @TimKiem + N'%'
+           OR [ItemName] LIKE N'%' + @TimKiem + N'%')
+        ORDER BY [ItemID];
         RETURN;
     END
 
@@ -302,8 +412,7 @@ BEGIN
             [CTKM]         AS [ma_ctbh],
             [EmployeeID]   AS [nvkd],
             [isLock]       AS [is_lock],
-            ISNULL((SELECT SUM(Quantity) FROM [dbo].[WEB_OrderDetailTbl] d WHERE d.DocumentID = o.DocumentID), 0) AS [total_qty],
-            COUNT(*) OVER() AS [total_rows]
+            ISNULL((SELECT SUM(Quantity) FROM [dbo].[WEB_OrderDetailTbl] d WHERE d.DocumentID = o.DocumentID), 0) AS [total_qty]
         FROM [dbo].[WEB_OrderTbl] o
         WHERE (@TuKhoa = '' OR [DocumentID] LIKE N'%' + @TuKhoa + N'%' OR [ObjectName] LIKE N'%' + @TuKhoa + N'%')
           AND (@FilterCustomerID IS NULL OR @FilterCustomerID = '' OR [ObjectID] = @FilterCustomerID)
@@ -324,9 +433,7 @@ BEGIN
                   ))
                OR (ISNULL(@UserRole, '') = '' AND ISNULL(@UserEmployeeID, '') = '' AND ISNULL(@UserObjectID, '') = '')
           )
-        ORDER BY [DateCreate] DESC
-        OFFSET (@Page - 1) * @PageSize ROWS
-        FETCH NEXT @PageSize ROWS ONLY;
+        ORDER BY [DateCreate] DESC;
         RETURN;
     END
 

@@ -8,10 +8,6 @@ var Router = (function () {
     { path: '/order', script: 'src/pages/order/order.js', pageFn: 'OrderPage', title: 'nav.order' },
     { path: '/orders', script: 'src/pages/orders/orders.js', pageFn: 'OrdersPage', title: 'nav.orders' },
     { path: '/order-detail', script: 'src/pages/order-detail/order-detail.js', pageFn: 'OrderDetailPage', title: 'nav.order_detail' },
-    { path: '/products', script: 'src/pages/products/products.js', pageFn: 'ProductsPage', title: 'nav.products' },
-    { path: '/sizes', script: 'src/pages/sizes/sizes.js', pageFn: 'SizesPage', title: 'nav.sizes' },
-    { path: '/sku', script: 'src/pages/sku/sku.js', pageFn: 'SkuPage', title: 'nav.sku' },
-    { path: '/promos', script: 'src/pages/promos/promos.js', pageFn: 'PromosPage', title: 'nav.promos' },
     { path: '/settings', script: 'src/pages/settings/settings.js', pageFn: 'SettingsPage', title: 'nav.settings' },
     { path: '/permissions', script: 'src/pages/permissions/permissions.js', pageFn: 'PermissionsPage', title: 'nav.permissions' },
     { path: '/menus', script: 'src/pages/menus/menus.js', pageFn: 'MenusPage', title: 'nav.menus' },
@@ -112,7 +108,7 @@ var Router = (function () {
       .then(function () {
         var mod = window[route.pageFn];
         if (mod && typeof mod.render === 'function') {
-          return mod.render($el);
+          return mod.render($el, route);
         }
         throw new Error('Module not found: ' + route.pageFn);
       })
@@ -133,6 +129,56 @@ var Router = (function () {
       });
   }
 
+  function addDynamicRoutes(menus) {
+    if (!menus || !Array.isArray(menus)) return;
+
+    var currentHash = window.location.hash.replace('#', '').split('?')[0] || '/order';
+    var needsReload = false;
+
+    menus.forEach(function (m) {
+      if (String(m.isDisable) === '1' || m.isDisable === true) return;
+
+      var rawUrl = m.URLPara || m.urlPara || '';
+      if (!rawUrl) {
+        if (m.FormKey && m.FormKey !== 'List' && m.FormKey !== 'Null') {
+          rawUrl = '/' + m.FormKey.toLowerCase();
+        }
+      }
+      if (!rawUrl) return;
+
+      var url = rawUrl.trim().replace(/^#\/?/, '').replace(/^\//, '');
+      if (url === '') return;
+
+      var path = '/' + url;
+
+      var existingRoute = ROUTES.find(function (r) { return r.path === path; });
+      if (existingRoute) {
+        return;
+      }
+
+      var route = {
+        path: path,
+        script: 'src/pages/dynamic/dynamic.js',
+        pageFn: 'DynamicPage',
+        title: m.VN || m.MenuName || m.FormName || '',
+        formName: m.FormName || m.formName || ''
+      };
+
+      ROUTES.push(route);
+      _routeMap[path] = route;
+
+      if (path === currentHash) {
+        needsReload = true;
+      }
+    });
+
+    if (needsReload) {
+      setTimeout(function () {
+        _handle();
+      }, 50);
+    }
+  }
+
   // ── Init ──────────────────────────────────────────────────────────────
   function init() {
     window.addEventListener('hashchange', _handle);
@@ -143,5 +189,5 @@ var Router = (function () {
   // ── Public navigate helper ────────────────────────────────────────────
   function go(path) { window.location.hash = '#' + path; }
 
-  return { init: init, go: go, fetchTemplate: fetchTemplate, ROUTES: ROUTES };
+  return { init: init, go: go, fetchTemplate: fetchTemplate, ROUTES: ROUTES, addDynamicRoutes: addDynamicRoutes };
 })();

@@ -1,4 +1,4 @@
-/* --- translations.js --- */
+﻿/* --- translations.js --- */
 var TRANSLATIONS = {
   vi: {
     // --- Sidebar ---
@@ -672,8 +672,9 @@ const Http = (() => {
 
   // --- Public API ---
   async function get(endpoint, params = {}) {
+    const separator = endpoint.includes('?') ? '&' : '?';
     const qs = new URLSearchParams(params).toString();
-    const url = getApiBaseUrl() + endpoint + (qs ? `?${qs}` : '');
+    const url = getApiBaseUrl() + endpoint + (qs ? `${separator}${qs}` : '');
 
     const cached = _getFromCache(_cacheKey(url));
     if (cached) return cached;
@@ -759,13 +760,16 @@ const ProductService = (() => {
    * Lấy danh sách sản phẩm (có hỗ trợ tìm kiếm)
    * @param {string} searchTerm - Từ khóa tìm kiếm (mã hoặc tên)
    */
-  async function getProducts(searchTerm = '') {
+  async function getProducts(searchTerm = '', isWebOnly = false) {
     if (!API_CONFIG.BASE_URL) {
       return [];
     }
 
     try {
       const queryObj = { TimKiem: searchTerm };
+      if (isWebOnly) {
+        queryObj.IsWebOnly = 1;
+      }
       const res = await Http.get(API_CONFIG.ENDPOINTS.PRODUCTS.LIST, { q: JSON.stringify(queryObj) });
 
       // Giả sử API trả về mảng trực tiếp hoặc nằm trong { records: [] }
@@ -877,18 +881,25 @@ const CustomerService = (() => {
   async function getAll(searchTerm = '', objectGroupId = '', page = 1, limit = 20) {
     if (!API_CONFIG.BASE_URL) return [];
     try {
-      const queryObj = {
-        page: page,
-        limit: limit
-      };
+      const queryObj = {};
       if (searchTerm && searchTerm.trim()) queryObj.TimKiem = searchTerm.trim();
       if (objectGroupId && objectGroupId.trim()) queryObj.ObjectGroupID = objectGroupId.trim();
 
-      const params = { q: JSON.stringify(queryObj) };
-      params._t = Date.now();
+      const params = {
+        page: page,
+        limit: limit,
+        q: JSON.stringify(queryObj),
+        _t: Date.now()
+      };
 
       const res = await Http.get(API_CONFIG.ENDPOINTS.CUSTOMERS.LIST, params);
-      return res.records || res || [];
+      var records = res.records || res || [];
+      if (!Array.isArray(records)) {
+        if (res && Array.isArray(res.list)) records = res.list;
+        else records = [];
+      }
+      records._recordtotal = res._recordtotal || records.length;
+      return records;
     } catch (err) {
       console.error('[CustomerService] Lỗi lấy danh sách khách hàng:', err);
       return [];
@@ -1660,6 +1671,16 @@ UIControls.createCheckbox = function(options) {
  */
 var UIControls = window.UIControls || {};
 
+function stringToColor(str) {
+  if (!str) return '#ccc';
+  var hash = 0;
+  for (var i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  var h = Math.abs(hash % 360);
+  return 'hsl(' + h + ', 70%, 55%)';
+}
+
 UIControls.createDataComboBox = function (options) {
   var container = document.createElement('div');
   container.className = 'combo-box-container';
@@ -1670,6 +1691,42 @@ UIControls.createDataComboBox = function (options) {
   input.className = 'ui-input';
   input.placeholder = options.placeholder || '';
   if (options.id) input.id = options.id;
+
+  // Swatch màu sắc cho trường Màu sắc
+  var swatch = null;
+  if (options.id && options.id.includes('MauSac')) {
+    swatch = document.createElement('div');
+    swatch.className = 'combo-color-swatch';
+    swatch.style.cssText = 'position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.15); pointer-events: none; background-color: transparent; display: none; transition: all 0.2s;';
+    input.style.paddingLeft = '34px'; // Nhường chỗ cho ô tròn hiển thị màu
+    container.style.position = 'relative';
+    container.appendChild(swatch);
+  }
+
+  function updateSwatchColor(val) {
+    if (!swatch) return;
+    var cleaned = val ? val.trim() : '';
+    if (cleaned && !cleaned.startsWith('-- Chọn')) {
+      swatch.style.backgroundColor = stringToColor(cleaned);
+      swatch.style.display = 'block';
+    } else {
+      swatch.style.display = 'none';
+    }
+  }
+
+  // Ghi đè Property Descriptor của input.value để cập nhật màu sắc lập tức khi gán bằng JS
+  if (swatch) {
+    var nativeValueDesc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+    Object.defineProperty(input, 'value', {
+      get: function() {
+        return nativeValueDesc.get.call(input);
+      },
+      set: function(val) {
+        nativeValueDesc.set.call(input, val);
+        updateSwatchColor(val);
+      }
+    });
+  }
 
   // Actions block – chỉ giữ nút mũi tên
   var actions = document.createElement('div');
@@ -1806,7 +1863,18 @@ UIControls.createDataComboBox = function (options) {
 
       rows.forEach(function (row) {
         var dataRow = displayData[row.getAttribute('data-index')];
-        var rowVal = (dataRow[options.colFilterIndex || 0] || '').toString().toLowerCase();
+        var cellVal = dataRow[options.colFilterIndex || 0];
+        
+        // Nếu là ô chọn màu sắc, chèn thêm chấm màu bên cạnh chữ
+        if (options.id && options.id.includes('MauSac') && cellVal) {
+          var firstTd = row.querySelector('td');
+          if (firstTd) {
+            var colorDot = '<span style="display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:8px; vertical-align:middle; border:1px solid rgba(0,0,0,0.15); background-color:' + stringToColor(cellVal) + ';"></span>';
+            firstTd.innerHTML = colorDot + firstTd.innerHTML;
+          }
+        }
+
+        var rowVal = (cellVal || '').toString().toLowerCase();
 
         if (currentInputVal && rowVal === currentInputVal) {
           row.classList.add('active');
@@ -5754,6 +5822,56 @@ var AppGrid = {
 };
 
 
+/* --- ProductWebSync.js --- */
+/**
+ * Product Web Sync Component
+ */
+var UIProductWebSync = (function () {
+  /**
+   * Tạo component thanh đồng bộ sản phẩm qua Web đặt hàng
+   * @param {Object} options - { onSync, onUnsync }
+   */
+  function create(options) {
+    options = options || {};
+
+    var container = document.createElement('div');
+    container.className = 'product-web-sync-toolbar';
+    container.style.display = 'flex';
+    container.style.gap = '12px';
+    container.style.alignItems = 'center';
+
+    var btnSync = document.createElement('button');
+    btnSync.className = 'btn';
+    btnSync.style.cssText = 'white-space: nowrap; height: 42px; background: #059669; color: white; display: flex; align-items: center; gap: 4px; border: none; cursor: pointer;';
+    btnSync.innerHTML = '<span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1)); vertical-align: middle;">public</span><span>Lấy sang Web</span>';
+    btnSync.addEventListener('click', function () {
+      if (typeof options.onSync === 'function') {
+        options.onSync();
+      }
+    });
+
+    var btnUnsync = document.createElement('button');
+    btnUnsync.className = 'btn';
+    btnUnsync.style.cssText = 'white-space: nowrap; height: 42px; background: #dc2626; color: white; display: flex; align-items: center; gap: 4px; border: none; cursor: pointer;';
+    btnUnsync.innerHTML = '<span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1)); vertical-align: middle;">public_off</span><span>Hủy lấy sang Web</span>';
+    btnUnsync.addEventListener('click', function () {
+      if (typeof options.onUnsync === 'function') {
+        options.onUnsync();
+      }
+    });
+
+    container.appendChild(btnSync);
+    container.appendChild(btnUnsync);
+
+    return container;
+  }
+
+  return {
+    create: create
+  };
+})();
+
+
 /* --- router.js --- */
 /**
  * Router — Hash-based SPA
@@ -5765,10 +5883,6 @@ var Router = (function () {
     { path: '/order', script: 'src/pages/order/order.js', pageFn: 'OrderPage', title: 'nav.order' },
     { path: '/orders', script: 'src/pages/orders/orders.js', pageFn: 'OrdersPage', title: 'nav.orders' },
     { path: '/order-detail', script: 'src/pages/order-detail/order-detail.js', pageFn: 'OrderDetailPage', title: 'nav.order_detail' },
-    { path: '/products', script: 'src/pages/products/products.js', pageFn: 'ProductsPage', title: 'nav.products' },
-    { path: '/sizes', script: 'src/pages/sizes/sizes.js', pageFn: 'SizesPage', title: 'nav.sizes' },
-    { path: '/sku', script: 'src/pages/sku/sku.js', pageFn: 'SkuPage', title: 'nav.sku' },
-    { path: '/promos', script: 'src/pages/promos/promos.js', pageFn: 'PromosPage', title: 'nav.promos' },
     { path: '/settings', script: 'src/pages/settings/settings.js', pageFn: 'SettingsPage', title: 'nav.settings' },
     { path: '/permissions', script: 'src/pages/permissions/permissions.js', pageFn: 'PermissionsPage', title: 'nav.permissions' },
     { path: '/menus', script: 'src/pages/menus/menus.js', pageFn: 'MenusPage', title: 'nav.menus' },
@@ -5869,7 +5983,7 @@ var Router = (function () {
       .then(function () {
         var mod = window[route.pageFn];
         if (mod && typeof mod.render === 'function') {
-          return mod.render($el);
+          return mod.render($el, route);
         }
         throw new Error('Module not found: ' + route.pageFn);
       })
@@ -5890,6 +6004,56 @@ var Router = (function () {
       });
   }
 
+  function addDynamicRoutes(menus) {
+    if (!menus || !Array.isArray(menus)) return;
+
+    var currentHash = window.location.hash.replace('#', '').split('?')[0] || '/order';
+    var needsReload = false;
+
+    menus.forEach(function (m) {
+      if (String(m.isDisable) === '1' || m.isDisable === true) return;
+
+      var rawUrl = m.URLPara || m.urlPara || '';
+      if (!rawUrl) {
+        if (m.FormKey && m.FormKey !== 'List' && m.FormKey !== 'Null') {
+          rawUrl = '/' + m.FormKey.toLowerCase();
+        }
+      }
+      if (!rawUrl) return;
+
+      var url = rawUrl.trim().replace(/^#\/?/, '').replace(/^\//, '');
+      if (url === '') return;
+
+      var path = '/' + url;
+
+      var existingRoute = ROUTES.find(function (r) { return r.path === path; });
+      if (existingRoute) {
+        return;
+      }
+
+      var route = {
+        path: path,
+        script: 'src/pages/dynamic/dynamic.js',
+        pageFn: 'DynamicPage',
+        title: m.VN || m.MenuName || m.FormName || '',
+        formName: m.FormName || m.formName || ''
+      };
+
+      ROUTES.push(route);
+      _routeMap[path] = route;
+
+      if (path === currentHash) {
+        needsReload = true;
+      }
+    });
+
+    if (needsReload) {
+      setTimeout(function () {
+        _handle();
+      }, 50);
+    }
+  }
+
   // ── Init ──────────────────────────────────────────────────────────────
   function init() {
     window.addEventListener('hashchange', _handle);
@@ -5900,7 +6064,7 @@ var Router = (function () {
   // ── Public navigate helper ────────────────────────────────────────────
   function go(path) { window.location.hash = '#' + path; }
 
-  return { init: init, go: go, fetchTemplate: fetchTemplate, ROUTES: ROUTES };
+  return { init: init, go: go, fetchTemplate: fetchTemplate, ROUTES: ROUTES, addDynamicRoutes: addDynamicRoutes };
 })();
 
 
@@ -5986,6 +6150,9 @@ document.addEventListener('DOMContentLoaded', function () {
   if (typeof MenuService !== 'undefined') {
     MenuService.getChildren('').then(function (items) {
       if (Array.isArray(items) && items.length > 0) {
+        if (window.Router && typeof Router.addDynamicRoutes === 'function') {
+          Router.addDynamicRoutes(items);
+        }
         var html = '';
         items.forEach(function (item) {
           // Bỏ qua các menu bị ẩn (isDisable = 1)

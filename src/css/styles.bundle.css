@@ -3106,7 +3106,7 @@ tbody tr.row-selected td:first-child {
 }
 
 .container-wide {
-  max-width: 1400px !important;
+  max-width: 95% !important;
   margin-left: auto !important;
   margin-right: auto !important;
   width: 100%;

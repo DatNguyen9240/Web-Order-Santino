@@ -1,0 +1,49 @@
+<div class="container-wide">
+  <div class="page-hdr">
+    <div>
+      <h2 id="dynamic-title"></h2>
+      <p id="dynamic-desc"></p>
+    </div>
+  </div>
+
+  <div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:16px; align-items:center;">
+    <div class="search-wrapper" style="width: 300px; max-width: 100%; flex: none;">
+      <span class="material-symbols-outlined">search</span>
+      <input id="dynamic-search" placeholder="Tìm kiếm nhanh..." oninput="DynamicPage.onSearch(this.value)">
+    </div>
+    <button class="btn btn-primary" onclick="DynamicPage.openModal()" style="white-space: nowrap; height: 42px;">
+      <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">add</span>
+      <span>Thêm</span>
+    </button>
+    <button class="btn btn-secondary" onclick="DynamicPage.copyItem()" style="white-space: nowrap; height: 42px;">
+      <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">content_copy</span>
+      <span>Sao chép</span>
+    </button>
+    
+    <!-- Vùng chứa các nút thao tác mở rộng của từng màn hình (Inject động) -->
+    <div id="dynamic-extra-actions" style="display:flex; gap:12px; align-items:center;"></div>
+  </div>
+
+  <div id="dynamic-grid-container" style="height: 550px; width: 100%;"></div>
+  <div id="dynamic-pagination" style="margin-top: 16px; display: flex; justify-content: center;"></div>
+</div>
+
+<!-- Modal: Dynamic CRUD Form -->
+<div class="modal-overlay" id="modal-dynamic">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h3 id="dm-title">Thêm Mới</h3>
+      <button class="btn-icon" onclick="closeModal('modal-dynamic')">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <input type="hidden" id="dm-id-hidden">
+    <div class="form-grid" id="dynamic-form-fields">
+      <!-- Fields will be dynamically generated here -->
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('modal-dynamic')">Hủy</button>
+      <button class="btn btn-primary" onclick="DynamicPage.save()">Lưu</button>
+    </div>
+  </div>
+</div>

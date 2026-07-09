@@ -100,8 +100,7 @@ BEGIN
         c.[NhaPhanPhoi] AS [nha_phan_phoi],
         u.[UserName] AS [username],
         COALESCE(u.[Disable], 0) AS [user_disable],
-        u.[UserGroupID] AS [usergroup_id],
-        COUNT(*) OVER() AS [total_rows]
+        u.[UserGroupID] AS [usergroup_id]
     FROM [dbo].[CF_ObjectTbl] c
     LEFT JOIN [dbo].[CF_LocationTbl] l ON c.[LocationID] = l.[LocationID]
     LEFT JOIN [dbo].[CF_ObjectGroupTbl] g ON c.[ObjectGroupID] = g.[ObjectGroupID]
@@ -114,9 +113,7 @@ BEGIN
            OR c.[Phone] LIKE '%' + @TimKiem + '%'
            OR c.[Address] LIKE N'%' + @TimKiem + '%')
       AND (@ObjectGroupID IS NULL OR @ObjectGroupID = '' OR c.[ObjectGroupID] = @ObjectGroupID)
-    ORDER BY c.[DateCreate] DESC, c.[ObjectID] DESC
-    OFFSET (@Page - 1) * @Limit ROWS
-    FETCH NEXT @Limit ROWS ONLY;
+    ORDER BY c.[DateCreate] DESC, c.[ObjectID] DESC;
 END;
 GO
 

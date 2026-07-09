@@ -37,6 +37,9 @@ document.addEventListener('DOMContentLoaded', function () {
   if (typeof MenuService !== 'undefined') {
     MenuService.getChildren('').then(function (items) {
       if (Array.isArray(items) && items.length > 0) {
+        if (window.Router && typeof Router.addDynamicRoutes === 'function') {
+          Router.addDynamicRoutes(items);
+        }
         var html = '';
         items.forEach(function (item) {
           // Bỏ qua các menu bị ẩn (isDisable = 1)

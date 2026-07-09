@@ -7,13 +7,16 @@ const ProductService = (() => {
    * Lấy danh sách sản phẩm (có hỗ trợ tìm kiếm)
    * @param {string} searchTerm - Từ khóa tìm kiếm (mã hoặc tên)
    */
-  async function getProducts(searchTerm = '') {
+  async function getProducts(searchTerm = '', isWebOnly = false) {
     if (!API_CONFIG.BASE_URL) {
       return [];
     }
 
     try {
       const queryObj = { TimKiem: searchTerm };
+      if (isWebOnly) {
+        queryObj.IsWebOnly = 1;
+      }
       const res = await Http.get(API_CONFIG.ENDPOINTS.PRODUCTS.LIST, { q: JSON.stringify(queryObj) });
 
       // Giả sử API trả về mảng trực tiếp hoặc nằm trong { records: [] }

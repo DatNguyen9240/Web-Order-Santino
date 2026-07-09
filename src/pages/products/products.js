@@ -71,6 +71,16 @@ var ProductsPage = (function () {
           }
         },
         {
+          field: 'is_web',
+          headerName: 'Lấy sang web',
+          cellRenderer: function (params) {
+            var isWeb = !!params.value;
+            var badgeClass = isWeb ? 'badge-blue' : 'badge-gray';
+            var badgeText = isWeb ? 'Đã lấy' : 'Không lấy';
+            return '<span class="badge ' + badgeClass + '">' + badgeText + '</span>';
+          }
+        },
+        {
           headerName: 'Thao tác',
           sortable: false,
           filter: false,
@@ -122,12 +132,14 @@ var ProductsPage = (function () {
       document.getElementById('pm-tenhh').value = p.ten_hang_hoa || '';
       document.getElementById('pm-tennhom').value = p.ten_nhom_hang || 'SỔ MI NGẮN TAY';
       document.getElementById('pm-ngung').value = String(!!p.ngung_su_dung);
+      document.getElementById('pm-is-web').value = String(!!p.is_web);
     } else {
       ['pm-ten', 'pm-design', 'pm-mau', 'pm-gia', 'pm-tenhh'].forEach(function (i) { document.getElementById(i).value = ''; });
       document.getElementById('pm-nhom').selectedIndex = 0;
       document.getElementById('pm-form').selectedIndex = 0;
       document.getElementById('pm-tennhom').selectedIndex = 0;
       document.getElementById('pm-ngung').selectedIndex = 0;
+      document.getElementById('pm-is-web').selectedIndex = 0;
     }
     window.openModal('modal-product');
   }
@@ -154,6 +166,7 @@ var ProductsPage = (function () {
     document.getElementById('pm-tenhh').value = p.ten_hang_hoa || '';
     document.getElementById('pm-tennhom').value = p.ten_nhom_hang || 'SỔ MI NGẮN TAY';
     document.getElementById('pm-ngung').value = String(!!p.ngung_su_dung);
+    document.getElementById('pm-is-web').value = String(!!p.is_web);
   }
 
   function save() {
@@ -173,6 +186,7 @@ var ProductsPage = (function () {
       ten_hang_hoa: document.getElementById('pm-tenhh').value.trim(),
       ten_nhom_hang: document.getElementById('pm-tennhom').value,
       ngung_su_dung: document.getElementById('pm-ngung').value === 'true',
+      is_web: document.getElementById('pm-is-web').value === 'true',
       ten_form: document.getElementById('pm-form').value === 'AMC' ? 'Modern Fit' : 'Regular'
     };
 

@@ -11,18 +11,25 @@ const CustomerService = (() => {
   async function getAll(searchTerm = '', objectGroupId = '', page = 1, limit = 20) {
     if (!API_CONFIG.BASE_URL) return [];
     try {
-      const queryObj = {
-        page: page,
-        limit: limit
-      };
+      const queryObj = {};
       if (searchTerm && searchTerm.trim()) queryObj.TimKiem = searchTerm.trim();
       if (objectGroupId && objectGroupId.trim()) queryObj.ObjectGroupID = objectGroupId.trim();
 
-      const params = { q: JSON.stringify(queryObj) };
-      params._t = Date.now();
+      const params = {
+        page: page,
+        limit: limit,
+        q: JSON.stringify(queryObj),
+        _t: Date.now()
+      };
 
       const res = await Http.get(API_CONFIG.ENDPOINTS.CUSTOMERS.LIST, params);
-      return res.records || res || [];
+      var records = res.records || res || [];
+      if (!Array.isArray(records)) {
+        if (res && Array.isArray(res.list)) records = res.list;
+        else records = [];
+      }
+      records._recordtotal = res._recordtotal || records.length;
+      return records;
     } catch (err) {
       console.error('[CustomerService] Lỗi lấy danh sách khách hàng:', err);
       return [];

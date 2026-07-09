@@ -1,0 +1,1 @@
+ALTER TABLE [dbo].[CF_TenHang2Tbl] ADD [isWeb] BIT NULL DEFAULT 0;

@@ -269,7 +269,7 @@ var CustomersPage = (function () {
     const customers = await CustomerService.getAll(search, groupId, currentPage, itemsPerPage);
     customersList = customers;
 
-    var totalItems = (customers.length > 0 && customers[0].total_rows) ? customers[0].total_rows : 0;
+    var totalItems = customers._recordtotal || 0;
 
     const countEl = document.getElementById('customers-count');
     if (countEl) {

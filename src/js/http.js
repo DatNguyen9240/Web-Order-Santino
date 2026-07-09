@@ -151,8 +151,9 @@ const Http = (() => {
 
   // --- Public API ---
   async function get(endpoint, params = {}) {
+    const separator = endpoint.includes('?') ? '&' : '?';
     const qs = new URLSearchParams(params).toString();
-    const url = getApiBaseUrl() + endpoint + (qs ? `?${qs}` : '');
+    const url = getApiBaseUrl() + endpoint + (qs ? `${separator}${qs}` : '');
 
     const cached = _getFromCache(_cacheKey(url));
     if (cached) return cached;

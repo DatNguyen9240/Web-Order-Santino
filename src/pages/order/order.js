@@ -786,7 +786,7 @@ var OrderPage = (function () {
     acSearchTimer = setTimeout(async function () {
 
       // Gọi API qua Service lấy sản phẩm
-      var prods = await ProductService.getProducts(val);
+      var prods = await ProductService.getProducts(val, true);
 
       // NẾU người dùng đã đóng bảng TRƯỚC KHI API trả về kết quả, thì HỦY render
       if (currentSearchId !== acSearchId) return;
@@ -921,10 +921,7 @@ var OrderPage = (function () {
       var code = codes[i];
       var prod = cachedProds[code];
       if (prod && !orderRows.find(function (r) { return r.ten_hang_2 === code; })) {
-        var nhomSize = prod.nhom_size || prod.nhom_hang || prod.Nhom_hang || prod.NhomHang || 'Nhóm 1';
-        // Map tự động từ CategoryID (nhom_hang) sang NhomSize nếu API thiếu trường nhom_size
-        var mapNhom = { 'TL': 'Nhóm 1', 'QA': 'Nhóm 2', 'SKU101': 'Nhóm 1', 'SKU102': 'Nhóm 3' };
-        var mappedNhomSize = mapNhom[nhomSize] || mapNhom[nhomSize.toUpperCase()] || 'Nhóm 1';
+        var mappedNhomSize = prod.nhom_size;
 
         var sizes = [];
         if (prod.sizes_json && prod.sizes_json !== 'null') {
@@ -963,9 +960,7 @@ var OrderPage = (function () {
     var prod = cachedProds[code];
     if (!prod) { showToast('Không tìm thấy sản phẩm ' + code, false); return; }
     if (orderRows.find(function (r) { return r.ten_hang_2 === code; })) { showToast('Sản phẩm đã có trong đơn', false); return; }
-    var nhomSize = prod.nhom_size || prod.nhom_hang || prod.Nhom_hang || prod.NhomHang || 'Nhóm 1';
-    var mapNhom = { 'TL': 'Nhóm 1', 'QA': 'Nhóm 2', 'SKU101': 'Nhóm 1', 'SKU102': 'Nhóm 3' };
-    var mappedNhomSize = mapNhom[nhomSize] || mapNhom[nhomSize.toUpperCase()] || 'Nhóm 1';
+    var mappedNhomSize = prod.nhom_size;
 
     var sizes = [];
     if (prod.sizes_json && prod.sizes_json !== 'null') {
@@ -1025,7 +1020,7 @@ var OrderPage = (function () {
         '<div style="font-size: 18px; font-weight:800; color:var(--primary); word-break: break-word;">' + row.ten_hang_2 + '</div>' +
         badgeHtml +
         '</div>' +
-        '<div style="font-size: 14px; color:var(--muted);">' + (row.product.nhom_size || row.product.nhom_hang || 'TL') + ' | ' + (row.product.mau || 'Không màu') + ' | ' + Utils.formatMoney(row.product.don_gia || 0) + '</div>' +
+        '<div style="font-size: 14px; color:var(--muted);">' + (row.product.nhom_size || '') + ' | ' + (row.product.mau || 'Không màu') + ' | ' + Utils.formatMoney(row.product.don_gia || 0) + '</div>' +
         '</div>' +
         '<div style="display:flex; gap:8px;">' +
         '<button class="btn-icon" onclick="OrderPage.removeRow(' + ri + ')" title="Xóa sản phẩm" style="color:var(--danger)"><span class="material-symbols-outlined">delete</span></button>' +
