@@ -20,17 +20,21 @@ BEGIN
     -- HỖ TRỢ PHÂN TÍCH JSON: Nếu tham số truyền vào gói trong JSON (qua biến q / @TimKiem từ Gateway)
     IF @TimKiem IS NOT NULL AND @TimKiem <> '' AND LEFT(LTRIM(@TimKiem), 1) = '{' AND ISJSON(@TimKiem) = 1
     BEGIN
-        SET @Loai = ISNULL(@Loai, JSON_VALUE(@TimKiem, '$.Loai'));
-        SET @chinhanh = ISNULL(@chinhanh, JSON_VALUE(@TimKiem, '$.chinhanh'));
-        SET @Page = ISNULL(CAST(JSON_VALUE(@TimKiem, '$.Page') AS INT), @Page);
-        SET @PageSize = ISNULL(CAST(JSON_VALUE(@TimKiem, '$.PageSize') AS INT), @PageSize);
-        SET @UserRole = ISNULL(@UserRole, JSON_VALUE(@TimKiem, '$.UserRole'));
-        SET @UserEmployeeID = ISNULL(@UserEmployeeID, JSON_VALUE(@TimKiem, '$.UserEmployeeID'));
-        SET @UserManagerID = ISNULL(@UserManagerID, JSON_VALUE(@TimKiem, '$.UserManagerID'));
-        SET @UserObjectID = ISNULL(@UserObjectID, JSON_VALUE(@TimKiem, '$.UserObjectID'));
-        
-        -- Giải nén từ khóa tìm kiếm thực tế trong JSON
-        SET @TimKiem = ISNULL(JSON_VALUE(@TimKiem, '$.TimKiem'), '');
+        -- Chỉ parse nếu đây là chuỗi JSON ngoài (có chứa thuộc tính Loai)
+        IF JSON_VALUE(@TimKiem, '$.Loai') IS NOT NULL
+        BEGIN
+            SET @Loai = ISNULL(@Loai, JSON_VALUE(@TimKiem, '$.Loai'));
+            SET @chinhanh = ISNULL(@chinhanh, JSON_VALUE(@TimKiem, '$.chinhanh'));
+            SET @Page = ISNULL(CAST(JSON_VALUE(@TimKiem, '$.Page') AS INT), @Page);
+            SET @PageSize = ISNULL(CAST(JSON_VALUE(@TimKiem, '$.PageSize') AS INT), @PageSize);
+            SET @UserRole = ISNULL(@UserRole, JSON_VALUE(@TimKiem, '$.UserRole'));
+            SET @UserEmployeeID = ISNULL(@UserEmployeeID, JSON_VALUE(@TimKiem, '$.UserEmployeeID'));
+            SET @UserManagerID = ISNULL(@UserManagerID, JSON_VALUE(@TimKiem, '$.UserManagerID'));
+            SET @UserObjectID = ISNULL(@UserObjectID, JSON_VALUE(@TimKiem, '$.UserObjectID'));
+            
+            -- Giải nén từ khóa tìm kiếm thực tế trong JSON
+            SET @TimKiem = ISNULL(JSON_VALUE(@TimKiem, '$.TimKiem'), '');
+        END
     END
 
     SET @TimKiem = LTRIM(RTRIM(ISNULL(@TimKiem, '')));
@@ -418,7 +422,7 @@ BEGIN
           AND (@FilterCustomerID IS NULL OR @FilterCustomerID = '' OR [ObjectID] = @FilterCustomerID)
           AND (@chinhanh IS NULL OR @chinhanh = '' OR [BranchID] = @chinhanh)
           AND (@TuNgay IS NULL OR [DocumentDate] >= @TuNgay)
-          AND (@DenNgay IS NULL OR [DocumentDate] <= @DenNgay)
+          AND (@DenNgay IS NULL OR [DocumentDate] < DATEADD(day, 1, @DenNgay))
           -- BỨC TƯỜNG LỬA BẢO VỆ ĐƠN HÀNG: Chỉ Sếp mới xem hết, NV xem đơn của mình, KH/Đại lý xem đơn của họ và cấp dưới
           AND (
                EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND [MenuID] = 'WEB_OrderFrm' AND ([isAdmin] = 1 OR [isManager] = 1))
