@@ -39,8 +39,10 @@ var AppGrid = {
         filter: true,
         resizable: true,
         floatingFilter: true,
-        flex: 1,
         minWidth: 100
+      },
+      autoSizeStrategy: {
+        type: 'fitCellContents'
       },
       localeText: {
         page: 'Trang',

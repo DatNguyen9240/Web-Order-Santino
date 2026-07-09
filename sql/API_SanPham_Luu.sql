@@ -43,25 +43,41 @@ BEGIN
         );
     END
 
-    -- 3. Tự động sinh danh sách size tương ứng trong bảng CF_ItemTbl nếu chưa tồn tại
+    -- 3. Tự động sinh hoặc cập nhật danh sách size tương ứng trong bảng CF_ItemTbl
     IF @nhom_size IS NOT NULL AND @nhom_size <> ''
-       AND NOT EXISTS (SELECT 1 FROM [dbo].[CF_ItemTbl] WHERE [ItemName2] = @ItemName2 AND [MauSac] = @MauSac)
     BEGIN
-        INSERT INTO [dbo].[CF_ItemTbl] (
-            [ItemID], [ItemName], [ItemName2], [Size], [MauSac], [UnitPrice], [isDisable], [Unit], [CategoryID]
-        )
-        SELECT 
-            @ItemName2 + @MauSac + [Size] AS [ItemID],
-            @TenHangHoa + ' ' + @MauSac + ' ' + [Size] AS [ItemName],
-            @ItemName2 AS [ItemName2],
-            [Size],
-            @MauSac AS [MauSac],
-            @UnitPrice AS [UnitPrice],
-            0 AS [isDisable],
-            N'Chiếc' AS [Unit],
-            @CategoryID AS [CategoryID]
-        FROM [dbo].[CF_NhomSizeTbl]
-        WHERE [NhomSize] = @nhom_size;
+        DECLARE @CurrentNhomSize NVARCHAR(50) = NULL;
+        
+        -- Lấy nhóm size hiện tại của sản phẩm dựa trên các size có sẵn trong CF_ItemTbl
+        SELECT TOP 1 @CurrentNhomSize = ns.[NhomSize]
+        FROM [dbo].[CF_ItemTbl] ci
+        INNER JOIN [dbo].[CF_NhomSizeTbl] ns ON ci.[Size] = ns.[Size]
+        WHERE ci.[ItemName2] = @ItemName2 AND ci.[MauSac] = @MauSac;
+
+        -- Nếu nhóm size bị thay đổi hoặc chưa từng tồn tại size nào cho sản phẩm
+        IF @CurrentNhomSize IS NULL OR @CurrentNhomSize <> @nhom_size
+        BEGIN
+            -- Xóa các dòng size cũ để đồng bộ theo nhóm size mới
+            DELETE FROM [dbo].[CF_ItemTbl] 
+            WHERE [ItemName2] = @ItemName2 AND [MauSac] = @MauSac;
+
+            -- Chèn các dòng size mới tương ứng với nhóm size mới chọn
+            INSERT INTO [dbo].[CF_ItemTbl] (
+                [ItemID], [ItemName], [ItemName2], [Size], [MauSac], [UnitPrice], [isDisable], [Unit], [CategoryID]
+            )
+            SELECT 
+                @ItemName2 + @MauSac + [Size] AS [ItemID],
+                @TenHangHoa + ' ' + @MauSac + ' ' + [Size] AS [ItemName],
+                @ItemName2 AS [ItemName2],
+                [Size],
+                @MauSac AS [MauSac],
+                @UnitPrice AS [UnitPrice],
+                0 AS [isDisable],
+                N'Chiếc' AS [Unit],
+                @CategoryID AS [CategoryID]
+            FROM [dbo].[CF_NhomSizeTbl]
+            WHERE [NhomSize] = @nhom_size;
+        END
     END
 
     -- Trả về phản hồi thành công
