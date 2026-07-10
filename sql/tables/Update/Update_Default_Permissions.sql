@@ -12,13 +12,13 @@ WHERE [UserGroupID] IN ('Admin', 'admin');
 UPDATE [dbo].[WA_UserGroupPermisstion]
 SET [IsRun] = 0, [IsAdd] = 0, [IsUpdate] = 0, [IsDelete] = 0, [isManager] = 0, [isAdmin] = 0
 WHERE [UserGroupID] NOT IN ('Admin', 'admin')
-  AND [MenuID] IN ('WEB_SystemGroup', 'WEB_MenuFrm', 'WEB_PermissionFrm', 'WEB_CustomerFrm');
+  AND [MenuID] IN ('80', '8010', '8020', '60');
 
 -- 2.2. Cho phép truy cập và thao tác trên trang Đặt hàng & Lịch sử đơn hàng
 UPDATE [dbo].[WA_UserGroupPermisstion]
 SET [IsRun] = 1, [IsAdd] = 1, [IsUpdate] = 1, [IsDelete] = 1
 WHERE [UserGroupID] NOT IN ('Admin', 'admin')
-  AND [MenuID] IN ('02', 'WEB_OrderFrm', 'WEB_OrdersList');
+  AND [MenuID] IN ('50', '5010', '5020');
 GO
 
 -- 3. Cập nhật phiên bản đồng bộ để ép các trình duyệt tải lại phân quyền mới
