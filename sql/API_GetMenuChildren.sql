@@ -34,6 +34,11 @@ BEGIN
           FROM [dbo].[WA_Menu] AS M
           WHERE (M.[Parent] = @Parent OR @Parent IS NULL OR @Parent = '')
             AND (
+                -- Lọc MenuID có 2 ký tự đầu tiên dạng số từ 50 trở lên, giữ các ID dạng chữ
+                (ISNUMERIC(LEFT(M.[MenuID], 2)) = 1 AND CAST(LEFT(M.[MenuID], 2) AS INT) >= 50)
+                OR ISNUMERIC(M.[MenuID]) = 0
+            )
+            AND (
                 -- Nếu menu không cần check quyền, cho hiển thị
                 M.[isNotCheckPermission] = 1
                 -- Hoặc nhóm quyền tương ứng của user được bật 'IsRun = 1'
