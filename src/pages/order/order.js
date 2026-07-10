@@ -258,7 +258,7 @@ var OrderPage = (function () {
     try {
       const [employees, customers, promotions, remarks, notes] = await Promise.all([
         CategoryService.getCategories('Employee'),
-        CategoryService.getCategories('Customer'),
+        CategoryService.getCategories('Customer').then(function() { return []; }), // Không dùng initial data - dùng onSearch có permission
         CategoryService.getCategories('Promotion'),
         CategoryService.getCategories('Remark'),
         CategoryService.getCategories('Note')
@@ -365,7 +365,9 @@ var OrderPage = (function () {
           enablePagination: true,
           showAddNew: _canAddCustomer,
           headers: ['Khách hàng', 'Tên kh/hàng', 'Địa chỉ', 'Mã NV', 'Chi nhánh'],
-          data: customers.map(function (c) { return [c.id, c.name, c.address || '', c.employee_id || '', c.branch_id || '', c.group_id || 'Khác']; }),
+          // data rỗng: buộc dùng onSearch (có UserRole/EmployeeID) ngay từ lần đầu mở combo
+          // Tránh lỗi bảo mật: CategoryService không truyền permission → hiện toàn bộ KH
+          data: [],
           colFilterIndex: 1,
           colHighlightIndex: 1,
           colGroupIndex: 5,
