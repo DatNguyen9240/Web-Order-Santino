@@ -31,17 +31,21 @@ BEGIN
 END
 
 -- Cấu hình quyền Admin trên WEB_OrderFrm cho nhóm KT Bruno
-IF EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = 'KT Bruno' AND [MenuID] = 'WEB_OrderFrm')
+DECLARE @OrderMenuID NVARCHAR(50);
+SELECT TOP 1 @OrderMenuID = MenuID FROM [dbo].[WA_Menu] WHERE FormName = 'WEB_OrderFrm';
+IF @OrderMenuID IS NULL SET @OrderMenuID = 'WEB_OrderFrm';
+
+IF EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = 'KT Bruno' AND [MenuID] = @OrderMenuID)
 BEGIN
     UPDATE [dbo].[WA_UserGroupPermisstion]
-    SET [isAdmin] = 1, [IsRun] = 1
-    WHERE [UserGroupID] = 'KT Bruno' AND [MenuID] = 'WEB_OrderFrm';
+    SET [isAdmin] = 1, [IsRun] = 1, [IsAdd] = 1, [IsUpdate] = 1, [IsDelete] = 1
+    WHERE [UserGroupID] = 'KT Bruno' AND [MenuID] = @OrderMenuID;
     PRINT '-> Đã cập nhật quyền Admin cho nhóm KT Bruno';
 END
 ELSE
 BEGIN
-    INSERT INTO [dbo].[WA_UserGroupPermisstion] ([UserGroupID], [MenuID], [IsRun], [IsAdd], [IsUpdate], [IsDelete], [isAdmin], [isManager])
-    VALUES ('KT Bruno', 'WEB_OrderFrm', 1, 1, 1, 1, 1, 0);
+    INSERT INTO [dbo].[WA_UserGroupPermisstion] ([ID], [UserGroupID], [MenuID], [IsRun], [IsAdd], [IsUpdate], [IsDelete], [isAdmin], [isManager])
+    VALUES ('KT Bruno_' + @OrderMenuID, 'KT Bruno', @OrderMenuID, 1, 1, 1, 1, 1, 0);
     PRINT '-> Đã tạo mới phân quyền Admin cho nhóm KT Bruno';
 END
 
