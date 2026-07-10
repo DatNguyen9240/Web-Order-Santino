@@ -1703,7 +1703,7 @@ UIControls.createDataComboBox = function (options) {
 
   // Swatch màu sắc cho trường Màu sắc
   var swatch = null;
-  if (options.id && options.id.includes('MauSac')) {
+  if (options.enableColorSwatch || (options.id && options.id.includes('MauSac'))) {
     swatch = document.createElement('div');
     swatch.className = 'combo-color-swatch';
     swatch.style.cssText = 'position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.15); pointer-events: none; background-color: transparent; display: none; transition: all 0.2s;';
@@ -1875,7 +1875,7 @@ UIControls.createDataComboBox = function (options) {
         var cellVal = dataRow[options.colFilterIndex || 0];
         
         // Nếu là ô chọn màu sắc, chèn thêm chấm màu bên cạnh chữ
-        if (options.id && options.id.includes('MauSac') && cellVal) {
+        if ((options.enableColorSwatch || (options.id && options.id.includes('MauSac'))) && cellVal) {
           var firstTd = row.querySelector('td');
           if (firstTd) {
             var colorDot = '<span style="display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:8px; vertical-align:middle; border:1px solid rgba(0,0,0,0.15); background-color:' + stringToColor(cellVal) + ';"></span>';
@@ -3544,12 +3544,6 @@ var ScreenCapture = (function () {
     overlayCanvas.width = ww;
     overlayCanvas.height = wh;
     
-    overlayCanvas.style.position = 'fixed';
-    overlayCanvas.style.top = '0';
-    overlayCanvas.style.left = '0';
-    overlayCanvas.style.zIndex = '999990';
-    overlayCanvas.style.cursor = 'crosshair';
-    
     ctx = overlayCanvas.getContext('2d');
     
     document.body.appendChild(overlayCanvas);
@@ -3582,19 +3576,8 @@ var ScreenCapture = (function () {
 
   function createToolbarBtn(icon, title, onClick) {
     var btn = document.createElement('button');
-    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:20px;">' + icon + '</span>';
+    btn.innerHTML = '<span class="material-symbols-outlined">' + icon + '</span>';
     btn.title = title;
-    btn.style.background = 'transparent';
-    btn.style.border = 'none';
-    btn.style.cursor = 'pointer';
-    btn.style.padding = '6px';
-    btn.style.display = 'flex';
-    btn.style.alignItems = 'center';
-    btn.style.justifyContent = 'center';
-    btn.style.color = '#374151';
-    btn.style.borderRadius = '4px';
-    btn.onmouseover = function() { if(!btn.classList.contains('active')) btn.style.background = '#F3F4F6'; };
-    btn.onmouseout = function() { if(!btn.classList.contains('active')) btn.style.background = 'transparent'; };
     btn.onclick = onClick;
     return btn;
   }
@@ -3602,20 +3585,10 @@ var ScreenCapture = (function () {
   function showToolbar() {
     if (!toolbar) {
       toolbar = document.createElement('div');
-      toolbar.style.position = 'fixed';
-      toolbar.style.zIndex = '999995';
-      toolbar.style.background = '#ffffff';
-      toolbar.style.border = '1px solid #E5E7EB';
-      toolbar.style.borderRadius = '6px';
-      toolbar.style.padding = '4px';
-      toolbar.style.display = 'flex';
-      toolbar.style.gap = '2px';
-      toolbar.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)';
+      toolbar.className = 'screen-capture-toolbar';
       
       var btnRect = createToolbarBtn('crop_square', 'Vẽ khung đỏ', function() {
         isShapeModeActive = true;
-        btnRect.style.background = '#E0E7FF';
-        btnRect.style.color = '#4F46E5';
         btnRect.classList.add('active');
         overlayCanvas.style.cursor = 'crosshair';
       });
@@ -3623,17 +3596,17 @@ var ScreenCapture = (function () {
       var btnCopy = createToolbarBtn('content_copy', 'Copy (Ctrl+C)', function() {
         captureAndAction();
       });
-      btnCopy.style.color = '#10B981';
+      btnCopy.classList.add('btn-copy');
 
       var btnClose = createToolbarBtn('close', 'Hủy (ESC)', function() {
         destroyOverlay();
       });
-      btnClose.style.color = '#F43F5E';
+      btnClose.classList.add('btn-close');
       
       toolbar.appendChild(btnRect);
       var divider = document.createElement('div');
       divider.style.width = '1px';
-      divider.style.background = '#E5E7EB';
+      divider.style.background = 'var(--border, #E5E7EB)';
       divider.style.margin = '4px';
       toolbar.appendChild(divider);
       toolbar.appendChild(btnCopy);
@@ -3807,23 +3780,15 @@ var ScreenCapture = (function () {
     if (toolbar) toolbar.style.display = 'none';
 
     var shapeContainer = document.createElement('div');
-    shapeContainer.style.position = 'absolute';
-    shapeContainer.style.left = '0';
-    shapeContainer.style.top = '0';
-    shapeContainer.style.width = '100%';
-    shapeContainer.style.height = '100%';
-    shapeContainer.style.pointerEvents = 'none';
-    shapeContainer.style.zIndex = '999998';
+    shapeContainer.className = 'screen-capture-shape-container';
 
     shapes.forEach(function(s) {
       var div = document.createElement('div');
-      div.style.position = 'absolute';
+      div.className = 'screen-capture-shape';
       div.style.left = (s.left + window.scrollX) + 'px';
       div.style.top = (s.top + window.scrollY) + 'px';
       div.style.width = s.width + 'px';
       div.style.height = s.height + 'px';
-      div.style.border = '3px solid #EF4444';
-      div.style.boxSizing = 'border-box';
       shapeContainer.appendChild(div);
     });
     document.body.appendChild(shapeContainer);
@@ -5911,8 +5876,9 @@ var UIProductWebSync = (function () {
     container.style.alignItems = 'center';
 
     var btnSync = document.createElement('button');
-    btnSync.className = 'btn';
-    btnSync.style.cssText = 'white-space: nowrap; height: 42px; background: #059669; color: white; display: flex; align-items: center; gap: 4px; border: none; cursor: pointer;';
+    btnSync.className = 'btn btn-success';
+    btnSync.style.whiteSpace = 'nowrap';
+    btnSync.style.height = '42px';
     btnSync.innerHTML = '<span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1)); vertical-align: middle;">public</span><span>Lấy sang Web</span>';
     btnSync.addEventListener('click', function () {
       if (typeof options.onSync === 'function') {
@@ -5921,8 +5887,9 @@ var UIProductWebSync = (function () {
     });
 
     var btnUnsync = document.createElement('button');
-    btnUnsync.className = 'btn';
-    btnUnsync.style.cssText = 'white-space: nowrap; height: 42px; background: #dc2626; color: white; display: flex; align-items: center; gap: 4px; border: none; cursor: pointer;';
+    btnUnsync.className = 'btn btn-danger';
+    btnUnsync.style.whiteSpace = 'nowrap';
+    btnUnsync.style.height = '42px';
     btnUnsync.innerHTML = '<span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1)); vertical-align: middle;">public_off</span><span>Hủy lấy sang Web</span>';
     btnUnsync.addEventListener('click', function () {
       if (typeof options.onUnsync === 'function') {
@@ -6230,10 +6197,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
           // Map URLPara hoặc FormKey sang route
           var route = item.URLPara ? item.URLPara : '';
-          if (!route) {
-            if (item.FormName === 'WEB_OrderDetailFrm' || item.FormKey === 'List') route = '/orders';
-            else if (item.FormName === 'WEB_OrderFrm' || item.FormKey === 'Null') route = '/order';
-            else if (item.FormKey && item.FormKey !== '') route = '/' + item.FormKey.toLowerCase();
+          if (!route && item.FormKey && item.FormKey !== '' && item.FormKey !== 'Null') {
+            route = '/' + item.FormKey.toLowerCase();
           }
           if (!route || route === '/' || route === '/null') return;
           if (!route.startsWith('/')) route = '/' + route;

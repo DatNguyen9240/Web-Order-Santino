@@ -35,7 +35,7 @@ UIControls.createDataComboBox = function (options) {
 
   // Swatch màu sắc cho trường Màu sắc
   var swatch = null;
-  if (options.id && options.id.includes('MauSac')) {
+  if (options.enableColorSwatch || (options.id && options.id.includes('MauSac'))) {
     swatch = document.createElement('div');
     swatch.className = 'combo-color-swatch';
     swatch.style.cssText = 'position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.15); pointer-events: none; background-color: transparent; display: none; transition: all 0.2s;';
@@ -207,7 +207,7 @@ UIControls.createDataComboBox = function (options) {
         var cellVal = dataRow[options.colFilterIndex || 0];
         
         // Nếu là ô chọn màu sắc, chèn thêm chấm màu bên cạnh chữ
-        if (options.id && options.id.includes('MauSac') && cellVal) {
+        if ((options.enableColorSwatch || (options.id && options.id.includes('MauSac'))) && cellVal) {
           var firstTd = row.querySelector('td');
           if (firstTd) {
             var colorDot = '<span style="display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:8px; vertical-align:middle; border:1px solid rgba(0,0,0,0.15); background-color:' + stringToColor(cellVal) + ';"></span>';

@@ -47,10 +47,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
           // Map URLPara hoặc FormKey sang route
           var route = item.URLPara ? item.URLPara : '';
-          if (!route) {
-            if (item.FormName === 'WEB_OrderDetailFrm' || item.FormKey === 'List') route = '/orders';
-            else if (item.FormName === 'WEB_OrderFrm' || item.FormKey === 'Null') route = '/order';
-            else if (item.FormKey && item.FormKey !== '') route = '/' + item.FormKey.toLowerCase();
+          if (!route && item.FormKey && item.FormKey !== '' && item.FormKey !== 'Null') {
+            route = '/' + item.FormKey.toLowerCase();
           }
           if (!route || route === '/' || route === '/null') return;
           if (!route.startsWith('/')) route = '/' + route;

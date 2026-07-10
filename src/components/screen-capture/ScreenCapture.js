@@ -47,12 +47,6 @@ var ScreenCapture = (function () {
     overlayCanvas.width = ww;
     overlayCanvas.height = wh;
     
-    overlayCanvas.style.position = 'fixed';
-    overlayCanvas.style.top = '0';
-    overlayCanvas.style.left = '0';
-    overlayCanvas.style.zIndex = '999990';
-    overlayCanvas.style.cursor = 'crosshair';
-    
     ctx = overlayCanvas.getContext('2d');
     
     document.body.appendChild(overlayCanvas);
@@ -85,19 +79,8 @@ var ScreenCapture = (function () {
 
   function createToolbarBtn(icon, title, onClick) {
     var btn = document.createElement('button');
-    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:20px;">' + icon + '</span>';
+    btn.innerHTML = '<span class="material-symbols-outlined">' + icon + '</span>';
     btn.title = title;
-    btn.style.background = 'transparent';
-    btn.style.border = 'none';
-    btn.style.cursor = 'pointer';
-    btn.style.padding = '6px';
-    btn.style.display = 'flex';
-    btn.style.alignItems = 'center';
-    btn.style.justifyContent = 'center';
-    btn.style.color = '#374151';
-    btn.style.borderRadius = '4px';
-    btn.onmouseover = function() { if(!btn.classList.contains('active')) btn.style.background = '#F3F4F6'; };
-    btn.onmouseout = function() { if(!btn.classList.contains('active')) btn.style.background = 'transparent'; };
     btn.onclick = onClick;
     return btn;
   }
@@ -105,20 +88,10 @@ var ScreenCapture = (function () {
   function showToolbar() {
     if (!toolbar) {
       toolbar = document.createElement('div');
-      toolbar.style.position = 'fixed';
-      toolbar.style.zIndex = '999995';
-      toolbar.style.background = '#ffffff';
-      toolbar.style.border = '1px solid #E5E7EB';
-      toolbar.style.borderRadius = '6px';
-      toolbar.style.padding = '4px';
-      toolbar.style.display = 'flex';
-      toolbar.style.gap = '2px';
-      toolbar.style.boxShadow = '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)';
+      toolbar.className = 'screen-capture-toolbar';
       
       var btnRect = createToolbarBtn('crop_square', 'Vẽ khung đỏ', function() {
         isShapeModeActive = true;
-        btnRect.style.background = '#E0E7FF';
-        btnRect.style.color = '#4F46E5';
         btnRect.classList.add('active');
         overlayCanvas.style.cursor = 'crosshair';
       });
@@ -126,17 +99,17 @@ var ScreenCapture = (function () {
       var btnCopy = createToolbarBtn('content_copy', 'Copy (Ctrl+C)', function() {
         captureAndAction();
       });
-      btnCopy.style.color = '#10B981';
+      btnCopy.classList.add('btn-copy');
 
       var btnClose = createToolbarBtn('close', 'Hủy (ESC)', function() {
         destroyOverlay();
       });
-      btnClose.style.color = '#F43F5E';
+      btnClose.classList.add('btn-close');
       
       toolbar.appendChild(btnRect);
       var divider = document.createElement('div');
       divider.style.width = '1px';
-      divider.style.background = '#E5E7EB';
+      divider.style.background = 'var(--border, #E5E7EB)';
       divider.style.margin = '4px';
       toolbar.appendChild(divider);
       toolbar.appendChild(btnCopy);
@@ -310,23 +283,15 @@ var ScreenCapture = (function () {
     if (toolbar) toolbar.style.display = 'none';
 
     var shapeContainer = document.createElement('div');
-    shapeContainer.style.position = 'absolute';
-    shapeContainer.style.left = '0';
-    shapeContainer.style.top = '0';
-    shapeContainer.style.width = '100%';
-    shapeContainer.style.height = '100%';
-    shapeContainer.style.pointerEvents = 'none';
-    shapeContainer.style.zIndex = '999998';
+    shapeContainer.className = 'screen-capture-shape-container';
 
     shapes.forEach(function(s) {
       var div = document.createElement('div');
-      div.style.position = 'absolute';
+      div.className = 'screen-capture-shape';
       div.style.left = (s.left + window.scrollX) + 'px';
       div.style.top = (s.top + window.scrollY) + 'px';
       div.style.width = s.width + 'px';
       div.style.height = s.height + 'px';
-      div.style.border = '3px solid #EF4444';
-      div.style.boxSizing = 'border-box';
       shapeContainer.appendChild(div);
     });
     document.body.appendChild(shapeContainer);

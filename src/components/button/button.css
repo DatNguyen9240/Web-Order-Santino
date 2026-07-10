@@ -63,6 +63,17 @@
   border-color: #DC2626;
 }
 
+.btn-success {
+  background: var(--color-success);
+  color: white;
+  border-color: var(--color-success);
+}
+
+.btn-success:hover:not(:disabled) {
+  background: #047857;
+  border-color: #047857;
+}
+
 .btn-accent {
   background: var(--accent);
   color: var(--primary-fg, #18181b);

@@ -10,6 +10,10 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+    -- Đảm bảo phân trang hợp lệ
+    IF @Page IS NULL OR @Page <= 0 SET @Page = 1;
+    IF @Limit IS NULL OR @Limit <= 0 SET @Limit = 100;
+
     -- Giải nén từ khóa tìm kiếm từ JSON hoặc chuỗi thông thường
     DECLARE @TimKiem NVARCHAR(255) = '';
     IF @q IS NOT NULL AND @q <> '' AND ISJSON(@q) = 1

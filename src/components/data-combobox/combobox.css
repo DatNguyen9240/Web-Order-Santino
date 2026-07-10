@@ -171,3 +171,8 @@
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+.combo-box-container.locked {
+  opacity: 0.45;
+  pointer-events: none;
+}

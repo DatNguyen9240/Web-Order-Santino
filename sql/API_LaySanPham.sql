@@ -12,6 +12,10 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
+    -- Đảm bảo phân trang hợp lệ
+    IF @Page IS NULL OR @Page <= 0 SET @Page = 1;
+    IF @Limit IS NULL OR @Limit <= 0 SET @Limit = 20;
+
     -- Xử lý giá trị NULL của IsWebOnly
     SET @IsWebOnly = ISNULL(@IsWebOnly, 0);
 

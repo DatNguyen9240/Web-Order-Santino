@@ -408,8 +408,7 @@ var OrderPage = (function () {
               }
               // Mở khóa combo đại lý khi đã có NPP (nếu đang bị tạm khóa)
               if (_combos.ma_dl._nppLocked) {
-                _combos.ma_dl.style.opacity = '';
-                _combos.ma_dl.style.pointerEvents = '';
+                _combos.ma_dl.classList.remove('locked');
                 _combos.ma_dl.title = '';
                 _combos.ma_dl._nppLocked = false;
               }
@@ -437,8 +436,7 @@ var OrderPage = (function () {
             if (inputEl) {
               inputEl.value = perm.user.name || perm.user.DisplayName || perm.objID;
               inputEl.readOnly = true;
-              inputEl.style.backgroundColor = '#f1f5f9';
-              inputEl.style.cursor = 'not-allowed';
+              inputEl.classList.add('readonly-input');
             }
 
             var actionBtn = _combos.kh.querySelector('.combo-action-btn');
@@ -447,7 +445,7 @@ var OrderPage = (function () {
             }
 
             // Chặn tuyệt đối mọi tương tác chuột vào Combobox
-            _combos.kh.style.pointerEvents = 'none';
+            _combos.kh.classList.add('locked');
 
             // Tự động thiết lập giá trị ngầm để khi Lưu đơn hàng lấy được mã KH
             var name = perm.user.name || perm.user.DisplayName || perm.objID;
@@ -519,14 +517,13 @@ var OrderPage = (function () {
             if (inputEl) {
               inputEl.value = perm.user.name || perm.user.DisplayName || perm.objID;
               inputEl.readOnly = true;
-              inputEl.style.backgroundColor = '#f1f5f9';
-              inputEl.style.cursor = 'not-allowed';
+              inputEl.classList.add('readonly-input');
             }
             var actionBtn = _combos.ma_dl.querySelector('.combo-action-btn');
             if (actionBtn) {
               actionBtn.innerHTML = '<span class="material-symbols-outlined" style="color:#94a3b8; font-size:18px;">lock</span>';
             }
-            _combos.ma_dl.style.pointerEvents = 'none';
+            _combos.ma_dl.classList.add('locked');
             document.getElementById('o-ma-dl').value = perm.objID;
           }
         } catch (e) { }
@@ -540,8 +537,7 @@ var OrderPage = (function () {
           var isLockedByPerm = permDL.objID && permDL.objID !== '' && !permDL.isPrivileged;
           var hasNPPSelected = document.getElementById('o-ma-kh').value || '';
           if (!isLockedByPerm && !hasNPPSelected) {
-            _combos.ma_dl.style.opacity = '0.45';
-            _combos.ma_dl.style.pointerEvents = 'none';
+            _combos.ma_dl.classList.add('locked');
             _combos.ma_dl.title = 'Vui lòng chọn khách hàng (NPP) trước';
             _combos.ma_dl._nppLocked = true;
           }
@@ -625,14 +621,13 @@ var OrderPage = (function () {
             if (inputEl) {
               inputEl.value = empName;
               inputEl.readOnly = true;
-              inputEl.style.backgroundColor = '#f1f5f9';
-              inputEl.style.cursor = 'not-allowed';
+              inputEl.classList.add('readonly-input');
             }
             var actionBtn = _combos.nvkd.querySelector('.combo-action-btn');
             if (actionBtn) {
               actionBtn.innerHTML = '<span class="material-symbols-outlined" style="color:#94a3b8; font-size:18px;">lock</span>';
             }
-            _combos.nvkd.style.pointerEvents = 'none';
+            _combos.nvkd.classList.add('locked');
             _catValues.nvkd = { id: perm.empID, name: empName };
           }
         } catch (e) { }

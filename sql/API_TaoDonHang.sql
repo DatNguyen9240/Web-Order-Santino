@@ -33,7 +33,7 @@ BEGIN
         END
         
         -- PHÂN QUYỀN LÚC TẠO ĐƠN:
-        IF ISNULL(@UserRole, '') <> '' AND NOT EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] p LEFT JOIN [dbo].[WA_Menu] m ON p.[MenuID] = m.[MenuID] WHERE p.[UserGroupID] = @UserRole AND (m.[FormName] = 'WEB_OrderFrm' OR p.[MenuID] = 'WEB_OrderFrm') AND (p.[isAdmin] = 1 OR p.[isManager] = 1))
+        IF ISNULL(@UserRole, '') <> '' AND NOT EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] p LEFT JOIN [dbo].[WA_Menu] m ON p.[MenuID] = m.[MenuID] WHERE p.[UserGroupID] = @UserRole AND m.[FormName] = 'WEB_OrderFrm' AND (p.[isAdmin] = 1 OR p.[isManager] = 1))
         BEGIN
             DECLARE @Allowed BIT = 0;
             -- 1. NV KD tự tạo cho KH của mình
@@ -144,11 +144,11 @@ BEGIN
             @DocumentID,
             (SELECT TOP 1 ci.ItemID FROM [dbo].[CF_ItemTbl] ci
              WHERE ci.ItemName2 = JSON_VALUE(l.[value], '$.ten_hang_2')
-               AND ci.Size     = JSON_VALUE(sz.[value], '$.size')
+               AND ci.Size     = LTRIM(RTRIM(JSON_VALUE(sz.[value], '$.size')))
                AND ci.MauSac   = JSON_VALUE(l.[value], '$.mau')
-             ORDER BY ci.ItemID), -- Chấp nhận NULL để né Khóa Ngoại
+             ORDER BY ci.ItemID),
             JSON_VALUE(l.[value], '$.ten_hang'),
-            JSON_VALUE(sz.[value], '$.size'),
+            LTRIM(RTRIM(JSON_VALUE(sz.[value], '$.size'))),
             JSON_VALUE(l.[value], '$.mau'),
             CAST(ISNULL(NULLIF(JSON_VALUE(sz.[value], '$.qty'), ''), '0') AS DECIMAL(18,2)),
             CAST(ISNULL(NULLIF(JSON_VALUE(l.[value], '$.don_gia'), ''), '0') AS DECIMAL(18,2)),
@@ -181,18 +181,21 @@ DECLARE @testJson NVARCHAR(MAX) = N'{
     "dien_giai": "Đơn hàng test từ SSMS",
     "nvkd": "NV01",
     "ht_thanh_toan": "TM",
-    "total_money": "",
+    "total_money": 1090000,
     "khach_dua": "",
     "lines": [
         {
-            "sku": "AMC38545S660",
-            "ten_hang": "Áo Polo Santino",
-            "size": "L",
-            "mau": "Trắng",
-            "so_luong": 2,
-            "don_gia": 250000,
-            "thanh_tien": 500000,
-            "stt": ""
+            "ten_hang_2": "AMC545S659",
+            "ten_hang": "Áo sơ mi-AMC545S659",
+            "mau": "S659",
+            "don_gia": 545000,
+            "stt": 0,
+            "chi_tiet_size": [
+                {
+                    "size": "40",
+                    "qty": 2
+                }
+            ]
         }
     ]
 }';

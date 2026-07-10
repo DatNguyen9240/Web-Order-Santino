@@ -146,6 +146,7 @@ var DynamicPage = (function () {
               id: comboId,
               placeholder: '-- Chọn ' + f.label + ' --',
               readOnly: true,
+              enableColorSwatch: f.name === 'MauSac' || f.name.toLowerCase().includes('mau'),
               headers: ['Mã/Giá trị', 'Tên hiển thị'],
               colFilterIndex: 0,
               colHighlightIndex: 1,
@@ -529,14 +530,25 @@ var DynamicPage = (function () {
         wrapper.style.display = 'flex';
         wrapper.style.gap = '6px';
         wrapper.style.alignItems = 'center';
-        wrapper.innerHTML = `
-          <button class="btn-icon" onclick="DynamicPage.openModal('${val}')">
-            <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">edit</span>
-          </button>
-          <button class="btn-icon" onclick="DynamicPage.del('${val}')">
-            <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1));color:var(--danger)">delete</span>
-          </button>
-        `;
+
+        var btnEdit = document.createElement('button');
+        btnEdit.className = 'btn-icon';
+        btnEdit.innerHTML = '<span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">edit</span>';
+        btnEdit.addEventListener('click', function (e) {
+          e.stopPropagation();
+          DynamicPage.openModal(val);
+        });
+
+        var btnDel = document.createElement('button');
+        btnDel.className = 'btn-icon';
+        btnDel.innerHTML = '<span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1));color:var(--danger)">delete</span>';
+        btnDel.addEventListener('click', function (e) {
+          e.stopPropagation();
+          DynamicPage.del(val);
+        });
+
+        wrapper.appendChild(btnEdit);
+        wrapper.appendChild(btnDel);
         return wrapper;
       }
     });
@@ -732,10 +744,10 @@ var DynamicPage = (function () {
       } else {
         if (idHidden) {
           var updateUrl = endpoint + '/' + encodeURIComponent(idHidden);
-          await Http.post(updateUrl, payload);
+          await Http.put(updateUrl, payload);
           showToast('Đã lưu thay đổi thành công');
         } else {
-          await Http.put(endpoint, payload);
+          await Http.post(endpoint, payload);
           showToast('Đã thêm mới thành công');
         }
       }

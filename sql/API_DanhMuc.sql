@@ -95,17 +95,11 @@ BEGIN
     BEGIN
         SELECT DISTINCT
             [Form]     AS [id],
-            [FormName] AS [name]
+            ISNULL(NULLIF([FormName], ''), [Form]) AS [name]
         FROM [dbo].[CF_TenHang2Tbl]
         WHERE [Form] IS NOT NULL AND [Form] <> ''
           AND (@TimKiem = '' OR [FormName] LIKE N'%' + @TimKiem + N'%'
                              OR [Form]     LIKE N'%' + @TimKiem + N'%')
-        UNION
-        SELECT 'AMC' AS [id], N'Modern Fit' AS [name] WHERE @TimKiem = '' OR N'Modern Fit' LIKE N'%' + @TimKiem + N'%' OR 'AMC' LIKE N'%' + @TimKiem + N'%'
-        UNION
-        SELECT 'ARC' AS [id], N'Regular' AS [name] WHERE @TimKiem = '' OR N'Regular' LIKE N'%' + @TimKiem + N'%' OR 'ARC' LIKE N'%' + @TimKiem + N'%'
-        UNION
-        SELECT 'APC' AS [id], N'Slim Fit' AS [name] WHERE @TimKiem = '' OR N'Slim Fit' LIKE N'%' + @TimKiem + N'%' OR 'APC' LIKE N'%' + @TimKiem + N'%'
         ORDER BY [id];
         RETURN;
     END
@@ -213,9 +207,9 @@ BEGIN
     BEGIN
         SELECT 
             -- Check xem group có quyền admin ở chức năng Đơn hàng không
-            CAST(ISNULL((SELECT TOP 1 p.[isAdmin] FROM [dbo].[WA_UserGroupPermisstion] p LEFT JOIN [dbo].[WA_Menu] m ON p.[MenuID] = m.[MenuID] WHERE p.[UserGroupID] = @UserRole AND (m.[FormName] = 'WEB_OrderFrm' OR p.[MenuID] = 'WEB_OrderFrm')), 0) AS BIT) AS [isAdmin],
+            CAST(ISNULL((SELECT TOP 1 p.[isAdmin] FROM [dbo].[WA_UserGroupPermisstion] p LEFT JOIN [dbo].[WA_Menu] m ON p.[MenuID] = m.[MenuID] WHERE p.[UserGroupID] = @UserRole AND m.[FormName] = 'WEB_OrderFrm'), 0) AS BIT) AS [isAdmin],
             -- Check xem group có quyền manager ở chức năng Đơn hàng không
-            CAST(ISNULL((SELECT TOP 1 p.[isManager] FROM [dbo].[WA_UserGroupPermisstion] p LEFT JOIN [dbo].[WA_Menu] m ON p.[MenuID] = m.[MenuID] WHERE p.[UserGroupID] = @UserRole AND (m.[FormName] = 'WEB_OrderFrm' OR p.[MenuID] = 'WEB_OrderFrm')), 0) AS BIT) AS [isManager],
+            CAST(ISNULL((SELECT TOP 1 p.[isManager] FROM [dbo].[WA_UserGroupPermisstion] p LEFT JOIN [dbo].[WA_Menu] m ON p.[MenuID] = m.[MenuID] WHERE p.[UserGroupID] = @UserRole AND m.[FormName] = 'WEB_OrderFrm'), 0) AS BIT) AS [isManager],
             -- Check xem có phải nhóm Đại lý hay không
             CAST(CASE WHEN UPPER(@UserRole) IN ('DL', 'BAN DAI LY') THEN 1 ELSE 0 END AS BIT) AS [isAgent]
         RETURN;
@@ -279,7 +273,7 @@ BEGIN
           -- PHÂN QUYỀN: Kế toán/Admin xem hết, NV KD xem KH của mình, NPP xem KH thuộc quản lý, KH tự xem mình
           AND (
                 -- CÚ CHECK TỰ ĐỘNG: Bất kỳ nhóm nào được tick isAdmin hoặc isManager ở trang WEB_OrderFrm thì mặc định nhả hết Khách hàng
-                 EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] p LEFT JOIN [dbo].[WA_Menu] m ON p.[MenuID] = m.[MenuID] WHERE p.[UserGroupID] = @UserRole AND (m.[FormName] = 'WEB_OrderFrm' OR p.[MenuID] = 'WEB_OrderFrm') AND (p.[isAdmin] = 1 OR p.[isManager] = 1))
+                 EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] p LEFT JOIN [dbo].[WA_Menu] m ON p.[MenuID] = m.[MenuID] WHERE p.[UserGroupID] = @UserRole AND m.[FormName] = 'WEB_OrderFrm' AND (p.[isAdmin] = 1 OR p.[isManager] = 1))
                
                  OR (@UserEmployeeID IS NOT NULL AND @UserEmployeeID <> '' AND [EmployeeID] = @UserEmployeeID)
                  -- Exception: NV Sales đã chọn NPP cụ thể → cho thấy TẤT CẢ đại lý con của NPP đó (không lọc theo EmployeeID)
@@ -291,8 +285,8 @@ BEGIN
                 OR (ISNULL(@UserRole, '') = '' AND ISNULL(@UserEmployeeID, '') = '' AND ISNULL(@UserObjectID, '') = '')
            )
         ORDER BY [ObjectName]
-        OFFSET (@Page - 1) * 200 ROWS
-        FETCH NEXT 200 ROWS ONLY;
+        OFFSET (@Page - 1) * @PageSize ROWS
+        FETCH NEXT @PageSize ROWS ONLY;
         RETURN;
     END
 
@@ -432,7 +426,7 @@ BEGIN
           AND (@DenNgay IS NULL OR [DocumentDate] < DATEADD(day, 1, @DenNgay))
           -- BỨC TƯỜNG LỬA BẢO VỆ ĐƠN HÀNG: Chỉ Sếp mới xem hết, NV xem đơn của mình, KH/Đại lý xem đơn của họ và cấp dưới
           AND (
-               EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND [MenuID] = 'WEB_OrderFrm' AND ([isAdmin] = 1 OR [isManager] = 1))
+               EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] p LEFT JOIN [dbo].[WA_Menu] m ON p.[MenuID] = m.[MenuID] WHERE p.[UserGroupID] = @UserRole AND m.[FormName] = 'WEB_OrderFrm' AND (p.[isAdmin] = 1 OR p.[isManager] = 1))
                OR (@UserEmployeeID IS NOT NULL AND @UserEmployeeID <> '' AND [EmployeeID] = @UserEmployeeID)
                OR (@UserObjectID IS NOT NULL AND @UserObjectID <> '' AND (
                     [ObjectID] = @UserObjectID 
@@ -501,9 +495,8 @@ BEGIN
         FROM [dbo].[WEB_OrderTbl] h
         LEFT JOIN [dbo].[CF_EmployeeTbl] e ON h.[EmployeeID] = e.[EmployeeID]
         WHERE h.DocumentID = @TimKiem
-          -- BỨC TƯỜNG LỬA CHẶN XEM LÉN CHI TIẾT ĐƠN HÀNG (Người ngoài biết mã cũng không xem được)
           AND (
-               EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND [MenuID] = 'WEB_OrderFrm' AND ([isAdmin] = 1 OR [isManager] = 1))
+               EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] p LEFT JOIN [dbo].[WA_Menu] m ON p.[MenuID] = m.[MenuID] WHERE p.[UserGroupID] = @UserRole AND m.[FormName] = 'WEB_OrderFrm' AND (p.[isAdmin] = 1 OR p.[isManager] = 1))
                OR (@UserEmployeeID IS NOT NULL AND @UserEmployeeID <> '' AND h.[EmployeeID] = @UserEmployeeID)
                OR (@UserObjectID IS NOT NULL AND @UserObjectID <> '' AND (
                     h.[ObjectID] = @UserObjectID 
