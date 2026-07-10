@@ -145,6 +145,7 @@ var DynamicPage = (function () {
             var comboContainer = UIControls.createDataComboBox({
               id: comboId,
               placeholder: '-- Chọn ' + f.label + ' --',
+              readOnly: true,
               headers: ['Mã/Giá trị', 'Tên hiển thị'],
               colFilterIndex: 0,
               colHighlightIndex: 1,

@@ -318,6 +318,7 @@ var OrderPage = (function () {
         _combos.delivery = UIControls.createDataComboBox({
           id: 'o-nguoi-giao-search',
           placeholder: '-- Chọn người giao --',
+          readOnly: true,
           headers: ['Người giao', 'Ghi chú'],
           data: deliveryPersons.map(function (d) { return [d.name, d.memo || '']; }),
           onSearch: function (q) {
@@ -338,6 +339,7 @@ var OrderPage = (function () {
         _combos.source = UIControls.createDataComboBox({
           id: 'o-nguon-don-search',
           placeholder: '-- Chọn nguồn đơn --',
+          readOnly: true,
           headers: ['Nguồn đơn', 'Ghi chú'],
           data: sources.map(function (s) { return [s.name, s.memo || '']; }),
           onSearch: function (q) {
@@ -358,6 +360,7 @@ var OrderPage = (function () {
         _combos.kh = UIControls.createDataComboBox({
           id: 'o-ma-kh-search',
           placeholder: '-- Tìm khách hàng --',
+          readOnly: true,
           hideDropdownOnInput: true,
           enablePagination: true,
           showAddNew: _canAddCustomer,
@@ -475,6 +478,7 @@ var OrderPage = (function () {
         _combos.ma_dl = UIControls.createDataComboBox({
           id: 'o-ma-dl-search',
           placeholder: '-- Tìm đại lý --',
+          readOnly: true,
           hideDropdownOnInput: true,
           enablePagination: true,
           headers: ['Khách hàng', 'Tên khách hàng', 'Địa chỉ'],
@@ -527,6 +531,7 @@ var OrderPage = (function () {
         _combos.branch = UIControls.createDataComboBox({
           id: 'o-chi-nhanh',
           placeholder: '-- Chọn chi nhánh --',
+          readOnly: true,
           headers: ['Tên chi nhánh', 'Chi nhánh', 'STT'],
           data: branches.map(function (b) { return [b.name, b.id, b.stt]; }),
           colFilterIndex: 0,
@@ -556,6 +561,7 @@ var OrderPage = (function () {
         _combos.nvkd = UIControls.createDataComboBox({
           id: 'o-nvkd',
           placeholder: '-- Chọn nhân viên --',
+          readOnly: true,
           headers: ['Tên nhân viên', 'Mã NV'],
           data: employees.map(function (e) { return [e.name, e.id]; }),
           colFilterIndex: 0,
@@ -604,6 +610,7 @@ var OrderPage = (function () {
         _combos.dk = UIControls.createDataComboBox({
           id: 'o-dieu-khoan',
           placeholder: '-- Chọn điều khoản --',
+          readOnly: true,
           headers: ['Tên điều khoản', 'Điều khoản TT'],
           data: payTerms.map(function (p) { return [p.name, p.id, p.due_days || 0]; }),
           colFilterIndex: 0,
@@ -638,6 +645,7 @@ var OrderPage = (function () {
         _combos.ht = UIControls.createDataComboBox({
           id: 'o-ht-thanh-toan',
           placeholder: '-- Chọn hình thức --',
+          readOnly: true,
           headers: ['Tên hình thức', 'Hình thức thanh toán'],
           data: payTypes.map(function (p) { return [p.name, p.id]; }),
           colFilterIndex: 0,
@@ -660,6 +668,7 @@ var OrderPage = (function () {
         _combos.ctkm = UIControls.createDataComboBox({
           id: 'o-ctkm-search',
           placeholder: '-- Chọn CTKM --',
+          readOnly: true,
           headers: ['Tên chiết khấu', 'Chiết khấu'],
           data: promotions.map(function (p) { return [p.name, p.id]; }),
           colFilterIndex: 0,
@@ -683,6 +692,7 @@ var OrderPage = (function () {
         _combos.pt_giao = UIControls.createDataComboBox({
           id: 'o-pt-giao-search',
           placeholder: '-- Chọn phương tiện --',
+          readOnly: true,
           headers: ['Mã phương tiện', 'Phương tiện giao hàng', 'Ghi chú'],
           data: vehicles.map(function (v) { return [v.id, v.name, v.memo || '']; }),
           colFilterIndex: 0,

@@ -24,6 +24,15 @@ UIControls.createDataComboBox = function (options) {
   input.placeholder = options.placeholder || '';
   if (options.id) input.id = options.id;
 
+  if (options.readOnly) {
+    input.readOnly = true;
+    input.style.cursor = 'pointer';
+    input.addEventListener('click', function (e) {
+      e.stopPropagation();
+      dropdown.classList.contains('active') ? hideDropdown() : showDropdown();
+    });
+  }
+
   // Swatch màu sắc cho trường Màu sắc
   var swatch = null;
   if (options.id && options.id.includes('MauSac')) {
