@@ -213,9 +213,9 @@ BEGIN
     BEGIN
         SELECT 
             -- Check xem group có quyền admin ở chức năng Đơn hàng không
-            CAST(ISNULL((SELECT TOP 1 [isAdmin] FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND [MenuID] = 'WEB_OrderFrm'), 0) AS BIT) AS [isAdmin],
+            CAST(ISNULL((SELECT TOP 1 p.[isAdmin] FROM [dbo].[WA_UserGroupPermisstion] p LEFT JOIN [dbo].[WA_Menu] m ON p.[MenuID] = m.[MenuID] WHERE p.[UserGroupID] = @UserRole AND (m.[FormName] = 'WEB_OrderFrm' OR p.[MenuID] = 'WEB_OrderFrm')), 0) AS BIT) AS [isAdmin],
             -- Check xem group có quyền manager ở chức năng Đơn hàng không
-            CAST(ISNULL((SELECT TOP 1 [isManager] FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND [MenuID] = 'WEB_OrderFrm'), 0) AS BIT) AS [isManager],
+            CAST(ISNULL((SELECT TOP 1 p.[isManager] FROM [dbo].[WA_UserGroupPermisstion] p LEFT JOIN [dbo].[WA_Menu] m ON p.[MenuID] = m.[MenuID] WHERE p.[UserGroupID] = @UserRole AND (m.[FormName] = 'WEB_OrderFrm' OR p.[MenuID] = 'WEB_OrderFrm')), 0) AS BIT) AS [isManager],
             -- Check xem có phải nhóm Đại lý hay không
             CAST(CASE WHEN UPPER(@UserRole) IN ('DL', 'BAN DAI LY') THEN 1 ELSE 0 END AS BIT) AS [isAgent]
         RETURN;
@@ -278,8 +278,8 @@ BEGIN
           AND (@NhaPhanPhoi IS NULL OR @NhaPhanPhoi = '' OR [NhaPhanPhoi] = @NhaPhanPhoi)
           -- PHÂN QUYỀN: Kế toán/Admin xem hết, NV KD xem KH của mình, NPP xem KH thuộc quản lý, KH tự xem mình
           AND (
-               -- CÚ CHECK TỰ ĐỘNG: Bất kỳ nhóm nào được tick isAdmin hoặc isManager ở trang WEB_OrderFrm thì mặc định nhả hết Khách hàng
-                EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND [MenuID] = 'WEB_OrderFrm' AND ([isAdmin] = 1 OR [isManager] = 1))
+                -- CÚ CHECK TỰ ĐỘNG: Bất kỳ nhóm nào được tick isAdmin hoặc isManager ở trang WEB_OrderFrm thì mặc định nhả hết Khách hàng
+                 EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] p LEFT JOIN [dbo].[WA_Menu] m ON p.[MenuID] = m.[MenuID] WHERE p.[UserGroupID] = @UserRole AND (m.[FormName] = 'WEB_OrderFrm' OR p.[MenuID] = 'WEB_OrderFrm') AND (p.[isAdmin] = 1 OR p.[isManager] = 1))
                
                  OR (@UserEmployeeID IS NOT NULL AND @UserEmployeeID <> '' AND [EmployeeID] = @UserEmployeeID)
                  -- Exception: NV Sales đã chọn NPP cụ thể → cho thấy TẤT CẢ đại lý con của NPP đó (không lọc theo EmployeeID)

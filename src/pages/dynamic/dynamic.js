@@ -82,7 +82,7 @@ var DynamicPage = (function () {
         var extraActionsEl = document.getElementById('dynamic-extra-actions');
         if (extraActionsEl) {
           extraActionsEl.innerHTML = '';
-          if (formName === 'frmProduct' && window.UIProductWebSync) {
+          if ((formName === 'frmProduct' || formName === 'WA_Product') && window.UIProductWebSync) {
             var syncToolbar = UIProductWebSync.create({
               onSync: function () {
                 updateProductWebStatus(1);

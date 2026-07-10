@@ -33,8 +33,7 @@ BEGIN
         END
         
         -- PHÂN QUYỀN LÚC TẠO ĐƠN:
-        IF NOT EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND [MenuID] = 'WEB_OrderFrm' AND ([isAdmin] = 1 OR [isManager] = 1))
-           AND ISNULL(@UserRole, '') <> '' -- Fallback backward compatibility
+        IF ISNULL(@UserRole, '') <> '' AND NOT EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] p LEFT JOIN [dbo].[WA_Menu] m ON p.[MenuID] = m.[MenuID] WHERE p.[UserGroupID] = @UserRole AND (m.[FormName] = 'WEB_OrderFrm' OR p.[MenuID] = 'WEB_OrderFrm') AND (p.[isAdmin] = 1 OR p.[isManager] = 1))
         BEGIN
             DECLARE @Allowed BIT = 0;
             -- 1. NV KD tự tạo cho KH của mình
