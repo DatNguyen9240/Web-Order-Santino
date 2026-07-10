@@ -398,14 +398,24 @@ var OrderPage = (function () {
                 _catValues.nvkd = { id: e.id, name: e.name };
               }
             }
-            // Xóa cache của ô đại lý để truy vấn lại theo NPP mới chọn
-            if (_combos.ma_dl && typeof _combos.ma_dl.clearCache === 'function') {
-              _combos.ma_dl.clearCache();
+            // Khi NPP thay đổi: reset đại lý đã chọn + làm mới danh sách theo NPP mới
+            if (_combos.ma_dl) {
               // Reset giá trị hiển thị của ô đại lý về trống (nếu không bị khóa)
               var dlInput = _combos.ma_dl.querySelector('input');
               if (dlInput && !dlInput.readOnly) {
                 dlInput.value = '';
                 document.getElementById('o-ma-dl').value = '';
+              }
+              // Mở khóa combo đại lý khi đã có NPP (nếu đang bị tạm khóa)
+              if (_combos.ma_dl._nppLocked) {
+                _combos.ma_dl.style.opacity = '';
+                _combos.ma_dl.style.pointerEvents = '';
+                _combos.ma_dl.title = '';
+                _combos.ma_dl._nppLocked = false;
+              }
+              // reload(): xóa cache VÀ tự động reload ngay nếu dropdown đang mở
+              if (typeof _combos.ma_dl.reload === 'function') {
+                _combos.ma_dl.reload();
               }
             }
             updateInfoSummary();
@@ -482,7 +492,8 @@ var OrderPage = (function () {
           hideDropdownOnInput: true,
           enablePagination: true,
           headers: ['Khách hàng', 'Tên khách hàng', 'Địa chỉ'],
-          data: customers.map(function (c) { return [c.id, c.name, c.address || '', c.group_id || 'Khác']; }),
+          // data rỗng: bắt buộc dùng onSearch để lọc theo NPP đã chọn, tránh hiện toàn bộ khách hàng
+          data: [],
           colFilterIndex: 1,
           colHighlightIndex: 1,
           colGroupIndex: 3,
@@ -520,7 +531,32 @@ var OrderPage = (function () {
           }
         } catch (e) { }
 
+        // -------------------------------------------------------------
+        // DISABLE ÔĐẠi LÝ NẾU CHƯA CHỌN NPP (tránh hiện toàn bộ khách)
+        // Chỉ áp dụng khi combo không bị khóa bởi permission
+        // -------------------------------------------------------------
+        try {
+          var permDL = _getUserPermission();
+          var isLockedByPerm = permDL.objID && permDL.objID !== '' && !permDL.isPrivileged;
+          var hasNPPSelected = document.getElementById('o-ma-kh').value || '';
+          if (!isLockedByPerm && !hasNPPSelected) {
+            _combos.ma_dl.style.opacity = '0.45';
+            _combos.ma_dl.style.pointerEvents = 'none';
+            _combos.ma_dl.title = 'Vui lòng chọn khách hàng (NPP) trước';
+            _combos.ma_dl._nppLocked = true;
+          }
+        } catch (e) { }
+
         wrapMaDL.appendChild(_combos.ma_dl);
+
+        // Khi pointerEvents:none → click xuyên qua combo lên wrapper → bắt ở đây để thông báo
+        wrapMaDL.addEventListener('click', function () {
+          if (_combos.ma_dl && _combos.ma_dl._nppLocked) {
+            if (typeof showToast === 'function') {
+              showToast('Vui lòng chọn khách hàng (NPP) trước khi chọn đại lý!', false);
+            }
+          }
+        });
       }
 
       // ── Chi nhánh ─────────────────────────────────────────────

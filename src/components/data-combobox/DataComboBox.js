@@ -503,5 +503,15 @@ UIControls.createDataComboBox = function (options) {
     cachedInitialResults = null;
   };
 
+  // Xóa cache VÀ reload lại ngay nếu dropdown đang mở
+  // Dùng khi NPP thay đổi → danh sách đại lý phải làm mới theo NPP mới
+  container.reload = function () {
+    cachedInitialResults = null;
+    if (dropdown.classList.contains('active')) {
+      searchInput.value = '';
+      loadData('', 1);
+    }
+  };
+
   return container;
 };

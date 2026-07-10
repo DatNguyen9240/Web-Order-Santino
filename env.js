@@ -6,7 +6,7 @@ const isVercel = window.location.hostname.includes('vercel.app');
 const ENV_VARS = {
     // Nếu chạy trên Vercel, dùng Proxy (rewrites) để tránh lỗi HTTPS gọi HTTP (Mixed Content).
     // Nếu chạy ở localhost, dùng trực tiếp IP/Domain HTTP.
-    API_BASE: isVercel ? '/api' : 'http://stn.bms79.com/api',
+    API_BASE: isVercel ? '/api' : 'http://stntest.bms79.com/api',
 };
 
 window.API_CONFIG = {
