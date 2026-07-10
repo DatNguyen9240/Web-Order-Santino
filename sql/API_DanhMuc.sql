@@ -281,12 +281,15 @@ BEGIN
                -- CÚ CHECK TỰ ĐỘNG: Bất kỳ nhóm nào được tick isAdmin hoặc isManager ở trang WEB_OrderFrm thì mặc định nhả hết Khách hàng
                 EXISTS (SELECT 1 FROM [dbo].[WA_UserGroupPermisstion] WHERE [UserGroupID] = @UserRole AND [MenuID] = 'WEB_OrderFrm' AND ([isAdmin] = 1 OR [isManager] = 1))
                
-                OR (@UserEmployeeID IS NOT NULL AND @UserEmployeeID <> '' AND [EmployeeID] = @UserEmployeeID)
-                OR (@UserObjectID IS NOT NULL AND @UserObjectID <> '' AND [NhaPhanPhoi] = @UserObjectID) -- NPP quản lý khách hàng
-                OR (@UserObjectID IS NOT NULL AND @UserObjectID <> '' AND [ObjectID] = @UserObjectID)
-               -- Fallback: Nếu không truyền phân quyền gì cả, cứ xem như admin để backward-compatibility
-               OR (ISNULL(@UserRole, '') = '' AND ISNULL(@UserEmployeeID, '') = '' AND ISNULL(@UserObjectID, '') = '')
-          )
+                 OR (@UserEmployeeID IS NOT NULL AND @UserEmployeeID <> '' AND [EmployeeID] = @UserEmployeeID)
+                 -- Exception: NV Sales đã chọn NPP cụ thể → cho thấy TẤT CẢ đại lý con của NPP đó (không lọc theo EmployeeID)
+                 -- An toàn vì NPP đã được validate ở ô KH (NV chỉ chọn được NPP do chính họ quản lý)
+                 OR (@NhaPhanPhoi IS NOT NULL AND @NhaPhanPhoi <> '' AND @UserEmployeeID IS NOT NULL AND @UserEmployeeID <> '')
+                 OR (@UserObjectID IS NOT NULL AND @UserObjectID <> '' AND [NhaPhanPhoi] = @UserObjectID) -- NPP quản lý khách hàng
+                 OR (@UserObjectID IS NOT NULL AND @UserObjectID <> '' AND [ObjectID] = @UserObjectID)
+                -- Fallback: Nếu không truyền phân quyền gì cả, cứ xem như admin để backward-compatibility
+                OR (ISNULL(@UserRole, '') = '' AND ISNULL(@UserEmployeeID, '') = '' AND ISNULL(@UserObjectID, '') = '')
+           )
         ORDER BY [ObjectName]
         OFFSET (@Page - 1) * 200 ROWS
         FETCH NEXT 200 ROWS ONLY;
