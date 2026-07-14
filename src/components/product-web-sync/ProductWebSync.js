@@ -16,10 +16,12 @@ var UIProductWebSync = (function () {
     container.style.alignItems = 'center';
 
     var btnSync = document.createElement('button');
-    btnSync.className = 'btn btn-success';
+    btnSync.className = 'btn btn-success btn-sm';
     btnSync.style.whiteSpace = 'nowrap';
-    btnSync.style.height = '42px';
-    btnSync.innerHTML = '<span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1)); vertical-align: middle;">public</span><span>Lấy sang Web</span>';
+    btnSync.style.height = '30px';
+    btnSync.style.padding = '0 10px';
+    btnSync.style.fontSize = '12px';
+    btnSync.innerHTML = '<span class="material-symbols-outlined" style="font-size: calc(13px * var(--text-scale, 1)); vertical-align: middle;">public</span><span>Lấy sang Web</span>';
     btnSync.addEventListener('click', function () {
       if (typeof options.onSync === 'function') {
         options.onSync();
@@ -27,10 +29,12 @@ var UIProductWebSync = (function () {
     });
 
     var btnUnsync = document.createElement('button');
-    btnUnsync.className = 'btn btn-danger';
+    btnUnsync.className = 'btn btn-danger btn-sm';
     btnUnsync.style.whiteSpace = 'nowrap';
-    btnUnsync.style.height = '42px';
-    btnUnsync.innerHTML = '<span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1)); vertical-align: middle;">public_off</span><span>Hủy lấy sang Web</span>';
+    btnUnsync.style.height = '30px';
+    btnUnsync.style.padding = '0 10px';
+    btnUnsync.style.fontSize = '12px';
+    btnUnsync.innerHTML = '<span class="material-symbols-outlined" style="font-size: calc(13px * var(--text-scale, 1)); vertical-align: middle;">public_off</span><span>Hủy lấy sang Web</span>';
     btnUnsync.addEventListener('click', function () {
       if (typeof options.onUnsync === 'function') {
         options.onUnsync();
