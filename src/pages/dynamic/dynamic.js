@@ -15,11 +15,182 @@ var DynamicPage = (function () {
   var searchVal = '';
   var copySourceData = null;
   var editOriginalData = null;
+  var searchDebounceTimer = null;
+  var fetchRequestId = 0;
+  var SEARCH_DEBOUNCE_MS = 350;
 
   // Danh sách các FormatID số trong CSDL chuẩn
-  var NUMERIC_FORMATS = ['B', 'U', 'Q', 'N', '1D', '2D', '3D', '4D', '5D', '6D', 'N3', 'N4', 'N5', 'N6'];
+  var NUMERIC_FORMATS = ['B', 'U', 'Q', 'N', '1D', '2D', '3D', '4D', '5D', '6D', 'N3', 'N4', 'N5', 'N6', 'P', 'P1', 'P2', 'PN', 'Y'];
+
+  function _isNumericField(field) {
+    return String(field.formatType || '').toUpperCase() === 'N' ||
+      NUMERIC_FORMATS.includes(String(field.renderRule || '').toUpperCase());
+  }
+
+  function _getPrimaryKeyNames() {
+    return String(primaryKey || '')
+      .split(';')
+      .map(function (keyName) { return keyName.trim(); })
+      .filter(Boolean);
+  }
+
+  function _formatDateForInput(value) {
+    var raw = String(value === undefined || value === null ? '' : value).trim();
+    if (!raw) return '';
+
+    var isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoMatch) return isoMatch[3] + '/' + isoMatch[2] + '/' + isoMatch[1];
+    return raw;
+  }
+
+  function _parseDateFromInput(value) {
+    var raw = String(value || '').trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+
+    var match = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (!match) return null;
+
+    var day = Number(match[1]);
+    var month = Number(match[2]);
+    var year = Number(match[3]);
+    var date = new Date(year, month - 1, day);
+    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+      return null;
+    }
+    return year + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+  }
+
+  function _formatDateInputs() {
+    document.querySelectorAll('input[data-dynamic-date="true"]').forEach(function (input) {
+      input.value = _formatDateForInput(input.value);
+    });
+    document.querySelectorAll('input[data-dynamic-date-picker="true"]').forEach(function (input) {
+      input.dispatchEvent(new Event('change'));
+    });
+  }
+
+  function _numberOptions(field) {
+    var format = String(field.formatString || '');
+    var decimalPart = format.indexOf('.') >= 0
+      ? format.substring(format.indexOf('.') + 1).replace(/[^0#]/g, '')
+      : '';
+    var fixedDecimals = (decimalPart.match(/0/g) || []).length;
+    var optionalDecimals = (decimalPart.match(/#/g) || []).length;
+    var configuredDecimals = Number(field.numberDecimal);
+    var minimumFractionDigits = fixedDecimals;
+    var maximumFractionDigits = fixedDecimals + optionalDecimals;
+
+    if (!decimalPart && Number.isFinite(configuredDecimals)) {
+      maximumFractionDigits = configuredDecimals;
+    }
+    if (!Number.isFinite(maximumFractionDigits) || maximumFractionDigits < 0) {
+      maximumFractionDigits = 0;
+    }
+
+    return {
+      minimumFractionDigits: minimumFractionDigits,
+      maximumFractionDigits: Math.max(minimumFractionDigits, maximumFractionDigits),
+      suffix: format.includes('%') ? '%' : ''
+    };
+  }
+
+  function _parseFormattedNumber(value) {
+    var raw = String(value === undefined || value === null ? '' : value)
+      .trim()
+      .replace(/\s/g, '')
+      .replace(/%/g, '');
+    if (raw === '') return null;
+
+    if (raw.includes(',')) {
+      raw = raw.replace(/\./g, '').replace(',', '.');
+    } else if (raw.includes('.')) {
+      var parts = raw.split('.');
+      if (parts.length > 2 || (parts.length === 2 && parts[1].length === 3)) {
+        raw = raw.replace(/\./g, '');
+      }
+    }
+
+    var parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : NaN;
+  }
+
+  function _formatNumber(value, field) {
+    var numericValue = _parseFormattedNumber(value);
+    if (numericValue === null || Number.isNaN(numericValue)) return '';
+
+    var options = _numberOptions(field);
+    var formatted = new Intl.NumberFormat('vi-VN', {
+      minimumFractionDigits: options.minimumFractionDigits,
+      maximumFractionDigits: options.maximumFractionDigits
+    }).format(numericValue);
+    return formatted + options.suffix;
+  }
+
+  function _formatNumericInputs() {
+    document.querySelectorAll('input[data-dynamic-number="true"]').forEach(function (input) {
+      if (input.value !== '') input.dispatchEvent(new Event('blur'));
+    });
+  }
+
+  function _readVietnameseThreeDigits(number, readFull) {
+    var hundreds = Math.floor(number / 100);
+    var tens = Math.floor((number % 100) / 10);
+    var units = number % 10;
+    var digits = ['không', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
+    var result = [];
+
+    if (hundreds > 0 || readFull) {
+      result.push(digits[hundreds] + ' trăm');
+    }
+    if (tens > 1) {
+      result.push(digits[tens] + ' mươi');
+      if (units === 1) result.push('mốt');
+      else if (units === 5) result.push('lăm');
+      else if (units > 0) result.push(digits[units]);
+    } else if (tens === 1) {
+      result.push('mười');
+      if (units === 5) result.push('lăm');
+      else if (units > 0) result.push(digits[units]);
+    } else if (units > 0) {
+      if (hundreds > 0 || readFull) result.push('lẻ');
+      result.push(units === 5 && (hundreds > 0 || readFull) ? 'năm' : digits[units]);
+    }
+
+    return result.join(' ');
+  }
+
+  function _readVietnameseNumber(value) {
+    var number = Math.floor(Math.abs(Number(value)));
+    if (!Number.isFinite(number)) return '';
+    if (number === 0) return 'Không';
+
+    var groupNames = ['', 'nghìn', 'triệu', 'tỷ', 'nghìn tỷ', 'triệu tỷ'];
+    var groups = [];
+    while (number > 0) {
+      groups.push(number % 1000);
+      number = Math.floor(number / 1000);
+    }
+
+    var words = [];
+    for (var index = groups.length - 1; index >= 0; index--) {
+      if (groups[index] === 0) continue;
+      var readFull = index < groups.length - 1 && groups[index] < 100;
+      words.push(_readVietnameseThreeDigits(groups[index], readFull));
+      if (groupNames[index]) words.push(groupNames[index]);
+    }
+
+    var result = words.join(' ').replace(/\s+/g, ' ').trim();
+    return result.charAt(0).toUpperCase() + result.slice(1);
+  }
+
+  function _isMoneyField(field) {
+    var formatId = String(field.renderRule || '').toUpperCase();
+    return formatId === 'B' || formatId === 'U';
+  }
 
   function render($el, route) {
+    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+    fetchRequestId++;
     gridApi = null;
     allData = [];
     currentPage = 1;
@@ -396,25 +567,86 @@ var DynamicPage = (function () {
             label.appendChild(document.createTextNode(labelText));
           } else {
             var input = document.createElement('input');
+            var numberWords = null;
+            var dateControl = null;
             input.id = 'field-' + f.name;
             input.name = f.name;
             input.placeholder = f.label;
             if (f.required) input.required = true;
 
             if (f.renderRule === 'D') {
-              input.type = 'date';
+              if (window.UIInput && typeof UIInput.createDate === 'function') {
+                dateControl = UIInput.createDate({
+                  id: input.id,
+                  name: f.name,
+                  placeholder: 'dd/MM/yyyy',
+                  required: f.required
+                });
+                var hiddenDateInput = dateControl.querySelector('input[type="hidden"]');
+                if (hiddenDateInput) hiddenDateInput.dataset.dynamicDatePicker = 'true';
+              } else {
+                input.type = 'text';
+                input.inputMode = 'numeric';
+                input.placeholder = 'dd/MM/yyyy';
+                input.dataset.dynamicDate = 'true';
+                input.maxLength = 10;
+                input.addEventListener('input', function () {
+                  var digits = this.value.replace(/\D/g, '').slice(0, 8);
+                  var parts = [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 8)].filter(Boolean);
+                  this.value = parts.join('/');
+                });
+              }
             } else if (f.renderRule === 'DT') {
               input.type = 'datetime-local';
             } else if (f.renderRule === 'H') {
               input.type = 'time';
-            } else if (NUMERIC_FORMATS.includes(f.renderRule)) {
-              input.type = 'number';
-              input.step = 'any';
+            } else if (_isNumericField(f)) {
+              // input[type=number] không hỗ trợ dấu phân cách hàng nghìn.
+              // Dùng text + inputMode để hiển thị đúng FormatString của ERP.
+              input.type = 'text';
+              input.inputMode = 'decimal';
+              input.dataset.dynamicNumber = 'true';
+              input.addEventListener('beforeinput', function (event) {
+                // Chỉ nhận số, dấu phân cách thập phân và dấu âm đầu chuỗi.
+                if (event.data && !/^[0-9.,-]+$/.test(event.data)) {
+                  event.preventDefault();
+                }
+              });
+              input.addEventListener('input', function () {
+                // Fallback cho paste/IME: lọc lại nếu trình duyệt không hỗ trợ beforeinput.
+                var cleanValue = this.value
+                  .replace(/[^0-9.,-]/g, '')
+                  .replace(/(?!^)-/g, '');
+                if (cleanValue !== this.value) this.value = cleanValue;
+              });
+              input.addEventListener('focus', function () {
+                // Giữ dấu phân cách đang hiển thị; chọn toàn bộ để người dùng
+                // gõ đè nhanh mà không gặp vấn đề vị trí con trỏ giữa các dấu.
+                this.select();
+              });
+              input.addEventListener('blur', function () {
+                this.value = _formatNumber(this.value, f);
+              });
+
+              if (_isMoneyField(f)) {
+                numberWords = document.createElement('small');
+                numberWords.className = 'dynamic-number-words';
+                var updateWords = function () {
+                  var numericValue = _parseFormattedNumber(input.value);
+                  numberWords.textContent = numericValue === null || Number.isNaN(numericValue)
+                    ? ''
+                    : _readVietnameseNumber(numericValue) + ' đồng';
+                };
+                input.addEventListener('input', updateWords);
+                input.addEventListener('blur', updateWords);
+              }
             } else {
               input.type = 'text';
             }
 
-            fieldWrapper.appendChild(input);
+            if (dateControl) fieldWrapper.appendChild(dateControl);
+            else fieldWrapper.appendChild(input);
+            if (numberWords) fieldWrapper.appendChild(numberWords);
           }
         }
 
@@ -445,6 +677,7 @@ var DynamicPage = (function () {
   }
 
   async function _fetchAndRender() {
+    var requestId = ++fetchRequestId;
     if (gridApi) {
       gridApi.showLoadingOverlay();
     }
@@ -514,6 +747,8 @@ var DynamicPage = (function () {
 
       // 3. Gọi API
       var res = await Http.get(endpoint, params);
+      // Bỏ qua response cũ nếu người dùng đã đổi từ khóa hoặc chuyển trang.
+      if (requestId !== fetchRequestId) return;
       
       // Xử lý dữ liệu mảng an toàn
       allData = res.records || res.list || res.data || res;
@@ -559,6 +794,7 @@ var DynamicPage = (function () {
 
       _renderGridPage(allData, totalItems);
     } catch (err) {
+      if (requestId !== fetchRequestId) return;
       console.warn('Lỗi tải danh sách từ API:', err);
       allData = [];
       _renderGridPage([], 0);
@@ -585,7 +821,7 @@ var DynamicPage = (function () {
         }
 
         // Định dạng cột số (Numeric) chuẩn hóa
-        var isNumeric = NUMERIC_FORMATS.includes(f.renderRule);
+        var isNumeric = _isNumericField(f);
         var hasDataSource = f.dataSource && f.dataSource.length > 0;
         var dsType = (f.dropdownType || '').toLowerCase().trim();
 
@@ -597,12 +833,7 @@ var DynamicPage = (function () {
 
         if (isNumeric) {
           col.cellStyle = Object.assign({}, col.cellStyle, { textAlign: 'right' });
-          col.valueFormatter = function (params) {
-            if (params.value !== undefined && params.value !== null && params.value !== '') {
-              return new Intl.NumberFormat('vi-VN').format(params.value);
-            }
-            return '';
-          };
+          col.valueFormatter = function (params) { return _formatNumber(params.value, f); };
         } else if (isStaticSelect) {
           // Render badge hiển thị cho các cấu hình chọn tĩnh (STATIC/ValueList)
           col.cellRenderer = function (params) {
@@ -710,7 +941,22 @@ var DynamicPage = (function () {
   function onSearch(val) {
     searchVal = val;
     currentPage = 1;
-    _fetchAndRender();
+    var clearButton = document.getElementById('dynamic-search-clear');
+    if (clearButton) clearButton.hidden = searchVal.trim() === '';
+    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(function () {
+      searchDebounceTimer = null;
+      _fetchAndRender();
+    }, SEARCH_DEBOUNCE_MS);
+  }
+
+  function clearSearch() {
+    var searchInput = document.getElementById('dynamic-search');
+    if (searchInput) {
+      searchInput.value = '';
+      searchInput.focus();
+    }
+    onSearch('');
   }
 
   function openModal(primaryKeyValue, isCopy) {
@@ -765,6 +1011,9 @@ var DynamicPage = (function () {
       }
     });
 
+    _formatNumericInputs();
+    _formatDateInputs();
+
     window.openModal('modal-dynamic');
   }
 
@@ -811,6 +1060,9 @@ var DynamicPage = (function () {
         }
       }
     });
+
+    _formatNumericInputs();
+    _formatDateInputs();
   }
 
   async function save() {
@@ -827,11 +1079,25 @@ var DynamicPage = (function () {
           isInvalid = true;
         }
         
-        var isNumeric = NUMERIC_FORMATS.includes(f.renderRule);
+        var isNumeric = _isNumericField(f);
         if (input.type === 'checkbox') {
           formInputData[f.name] = val;
         } else if (isNumeric) {
-          formInputData[f.name] = val === '' ? 0 : Number(val);
+          var numericValue = _parseFormattedNumber(val);
+          if (val !== '' && Number.isNaN(numericValue)) {
+            showToast('Giá trị số không hợp lệ: ' + f.label, 'error');
+            isInvalid = true;
+          } else {
+            formInputData[f.name] = numericValue === null ? 0 : numericValue;
+          }
+        } else if (f.renderRule === 'D') {
+          var normalizedDate = val === '' ? '' : _parseDateFromInput(val);
+          if (val !== '' && !normalizedDate) {
+            showToast('Ngày không hợp lệ: ' + f.label + ' (dd/MM/yyyy)', 'error');
+            isInvalid = true;
+          } else {
+            formInputData[f.name] = normalizedDate || '';
+          }
         } else if (val === 'true') {
           formInputData[f.name] = true;
         } else if (val === 'false') {
@@ -878,6 +1144,7 @@ var DynamicPage = (function () {
         endpoint.toLowerCase().includes('/api_capnhatdulieuchung') ||
         !endpoint.toLowerCase().includes('/api_')
       );
+      var isCommonCreate = !idHidden && endpoint.toLowerCase().includes('/api_themdulieuchung');
 
       if (isCommonUpdate) {
         endpoint = '/API_CapNhatDuLieuChung';
@@ -888,16 +1155,18 @@ var DynamicPage = (function () {
 
       if (isCommonUpdate) {
         var originalKeys = {};
-        schemaFields.forEach(function (field) {
-          if (editOriginalData && Object.prototype.hasOwnProperty.call(editOriginalData, field.name)) {
-            originalKeys[field.name] = editOriginalData[field.name];
+        var primaryKeyNames = _getPrimaryKeyNames();
+
+        primaryKeyNames.forEach(function (keyName) {
+          if (!editOriginalData || !Object.prototype.hasOwnProperty.call(editOriginalData, keyName)) {
+            throw new Error('Không tìm thấy giá trị khóa chính gốc: ' + keyName);
           }
+          originalKeys[keyName] = editOriginalData[keyName];
         });
 
         var updateValues = Object.assign({}, formInputData);
-        String(primaryKey || '').split(';').forEach(function (keyName) {
-          keyName = keyName.trim();
-          if (keyName) delete updateValues[keyName];
+        primaryKeyNames.forEach(function (keyName) {
+          delete updateValues[keyName];
         });
 
         payload = {
@@ -905,6 +1174,18 @@ var DynamicPage = (function () {
             FormName: formName,
             OriginalKeys: originalKeys,
             Values: updateValues
+          })
+        };
+      } else if (isCommonCreate) {
+        var createValues = {};
+        Object.keys(formInputData).forEach(function (key) {
+          // CopyFrom_* chỉ dành cho API nghiệp vụ; API chung chỉ nhận cột thật của bảng.
+          if (!key.startsWith('CopyFrom_')) createValues[key] = formInputData[key];
+        });
+        payload = {
+          q: JSON.stringify({
+            FormName: formName,
+            Values: createValues
           })
         };
       } else {
@@ -941,24 +1222,27 @@ var DynamicPage = (function () {
       confirmText: 'Xóa',
       confirmClass: 'btn-danger',
       onConfirm: async function () {
-        var endpoint = '/API_XoaDuLieuChung';
+        var endpoint = apiDelete || '/API_XoaDuLieuChung';
         try {
-          // API xóa chung tự xác định bảng từ FormName. Chỉ gửi các cột thật
-          // có trong schema để tạo điều kiện khóa và tránh xóa nhầm nhiều dòng.
+          // Chỉ gửi khóa chính. API chung và API nghiệp vụ đều nhận cùng payload,
+          // còn endpoint được quyết định bởi metadata của form.
           var keys = {};
           var record = rowData && typeof rowData === 'object'
             ? rowData
             : { [primaryKey]: rowData };
 
-          schemaFields.forEach(function (field) {
-            if (Object.prototype.hasOwnProperty.call(record, field.name)) {
-              keys[field.name] = record[field.name];
-            }
-          });
+          var keyNames = _getPrimaryKeyNames();
 
-          if (!Object.prototype.hasOwnProperty.call(keys, primaryKey)) {
-            keys[primaryKey] = record[primaryKey];
+          if (keyNames.length === 0) {
+            throw new Error('Form chưa cấu hình khóa chính để xóa dữ liệu.');
           }
+
+          keyNames.forEach(function (keyName) {
+            if (!Object.prototype.hasOwnProperty.call(record, keyName)) {
+              throw new Error('Không tìm thấy giá trị khóa chính: ' + keyName);
+            }
+            keys[keyName] = record[keyName];
+          });
 
           await Http.post(endpoint, {
             q: JSON.stringify({
@@ -1020,6 +1304,7 @@ var DynamicPage = (function () {
   return {
     render: render,
     onSearch: onSearch,
+    clearSearch: clearSearch,
     openModal: openModal,
     copyItem: copyItem,
     save: save,

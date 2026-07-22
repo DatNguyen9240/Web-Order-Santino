@@ -4,11 +4,17 @@
     <h2 id="detail-title"
       style="word-wrap: break-word; font-size: 14.5px; font-weight: 700; margin: 0; line-height: 1.2;">Chi Tiết Đơn</h2>
   </div>
-  <button class="btn btn-ghost btn-sm" onclick="Router.go('/orders')"
-    style="white-space: nowrap; flex-shrink: 0; padding: 4px 8px; height: 28px; min-height: 28px; font-size: 12px; gap: 4px;">
-    <span class="material-symbols-outlined" style="font-size: 14px;">arrow_back</span><span data-i18n="btn.back">Quay
-      lại</span>
-  </button>
+  <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+    <button id="order-detail-print" class="btn btn-ghost btn-sm" type="button" hidden
+      style="white-space: nowrap; padding: 4px 8px; height: 28px; min-height: 28px; font-size: 12px; gap: 4px;">
+      <span class="material-symbols-outlined" style="font-size: 14px;">print</span><span>In DOCX</span>
+    </button>
+    <button class="btn btn-ghost btn-sm" onclick="Router.go('/orders')"
+      style="white-space: nowrap; flex-shrink: 0; padding: 4px 8px; height: 28px; min-height: 28px; font-size: 12px; gap: 4px;">
+      <span class="material-symbols-outlined" style="font-size: 14px;">arrow_back</span><span data-i18n="btn.back">Quay
+        lại</span>
+    </button>
+  </div>
 </div>
 <div class="order-detail-layout">
   <div class="order-detail-header-card" id="detail-info"></div>
