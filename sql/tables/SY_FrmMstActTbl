@@ -1,0 +1,17 @@
+UserAutoID	varchar
+FormID	varchar
+MaterAction	varchar
+Action	varchar
+Source	nvarchar
+Para	varchar
+ColumnID	varchar
+TargetValue	nvarchar
+TargetValue2	nvarchar
+TargetColumn	varchar
+TargetColumn2	varchar
+MsgID	varchar
+IsDisable	bit
+ActType	varchar
+Oderby	int
+isLockScreen	bit
+ColumnIDArr	varchar
