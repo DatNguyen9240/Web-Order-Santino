@@ -158,7 +158,7 @@ var Router = (function () {
 
       var route = {
         path: path,
-        script: 'src/pages/dynamic/dynamic.js',
+        script: 'src/pages/dynamic/dynamic.js?v=20260722-2',
         pageFn: 'DynamicPage',
         title: m.VN || m.MenuName || m.FormName || '',
         formName: m.FormName || m.formName || ''

@@ -151,9 +151,33 @@ const Http = (() => {
 
   // --- Public API ---
   async function get(endpoint, params = {}) {
-    const separator = endpoint.includes('?') ? '&' : '?';
-    const qs = new URLSearchParams(params).toString();
-    const url = getApiBaseUrl() + endpoint + (qs ? `${separator}${qs}` : '');
+    var cleanEndpoint = String(endpoint || '').trim();
+    var cleanParams = Object.assign({}, params);
+    
+    // Tự động nhận diện và chuyển đổi câu lệnh SQL SELECT thành API URL tương thích của hệ thống
+    if (cleanEndpoint.toUpperCase().startsWith('SELECT')) {
+      const selectRegex = /^\s*SELECT\s+([\s\S]+?)\s+FROM\s+(\w+)(?:\s+WHERE\s+([\s\S]+))?\s*$/i;
+      const match = cleanEndpoint.match(selectRegex);
+      if (match) {
+        const columns = match[1].split(',').map(s => s.trim()).join(';');
+        const tableName = match[2].trim();
+        const whereClause = match[3] ? match[3].trim() : '';
+        
+        // API_CONFIG.BASE_URL already ends with `/api`, so the table route must
+        // stay relative to that base (otherwise requests become `/api/api/...`).
+        cleanEndpoint = '/' + tableName;
+        if (columns !== '*') {
+          cleanParams.f = columns;
+        }
+        if (whereClause) {
+          cleanParams.w = whereClause;
+        }
+      }
+    }
+
+    const separator = cleanEndpoint.includes('?') ? '&' : '?';
+    const qs = new URLSearchParams(cleanParams).toString();
+    const url = getApiBaseUrl() + cleanEndpoint + (qs ? `${separator}${qs}` : '');
 
     const cached = _getFromCache(_cacheKey(url));
     if (cached) return cached;

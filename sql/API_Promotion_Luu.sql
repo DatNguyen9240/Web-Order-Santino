@@ -8,8 +8,9 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @CTKM NVARCHAR(50)       = JSON_VALUE(@q, '$.id');
-    DECLARE @ChietKhau NVARCHAR(255) = JSON_VALUE(@q, '$.name');
+    -- Nhận diện cả key mới (CTKM/ChietKhau) và key cũ (id/name) để đảm bảo an toàn tương thích ngược
+    DECLARE @CTKM NVARCHAR(50)       = COALESCE(JSON_VALUE(@q, '$.CTKM'), JSON_VALUE(@q, '$.id'));
+    DECLARE @ChietKhau NVARCHAR(255) = COALESCE(JSON_VALUE(@q, '$.ChietKhau'), JSON_VALUE(@q, '$.name'));
 
     IF EXISTS (SELECT 1 FROM [dbo].[CF_CTKMTbl] WHERE [CTKM] = @CTKM)
     BEGIN

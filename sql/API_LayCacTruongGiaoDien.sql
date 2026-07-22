@@ -1,47 +1,8 @@
 -- =========================================================================
--- SCRIPT TẠO BẢNG CẤU HÌNH VÀ STORED PROCEDURE CHO ENGINE GIAO DIỆN ĐỘNG (DYNAMIC ENGINE)
+-- SCRIPT TẠO STORED PROCEDURE LẤY CẤU HÌNH GIAO DIỆN ĐỘNG (DYNAMIC ENGINE)
+-- HỆ THỐNG METADATA CHUẨN: SY_FrmLstTbl, SY_FmtFldTbl, SY_FrmDrdwTbl, SY_FmatTbl
 -- =========================================================================
 
--- 1. Tạo bảng Danh sách Form (WA_FrmLstTbl)
-IF OBJECT_ID('dbo.WA_FrmLstTbl', 'U') IS NULL
-BEGIN
-    CREATE TABLE [dbo].[WA_FrmLstTbl] (
-        [FormID]      VARCHAR(50)   NOT NULL PRIMARY KEY,
-        [PrimaryKey]  VARCHAR(50)   NOT NULL,
-        [ApiSearch]   VARCHAR(255)  NULL,
-        [ApiSave]     VARCHAR(255)  NULL,
-        [ApiDelete]   VARCHAR(255)  NULL
-    );
-END
-GO
-
--- 2. Tạo bảng Cấu hình trường Form (WA_FormatFields)
-IF OBJECT_ID('dbo.WA_FormatFields', 'U') IS NULL
-BEGIN
-    CREATE TABLE [dbo].[WA_FormatFields] (
-        [FormName]       VARCHAR(50)    NOT NULL,
-        [FieldName]      VARCHAR(50)    NOT NULL,
-        [CaptionVN]      NVARCHAR(255)  NULL,
-        [IsRequired]     BIT            NULL DEFAULT 0,
-        [FormPosition]   VARCHAR(20)    NULL DEFAULT '6',
-        [ShowInAdd]      BIT            NULL DEFAULT 1,
-        [ShowInEdit]     BIT            NULL DEFAULT 1,
-        [IsReadOnlyEdit] BIT            NULL DEFAULT 0,
-        [IsReadOnlyAdd]  BIT            NULL DEFAULT 0,
-        [ShowInGrid]     BIT            NULL DEFAULT 1,
-        [FormatID]       VARCHAR(50)    NULL DEFAULT '', -- renderRule
-        [DataSource]     NVARCHAR(500)  NULL DEFAULT '',
-        [OrderNo]        INT            NULL DEFAULT 0,
-        [ValidateRule]   VARCHAR(500)   NULL DEFAULT '',
-        [DependsOn]      VARCHAR(255)   NULL DEFAULT '',
-        [VisibleRule]    VARCHAR(500)   NULL DEFAULT '',
-        [ShowInFilter]   BIT            NULL DEFAULT 0,
-        CONSTRAINT [PK_WA_FormatFields] PRIMARY KEY CLUSTERED ([FormName] ASC, [FieldName] ASC)
-    );
-END
-GO
-
--- 3. Stored Procedure lấy cấu hình giao diện: API_LayCacTruongGiaoDien
 IF OBJECT_ID('dbo.API_LayCacTruongGiaoDien', 'P') IS NOT NULL
     DROP PROCEDURE [dbo].[API_LayCacTruongGiaoDien];
 GO
@@ -52,98 +13,161 @@ AS
 BEGIN
     SET NOCOUNT ON;
     
-    SELECT 
-        ff.[FieldName]      AS [name], 
-        ff.[CaptionVN]      AS [label],
-        ISNULL(ff.[IsRequired], 0) AS [required], 
-        ISNULL(ff.[FormPosition], '6') AS [position],
-        
-        ISNULL(l.[PrimaryKey], '') AS [primaryKey],
-        ISNULL(l.[ApiSearch], '')  AS [apiSearch],
-        ISNULL(l.[ApiSave], '')    AS [apiSave],
-        ISNULL(l.[ApiDelete], '')  AS [apiDelete],
-        
-        ISNULL(ff.[ShowInAdd],      1) AS [showInAdd],
-        ISNULL(ff.[ShowInEdit],     1) AS [showInEdit],
-        ISNULL(ff.[IsReadOnlyEdit], 0) AS [isReadOnlyEdit],
-        ISNULL(ff.[IsReadOnlyAdd],  0) AS [isReadOnlyAdd],
-        ISNULL(ff.[ShowInGrid],     1) AS [showInGrid],
+    IF @FormName IS NULL RETURN;
 
-        ISNULL(ff.[FormatID], '')      AS [renderRule],
-        ISNULL(ff.[DataSource], '')    AS [dataSource],
-        ISNULL(ff.[OrderNo], 0)        AS [orderNo],
-        ISNULL(ff.[ValidateRule], '')  AS [validateRule],
-        ISNULL(ff.[DependsOn], '')     AS [dependsOn],
-        ISNULL(ff.[VisibleRule], '')    AS [visibleRule],
-        ISNULL(ff.[ShowInFilter], 0)   AS [showInFilter]
-    FROM [dbo].[WA_FormatFields] ff
-    LEFT JOIN [dbo].[WA_FrmLstTbl] l ON ff.[FormName] = l.[FormID]
-    WHERE (@FormName IS NULL OR ff.[FormName] = @FormName)
-    ORDER BY ISNULL(ff.[OrderNo], 0) ASC, ff.[FieldName] ASC;
+    -- Lấy thông tin cấu hình từ SY_FrmLstTbl
+    DECLARE @TableName VARCHAR(100) = '';
+    DECLARE @PrimaryKey VARCHAR(100) = '';
+    DECLARE @HideColumnArr VARCHAR(MAX) = '';
+    DECLARE @AddNewColumnArr VARCHAR(MAX) = '';
+    DECLARE @EditorColumnArr VARCHAR(MAX) = '';
+
+    SELECT TOP (1)
+        @TableName = ISNULL(formConfig.TableName, formConfig.FormID),
+        @PrimaryKey = NULLIF(LTRIM(RTRIM(formConfig.PrimaryKey)), ''),
+        @HideColumnArr = ISNULL(formConfig.HideColumnArr, ''),
+        @AddNewColumnArr = ISNULL(formConfig.AddNewColumnArr, ''),
+        @EditorColumnArr = ISNULL(formConfig.EditorColumnArr, '')
+    FROM dbo.SY_FrmLstTbl formConfig
+    WHERE formConfig.FormID = @FormName OR formConfig.TableName = @FormName;
+
+    IF @TableName = '' SET @TableName = @FormName;
+
+    DECLARE @ObjectId INT = OBJECT_ID(@TableName);
+
+    -- Route mặc định dùng API CRUD theo tên bảng. Form có nghiệp vụ riêng có thể
+    -- override trong SY_FrmMstActTbl với MaterAction = 'API'.
+    DECLARE @ApiSearch NVARCHAR(400) = '/' + @TableName;
+    DECLARE @ApiDetail NVARCHAR(400) = '/' + @TableName;
+    DECLARE @ApiCreate NVARCHAR(400) = '/' + @TableName;
+    DECLARE @ApiUpdate NVARCHAR(400) = '/API_CapNhatDuLieuChung';
+    -- Backend triển khai chỉ cho phép GET/POST. Trang động dùng một POST API
+    -- chung để xóa an toàn theo FormName, không gọi HTTP DELETE vào route bảng.
+    DECLARE @ApiDelete NVARCHAR(400) = '/API_XoaDuLieuChung';
+    DECLARE @ApiConfigured BIT = 0;
+
+    -- Sản phẩm có nghiệp vụ đồng bộ SKU/size nên thêm và sửa vẫn dùng API riêng.
+    IF LOWER(@TableName) = LOWER('CF_TenHang2Tbl')
+    BEGIN
+        SET @ApiCreate = '/API_SanPham_Luu';
+        SET @ApiUpdate = '/API_SanPham_Luu';
+    END;
+
+    IF EXISTS (
+        SELECT 1
+        FROM dbo.SY_FrmMstActTbl
+        WHERE FormID = @FormName
+          AND UPPER(ISNULL(MaterAction, '')) = 'API'
+          AND ISNULL(IsDisable, 0) = 0
+          AND NULLIF(LTRIM(RTRIM(Source)), '') IS NOT NULL
+    )
+    BEGIN
+        SET @ApiConfigured = 1;
+
+        SELECT
+            @ApiSearch = COALESCE(MAX(CASE WHEN UPPER(Action) IN ('SEARCH', 'LIST') THEN NULLIF(LTRIM(RTRIM(Source)), '') END), @ApiSearch),
+            @ApiDetail = COALESCE(MAX(CASE WHEN UPPER(Action) = 'DETAIL' THEN NULLIF(LTRIM(RTRIM(Source)), '') END), @ApiDetail),
+            @ApiCreate = COALESCE(MAX(CASE WHEN UPPER(Action) IN ('CREATE', 'ADD') THEN NULLIF(LTRIM(RTRIM(Source)), '') END), @ApiCreate),
+            @ApiUpdate = COALESCE(MAX(CASE WHEN UPPER(Action) IN ('UPDATE', 'EDIT') THEN NULLIF(LTRIM(RTRIM(Source)), '') END), @ApiUpdate),
+            @ApiDelete = COALESCE(MAX(CASE WHEN UPPER(Action) = 'DELETE' THEN NULLIF(LTRIM(RTRIM(Source)), '') END), @ApiDelete)
+        FROM dbo.SY_FrmMstActTbl
+        WHERE FormID = @FormName
+          AND UPPER(ISNULL(MaterAction, '')) = 'API'
+          AND ISNULL(IsDisable, 0) = 0;
+    END;
+
+    -- Lấy cấu hình các trường từ sys.columns kết hợp với các bảng từ điển chuẩn (hỗ trợ không phân biệt chữ hoa/thường)
+    SELECT 
+        c.name AS [name], 
+        COALESCE(NULLIF(f.CaptionVN, ''), c.name) AS [label],
+        
+        -- Cột bắt buộc nếu là NOT NULL và không phải tự tăng/computed
+        CASE 
+            WHEN c.is_nullable = 0 AND c.is_identity = 0 AND c.is_computed = 0 THEN 1 
+            ELSE 0 
+        END AS [required], 
+        
+        ISNULL(@PrimaryKey, '') AS [primaryKey],
+        ISNULL(@ApiSearch, '')  AS [apiSearch],
+        ISNULL(@ApiDetail, '')  AS [apiDetail],
+        ISNULL(@ApiCreate, '')  AS [apiCreate],
+        ISNULL(@ApiUpdate, '')  AS [apiUpdate],
+        -- Giữ apiSave cho DynamicPage cũ; form mới nên dùng apiCreate/apiUpdate.
+        ISNULL(@ApiCreate, '')  AS [apiSave],
+        ISNULL(@ApiDelete, '')  AS [apiDelete],
+        @ApiConfigured          AS [apiConfigured],
+        
+        -- showInAdd
+        CASE 
+            WHEN c.is_identity = 1 OR c.is_computed = 1 THEN 0
+            WHEN ISNULL(dd.isInvisible, 0) = 1 THEN 0
+            WHEN NULLIF(LTRIM(RTRIM(@AddNewColumnArr)), '') IS NOT NULL 
+                 AND NOT EXISTS (
+                     SELECT 1 FROM STRING_SPLIT(@AddNewColumnArr, ';') s 
+                     WHERE LOWER(LTRIM(RTRIM(s.value))) = LOWER(c.name)
+                 ) THEN 0
+            ELSE 1
+        END AS [showInAdd],
+        
+        -- showInEdit
+        CASE 
+            WHEN c.is_identity = 1 OR c.is_computed = 1 OR LOWER(c.name) = LOWER(@PrimaryKey) THEN 0
+            WHEN ISNULL(dd.isInvisible, 0) = 1 THEN 0
+            WHEN NULLIF(LTRIM(RTRIM(@EditorColumnArr)), '') IS NOT NULL 
+                 AND NOT EXISTS (
+                     SELECT 1 FROM STRING_SPLIT(@EditorColumnArr, ';') s 
+                     WHERE LOWER(LTRIM(RTRIM(s.value))) = LOWER(c.name)
+                 ) THEN 0
+            ELSE 1
+        END AS [showInEdit],
+        
+        -- isReadOnlyEdit
+        CASE 
+            WHEN LOWER(c.name) = LOWER(@PrimaryKey) OR c.is_identity = 1 OR c.is_computed = 1 THEN 1
+            WHEN ISNULL(dd.isLock, 0) = 1 THEN 1
+            ELSE 0
+        END AS [isReadOnlyEdit],
+        
+        -- isReadOnlyAdd
+        CASE 
+            WHEN c.is_identity = 1 OR c.is_computed = 1 THEN 1
+            WHEN ISNULL(dd.isLock, 0) = 1 THEN 1
+            ELSE 0
+        END AS [isReadOnlyAdd],
+        
+        -- showInGrid
+        CASE 
+            WHEN EXISTS (
+                SELECT 1 FROM STRING_SPLIT(@HideColumnArr, ';') s 
+                WHERE LOWER(LTRIM(RTRIM(s.value))) = LOWER(c.name)
+            ) THEN 0
+            ELSE 1
+        END AS [showInGrid],
+
+        f.FormatID AS [renderRule],
+        ISNULL(dd.Source, '') AS [dataSource],
+        ISNULL(dd.ValueColumn, '') AS [dropdownValueColumn],
+        ISNULL(dd.DisplayColumn, '') AS [dropdownDisplayColumn],
+        ISNULL(dd.Type, '') AS [dropdownType],
+        t.name AS [dataType],
+        ISNULL(dd.LinkColumn, '') AS [LinkColumn],
+        
+        -- orderNo
+        CASE 
+            WHEN NULLIF(LTRIM(RTRIM(@EditorColumnArr)), '') IS NULL THEN c.column_id
+            ELSE COALESCE(NULLIF(CHARINDEX(';' + c.name + ';', ';' + @EditorColumnArr + ';'), 0), 10000 + c.column_id)
+        END AS [orderNo]
+    FROM sys.columns c
+    INNER JOIN sys.types t ON t.user_type_id = c.user_type_id
+    LEFT JOIN dbo.SY_FmtFldTbl f ON LOWER(f.FieldName) = LOWER(c.name)
+    LEFT JOIN dbo.SY_FmatTbl fm ON LOWER(fm.FormatID) = LOWER(f.FormatID)
+    LEFT JOIN dbo.SY_FrmDrdwTbl dd ON dd.FormID = @FormName AND LOWER(dd.ColumnID) = LOWER(c.name)
+    WHERE c.object_id = @ObjectId
+    ORDER BY 
+        CASE 
+            WHEN NULLIF(LTRIM(RTRIM(@EditorColumnArr)), '') IS NULL THEN c.column_id
+            ELSE COALESCE(NULLIF(CHARINDEX(';' + c.name + ';', ';' + @EditorColumnArr + ';'), 0), 10000 + c.column_id)
+        END ASC, 
+        c.column_id ASC;
 END
 GO
-
--- 4. BƠM DỮ LIỆU CẤU HÌNH MẪU CHO CÁC FORM
-
--- Dọn dẹp trước khi chèn
-DELETE FROM [dbo].[WA_FrmLstTbl] WHERE [FormID] IN ('frmProduct', 'frmSize', 'frmSKU', 'frmPromotion', 'WA_Product', 'WA_CTCK');
-DELETE FROM [dbo].[WA_FormatFields] WHERE [FormName] IN ('frmProduct', 'frmSize', 'frmSKU', 'frmPromotion', 'WA_Product', 'WA_CTCK');
-
--- Thêm danh sách Form
-INSERT INTO [dbo].[WA_FrmLstTbl] ([FormID], [PrimaryKey], [ApiSearch], [ApiSave], [ApiDelete])
-VALUES 
-('WA_Product', 'ItemName2', '/API_LaySanPham', '/API_SanPham_Luu', '/CF_TenHang2Tbl'),
-('WA_CTCK', 'id', '/API_DanhMuc?Loai=Promotion', '/API_Promotion_Luu', '/CF_CTKMTbl');
-
--- Thêm cấu hình trường cho Sản phẩm (WA_Product)
-INSERT INTO [dbo].[WA_FormatFields] 
-([FormName], [FieldName], [CaptionVN], [IsRequired], [FormPosition], [ShowInAdd], [ShowInEdit], [ShowInGrid], [FormatID], [DataSource], [OrderNo], [ShowInFilter])
-VALUES
-('WA_Product', 'ItemName2', N'Tên hàng 2', 1, '6', 1, 1, 1, 'text', '', 10, 1),
-('WA_Product', 'CategoryID', N'Nhóm hàng', 0, '6', 1, 1, 0, 'select', '/API_DanhMuc?Loai=nhom_hang', 20, 0),
-('WA_Product', 'Form', N'Form', 0, '6', 1, 1, 1, 'select', '/API_DanhMuc?Loai=form', 30, 0),
-('WA_Product', 'MauSac', N'Màu sắc', 0, '6', 1, 1, 1, 'select', '/API_DanhMuc?Loai=mau', 50, 0),
-('WA_Product', 'nhom_size', N'Nhóm size', 0, '6', 1, 1, 1, 'select', '/API_DanhMuc?Loai=nhom_size', 60, 0),
-('WA_Product', 'UnitPrice', N'Đơn giá', 0, '6', 1, 1, 1, 'mn', '', 70, 0),
-('WA_Product', 'TenHangHoa', N'Tên hàng hóa', 0, '6', 1, 1, 1, 'text', '', 80, 0),
-('WA_Product', 'ten_nhom_hang', N'Tên nhóm hàng', 0, '6', 0, 0, 1, 'select', '/API_DanhMuc?Loai=ten_nhom_hang', 90, 0),
-('WA_Product', 'isDisable', N'Trạng thái', 0, '6', 1, 1, 1, 'sw', N'STATIC:false|Đang bán,true|Ngừng bán', 100, 0),
-('WA_Product', 'isWeb', N'Lấy sang web đặt hàng', 0, '6', 1, 1, 1, 'sw', N'STATIC:true|Có,false|Không', 110, 0);
-
--- Thêm cấu hình trường cho CTKM (WA_CTCK)
-INSERT INTO [dbo].[WA_FormatFields] 
-([FormName], [FieldName], [CaptionVN], [IsRequired], [FormPosition], [ShowInAdd], [ShowInEdit], [ShowInGrid], [FormatID], [DataSource], [OrderNo], [ShowInFilter])
-VALUES
-('WA_CTCK', 'id', N'Mã CTKM', 1, '6', 1, 1, 1, 'text', '', 10, 1),
-('WA_CTCK', 'name', N'Tên CTKM', 1, '6', 1, 1, 1, 'text', '', 20, 0);
-GO
-
--- 5. DỌN DẸP MENU ĐỘNG CŨ TRONG HỆ THỐNG MENU (WA_Menu)
-DELETE FROM [dbo].[WA_Menu] WHERE [MenuID] IN ('04', '0410', '0420', '0430', '0440', '70', '7010', '7020', '7030', '7040');
-GO
-
--- 6. Đồng bộ phân quyền cho các Menu mới vào WA_UserGroupPermisstion
-IF OBJECT_ID('dbo.API_DongBoQuyenTruyCap') IS NOT NULL
-BEGIN
-    EXEC [dbo].[API_DongBoQuyenTruyCap] @NhomNguoiDangThaoTac = 'Admin';
-END;
-GO
-
--- =========================================================================
--- CÁC CÂU LỆNH KIỂM TRA DỮ LIỆU SAU KHI CHẠY SCRIPT (COPY VÀ CHẠY THỬ)
--- =========================================================================
-
--- 1. Xem danh sách Form cấu hình đã đăng ký
-SELECT * FROM [dbo].[WA_FrmLstTbl];
-
--- 2. Xem danh sách trường của các Form
-SELECT * FROM [dbo].[WA_FormatFields] ORDER BY [FormName], [OrderNo];
-
--- 3. Xem danh sách Menu đã chèn (Nhóm 70)
-SELECT * FROM [dbo].[WA_Menu] WHERE [MenuID] LIKE '70%' OR [Parent] = '70';
-
--- 4. Chạy thử Stored Procedure lấy danh sách các trường của Form Sản phẩm (WA_Product)
-EXEC [dbo].[API_LayCacTruongGiaoDien] @FormName = 'WA_Product';
-
--- 5. Chạy thử Stored Procedure lấy danh sách các trường của Form CTKM (WA_CTCK)
-EXEC [dbo].[API_LayCacTruongGiaoDien] @FormName = 'WA_CTCK';

@@ -2,11 +2,12 @@
  * CẤU HÌNH HỆ THỐNG
  * Chỉnh sửa file này khi cần thay đổi URL server (không cần build lại)
  */
-const isVercel = window.location.hostname.includes('vercel.app');
+// Chỉ môi trường phát triển local mới gọi thẳng backend. Mọi domain triển
+// khai (HTTP hoặc HTTPS, kể cả custom domain) đều đi qua proxy cùng origin
+// `/api` để trình duyệt không phát sinh request CORS/preflight.
+const isLocalDevelopment = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 const ENV_VARS = {
-    // Nếu chạy trên Vercel, dùng Proxy (rewrites) để tránh lỗi HTTPS gọi HTTP (Mixed Content).
-    // Nếu chạy ở localhost, dùng trực tiếp IP/Domain HTTP.
-    API_BASE: isVercel ? '/api' : 'http://santino.bms79.com/api',
+    API_BASE: isLocalDevelopment ? 'http://stntest.bms79.com/api' : '/api',
 };
 
 window.API_CONFIG = {
@@ -26,11 +27,6 @@ window.API_CONFIG = {
         },
         CATEGORIES: {
             LIST: '/API_DanhMuc',
-        },
-        ORDERS: {
-            LIST: '/API_LayDonHang',
-            CREATE: '/API_TaoDonHang',
-            DELETE: '/API_XoaDonHang'
         },
         CUSTOMERS: {
             SAVE: '/API_KhachHang_Luu',

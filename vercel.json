@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "http://santino.bms79.com/api/:path*"
+      "destination": "http://stntest.bms79.com/api/:path*"
     }
   ]
 }

@@ -4,23 +4,28 @@ var DynamicPage = (function () {
   var primaryKey = 'id';
   var apiSearch = '';
   var apiSave = '';
+  var apiCreate = '';
+  var apiUpdate = '';
   var apiDelete = '';
   var schemaFields = [];
   var allData = [];
-  var filteredData = [];
   var currentPage = 1;
   var itemsPerPage = 20;
   var gridApi = null;
   var searchVal = '';
   var copySourceData = null;
+  var editOriginalData = null;
+
+  // Danh sách các FormatID số trong CSDL chuẩn
+  var NUMERIC_FORMATS = ['B', 'U', 'Q', 'N', '1D', '2D', '3D', '4D', '5D', '6D', 'N3', 'N4', 'N5', 'N6'];
 
   function render($el, route) {
     gridApi = null;
     allData = [];
-    filteredData = [];
     currentPage = 1;
     searchVal = '';
     schemaFields = [];
+    editOriginalData = null;
 
     currentRoute = route ? route.path : '';
     formName = route ? route.formName : '';
@@ -38,7 +43,7 @@ var DynamicPage = (function () {
       if (window.LoadingSpinner) LoadingSpinner.show('Đang tải cấu hình...');
 
       try {
-        // 1. Gọi API lấy cấu hình trường (metadata) từ bảng WA_FormatFields và WA_FrmLstTbl trong SQL
+        // 1. Gọi API lấy cấu hình trường (metadata) từ các bảng hệ thống SY_FmtFldTbl, SY_FrmLstTbl, SY_FrmDrdwTbl
         var resConfig = await Http.post('/API_LayCacTruongGiaoDien', { FormName: formName });
         var rawFields = resConfig.records || resConfig.list || resConfig || [];
         schemaFields = rawFields.map(function(f) {
@@ -48,6 +53,7 @@ var DynamicPage = (function () {
           f.showInGrid = !(f.showInGrid === false || f.showInGrid === 0 || String(f.showInGrid) === '0' || String(f.showInGrid) === 'false');
           f.isReadOnlyEdit = (f.isReadOnlyEdit === true || f.isReadOnlyEdit === 1 || String(f.isReadOnlyEdit) === '1' || String(f.isReadOnlyEdit) === 'true');
           f.isReadOnlyAdd = (f.isReadOnlyAdd === true || f.isReadOnlyAdd === 1 || String(f.isReadOnlyAdd) === '1' || String(f.isReadOnlyAdd) === 'true');
+          
           return f;
         });
 
@@ -60,6 +66,8 @@ var DynamicPage = (function () {
         primaryKey = firstField.primaryKey || 'id';
         apiSearch = firstField.apiSearch || '';
         apiSave = firstField.apiSave || '';
+        apiCreate = firstField.apiCreate || apiSave;
+        apiUpdate = firstField.apiUpdate || '';
         apiDelete = firstField.apiDelete || '';
 
         // Tự động dịch tiêu đề dựa trên key dịch thuật
@@ -82,8 +90,9 @@ var DynamicPage = (function () {
         var extraActionsEl = document.getElementById('dynamic-extra-actions');
         if (extraActionsEl) {
           extraActionsEl.innerHTML = '';
-          if ((formName === 'frmProduct' || formName === 'WA_Product') && window.UIProductWebSync) {
-            var syncToolbar = UIProductWebSync.create({
+          var syncComponentKey = 'UI' + formName.replace('frm', '') + 'WebSync';
+          if (window[syncComponentKey]) {
+            var syncToolbar = window[syncComponentKey].create({
               onSync: function () {
                 updateProductWebStatus(1);
               },
@@ -103,7 +112,7 @@ var DynamicPage = (function () {
         $el.innerHTML = `<div class="card" style="color:var(--danger)">
           <h4><span class="material-symbols-outlined" style="vertical-align:middle">error</span> Lỗi khởi tạo trang động</h4>
           <p>${err.message}</p>
-          <p style="font-size: 12px; margin-top: 8px;">Vui lòng chạy file script SQL <code>sql/API_LayCacTruongGiaoDien.sql</code> để tạo bảng <code>WA_FormatFields</code>, <code>WA_FrmLstTbl</code> và SP <code>API_LayCacTruongGiaoDien</code>.</p>
+          <p style="font-size: 12px; margin-top: 8px;">Vui lòng chạy file script SQL <code>sql/API_LayCacTruongGiaoDien.sql</code> để tạo cấu hình trong các bảng <code>SY_FmtFldTbl</code>, <code>SY_FrmLstTbl</code>, <code>SY_FrmDrdwTbl</code> và SP <code>API_LayCacTruongGiaoDien</code>.</p>
         </div>`;
       } finally {
         if (window.LoadingSpinner) LoadingSpinner.hide();
@@ -111,11 +120,33 @@ var DynamicPage = (function () {
     });
   }
 
+  function _isQueryOrApi(source) {
+    if (!source) return false;
+    var src = source.toLowerCase().trim();
+    if (src.startsWith('/') || src.startsWith('select ') || src.startsWith('exec ')) return true;
+    if (src.includes('from ') || src.includes('where ') || src.includes('join ')) return true;
+    if (src.includes('{0}') || src.includes('{1}') || src.includes('{s}')) return true;
+    // Nếu có khoảng trắng nhưng không chứa dấu chấm phẩy hoặc dấu gạch đứng thì khả năng cao là SP call
+    if (src.includes(' ') && !src.includes(';') && !src.includes('|')) return true;
+    return false;
+  }
+
   function _parseStaticOptions(dataSource) {
-    if (!dataSource || !dataSource.startsWith('STATIC:')) return [];
-    return dataSource.substring(7).split(',').map(function (p) {
+    if (!dataSource) return [];
+    
+    var cleanStr = dataSource.trim();
+    if (cleanStr.toUpperCase().startsWith('STATIC:')) {
+      cleanStr = cleanStr.substring(7);
+    }
+    
+    // Hỗ trợ phân tách bằng dấu chấm phẩy hoặc dấu phẩy
+    var separator = cleanStr.includes(';') ? ';' : ',';
+    return cleanStr.split(separator).map(function (p) {
       var kv = p.split('|');
-      return { value: kv[0], label: kv[1] || kv[0] };
+      var val = kv[0].trim();
+      var lbl = kv[1] ? kv[1].trim() : val;
+      var color = kv[2] ? kv[2].trim() : '';
+      return { value: val, label: lbl, color: color };
     });
   }
 
@@ -128,8 +159,8 @@ var DynamicPage = (function () {
     schemaFields
       .filter(f => f.showInAdd || f.showInEdit)
       .forEach(function (f) {
-        var requiredAttr = f.required ? 'required' : '';
-        var groupClass = f.renderRule === 'textarea' ? 'form-group span2' : 'form-group';
+        var isTextarea = f.renderRule === 'textarea';
+        var groupClass = isTextarea ? 'form-group span2' : 'form-group';
         var labelText = f.label + (f.required ? ' *' : '');
 
         var fieldWrapper = document.createElement('div');
@@ -139,86 +170,150 @@ var DynamicPage = (function () {
         label.textContent = labelText;
         fieldWrapper.appendChild(label);
 
-        if (f.renderRule === 'select') {
+        // Phân tích loại điều khiển nhập liệu từ CSDL chuẩn
+        var hasDataSource = f.dataSource && f.dataSource.length > 0;
+        var dsType = (f.dropdownType || '').toLowerCase().trim();
+
+        // Phân loại động (lookup) vs tĩnh (valuelist) theo Type chuẩn của DB và phân tích nội dung
+        var isDynamicLookup = hasDataSource && (
+          ['dropdown', 'dropselect', 'combo'].includes(dsType) ||
+          (dsType === '' && _isQueryOrApi(f.dataSource))
+        );
+        var isStaticSelect = hasDataSource && (dsType === 'valuelist' || (dsType === '' && !isDynamicLookup));
+
+        if (dsType === 'colorselct') {
+          // Render Color Picker nếu là loại ColorSelct chuẩn
+          var input = document.createElement('input');
+          input.id = 'field-' + f.name;
+          input.name = f.name;
+          input.type = 'color';
+          if (f.required) input.required = true;
+          fieldWrapper.appendChild(input);
+        } else if (isDynamicLookup) {
+          // 1. Nếu là các loại chọn động từ API/SQL -> Render Combobox tìm kiếm động
           if (window.UIControls && typeof UIControls.createDataComboBox === 'function') {
             var comboId = 'field-' + f.name;
             var comboContainer = UIControls.createDataComboBox({
               id: comboId,
               placeholder: '-- Chọn ' + f.label + ' --',
               readOnly: true,
-              enableColorSwatch: f.name === 'MauSac' || f.name.toLowerCase().includes('mau'),
+              enableColorSwatch: f.name.toLowerCase().includes('mau'),
               headers: ['Mã/Giá trị', 'Tên hiển thị'],
               colFilterIndex: 0,
               colHighlightIndex: 1,
-              enablePagination: false,
+              enablePagination: true,
               onSearch: async function (q, page) {
                 try {
                   var options = [];
-                  if (f.dataSource && f.dataSource.startsWith('STATIC:')) {
-                    options = _parseStaticOptions(f.dataSource);
-                  } else if (f.dataSource) {
-                    var endpoint = f.dataSource;
-                    var params = { _t: Date.now() };
-                    
-                    if (endpoint.includes('/API_DanhMuc')) {
-                      var queryObj = {};
-                      if (f.dataSource.includes('?')) {
-                        var parts = f.dataSource.split('?');
-                        endpoint = parts[0];
-                        var searchParams = new URLSearchParams(parts[1]);
-                        searchParams.forEach(function (v, k) {
-                          queryObj[k] = v;
-                        });
-                      }
-                      if (q) {
-                        queryObj.TimKiem = q;
-                      }
-                      
-                      var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
-                      queryObj.UserRole = user.role || user.Group || '';
-                      queryObj.UserEmployeeID = user.EmployeeID || '';
-                      queryObj.UserManagerID = user.ManagerID || '';
-                      queryObj.UserObjectID = user.ObjectID || '';
-                      
-                      params.q = JSON.stringify(queryObj);
-                    } else {
-                      if (f.dataSource.includes('?')) {
-                        var parts = f.dataSource.split('?');
-                        endpoint = parts[0];
-                        var searchParams = new URLSearchParams(parts[1]);
-                        searchParams.forEach(function (v, k) {
-                          params[k] = v;
-                        });
-                      }
-                      if (q) {
-                        params.TimKiem = q;
-                      }
-                    }
-                    var res = await Http.get(endpoint, params);
-                    var records = res.records || res.list || res.data || res;
-                    if (Array.isArray(records)) {
-                      options = records.map(function (r) {
-                        if (typeof r === 'object' && r !== null) {
-                          var valKey = Object.keys(r).find(k => /id|value|val|ma/i.test(k));
-                          var lblKey = Object.keys(r).find(k => /name|ten|label|desc|title|caption/i.test(k));
-                          var val = valKey ? r[valKey] : Object.values(r)[0];
-                          var lbl = lblKey ? r[lblKey] : (valKey ? r[valKey] : Object.values(r)[0]);
-                          return { value: val, label: lbl };
-                        }
-                        return { value: r, label: r };
-                      });
+                  var endpoint = f.dataSource;
+                  
+                  // Tự động phân tích và thay thế các biến tham chiếu từ trường cha trên form (ví dụ: {ProvinceID})
+                  var matches = endpoint.match(/\{(\w+)\}/g);
+                  if (matches) {
+                    matches.forEach(function (m) {
+                      var parentFieldName = m.substring(1, m.length - 1);
+                      var parentInput = document.getElementById('field-' + parentFieldName);
+                      var parentVal = parentInput ? parentInput.value : '';
+                      endpoint = endpoint.replace(m, parentVal);
+                    });
+                  }
+
+                  var params = {
+                    page: page || 1,
+                    limit: 200,
+                    top: 200,
+                    _t: Date.now()
+                  };
+                  
+                  var queryObj = {};
+                  if (endpoint.includes('?')) {
+                    var parts = endpoint.split('?');
+                    endpoint = parts[0];
+                    var searchParams = new URLSearchParams(parts[1]);
+                    searchParams.forEach(function (v, k) {
+                      queryObj[k] = v;
+                    });
+                  }
+                  var isSelectSource = /^\s*select\s+/i.test(endpoint);
+                  if (q && !isSelectSource) {
+                    queryObj.TimKiem = q;
+                    queryObj.Keyword = q;
+                  }
+                  
+                  // Nếu ô nhập này phụ thuộc vào trường cha (LinkColumn), tự động lấy giá trị trường cha gửi lên API làm tham số lọc
+                  if (f.LinkColumn) {
+                    var parentInput = document.getElementById('field-' + f.LinkColumn);
+                    if (parentInput) {
+                      queryObj[f.LinkColumn] = parentInput.value;
                     }
                   }
                   
-                  if (q && f.dataSource && f.dataSource.startsWith('STATIC:')) {
-                    var lq = q.toLowerCase();
-                    options = options.filter(opt => 
-                      String(opt.value).toLowerCase().includes(lq) || 
-                      String(opt.label).toLowerCase().includes(lq)
-                    );
+                  var dsL = endpoint.toLowerCase();
+                  if (isSelectSource) {
+                    // Route bảng generic chỉ nhận page/limit/f/q. Các tham số
+                    // TimKiem/UserRole trước đây làm request lookup bị lỗi.
+                    var selectColumns = [];
+                    if (f.dropdownValueColumn) selectColumns.push(f.dropdownValueColumn);
+                    if (f.dropdownDisplayColumn && selectColumns.indexOf(f.dropdownDisplayColumn) === -1) {
+                      selectColumns.push(f.dropdownDisplayColumn);
+                    }
+                    if (selectColumns.length > 0) params.f = selectColumns.join(';');
+
+                    var selectQuery = {};
+                    if (q) {
+                      var searchColumn = f.dropdownDisplayColumn || f.dropdownValueColumn || f.name;
+                      selectQuery[searchColumn + '$lk'] = '%' + q + '%';
+                    }
+                    if (f.LinkColumn && queryObj[f.LinkColumn]) {
+                      selectQuery[f.LinkColumn] = queryObj[f.LinkColumn];
+                    }
+                    if (Object.keys(selectQuery).length > 0) {
+                      params.q = JSON.stringify(selectQuery);
+                    }
+                  } else {
+                    // Context người dùng chỉ dành cho API/SP, không gửi vào route bảng.
+                    var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
+                    queryObj.UserRole = user.role || user.Group || '';
+                    queryObj.UserEmployeeID = user.EmployeeID || '';
+                    queryObj.UserObjectID = user.ObjectID || '';
+
+                    if (dsL.includes('danhmuc') || dsL.includes('gateway') || dsL.includes('router')) {
+                      params.q = JSON.stringify(queryObj);
+                    } else {
+                      Object.assign(params, queryObj);
+                    }
                   }
 
-                  return options.map(opt => [opt.value, opt.label]);
+                  var res = await Http.get(endpoint, params);
+                  var records = res.records || res.list || res.data || res;
+                  if (Array.isArray(records)) {
+                    options = records.map(function (r) {
+                      if (typeof r === 'object' && r !== null) {
+                        var keys = Object.keys(r);
+                        var valKey = f.dropdownValueColumn && keys.find(k => k.toLowerCase() === f.dropdownValueColumn.toLowerCase())
+                          ? keys.find(k => k.toLowerCase() === f.dropdownValueColumn.toLowerCase())
+                          : keys[0];
+                        var lblKey = f.dropdownDisplayColumn && keys.find(k => k.toLowerCase() === f.dropdownDisplayColumn.toLowerCase())
+                          ? keys.find(k => k.toLowerCase() === f.dropdownDisplayColumn.toLowerCase())
+                          : (keys[1] || valKey);
+                        
+                        return { value: r[valKey], label: r[lblKey], rawRecord: r };
+                      }
+                      return { value: r, label: r, rawRecord: r };
+                    });
+                  }
+
+                  // `SELECT *` can return repeated lookup values (notably MauSac).
+                  // Keep the first row for each value so the dropdown stays clean.
+                  var seenValues = {};
+                  return options
+                    .filter(function (opt) {
+                      var key = String(opt.value === undefined || opt.value === null ? '' : opt.value);
+                      if (seenValues[key]) return false;
+                      seenValues[key] = true;
+                      return true;
+                    })
+                    .map(opt => [opt.value, opt.label, opt.rawRecord]);
                 } catch (err) {
                   console.warn('Lỗi tải dữ liệu cho combobox ' + f.name, err);
                   return [];
@@ -229,6 +324,29 @@ var DynamicPage = (function () {
                 if (innerInput) {
                   innerInput.value = row[0];
                   innerInput.dispatchEvent(new Event('change'));
+                }
+
+                // TỰ ĐỘNG TRIGGER AUTOFILL: Tự động điền dữ liệu cho các trường khác nếu có cột trùng tên
+                var rawRecord = row[2];
+                if (rawRecord && typeof rawRecord === 'object') {
+                  var recordKeys = Object.keys(rawRecord);
+                  schemaFields.forEach(function (otherField) {
+                    if (otherField.name === f.name) return; // Tránh đè lên chính nó
+
+                    var matchedKey = recordKeys.find(k => k.toLowerCase().replace(/_/g, '') === otherField.name.toLowerCase().replace(/_/g, ''));
+                    if (matchedKey) {
+                      var otherInput = document.getElementById('field-' + otherField.name);
+                      if (otherInput) {
+                        var newVal = rawRecord[matchedKey];
+                        if (otherInput.type === 'checkbox') {
+                          otherInput.checked = newVal === 'true' || newVal === 1 || newVal === '1' || newVal === true;
+                        } else {
+                          otherInput.value = newVal !== undefined && newVal !== null ? String(newVal) : '';
+                        }
+                        otherInput.dispatchEvent(new Event('change'));
+                      }
+                    }
+                  });
                 }
               }
             });
@@ -248,52 +366,81 @@ var DynamicPage = (function () {
             select.innerHTML = '<option value="">-- Chọn --</option>';
             fieldWrapper.appendChild(select);
           }
-        } else if (f.renderRule === 'sw') {
+        } else if (isStaticSelect) {
+          // 2. Nếu là các loại chọn tĩnh (ValueList) -> Render thẻ <select> tĩnh tiêu chuẩn
           var select = document.createElement('select');
           select.id = 'field-' + f.name;
           select.name = f.name;
           if (f.required) select.required = true;
 
           var options = _parseStaticOptions(f.dataSource);
-          if (options.length === 0) {
-            options = [{ value: 'true', label: 'Có' }, { value: 'false', label: 'Không' }];
-          }
           select.innerHTML = options
             .map(opt => `<option value="${opt.value}">${opt.label}</option>`)
             .join('');
           fieldWrapper.appendChild(select);
-        } else if (f.renderRule === 'mn') {
-          var input = document.createElement('input');
-          input.id = 'field-' + f.name;
-          input.name = f.name;
-          input.type = 'text';
-          input.setAttribute('inputmode', 'numeric');
-          input.placeholder = f.label;
-          if (f.required) input.required = true;
-          fieldWrapper.appendChild(input);
-
-          var wordEl = document.createElement('div');
-          wordEl.className = 'money-words-text';
-          wordEl.style.cssText = 'font-size: 11px; color: var(--success); margin-top: 4px; min-height: 16px; font-style: italic;';
-          fieldWrapper.appendChild(wordEl);
-
-          if (window.UIInput && typeof UIInput.setupMoneyInput === 'function') {
-            UIInput.setupMoneyInput(input, wordEl);
-          }
         } else {
-          var type = 'text';
-          if (f.renderRule === 'number') type = 'number';
-          var input = document.createElement('input');
-          input.id = 'field-' + f.name;
-          input.name = f.name;
-          input.type = type;
-          if (type === 'number') input.step = 'any';
-          input.placeholder = f.label;
-          if (f.required) input.required = true;
-          fieldWrapper.appendChild(input);
+          // 3. Các loại nhập liệu kiểu dữ liệu khác
+          if (f.dataType === 'bit') {
+            // Render ô checkbox chuẩn cho trường kiểu logic bit không có danh mục chọn
+            var input = document.createElement('input');
+            input.id = 'field-' + f.name;
+            input.name = f.name;
+            input.type = 'checkbox';
+            input.style.width = 'auto';
+            input.style.height = 'auto';
+            input.style.marginRight = '8px';
+            
+            // Đặt checkbox lên trước label text
+            label.innerHTML = '';
+            label.appendChild(input);
+            label.appendChild(document.createTextNode(labelText));
+          } else {
+            var input = document.createElement('input');
+            input.id = 'field-' + f.name;
+            input.name = f.name;
+            input.placeholder = f.label;
+            if (f.required) input.required = true;
+
+            if (f.renderRule === 'D') {
+              input.type = 'date';
+            } else if (f.renderRule === 'DT') {
+              input.type = 'datetime-local';
+            } else if (f.renderRule === 'H') {
+              input.type = 'time';
+            } else if (NUMERIC_FORMATS.includes(f.renderRule)) {
+              input.type = 'number';
+              input.step = 'any';
+            } else {
+              input.type = 'text';
+            }
+
+            fieldWrapper.appendChild(input);
+          }
         }
 
         formFieldsContainer.appendChild(fieldWrapper);
+      });
+
+      // Đăng ký sự kiện lắng nghe thay đổi của cha để tự động xóa trường con (Cascading Dropdowns)
+      schemaFields.forEach(function (parentField) {
+        var parentInput = document.getElementById('field-' + parentField.name);
+        if (parentInput) {
+          parentInput.addEventListener('change', function () {
+            schemaFields.forEach(function (childField) {
+              var isChild = childField.LinkColumn === parentField.name || 
+                            (childField.dataSource && childField.dataSource.toLowerCase().includes('{' + parentField.name.toLowerCase() + '}'));
+              if (isChild) {
+                var childInput = document.getElementById('field-' + childField.name);
+                if (childInput) {
+                  if (childInput.value !== '') {
+                    childInput.value = '';
+                    childInput.dispatchEvent(new Event('change'));
+                  }
+                }
+              }
+            });
+          });
+        }
       });
   }
 
@@ -331,14 +478,13 @@ var DynamicPage = (function () {
 
       // 2. Thêm điều kiện lọc tìm kiếm server-side ($lk) hoặc TimKiem
       var hasSearch = searchVal.trim() !== '';
+      var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
+      var dsLower = endpoint.toLowerCase();
 
-      if (endpoint.includes('/API_DanhMuc')) {
-        // Với API_DanhMuc, tất cả các tham số lọc phải đưa vào params.q dạng JSON
+      if (dsLower.includes('danhmuc') || dsLower.includes('gateway') || dsLower.includes('router')) {
         if (hasSearch) {
           queryObj.TimKiem = searchVal.trim();
         }
-        
-        var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
         queryObj.UserRole = user.role || user.Group || '';
         queryObj.UserEmployeeID = user.EmployeeID || '';
         queryObj.UserManagerID = user.ManagerID || '';
@@ -346,7 +492,6 @@ var DynamicPage = (function () {
         
         params.q = JSON.stringify(queryObj);
       } else {
-        // Với các API khác, đưa queryParams trực tiếp vào params chính
         if (hasQueryParams) {
           Object.assign(params, queryObj);
         }
@@ -356,11 +501,8 @@ var DynamicPage = (function () {
             var qObj = {};
             qObj[filterField.name + '$lk'] = '%' + searchVal.trim() + '%';
             
-            // Đóng gói lồng nhau để Gateway nhận diện key "q" và gán vào tham số @q của Store
-            var gatewayObj = {
-              q: JSON.stringify(qObj)
-            };
-            params.q = JSON.stringify(gatewayObj);
+            // Route bảng generic nhận trực tiếp object điều kiện trong tham số q.
+            params.q = JSON.stringify(qObj);
           }
         }
       }
@@ -384,7 +526,7 @@ var DynamicPage = (function () {
         }
       }
 
-      // Chuẩn hóa key của từng bản ghi để khớp với định dạng chữ hoa/thường và đồng nghĩa của schemaFields
+      // Chuẩn hóa key của từng bản ghi để khớp với định dạng chữ hoa/thường của schemaFields
       if (Array.isArray(allData)) {
         allData = allData.map(function (row) {
           if (!row || typeof row !== 'object') return row;
@@ -395,45 +537,10 @@ var DynamicPage = (function () {
             var fName = f.name;
             var fNameClean = fName.toLowerCase().replace(/_/g, '');
             
-            // 1. Tìm khớp trực tiếp (bỏ qua viết hoa/thường và gạch dưới)
+            // Tìm khớp trực tiếp (bỏ qua viết hoa/thường và gạch dưới)
             var matchedKey = rowKeys.find(function (k) {
-              var kClean = k.toLowerCase().replace(/_/g, '');
-              return kClean === fNameClean;
+              return k.toLowerCase().replace(/_/g, '') === fNameClean;
             });
-            
-            // 2. Nếu không khớp trực tiếp, sử dụng từ điển đồng nghĩa phổ biến
-            if (!matchedKey) {
-              var fL = fName.toLowerCase();
-              matchedKey = rowKeys.find(function (k) {
-                var kL = k.toLowerCase();
-                
-                // Đồng nghĩa ID / Mã chính
-                if ((fL === 'id' || fL === 'itemid' || fL === 'chietkhau' || fL === 'size') && 
-                    (kL === 'id' || kL === 'itemid' || kL === 'size' || kL === 'chietkhau')) return true;
-                
-                // Đồng nghĩa Tên / Nhãn
-                if ((fL === 'name' || fL === 'itemname' || fL === 'ctkm' || fL === 'tensize') && 
-                    (kL === 'name' || kL === 'itemname' || kL === 'ctkm' || kL === 'ten_size')) return true;
-                
-                // Đồng nghĩa Giá / Đơn giá
-                if ((fL === 'price' || fL === 'unitprice') && 
-                    (kL === 'price' || kL === 'unitprice' || kL === 'don_gia')) return true;
-                
-                // Đồng nghĩa Nhóm size
-                if (fL === 'nhomsize' && kL === 'nhom_size') return true;
-                
-                return false;
-              });
-            }
-            
-            // 3. Dự phòng theo thứ tự cột nếu là danh mục chung (Promotion / SKU)
-            if (!matchedKey && rowKeys.length >= 2) {
-              var showGridFields = schemaFields.filter(function (sf) { return sf.showInGrid; });
-              var fIndex = showGridFields.indexOf(f);
-              if (fIndex === 0 && rowKeys.includes('id')) matchedKey = 'id';
-              else if (fIndex === 1 && rowKeys.includes('name')) matchedKey = 'name';
-              else if (fIndex === 2 && rowKeys.includes('price')) matchedKey = 'price';
-            }
             
             if (matchedKey) {
               newRow[fName] = row[matchedKey];
@@ -477,40 +584,48 @@ var DynamicPage = (function () {
           col.cellStyle = { fontWeight: '700' };
         }
 
-        if (f.renderRule === 'mn') {
-          col.cellStyle = Object.assign({}, col.cellStyle, { color: 'var(--accent, #4F46E5)', fontWeight: '700', textAlign: 'right' });
-          col.valueFormatter = function (params) {
-            if (params.value && typeof Utils !== 'undefined') return Utils.formatMoney(params.value);
-            return params.value || '0đ';
-          };
-        } else if (f.renderRule === 'sw') {
-          col.cellRenderer = function (params) {
-            var isTrue = !!params.value && String(params.value) !== 'false' && String(params.value) !== '0';
-            var badgeClass = isTrue ? 'badge-blue' : 'badge-gray';
-            var badgeText = isTrue ? 'Có' : 'Không';
-            
-            if (f.dataSource && f.dataSource.startsWith('STATIC:')) {
-              var options = _parseStaticOptions(f.dataSource);
-              var matched = options.find(opt => {
-                var optBool = opt.value === 'true' || opt.value === 1 || opt.value === '1';
-                return optBool === isTrue;
-              });
-              if (matched) {
-                badgeText = matched.label;
-              }
-            }
+        // Định dạng cột số (Numeric) chuẩn hóa
+        var isNumeric = NUMERIC_FORMATS.includes(f.renderRule);
+        var hasDataSource = f.dataSource && f.dataSource.length > 0;
+        var dsType = (f.dropdownType || '').toLowerCase().trim();
 
-            // Gán màu sắc đặc trưng
-            if (isTrue) {
-              badgeClass = 'badge-blue';
-              if (f.name === 'isDisable') badgeClass = 'badge-red'; // Đỏ nếu ngừng bán
-              else if (f.name === 'isWeb') badgeClass = 'badge-blue';
-            } else {
-              badgeClass = 'badge-gray';
-              if (f.name === 'isDisable') badgeClass = 'badge-green'; // Xanh lá nếu đang bán
+        var isDynamicLookup = hasDataSource && (
+          ['dropdown', 'dropselect', 'combo'].includes(dsType) ||
+          (dsType === '' && _isQueryOrApi(f.dataSource))
+        );
+        var isStaticSelect = hasDataSource && (dsType === 'valuelist' || (dsType === '' && !isDynamicLookup));
+
+        if (isNumeric) {
+          col.cellStyle = Object.assign({}, col.cellStyle, { textAlign: 'right' });
+          col.valueFormatter = function (params) {
+            if (params.value !== undefined && params.value !== null && params.value !== '') {
+              return new Intl.NumberFormat('vi-VN').format(params.value);
+            }
+            return '';
+          };
+        } else if (isStaticSelect) {
+          // Render badge hiển thị cho các cấu hình chọn tĩnh (STATIC/ValueList)
+          col.cellRenderer = function (params) {
+            var valStr = params.value !== undefined && params.value !== null ? String(params.value).trim() : '';
+            var options = _parseStaticOptions(f.dataSource);
+            var matched = options.find(opt => opt.value === valStr || (opt.value === 'true' && valStr === '1') || (opt.value === 'false' && valStr === '0'));
+            
+            var badgeText = matched ? matched.label : valStr;
+            var color = (matched && matched.color) ? matched.color : '';
+            
+            var badgeClass = 'badge-gray';
+            if (color) {
+              badgeClass = 'badge-' + color;
             }
 
             return `<span class="badge ${badgeClass}">${badgeText}</span>`;
+          };
+        } else if (f.dataType === 'bit') {
+          col.cellStyle = Object.assign({}, col.cellStyle, { textAlign: 'center' });
+          col.cellRenderer = function (params) {
+            var val = params.value;
+            var isTrue = val === true || val === 1 || val === '1' || String(val).toLowerCase() === 'true';
+            return isTrue ? '✔️' : '❌';
           };
         }
 
@@ -544,7 +659,7 @@ var DynamicPage = (function () {
         btnDel.innerHTML = '<span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1));color:var(--danger)">delete</span>';
         btnDel.addEventListener('click', function (e) {
           e.stopPropagation();
-          DynamicPage.del(val);
+          DynamicPage.del(p);
         });
 
         wrapper.appendChild(btnEdit);
@@ -603,37 +718,49 @@ var DynamicPage = (function () {
       copySourceData = null;
     }
     var p = allData.find(item => String(item[primaryKey]) === String(primaryKeyValue));
+    editOriginalData = p && !isCopy ? Object.assign({}, p) : null;
     document.getElementById('dm-title').textContent = p ? 'Chỉnh Sửa' : 'Thêm Mới';
     document.getElementById('dm-id-hidden').value = p ? primaryKeyValue : '';
 
     schemaFields.forEach(function (f) {
       var input = document.getElementById('field-' + f.name);
       if (input) {
+        var hasDataSource = f.dataSource && f.dataSource.length > 0;
+        var dsType = (f.dropdownType || '').toLowerCase().trim();
+        var isDynamicLookup = hasDataSource && (
+          ['dropdown', 'dropselect', 'combo'].includes(dsType) ||
+          (dsType === '' && _isQueryOrApi(f.dataSource))
+        );
+        var isStaticSelect = hasDataSource && (dsType === 'valuelist' || (dsType === '' && !isDynamicLookup));
+
         if (p) {
           var val = p[f.name];
-          if (f.renderRule === 'sw') {
-            var isTrue = !!val && String(val) !== 'false' && String(val) !== '0';
+          if (input.type === 'checkbox') {
+            input.checked = val === 'true' || val === 1 || val === '1' || val === true;
+          } else if (isStaticSelect) {
+            var valStr = val !== undefined && val !== null ? String(val).trim() : '';
+            var isTrue = valStr === 'true' || valStr === '1';
             input.value = isTrue ? 'true' : 'false';
           } else {
             input.value = val !== undefined && val !== null ? String(val) : '';
-            if (f.renderRule === 'mn') {
-              input.dispatchEvent(new Event('change'));
-            }
           }
-          if (f.readonlyOnEdit) {
+          if (f.isReadOnlyEdit) {
             input.disabled = true;
           }
         } else {
-          if (f.renderRule === 'sw') {
+          if (input.type === 'checkbox') {
+            input.checked = false;
+          } else if (isStaticSelect) {
             var options = _parseStaticOptions(f.dataSource);
             input.value = options.length > 0 ? options[0].value : 'false';
           } else {
             input.value = '';
-            if (f.renderRule === 'mn') {
-              input.dispatchEvent(new Event('change'));
-            }
           }
-          input.disabled = false;
+          if (f.isReadOnlyAdd) {
+            input.disabled = true;
+          } else {
+            input.disabled = false;
+          }
         }
       }
     });
@@ -664,12 +791,22 @@ var DynamicPage = (function () {
           input.value = p[f.name] || '';
         } else {
           var val = p[f.name];
-          if (f.renderRule === 'sw') {
-            var isTrue = !!val && String(val) !== 'false' && String(val) !== '0';
+          var hasDataSource = f.dataSource && f.dataSource.length > 0;
+          var dsType = (f.dropdownType || '').toLowerCase().trim();
+          var isDynamicLookup = hasDataSource && (
+            ['dropdown', 'dropselect', 'combo'].includes(dsType) ||
+            (dsType === '' && _isQueryOrApi(f.dataSource))
+          );
+          var isStaticSelect = hasDataSource && (dsType === 'valuelist' || (dsType === '' && !isDynamicLookup));
+
+          if (input.type === 'checkbox') {
+            input.checked = val === 'true' || val === 1 || val === '1' || val === true;
+          } else if (isStaticSelect) {
+            var valStr = val !== undefined && val !== null ? String(val).trim() : '';
+            var isTrue = valStr === 'true' || valStr === '1';
             input.value = isTrue ? 'true' : 'false';
           } else {
             input.value = val !== undefined && val !== null ? String(val) : '';
-            input.dispatchEvent(new Event('change'));
           }
         }
       }
@@ -684,16 +821,16 @@ var DynamicPage = (function () {
     schemaFields.forEach(function (f) {
       var input = document.getElementById('field-' + f.name);
       if (input) {
-        var val = input.value.trim();
-        if (f.required && !val) {
+        var val = input.type === 'checkbox' ? input.checked : input.value.trim();
+        if (f.required && (input.type === 'checkbox' ? false : !val)) {
           showToast('Vui lòng nhập đầy đủ: ' + f.label, 'error');
           isInvalid = true;
         }
         
-        if (f.renderRule === 'mn') {
-          var cleanVal = val.replace(/\D/g, '');
-          formInputData[f.name] = cleanVal === '' ? 0 : Number(cleanVal);
-        } else if (f.renderRule === 'number') {
+        var isNumeric = NUMERIC_FORMATS.includes(f.renderRule);
+        if (input.type === 'checkbox') {
+          formInputData[f.name] = val;
+        } else if (isNumeric) {
           formInputData[f.name] = val === '' ? 0 : Number(val);
         } else if (val === 'true') {
           formInputData[f.name] = true;
@@ -716,11 +853,14 @@ var DynamicPage = (function () {
       copySourceData = null; // Reset trạng thái copy sau khi đã lấy dữ liệu
     }
 
-    var endpoint = apiSave ? apiSave.split('?')[0] : apiSearch.split('?')[0];
+    var configuredEndpoint = idHidden
+      ? (apiUpdate || apiSave || apiSearch)
+      : (apiCreate || apiSave || apiSearch);
+    var endpoint = configuredEndpoint.split('?')[0];
 
     // Trích xuất query params (Loai=SKU, Loai=Promotion...) để gửi kèm lên body
-    if (apiSave && apiSave.includes('?')) {
-      var parts = apiSave.split('?');
+    if (configuredEndpoint && configuredEndpoint.includes('?')) {
+      var parts = configuredEndpoint.split('?');
       var searchParams = new URLSearchParams(parts[1]);
       searchParams.forEach(function (v, k) {
         formInputData[k] = v;
@@ -734,17 +874,50 @@ var DynamicPage = (function () {
     }
 
     try {
+      var isCommonUpdate = !!idHidden && (
+        endpoint.toLowerCase().includes('/api_capnhatdulieuchung') ||
+        !endpoint.toLowerCase().includes('/api_')
+      );
+
+      if (isCommonUpdate) {
+        endpoint = '/API_CapNhatDuLieuChung';
+      }
+
       var isSP = endpoint.toLowerCase().includes('/api_');
-      var payload = isSP ? { q: JSON.stringify(formInputData) } : formInputData;
+      var payload;
+
+      if (isCommonUpdate) {
+        var originalKeys = {};
+        schemaFields.forEach(function (field) {
+          if (editOriginalData && Object.prototype.hasOwnProperty.call(editOriginalData, field.name)) {
+            originalKeys[field.name] = editOriginalData[field.name];
+          }
+        });
+
+        var updateValues = Object.assign({}, formInputData);
+        String(primaryKey || '').split(';').forEach(function (keyName) {
+          keyName = keyName.trim();
+          if (keyName) delete updateValues[keyName];
+        });
+
+        payload = {
+          q: JSON.stringify({
+            FormName: formName,
+            OriginalKeys: originalKeys,
+            Values: updateValues
+          })
+        };
+      } else {
+        payload = isSP ? { q: JSON.stringify(formInputData) } : formInputData;
+      }
 
       if (isSP) {
-        // Nếu là Stored Procedure, luôn dùng POST (Store tự xử lý INSERT hoặc UPDATE)
         await Http.post(endpoint, payload);
         showToast(idHidden ? 'Đã lưu thay đổi thành công' : 'Đã thêm mới thành công');
       } else {
         if (idHidden) {
           var updateUrl = endpoint + '/' + encodeURIComponent(idHidden);
-          await Http.put(updateUrl, payload);
+          await Http.post(updateUrl, payload);
           showToast('Đã lưu thay đổi thành công');
         } else {
           await Http.post(endpoint, payload);
@@ -753,54 +926,51 @@ var DynamicPage = (function () {
       }
 
       closeModal('modal-dynamic');
+      editOriginalData = null;
       _fetchAndRender();
     } catch (err) {
-      console.warn('Lưu API thất bại, chuyển sang chế độ Lưu tạm:', err);
-      _saveLocalFallback(idHidden, formInputData);
+      console.error('Lưu dữ liệu thất bại:', err);
+      showToast(err.message || 'Lưu dữ liệu thất bại. Vui lòng thử lại!', 'error');
     }
   }
 
-  function _saveLocalFallback(idHidden, formInputData) {
-    var pkValue = formInputData[primaryKey];
-    if (idHidden) {
-      var idx = allData.findIndex(item => String(item[primaryKey]) === String(idHidden));
-      if (idx !== -1) {
-        allData[idx] = Object.assign({}, allData[idx], formInputData);
-      }
-    } else {
-      var exists = allData.some(item => String(item[primaryKey]).toLowerCase() === String(pkValue).toLowerCase());
-      if (exists) {
-        showToast('Mã khóa chính này đã tồn tại!', 'error');
-        return;
-      }
-      allData.push(formInputData);
-    }
-    localStorage.setItem('Santino_CRUD_' + currentRoute, JSON.stringify(allData));
-    closeModal('modal-dynamic');
-    _fetchAndRender();
-    showToast('Đã lưu tạm dữ liệu thành công');
-  }
-
-  function del(primaryKeyValue) {
+  function del(rowData) {
     ConfirmModal.show({
       title: 'Xác nhận xóa',
       message: 'Bạn có chắc muốn xóa dòng dữ liệu này không?',
       confirmText: 'Xóa',
       confirmClass: 'btn-danger',
       onConfirm: async function () {
-        var endpoint = apiSearch.split('?')[0];
+        var endpoint = '/API_XoaDuLieuChung';
         try {
-          // Xóa (DELETE /api/{endpoint}/{id})
-          var deleteUrl = endpoint + '/' + encodeURIComponent(primaryKeyValue);
-          await Http.del(deleteUrl);
+          // API xóa chung tự xác định bảng từ FormName. Chỉ gửi các cột thật
+          // có trong schema để tạo điều kiện khóa và tránh xóa nhầm nhiều dòng.
+          var keys = {};
+          var record = rowData && typeof rowData === 'object'
+            ? rowData
+            : { [primaryKey]: rowData };
+
+          schemaFields.forEach(function (field) {
+            if (Object.prototype.hasOwnProperty.call(record, field.name)) {
+              keys[field.name] = record[field.name];
+            }
+          });
+
+          if (!Object.prototype.hasOwnProperty.call(keys, primaryKey)) {
+            keys[primaryKey] = record[primaryKey];
+          }
+
+          await Http.post(endpoint, {
+            q: JSON.stringify({
+              FormName: formName,
+              Keys: keys
+            })
+          });
           showToast('Đã xóa dữ liệu thành công');
           _fetchAndRender();
         } catch (err) {
-          console.warn('Xóa API thất bại, chuyển sang chế độ Xóa tạm:', err);
-          allData = allData.filter(item => String(item[primaryKey]) !== String(primaryKeyValue));
-          localStorage.setItem('Santino_CRUD_' + currentRoute, JSON.stringify(allData));
-          _fetchAndRender();
-          showToast('Đã xóa tạm dữ liệu thành công');
+          console.error('Xóa dữ liệu thất bại:', err);
+          showToast(err.message || 'Xóa dữ liệu thất bại. Vui lòng thử lại!', 'error');
         }
       }
     });
@@ -815,9 +985,14 @@ var DynamicPage = (function () {
     }
 
     var items = selectedRows.map(function (row) {
+      var rowKeys = Object.keys(row);
+      // Ánh xạ động key của Grid (ItemName2 / MauSac từ Database chuẩn) sang đúng payload ten_hang_2 và mau
+      var keyItemName = rowKeys.find(k => k.toLowerCase().replace(/_/g, '') === 'itemname2' || k.toLowerCase().replace(/_/g, '') === 'tenhang2') || 'ItemName2';
+      var keyMau = rowKeys.find(k => k.toLowerCase().replace(/_/g, '') === 'mausac' || k.toLowerCase().replace(/_/g, '') === 'mau') || 'MauSac';
+      
       return {
-        ten_hang_2: row.ten_hang_2,
-        mau: row.mau
+        ten_hang_2: row[keyItemName],
+        mau: row[keyMau]
       };
     });
 
