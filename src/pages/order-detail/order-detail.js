@@ -305,13 +305,22 @@ var OrderDetailPage = (function () {
         ChiTietDonHang: currentOrderData.print_items || currentOrderData.lines || []
       };
 
+      var baseApi = (window.API_CONFIG && API_CONFIG.ENDPOINTS && API_CONFIG.ENDPOINTS.DOCUMENT_MANAGER)
+        ? API_CONFIG.ENDPOINTS.DOCUMENT_MANAGER.BASE_API
+        : ((window.DOC_ENGINE_URL || 'http://103.190.38.46:8081') + '/api/documents');
+
+      var templateName = 'In Don dat hang.docx';
+      if (window.API_CONFIG && API_CONFIG.ENDPOINTS && API_CONFIG.ENDPOINTS.DOCUMENT_MANAGER && API_CONFIG.ENDPOINTS.DOCUMENT_MANAGER.ORDER_TEMPLATE) {
+        templateName = API_CONFIG.ENDPOINTS.DOCUMENT_MANAGER.ORDER_TEMPLATE;
+      }
+
       var payload = {
-        templateType: 'Phieu_Dat_Hang_Santino.docx',
+        templateType: templateName,
         outputFileName: 'Phieu_Dat_Hang_' + String(rowDataPayload.SoPhieu || id).replace(/[\/\\:*?"<>|()+]/g, '_'),
         rowData: rowDataPayload
       };
 
-      var docEngineUrl = (window.DOC_ENGINE_URL || 'http://localhost:8081') + '/api/documents/generate';
+      var docEngineUrl = baseApi + '/generate';
       var res = await fetch(docEngineUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
