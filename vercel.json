@@ -3,6 +3,14 @@
     {
       "source": "/api/:path*",
       "destination": "http://stntest.bms79.com/api/:path*"
+    },
+    {
+      "source": "/docserver/:path*",
+      "destination": "http://103.190.38.46:8081/:path*"
+    },
+    {
+      "source": "/((?!api|docserver|src|images|styles|.*\\..*).*)",
+      "destination": "/index.html"
     }
   ]
 }
