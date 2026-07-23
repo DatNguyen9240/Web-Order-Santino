@@ -8,8 +8,16 @@ var OrderPage = (function () {
   var _cachedProvinces = [];
   var _cachedObjectGroups = [];
 
-  var _userPerm = { isAdmin: false, isManager: false, isAgent: false };
-  var _canAddCustomer = false;
+  var _catValues = {
+    khach_hang: { id: '', name: '' },
+    chi_nhanh: { id: '', name: '' },
+    nvkd: { id: '', name: '' },
+    dieu_khoan: { id: '', name: '' },
+    ht_tt: { id: '', name: '' },
+    remarks: { id: '', name: '' },
+    notes: { id: '', name: '' }
+  };
+  var _combos = {};
 
   async function _loadUserPermission() {
     try {
@@ -1248,32 +1256,33 @@ var OrderPage = (function () {
       return;
     }
 
-    var kh_ten = document.getElementById('o-kh-ten').value.trim();
-    var ma_kh = document.getElementById('o-ma-kh').value.trim();
-    if (!ma_kh) { showToast('Vui lòng nhập mã khách hàng', false); return; }
-
+    var kh_ten_el = document.getElementById('o-kh-ten');
+    var ma_kh_el = document.getElementById('o-ma-kh');
+    var kh_ten = kh_ten_el ? kh_ten_el.value.trim() : '';
+    var ma_kh = ma_kh_el ? ma_kh_el.value.trim() : '';
+    if (!ma_kh) { showToast('Vui lòng chọn Mã khách hàng!', false); return; }
 
     var order = {
-      id: Utils.uuid(), // Generate ID
-      so_ct: document.getElementById('o-so-ct').value,
-      ngay_ct: document.getElementById('o-ngay').value,
-      chi_nhanh: _catValues.chi_nhanh.id || _catValues.chi_nhanh.name,
-      nvkd: _catValues.nvkd.id || _catValues.nvkd.name,
-      nguoi_tao: document.getElementById('o-nguoi-tao').value,
+      id: Utils.uuid(),
+      so_ct: (document.getElementById('o-so-ct') ? document.getElementById('o-so-ct').value : ''),
+      ngay_ct: (document.getElementById('o-ngay') ? document.getElementById('o-ngay').value : ''),
+      chi_nhanh: (_catValues && _catValues.chi_nhanh ? (_catValues.chi_nhanh.id || _catValues.chi_nhanh.name || '') : ''),
+      nvkd: (_catValues && _catValues.nvkd ? (_catValues.nvkd.id || _catValues.nvkd.name || '') : ''),
+      nguoi_tao: (document.getElementById('o-nguoi-tao') ? document.getElementById('o-nguoi-tao').value : ''),
       ma_kh: ma_kh,
-      ma_dl: document.getElementById('o-ma-dl').value,
-      kh_ten: document.getElementById('o-kh-ten').value.trim(),
-      kh_dc: document.getElementById('o-kh-dc').value,
-      nguon_don: document.getElementById('o-nguon-don').value || (_combos.source ? _combos.source.querySelector('input').value : ''),
-      dien_giai: document.getElementById('o-remarks').value || (_combos.remark ? _combos.remark.querySelector('input').value : ''),
-      ghi_chu: document.getElementById('o-notes').value || (_combos.note ? _combos.note.querySelector('input').value : ''),
-      pt_giao: document.getElementById('o-pt-giao').value,
-      nguoi_giao: document.getElementById('o-nguoi-giao').value || (_combos.delivery ? _combos.delivery.querySelector('input').value : ''),
-      dieu_khoan: _catValues.dieu_khoan.id || _catValues.dieu_khoan.name,
-      ht_thanh_toan: _catValues.ht_tt.id || _catValues.ht_tt.name,
-      ngay_tt: document.getElementById('o-ngay-tt').value,
-      khach_dua: document.getElementById('o-khach-dua').value,
-      ma_ctbh: document.getElementById('o-ctbh').value,
+      ma_dl: (document.getElementById('o-ma-dl') ? document.getElementById('o-ma-dl').value : ''),
+      kh_ten: kh_ten,
+      kh_dc: (document.getElementById('o-kh-dc') ? document.getElementById('o-kh-dc').value : ''),
+      nguon_don: (document.getElementById('o-nguon-don') && document.getElementById('o-nguon-don').value) || (_combos && _combos.source && _combos.source.querySelector('input') ? _combos.source.querySelector('input').value : ''),
+      dien_giai: (document.getElementById('o-remarks') && document.getElementById('o-remarks').value) || (_combos && _combos.remark && _combos.remark.querySelector('input') ? _combos.remark.querySelector('input').value : ''),
+      ghi_chu: (document.getElementById('o-notes') && document.getElementById('o-notes').value) || (_combos && _combos.note && _combos.note.querySelector('input') ? _combos.note.querySelector('input').value : ''),
+      pt_giao: (document.getElementById('o-pt-giao') ? document.getElementById('o-pt-giao').value : ''),
+      nguoi_giao: (document.getElementById('o-nguoi-giao') && document.getElementById('o-nguoi-giao').value) || (_combos && _combos.delivery && _combos.delivery.querySelector('input') ? _combos.delivery.querySelector('input').value : ''),
+      dieu_khoan: (_catValues && _catValues.dieu_khoan ? (_catValues.dieu_khoan.id || _catValues.dieu_khoan.name || '') : ''),
+      ht_thanh_toan: (_catValues && _catValues.ht_tt ? (_catValues.ht_tt.id || _catValues.ht_tt.name || '') : ''),
+      ngay_tt: (document.getElementById('o-ngay-tt') ? document.getElementById('o-ngay-tt').value : ''),
+      khach_dua: (document.getElementById('o-khach-dua') ? document.getElementById('o-khach-dua').value : ''),
+      ma_ctbh: (document.getElementById('o-ctbh') ? document.getElementById('o-ctbh').value : ''),
       total_qty: lines.reduce(function (s, l) { return s + l.so_luong; }, 0),
       total_money: lines.reduce(function (s, l) { return s + l.thanh_tien; }, 0),
       lines: lines, created_at: new Date().toISOString()
