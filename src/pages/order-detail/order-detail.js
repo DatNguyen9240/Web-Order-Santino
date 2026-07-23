@@ -355,8 +355,99 @@ var OrderDetailPage = (function () {
     }
   }
 
+  async function previewOrder() {
+    var btn = document.getElementById('btn-preview-order');
+    if (btn) btn.disabled = true;
+
+    try {
+      if (!currentOrderData) return;
+      var docConfig = (window.API_CONFIG && API_CONFIG.ENDPOINTS && API_CONFIG.ENDPOINTS.DOCUMENT_MANAGER) ? API_CONFIG.ENDPOINTS.DOCUMENT_MANAGER : null;
+      if (!docConfig || !docConfig.BASE_API) {
+        alert('Chưa cấu hình DOCUMENT_MANAGER trong env.js');
+        return;
+      }
+
+      var rowDataPayload = {
+        SoPhieu: currentOrderData.so_ct || id,
+        Ngay: currentOrderData.ngay_ct || '',
+        ChiNhanh: currentOrderData.chi_nhanh || '',
+        NhanVienKD: currentOrderData.nvkd || '',
+        KhachHang: currentOrderData.kh_ten || currentOrderData.ObjectName || '',
+        MaKhachHang: currentOrderData.ma_kh || currentOrderData.ObjectID || '',
+        DiaChi: currentOrderData.kh_dc || '',
+        SDT: currentOrderData.sdt || '',
+        DienGiai: currentOrderData.dien_giai || currentOrderData.ghi_chu || '',
+        TongSoLuong: currentOrderData.total_qty || 0,
+        TongTienHang: currentOrderData.total_money || 0,
+        TongThanhToan: currentOrderData.total_money || 0,
+        ChiTietDonHang: currentOrderData.print_items || currentOrderData.lines || []
+      };
+
+      var payload = {
+        templateType: docConfig.ORDER_TEMPLATE,
+        outputFileName: 'Phieu_Dat_Hang_' + String(rowDataPayload.SoPhieu || id).replace(/[\/\\:*?"<>|()+]/g, '_'),
+        rowData: rowDataPayload
+      };
+
+      var res = await fetch(docConfig.BASE_API + '/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      var result = await res.json();
+      var downloadUrl = '';
+      if (result.success) {
+        if (result.data && result.data.fileUrl) downloadUrl = result.data.fileUrl;
+        else if (result.fileUrl) downloadUrl = result.fileUrl;
+        else if (result.fileName) downloadUrl = docConfig.UPLOADS_URL + encodeURIComponent(result.fileName);
+      }
+
+      if (downloadUrl) {
+        _showPreviewModal(downloadUrl, result.fileName || 'Phieu_Dat_Hang.docx');
+      } else {
+        alert('Lỗi tạo phiếu xem trước: ' + (result.message || 'Chưa rõ nguyên nhân'));
+      }
+    } catch (err) {
+      console.error('Lỗi khi xem trước phiếu:', err);
+      alert('Lỗi xem trước: ' + err.message);
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  function _showPreviewModal(fileUrl, fileName) {
+    var modalId = 'modal-docx-preview';
+    var oldModal = document.getElementById(modalId);
+    if (oldModal) oldModal.remove();
+
+    var viewerUrl = 'https://view.officeapps.live.com/op/embed.aspx?src=' + encodeURIComponent(fileUrl);
+    var html = `
+      <div class="modal-overlay active" id="${modalId}" style="z-index:99999;">
+        <div class="modal" style="width:90%; max-width:1000px; height:85vh; display:flex; flex-direction:column; padding:0;">
+          <div class="modal-hdr" style="padding:12px 16px; background:var(--primary); color:#fff; display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="margin:0; font-size:15px; color:#fff; display:flex; align-items:center; gap:8px;">
+              <span class="material-symbols-outlined">visibility</span> Xem Trước Phiếu Đặt Hàng (${fileName})
+            </h3>
+            <div style="display:flex; gap:8px;">
+              <a href="${fileUrl}" target="_blank" download class="btn btn-sm" style="background:#fff; color:var(--primary); text-decoration:none; padding:4px 10px; font-size:12px; border-radius:4px; display:inline-flex; align-items:center; gap:4px;">
+                <span class="material-symbols-outlined" style="font-size:16px;">download</span> Tải DOCX
+              </a>
+              <button class="btn-icon" onclick="document.getElementById('${modalId}').remove()" style="color:#fff;"><span class="material-symbols-outlined">close</span></button>
+            </div>
+          </div>
+          <div class="modal-body" style="flex:1; padding:0; overflow:hidden;">
+            <iframe src="${viewerUrl}" style="width:100%; height:100%; border:none;" onerror="this.src='${fileUrl}'"></iframe>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+  }
+
   return { 
     render: render,
-    printOrder: printOrder
+    printOrder: printOrder,
+    previewOrder: previewOrder
   };
 })();
