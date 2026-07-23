@@ -39,6 +39,14 @@ var OrderPrintService = (function () {
     return num.toLocaleString('en-US');
   }
 
+  function _parseMoney(val) {
+    if (val === null || val === undefined || val === '') return 0;
+    if (typeof val === 'number') return val;
+    var cleaned = String(val).replace(/,/g, '').replace(/\./g, '').replace(/đ/g, '').trim();
+    var num = Number(cleaned);
+    return isNaN(num) ? 0 : num;
+  }
+
   function _message(type, title, detail) {
     if (typeof Alert !== 'undefined' && typeof Alert[type] === 'function') {
       Alert[type](title, detail);
@@ -55,19 +63,10 @@ var OrderPrintService = (function () {
       : (Array.isArray(order.print_items) ? order.print_items : []));
 
     var formattedLines = rawLines.map(function (line, index) {
-      var rawPrice = line.don_gia || line.UnitPrice || line.DonGia || 0;
-      var price = typeof rawPrice === 'string'
-        ? Number(rawPrice.replace(/,/g, '').replace(/\./g, '').replace(/đ/g, '').trim())
-        : Number(rawPrice || 0);
-      if (isNaN(price)) price = 0;
-
+      var price = _parseMoney(line.don_gia || line.UnitPrice || line.DonGia);
       var qty = Number(line.so_luong || line.Quantity || line.SoLuong || 0);
-
-      var rawTotal = line.thanh_tien || line.Amount || line.ThanhTien || 0;
-      var total = typeof rawTotal === 'string'
-        ? Number(rawTotal.replace(/,/g, '').replace(/\./g, '').replace(/đ/g, '').trim())
-        : Number(rawTotal || 0);
-      if (isNaN(total)) total = price * qty;
+      var rawTotal = line.thanh_tien || line.Amount || line.ThanhTien;
+      var total = rawTotal !== undefined && rawTotal !== null ? _parseMoney(rawTotal) : (price * qty);
       var stt = line.STT || line.stt || (index + 1);
       var itemName = line.ten_hang || line.ItemName || line.TenHang || line.ten_hang_2 || '';
       var itemCode = line.ma_hang || line.ItemID || line.MaHang || line.ten_hang_2 || '';
@@ -102,7 +101,7 @@ var OrderPrintService = (function () {
     });
 
     var totalQty = formattedLines.reduce(function (acc, l) { return acc + Number(l.SoLuong || 0); }, 0);
-    var totalMoney = Number(order.TongTienHang || order.total_money || order.BaseTotal || formattedLines.reduce(function (acc, l) { return acc + Number(l.ThanhTien || 0); }, 0));
+    var totalMoney = _parseMoney(order.TongTienHang || order.total_money || order.BaseTotal || formattedLines.reduce(function (acc, l) { return acc + _parseMoney(l.ThanhTien); }, 0));
 
     var payload = Object.assign({}, order, {
       SoPhieu: order.SoPhieu || order.so_ct || order.DocumentID || '',
