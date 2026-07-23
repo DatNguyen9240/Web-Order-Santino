@@ -115,12 +115,4 @@ var OrderPrintService = (function () {
 
   return { generate: generate };
 })();
-      .catch (function (err) {
-  if (printWin) printWin.close();
-  _message('error', 'Không thể in DOCX', err.message || 'Không kết nối được Document Server.');
-  throw err;
-});
-  }
 
-return { generate: generate };
-}) ();
