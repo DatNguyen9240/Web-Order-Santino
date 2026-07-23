@@ -180,9 +180,9 @@ var OrderPrintService = (function () {
         });
       })
       .then(function (result) {
-        var fileUrl = (result && result.fileUrl) || (result && result.data && result.data.fileUrl) || '';
         var fileName = (result && result.fileName) || (result && result.data && result.data.fileName) || '';
-        var downloadUrl = fileUrl || (uploadsUrl + encodeURIComponent(fileName));
+        var fileUrl = (result && result.fileUrl) || (result && result.data && result.data.fileUrl) || '';
+        var downloadUrl = fileName ? (uploadsUrl + encodeURIComponent(fileName)) : fileUrl;
 
         if (!downloadUrl || downloadUrl.endsWith('/undefined')) {
           throw new Error('Server không trả về tập tin hợp lệ.');

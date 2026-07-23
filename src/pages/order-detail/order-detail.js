@@ -333,12 +333,14 @@ var OrderDetailPage = (function () {
       var result = await res.json();
       var downloadUrl = '';
       if (result.success) {
-        if (result.data && result.data.fileUrl) {
-          downloadUrl = result.data.fileUrl;
-        } else if (result.fileUrl) {
-          downloadUrl = result.fileUrl;
-        } else if (result.fileName) {
-          downloadUrl = docConfig.UPLOADS_URL + encodeURIComponent(result.fileName);
+        var fileName = result.fileName || (result.data && result.data.fileName);
+        if (fileName) {
+          downloadUrl = docConfig.UPLOADS_URL + encodeURIComponent(fileName);
+        } else {
+          var fileUrl = result.fileUrl || (result.data && result.data.fileUrl);
+          if (fileUrl) {
+            downloadUrl = fileUrl;
+          }
         }
       }
 
