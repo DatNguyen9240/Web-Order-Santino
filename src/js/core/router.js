@@ -33,13 +33,15 @@ var Router = (function () {
     });
   }
 
-  // ── Template fetch ─────────────────────────────────────────
+  // ── Template fetch with cache ─────────────────────────────────────────
   function fetchTemplate(url) {
+    if (_templateCache[url]) return Promise.resolve(_templateCache[url]);
     return fetch(url + '?v=' + new Date().getTime(), { cache: "no-store" })
       .then(function (r) {
         if (!r.ok) throw new Error('Template not found: ' + url);
         return r.text();
-      });
+      })
+      .then(function (html) { _templateCache[url] = html; return html; });
   }
 
   // ── Fade helpers ──────────────────────────────────────────────────────

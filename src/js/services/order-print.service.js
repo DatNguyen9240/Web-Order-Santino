@@ -77,8 +77,6 @@ var OrderPrintService = (function () {
       return Promise.reject(new Error('Thiếu số chứng từ.'));
     }
 
-    var printWin = window.open('about:blank', '_blank');
-
     return fetch(baseApi + '/generate', {
       method: 'POST',
       headers: _authHeaders(),
@@ -97,30 +95,19 @@ var OrderPrintService = (function () {
         });
       })
       .then(function (result) {
-        var fileName = (result.data && result.data.fileName) || result.fileName || 'Phieu_Dat_Hang.docx';
-        var downloadUrl = uploadsUrl + encodeURIComponent(fileName);
-        if (result.data && result.data.fileUrl && result.data.fileUrl.includes(':8081')) {
-          downloadUrl = result.data.fileUrl;
-        }
-
-        if (printWin) {
-          printWin.location.href = downloadUrl;
-        } else {
-          var anchor = document.createElement('a');
-          anchor.href = downloadUrl;
-          anchor.target = '_blank';
-          anchor.rel = 'noopener';
-          anchor.download = fileName;
-          document.body.appendChild(anchor);
-          anchor.click();
-          anchor.remove();
-        }
-
+        var downloadUrl = uploadsUrl + encodeURIComponent(result.fileName);
+        var anchor = document.createElement('a');
+        anchor.href = downloadUrl;
+        anchor.target = '_blank';
+        anchor.rel = 'noopener';
+        anchor.download = result.fileName;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
         _message('success', 'Đã tạo phiếu đặt hàng', 'File DOCX đang được tải xuống.');
         return result;
       })
       .catch(function (err) {
-        if (printWin) printWin.close();
         _message('error', 'Không thể in DOCX', err.message || 'Không kết nối được Document Server.');
         throw err;
       });
@@ -128,3 +115,12 @@ var OrderPrintService = (function () {
 
   return { generate: generate };
 })();
+      .catch (function (err) {
+  if (printWin) printWin.close();
+  _message('error', 'Không thể in DOCX', err.message || 'Không kết nối được Document Server.');
+  throw err;
+});
+  }
+
+return { generate: generate };
+}) ();
