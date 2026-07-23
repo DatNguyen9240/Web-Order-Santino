@@ -398,23 +398,87 @@ var OrderDetailPage = (function () {
     var oldModal = document.getElementById(modalId);
     if (oldModal) oldModal.remove();
 
-    var viewerUrl = 'https://view.officeapps.live.com/op/embed.aspx?src=' + encodeURIComponent(fileUrl);
+    var fullFileUrl = fileUrl.startsWith('/') ? (location.protocol + '//' + location.host + fileUrl) : fileUrl;
+    var o = currentOrderData || {};
+    var items = o.print_items || o.lines || [];
+
+    var itemsHtml = items.map(function (item, idx) {
+      var name = item.ten_hang_2 || item.ItemName || item.ten_hang_hoa || item.ten_hang || 'Sản phẩm';
+      var size = item.size || item.Size || '—';
+      var color = item.mau || item.MauSac || '—';
+      var qty = item.so_luong || item.Quantity || item.qty || 0;
+      var price = item.don_gia || item.UnitPrice || 0;
+      var amount = item.thanh_tien || item.Amount || (qty * price);
+
+      return `
+        <tr>
+          <td style="text-align:center; border:1px solid #cbd5e1; padding:8px;">${idx + 1}</td>
+          <td style="border:1px solid #cbd5e1; padding:8px;"><strong>${name}</strong></td>
+          <td style="text-align:center; border:1px solid #cbd5e1; padding:8px;">${size}</td>
+          <td style="text-align:center; border:1px solid #cbd5e1; padding:8px;">${color}</td>
+          <td style="text-align:center; border:1px solid #cbd5e1; padding:8px;">${qty}</td>
+          <td style="text-align:right; border:1px solid #cbd5e1; padding:8px;">${Utils.formatMoney(price)}</td>
+          <td style="text-align:right; border:1px solid #cbd5e1; padding:8px;"><strong>${Utils.formatMoney(amount)}</strong></td>
+        </tr>
+      `;
+    }).join('');
+
     var html = `
       <div class="modal-overlay active" id="${modalId}" style="z-index:99999;">
-        <div class="modal" style="width:90%; max-width:1000px; height:85vh; display:flex; flex-direction:column; padding:0;">
-          <div class="modal-hdr" style="padding:12px 16px; background:var(--primary); color:#fff; display:flex; justify-content:space-between; align-items:center;">
+        <div class="modal" style="width:92%; max-width:900px; height:88vh; display:flex; flex-direction:column; padding:0; background:#f8fafc; border-radius:10px; overflow:hidden;">
+          <div class="modal-hdr" style="padding:14px 20px; background:var(--primary); color:#fff; display:flex; justify-content:space-between; align-items:center;">
             <h3 style="margin:0; font-size:15px; color:#fff; display:flex; align-items:center; gap:8px;">
-              <span class="material-symbols-outlined">visibility</span> Xem Trước Phiếu Đặt Hàng (${fileName})
+              <span class="material-symbols-outlined">visibility</span> Xem Trước Phiếu Đặt Hàng (${o.so_ct || 'Phiếu'})
             </h3>
-            <div style="display:flex; gap:8px;">
-              <a href="${fileUrl}" target="_blank" download class="btn btn-sm" style="background:#fff; color:var(--primary); text-decoration:none; padding:4px 10px; font-size:12px; border-radius:4px; display:inline-flex; align-items:center; gap:4px;">
-                <span class="material-symbols-outlined" style="font-size:16px;">download</span> Tải DOCX
+            <div style="display:flex; gap:10px; align-items:center;">
+              <a href="${fullFileUrl}" target="_blank" download="${fileName}" class="btn btn-sm" style="background:#fff; color:var(--primary); text-decoration:none; padding:6px 14px; font-size:12px; font-weight:700; border-radius:6px; display:inline-flex; align-items:center; gap:4px; box-shadow:0 2px 4px rgba(0,0,0,0.15);">
+                <span class="material-symbols-outlined" style="font-size:16px;">download</span> Tải File DOCX
               </a>
               <button class="btn-icon" onclick="document.getElementById('${modalId}').remove()" style="color:#fff;"><span class="material-symbols-outlined">close</span></button>
             </div>
           </div>
-          <div class="modal-body" style="flex:1; padding:0; overflow:hidden;">
-            <iframe src="${viewerUrl}" style="width:100%; height:100%; border:none;" onerror="this.src='${fileUrl}'"></iframe>
+          <div class="modal-body" style="flex:1; padding:24px; overflow-y:auto; background:#f1f5f9;">
+            <div style="max-width:800px; margin:0 auto; background:#fff; padding:32px; border:1px solid #e2e8f0; border-radius:8px; box-shadow:0 10px 25px -5px rgba(0,0,0,0.1); font-family:sans-serif; color:#0f172a;">
+              <div style="text-align:center; margin-bottom:24px; border-bottom:2px solid var(--primary); padding-bottom:16px;">
+                <h2 style="margin:0; color:var(--primary); font-size:22px; text-transform:uppercase; letter-spacing:1px;">PHIẾU ĐẶT HÀNG SỈ</h2>
+                <div style="font-size:13px; color:#64748b; margin-top:6px;">Số CT: <strong style="color:#0f172a;">${o.so_ct || '—'}</strong> | Ngày lập: ${o.ngay_ct || '—'}</div>
+              </div>
+
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:24px; font-size:13px; background:#f8fafc; padding:16px; border-radius:8px; border:1px solid #e2e8f0;">
+                <div><strong>Khách hàng:</strong> ${o.kh_ten || o.ObjectName || '—'}</div>
+                <div><strong>Mã KH:</strong> ${o.ma_kh || o.ObjectID || '—'}</div>
+                <div><strong>Địa chỉ:</strong> ${o.dia_chi || o.kh_dc || '—'}</div>
+                <div><strong>Số điện thoại:</strong> ${o.sdt || '—'}</div>
+                <div><strong>Chi nhánh:</strong> ${o.chi_nhanh || '—'}</div>
+                <div><strong>Nhân viên KD:</strong> ${o.nvkd || '—'}</div>
+              </div>
+
+              <table style="width:100%; border-collapse:collapse; font-size:13px; margin-bottom:20px;">
+                <thead>
+                  <tr style="background:var(--primary); color:#fff;">
+                    <th style="border:1px solid var(--primary); padding:10px; width:40px;">STT</th>
+                    <th style="border:1px solid var(--primary); padding:10px; text-align:left;">Tên Sản Phẩm</th>
+                    <th style="border:1px solid var(--primary); padding:10px; width:60px;">Size</th>
+                    <th style="border:1px solid var(--primary); padding:10px; width:80px;">Màu</th>
+                    <th style="border:1px solid var(--primary); padding:10px; width:60px;">SL</th>
+                    <th style="border:1px solid var(--primary); padding:10px; width:100px; text-align:right;">Đơn Giá</th>
+                    <th style="border:1px solid var(--primary); padding:10px; width:110px; text-align:right;">Thành Tiền</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${itemsHtml || '<tr><td colspan="7" style="text-align:center; padding:16px;">Không có sản phẩm</td></tr>'}
+                </tbody>
+                <tfoot>
+                  <tr style="background:#f8fafc; font-weight:bold;">
+                    <td colspan="4" style="text-align:right; border:1px solid #cbd5e1; padding:10px;">Tổng Cộng:</td>
+                    <td style="text-align:center; border:1px solid #cbd5e1; padding:10px; color:var(--primary); font-size:14px;">${o.total_qty || 0}</td>
+                    <td colspan="2" style="text-align:right; border:1px solid #cbd5e1; padding:10px; color:var(--accent); font-size:15px;">${Utils.formatMoney(o.total_money || 0)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+
+              ${o.dien_giai || o.ghi_chu ? `<div style="font-size:12px; color:#64748b; font-style:italic; border-top:1px dashed #cbd5e1; padding-top:12px;">Ghi chú: ${o.dien_giai || o.ghi_chu}</div>` : ''}
+            </div>
           </div>
         </div>
       </div>
