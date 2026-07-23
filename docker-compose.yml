@@ -1,0 +1,22 @@
+version: '3'
+services:
+  backend-app:
+    build: ./backend-app
+    container_name: santino_backend_app
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./backend-app/uploads:/app/uploads
+      - ./backend-app/samples:/app/samples
+      - ./env.js:/app/env.js
+    restart: always
+
+  onlyoffice:
+    image: onlyoffice/documentserver:latest
+    container_name: santino_onlyoffice_server
+    ports:
+      - "8082:80"
+    environment:
+      # Tắt JWT để không bị lỗi chặn Token khi kết nối
+      - JWT_ENABLED=false
+    restart: always
