@@ -2,7 +2,7 @@
 
 ## Dùng thử
 
-[🔗 Mở trang đăng nhập](login.html)
+[🔗 Mở trang đăng nhập](https://web-order-santino.vercel.app/)
 
 Bạn có thể đăng nhập bằng một trong các tài khoản test sau:
 
@@ -11,7 +11,7 @@ Bạn có thể đăng nhập bằng một trong các tài khoản test sau:
 - `A8172991` — Đại lý
 - `A2142010` — Khách lẻ
 
-Mật khẩu: liên hệ quản trị viên để nhận tài khoản test.
+Mật khẩu: 123456
 
 Ứng dụng web B2B hỗ trợ Santino tạo và quản lý đơn đặt hàng sỉ. Hệ thống tập trung vào thao tác đặt hàng theo ma trận size, quản lý danh mục sản phẩm/khách hàng và tra cứu lịch sử đơn hàng.
 
