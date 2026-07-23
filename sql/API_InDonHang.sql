@@ -38,7 +38,9 @@ BEGIN
 
     SELECT TOP 1
         @SoPhieu       = h.[DocumentID],
-        @NgayLap       = FORMAT(ISNULL(h.[DocumentDate], GETDATE()), 'dd/MM/yyyy'),
+        @NgayLap       = N'Ngày ' + FORMAT(ISNULL(h.[DocumentDate], GETDATE()), 'dd') 
+                         + N' tháng ' + FORMAT(ISNULL(h.[DocumentDate], GETDATE()), 'MM') 
+                         + N' năm ' + FORMAT(ISNULL(h.[DocumentDate], GETDATE()), 'yyyy'),
         @MaKH          = h.[ObjectID],
         @TenKhachHang  = ISNULL(h.[ObjectName], c.[ObjectName]),
         @DiaChi        = ISNULL(c.[Address], N''),
