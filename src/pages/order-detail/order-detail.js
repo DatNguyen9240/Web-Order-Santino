@@ -8,33 +8,15 @@ var OrderDetailPage = (function () {
   var currentOrder = null;
 
   async function bindPrintButton() {
-    var button = document.getElementById('order-detail-print');
-    if (!button) return;
+    var btnPrint = document.getElementById('btn-print-order') || document.getElementById('order-detail-print');
+    var btnPreview = document.getElementById('btn-preview-order');
 
-    button.hidden = true;
     var canPrint = typeof PermissionsService !== 'undefined'
       && typeof PermissionsService.canExportExcel === 'function'
       && await PermissionsService.canExportExcel('WEB_OrderDetailFrm');
-    button.hidden = !canPrint;
-    if (!canPrint) return;
 
-    button.onclick = async function () {
-      if (!currentOrder || typeof OrderPrintService === 'undefined') return;
-      button.disabled = true;
-      try {
-        var stillAllowed = await PermissionsService.canExportExcel('WEB_OrderDetailFrm');
-        if (!stillAllowed) {
-          button.hidden = true;
-          if (typeof Alert !== 'undefined') Alert.warning('Không có quyền', 'Bạn không có quyền in/xuất đơn hàng.');
-          return;
-        }
-        await printOrder();
-      } catch (err) {
-        console.error('Lỗi khi in đơn hàng:', err);
-      } finally {
-        button.disabled = false;
-      }
-    };
+    if (btnPrint) btnPrint.hidden = !canPrint;
+    if (btnPreview) btnPreview.hidden = !canPrint;
   }
 
   function renderLines() {
