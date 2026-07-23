@@ -1442,9 +1442,17 @@ var OrderPrintService = (function () {
         q: JSON.stringify({ Loai: 'InDonHang', TimKiem: docId, DocumentID: docId }),
         _t: Date.now()
       }).then(function (res) {
-        if (res && res.records && res.records.length > 0) return res.records[0];
-        if (res && res.JsonPayload) return typeof res.JsonPayload === 'string' ? JSON.parse(res.JsonPayload) : res.JsonPayload;
-        if (Array.isArray(res) && res.length > 0) return res[0];
+        var record = null;
+        if (res && res.records && res.records.length > 0) record = res.records[0];
+        else if (res && res.JsonPayload) record = res;
+        else if (Array.isArray(res) && res.length > 0) record = res[0];
+
+        if (record) {
+          if (record.JsonPayload) {
+            return typeof record.JsonPayload === 'string' ? JSON.parse(record.JsonPayload) : record.JsonPayload;
+          }
+          return record;
+        }
         return null;
       }).catch(function (err) {
         console.warn('[OrderPrintService] Lỗi gọi API_InDonHang, dùng dữ liệu đơn hàng sẵn có:', err);
