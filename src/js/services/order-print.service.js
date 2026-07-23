@@ -96,7 +96,10 @@ var OrderPrintService = (function () {
       })
       .then(function (result) {
         var fileName = (result.data && result.data.fileName) || result.fileName || 'Phieu_Dat_Hang.docx';
-        var downloadUrl = (result.data && result.data.fileUrl) || result.fileUrl || (uploadsUrl + encodeURIComponent(fileName));
+        var downloadUrl = uploadsUrl + encodeURIComponent(fileName);
+        if (result.data && result.data.fileUrl && result.data.fileUrl.includes(':8081')) {
+          downloadUrl = result.data.fileUrl;
+        }
         var anchor = document.createElement('a');
         anchor.href = downloadUrl;
         anchor.target = '_blank';

@@ -39,7 +39,22 @@ var AppGrid = {
         filter: true,
         resizable: true,
         floatingFilter: true,
-        minWidth: 100
+        minWidth: 100,
+        valueFormatter: function (params) {
+          if (params.value === null || params.value === undefined) return '';
+          if (typeof params.value === 'object') {
+            if (Array.isArray(params.value)) {
+              return params.value.map(function (item) {
+                if (item && typeof item === 'object') {
+                  return item.name || item.text || item.label || item.ItemID || item.so_ct || JSON.stringify(item);
+                }
+                return String(item);
+              }).join(', ');
+            }
+            return params.value.name || params.value.text || params.value.label || params.value.id || '';
+          }
+          return params.value;
+        }
       },
       autoSizeStrategy: {
         type: 'fitCellContents'

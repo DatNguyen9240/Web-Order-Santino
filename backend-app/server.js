@@ -422,10 +422,13 @@ app.post('/api/documents/generate', async (req, res) => {
         fs.writeFileSync(outputPath, buf);
 
         const protocol = req.protocol || 'http';
-        const host = req.get('host') || `localhost:${PORT}`;
+        let host = req.get('host') || `localhost:${PORT}`;
+        if (!host.includes(':') && PORT && PORT != 80 && PORT != 443) {
+            host = `${host}:${PORT}`;
+        }
         const fileUrl = `${protocol}://${host}/uploads/${finalFileName}`;
 
-        console.log(`[GENERATE] ✅ Đã tạo file: ${finalFileName}`);
+        console.log(`[GENERATE] ✅ Đã tạo file: ${finalFileName} -> ${fileUrl}`);
 
         return res.json({
             success: true,

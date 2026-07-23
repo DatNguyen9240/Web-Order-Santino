@@ -1,4 +1,4 @@
-﻿/* --- translations.js --- */
+/* --- translations.js --- */
 var TRANSLATIONS = {
   vi: {
     // --- Sidebar ---

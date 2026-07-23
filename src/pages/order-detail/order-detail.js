@@ -378,15 +378,9 @@ var OrderDetailPage = (function () {
       });
 
       var result = await res.json();
-      var downloadUrl = '';
       if (result.success) {
-        if (result.data && result.data.fileUrl) downloadUrl = result.data.fileUrl;
-        else if (result.fileUrl) downloadUrl = result.fileUrl;
-        else if (result.fileName) downloadUrl = docConfig.UPLOADS_URL + encodeURIComponent(result.fileName);
-      }
-
-      if (downloadUrl) {
         var fileName = (result.data && result.data.fileName) || result.fileName || 'Phieu_Dat_Hang.docx';
+        var downloadUrl = docConfig.UPLOADS_URL + encodeURIComponent(fileName);
         _showPreviewModal(downloadUrl, fileName);
       } else {
         alert('Lỗi tạo phiếu xem trước: ' + (result.message || 'Chưa rõ nguyên nhân'));
