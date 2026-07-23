@@ -1322,10 +1322,16 @@ var OrderPrintService = (function () {
   }
 
   function _money(value) {
-    if (typeof Utils !== 'undefined' && typeof Utils.formatMoney === 'function') {
-      return Utils.formatMoney(value || 0);
+    if (value === null || value === undefined || value === '') return '0';
+    if (typeof value === 'string') {
+      var trimmed = value.trim();
+      if (trimmed.indexOf(',') >= 0 || trimmed.indexOf('.') >= 0 || trimmed.indexOf('đ') >= 0 || trimmed.indexOf('đ') >= 0) {
+        return trimmed;
+      }
     }
-    return Number(value || 0).toLocaleString('vi-VN');
+    var num = Number(value);
+    if (isNaN(num)) return String(value);
+    return num.toLocaleString('en-US');
   }
 
   function _message(type, title, detail) {
@@ -1344,9 +1350,19 @@ var OrderPrintService = (function () {
       : (Array.isArray(order.print_items) ? order.print_items : []));
 
     var formattedLines = rawLines.map(function (line, index) {
-      var price = Number(line.don_gia || line.UnitPrice || line.DonGia || 0);
+      var rawPrice = line.don_gia || line.UnitPrice || line.DonGia || 0;
+      var price = typeof rawPrice === 'string'
+        ? Number(rawPrice.replace(/,/g, '').replace(/\./g, '').replace(/đ/g, '').trim())
+        : Number(rawPrice || 0);
+      if (isNaN(price)) price = 0;
+
       var qty = Number(line.so_luong || line.Quantity || line.SoLuong || 0);
-      var total = Number(line.thanh_tien || line.Amount || line.ThanhTien || (price * qty));
+
+      var rawTotal = line.thanh_tien || line.Amount || line.ThanhTien || 0;
+      var total = typeof rawTotal === 'string'
+        ? Number(rawTotal.replace(/,/g, '').replace(/\./g, '').replace(/đ/g, '').trim())
+        : Number(rawTotal || 0);
+      if (isNaN(total)) total = price * qty;
       var stt = line.STT || line.stt || (index + 1);
       var itemName = line.ten_hang || line.ItemName || line.TenHang || line.ten_hang_2 || '';
       var itemCode = line.ma_hang || line.ItemID || line.MaHang || line.ten_hang_2 || '';
@@ -1366,7 +1382,7 @@ var OrderPrintService = (function () {
         DVT: unit,
         dvt: unit,
         don_vi_tinh: unit,
-        DonGia: price,
+        DonGia: _money(price),
         don_gia: price,
         don_gia_display: _money(price),
         SoLuong: qty,
@@ -1374,7 +1390,7 @@ var OrderPrintService = (function () {
         so_luong_display: qty,
         ChietKhau: discount,
         chiet_khau: discount,
-        ThanhTien: total,
+        ThanhTien: _money(total),
         thanh_tien: total,
         thanh_tien_display: _money(total)
       });
@@ -1401,13 +1417,13 @@ var OrderPrintService = (function () {
       ghi_chu: order.ghi_chu || order.DienGiai || order.Memo || '',
       dien_giai: order.dien_giai || order.DienGiai || order.Memo || '',
       
-      TongTienHang: totalMoney,
+      TongTienHang: _money(totalMoney),
       total_money: totalMoney,
       total_money_display: _money(totalMoney),
-      TienChietKhau: order.TienChietKhau || 0,
-      TienSauChietKhau: order.TienSauChietKhau || totalMoney,
+      TienChietKhau: _money(order.TienChietKhau || 0),
+      TienSauChietKhau: _money(order.TienSauChietKhau || totalMoney),
       ChietKhauKhac: order.ChietKhauKhac || 0,
-      TongThanhToan: order.TongThanhToan || totalMoney,
+      TongThanhToan: _money(order.TongThanhToan || totalMoney),
       TongSoLuong: totalQty,
       total_qty: totalQty,
 

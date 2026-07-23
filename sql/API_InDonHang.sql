@@ -64,11 +64,11 @@ BEGIN
                 @DiaChi                                      AS [DiaChi],
                 @SDT                                         AS [SDT],
                 @DienGiai                                    AS [DienGiai],
-                @TongTienHang                                AS [TongTienHang],
-                0                                            AS [TienChietKhau],
-                @TongTienHang                                AS [TienSauChietKhau],
-                0                                            AS [ChietKhauKhac],
-                @TongTienHang                                AS [TongThanhToan],
+                FORMAT(ISNULL(@TongTienHang, 0), '#,0')      AS [TongTienHang],
+                N'0'                                         AS [TienChietKhau],
+                FORMAT(ISNULL(@TongTienHang, 0), '#,0')      AS [TienSauChietKhau],
+                N'0'                                         AS [ChietKhauKhac],
+                FORMAT(ISNULL(@TongTienHang, 0), '#,0')      AS [TongThanhToan],
                 
                 -- Tính tổng số lượng
                 (SELECT ISNULL(SUM([Quantity]), 0) FROM [dbo].[WEB_OrderDetailTbl] WHERE [DocumentID] = @DocumentID) AS [TongSoLuong],
@@ -81,14 +81,14 @@ BEGIN
                         d.[ItemID]                                AS [MaHang],
                         d.[ItemName]                              AS [TenHang],
                         i.[Unit]                                  AS [DVT],
-                        d.[UnitPrice]                             AS [DonGia],
+                        FORMAT(ISNULL(d.[UnitPrice], 0), '#,0')   AS [DonGia],
                         d.[Quantity]                              AS [SoLuong],
                         CASE 
                             WHEN (d.[UnitPrice] * d.[Quantity]) > 0 THEN 
                                 ROUND(((d.[UnitPrice] * d.[Quantity] - d.[Amount]) / (d.[UnitPrice] * d.[Quantity])) * 100, 0)
                             ELSE 0 
                         END                                       AS [ChietKhau],
-                        d.[Amount]                                AS [ThanhTien]
+                        FORMAT(ISNULL(d.[Amount], 0), '#,0')      AS [ThanhTien]
                     FROM [dbo].[WEB_OrderDetailTbl] d
                     INNER JOIN [dbo].[WEB_OrderTbl]  h ON d.[DocumentID] = h.[DocumentID]
                     LEFT JOIN  [dbo].[CF_BranchTbl]  b ON h.[BranchID]   = b.[BranchID]
