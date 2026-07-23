@@ -296,11 +296,19 @@ app.post('/api/documents/generate', async (req, res) => {
 
 
         // Tìm đường dẫn file template trong samples/
-        const docxTemplatePath = findTemplatePath(SAMPLES_DIR, templateType);
+        let docxTemplatePath = findTemplatePath(SAMPLES_DIR, templateType);
+        if (!docxTemplatePath) {
+            // Fallback: Lấy file .docx đầu tiên có sẵn trong thư mục samples/
+            const sampleFiles = fs.readdirSync(SAMPLES_DIR).filter(f => f.endsWith('.docx'));
+            if (sampleFiles.length > 0) {
+                docxTemplatePath = path.join(SAMPLES_DIR, sampleFiles[0]);
+            }
+        }
+
         if (!docxTemplatePath) {
             return res.status(404).json({
                 success: false,
-                message: `Không tìm thấy template '${templateType}' trong thư mục samples/.`
+                message: `Không tìm thấy template '${templateType}' hoặc bất kỳ file mẫu .docx nào trong thư mục samples/.`
             });
         }
 

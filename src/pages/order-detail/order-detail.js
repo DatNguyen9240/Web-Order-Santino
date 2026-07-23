@@ -305,31 +305,45 @@ var OrderDetailPage = (function () {
         ChiTietDonHang: currentOrderData.print_items || currentOrderData.lines || []
       };
 
-      var baseApi = (window.API_CONFIG && API_CONFIG.ENDPOINTS && API_CONFIG.ENDPOINTS.DOCUMENT_MANAGER)
-        ? API_CONFIG.ENDPOINTS.DOCUMENT_MANAGER.BASE_API
-        : ((window.DOC_ENGINE_URL || 'http://103.190.38.46:8081') + '/api/documents');
+      if (typeof OrderPrintService !== 'undefined' && typeof OrderPrintService.generate === 'function') {
+        return OrderPrintService.generate(currentOrderData);
+      }
 
-      var templateName = 'In Don dat hang.docx';
-      if (window.API_CONFIG && API_CONFIG.ENDPOINTS && API_CONFIG.ENDPOINTS.DOCUMENT_MANAGER && API_CONFIG.ENDPOINTS.DOCUMENT_MANAGER.ORDER_TEMPLATE) {
-        templateName = API_CONFIG.ENDPOINTS.DOCUMENT_MANAGER.ORDER_TEMPLATE;
+      var docConfig = (window.API_CONFIG && API_CONFIG.ENDPOINTS && API_CONFIG.ENDPOINTS.DOCUMENT_MANAGER)
+        ? API_CONFIG.ENDPOINTS.DOCUMENT_MANAGER
+        : null;
+
+      if (!docConfig || !docConfig.BASE_API) {
+        alert('Chưa cấu hình DOCUMENT_MANAGER trong env.js');
+        return;
       }
 
       var payload = {
-        templateType: templateName,
+        templateType: docConfig.ORDER_TEMPLATE,
         outputFileName: 'Phieu_Dat_Hang_' + String(rowDataPayload.SoPhieu || id).replace(/[\/\\:*?"<>|()+]/g, '_'),
         rowData: rowDataPayload
       };
 
-      var docEngineUrl = baseApi + '/generate';
-      var res = await fetch(docEngineUrl, {
+      var res = await fetch(docConfig.BASE_API + '/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
       var result = await res.json();
-      if (result.success && result.data && result.data.fileUrl) {
-        window.open(result.data.fileUrl, '_blank');
+      var downloadUrl = '';
+      if (result.success) {
+        if (result.data && result.data.fileUrl) {
+          downloadUrl = result.data.fileUrl;
+        } else if (result.fileUrl) {
+          downloadUrl = result.fileUrl;
+        } else if (result.fileName) {
+          downloadUrl = docConfig.UPLOADS_URL + encodeURIComponent(result.fileName);
+        }
+      }
+
+      if (downloadUrl) {
+        window.open(downloadUrl, '_blank');
       } else {
         alert('Lỗi tạo phiếu in: ' + (result.message || 'Chưa rõ nguyên nhân'));
       }
