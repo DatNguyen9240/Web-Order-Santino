@@ -1390,12 +1390,19 @@ var OrderPrintService = (function () {
         });
       })
       .then(function (result) {
-        var downloadUrl = uploadsUrl + encodeURIComponent(result.fileName);
+        var fileUrl = (result && result.fileUrl) || (result && result.data && result.data.fileUrl) || '';
+        var fileName = (result && result.fileName) || (result && result.data && result.data.fileName) || '';
+        var downloadUrl = fileUrl || (uploadsUrl + encodeURIComponent(fileName));
+
+        if (!downloadUrl || downloadUrl.endsWith('/undefined')) {
+          throw new Error('Server không trả về tập tin hợp lệ.');
+        }
+
         var anchor = document.createElement('a');
         anchor.href = downloadUrl;
         anchor.target = '_blank';
         anchor.rel = 'noopener';
-        anchor.download = result.fileName;
+        anchor.download = fileName || 'Phieu_dat_hang.docx';
         document.body.appendChild(anchor);
         anchor.click();
         anchor.remove();

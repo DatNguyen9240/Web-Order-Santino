@@ -16,8 +16,9 @@ const PORT = process.env.PORT || 8081;
 // Setup directories
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 const SAMPLES_DIR = path.join(__dirname, 'samples');
+const OUTPUT_DIR = path.join(__dirname, 'output');
 
-[UPLOADS_DIR, SAMPLES_DIR].forEach(dir => {
+[UPLOADS_DIR, SAMPLES_DIR, OUTPUT_DIR].forEach(dir => {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
 
@@ -29,6 +30,12 @@ app.use('/uploads', (req, res, next) => {
     res.header('Access-Control-Allow-Headers', '*');
     next();
 }, express.static(UPLOADS_DIR));
+
+app.use('/output', (req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', '*');
+    next();
+}, express.static(OUTPUT_DIR));
 
 app.use('/samples', (req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -418,18 +425,22 @@ app.post('/api/documents/generate', async (req, res) => {
         });
 
         const finalFileName = `${safeOutputName}_${Date.now()}.docx`;
-        const outputPath = path.join(UPLOADS_DIR, finalFileName);
+        const outputPath = path.join(OUTPUT_DIR, finalFileName);
+        const uploadsPath = path.join(UPLOADS_DIR, finalFileName);
         fs.writeFileSync(outputPath, buf);
+        try { fs.writeFileSync(uploadsPath, buf); } catch (e) {}
 
         const protocol = req.protocol || 'http';
         const host = req.get('host') || `localhost:${PORT}`;
-        const fileUrl = `${protocol}://${host}/uploads/${finalFileName}`;
+        const fileUrl = `${protocol}://${host}/output/${finalFileName}`;
 
         console.log(`[GENERATE] ✅ Đã tạo file: ${finalFileName}`);
 
         return res.json({
             success: true,
             message: 'Tạo tài liệu thành công!',
+            fileName: finalFileName,
+            fileUrl: fileUrl,
             data: {
                 fileName: finalFileName,
                 fileUrl: fileUrl

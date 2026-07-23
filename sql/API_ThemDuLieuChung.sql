@@ -44,7 +44,7 @@ BEGIN
     FROM dbo.SY_FrmLstTbl
     WHERE FormID = @FormName;
 
-    SET @ObjectID = OBJECT_ID(@TableName, 'U');
+    SET @ObjectID = OBJECT_ID(@TableName);
     IF @ObjectID IS NULL
     BEGIN
         SELECT 1 AS [code], N'Form không được cấu hình bảng dữ liệu hợp lệ.' AS [msg];

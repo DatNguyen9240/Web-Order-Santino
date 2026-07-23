@@ -34,6 +34,23 @@ var DynamicPage = (function () {
       .filter(Boolean);
   }
 
+  function _getRowPrimaryKeyValue(row) {
+    if (!row || typeof row !== 'object') return '';
+    var keys = _getPrimaryKeyNames();
+    if (keys.length === 0) {
+      return String(row[primaryKey] || row.id || row.UserAutoID || row.ItemName2 || row.DocumentID || '');
+    }
+    var values = keys.map(function (k) {
+      if (row[k] !== undefined && row[k] !== null) return String(row[k]);
+      var kClean = k.toLowerCase().replace(/_/g, '');
+      var matchedKey = Object.keys(row).find(function (rk) {
+        return rk.toLowerCase().replace(/_/g, '') === kClean;
+      });
+      return matchedKey && row[matchedKey] !== undefined && row[matchedKey] !== null ? String(row[matchedKey]) : '';
+    }).filter(Boolean);
+    return values.length > 0 ? values.join(';') : String(row[primaryKey] || row.id || row.UserAutoID || row.ItemName2 || row.ten_hang_2 || '');
+  }
+
   function _formatDateForInput(value) {
     var raw = String(value === undefined || value === null ? '' : value).trim();
     if (!raw) return '';
@@ -874,7 +891,7 @@ var DynamicPage = (function () {
       floatingFilter: false,
       cellRenderer: function (params) {
         var p = params.data;
-        var val = p[primaryKey];
+        var val = _getRowPrimaryKeyValue(p);
         var wrapper = document.createElement('div');
         wrapper.style.display = 'flex';
         wrapper.style.gap = '6px';
@@ -885,7 +902,7 @@ var DynamicPage = (function () {
         btnEdit.innerHTML = '<span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">edit</span>';
         btnEdit.addEventListener('click', function (e) {
           e.stopPropagation();
-          DynamicPage.openModal(val);
+          DynamicPage.openModal(val, false, p);
         });
 
         var btnDel = document.createElement('button');
@@ -962,14 +979,24 @@ var DynamicPage = (function () {
     onSearch('');
   }
 
-  function openModal(primaryKeyValue, isCopy) {
+  function openModal(primaryKeyValue, isCopy, rowData) {
     if (!isCopy) {
       copySourceData = null;
     }
-    var p = allData.find(item => String(item[primaryKey]) === String(primaryKeyValue));
-    editOriginalData = p && !isCopy ? Object.assign({}, p) : null;
-    document.getElementById('dm-title').textContent = p ? 'Chỉnh Sửa' : 'Thêm Mới';
-    document.getElementById('dm-id-hidden').value = p ? primaryKeyValue : '';
+    var targetVal = String(primaryKeyValue === undefined || primaryKeyValue === null ? '' : primaryKeyValue);
+    var p = rowData || allData.find(function (item) {
+      return _getRowPrimaryKeyValue(item) === targetVal;
+    });
+    if (!p && targetVal !== '') {
+      p = allData.find(function (item) {
+        return String(item[primaryKey] || item.id || item.UserAutoID || item.ItemName2 || item.ten_hang_2 || '') === targetVal;
+      });
+    }
+
+    var isEditMode = !!p && !isCopy;
+    editOriginalData = isEditMode ? Object.assign({}, p) : null;
+    document.getElementById('dm-title').textContent = isEditMode ? 'Chỉnh Sửa' : 'Thêm Mới';
+    document.getElementById('dm-id-hidden').value = isEditMode ? (targetVal || _getRowPrimaryKeyValue(p)) : '';
 
     schemaFields.forEach(function (f) {
       var input = document.getElementById('field-' + f.name);
@@ -1143,13 +1170,21 @@ var DynamicPage = (function () {
     }
 
     try {
-      var isCommonUpdate = !!idHidden && (
+      var isProductForm = formName && (
+        formName.toLowerCase().includes('product') ||
+        formName.toLowerCase().includes('tenhang2') ||
+        formName.toLowerCase().includes('hanghoa')
+      );
+
+      var isCommonUpdate = !isProductForm && !!idHidden && (
         endpoint.toLowerCase().includes('/api_capnhatdulieuchung') ||
         !endpoint.toLowerCase().includes('/api_')
       );
-      var isCommonCreate = !idHidden && endpoint.toLowerCase().includes('/api_themdulieuchung');
+      var isCommonCreate = !isProductForm && !idHidden && endpoint.toLowerCase().includes('/api_themdulieuchung');
 
-      if (isCommonUpdate) {
+      if (isProductForm) {
+        endpoint = '/API_SanPham_Luu';
+      } else if (isCommonUpdate) {
         endpoint = '/API_CapNhatDuLieuChung';
       }
 

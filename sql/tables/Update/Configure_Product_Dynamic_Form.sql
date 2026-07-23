@@ -7,7 +7,7 @@ BEGIN TRY
 
     DECLARE @Forms TABLE (FormID VARCHAR(100) PRIMARY KEY);
     INSERT INTO @Forms (FormID)
-    VALUES ('frmProduct'), ('TenHang2Frm');
+    VALUES ('frmProduct'), ('TenHang2Frm'), ('products');
 
     DECLARE @Actions TABLE
     (

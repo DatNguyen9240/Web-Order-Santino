@@ -54,7 +54,7 @@ BEGIN
     FROM dbo.SY_FrmLstTbl
     WHERE FormID = @FormName;
 
-    SET @ObjectID = OBJECT_ID(@TableName, 'U');
+    SET @ObjectID = OBJECT_ID(@TableName);
 
     IF @ObjectID IS NULL
     BEGIN
