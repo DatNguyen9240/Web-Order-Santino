@@ -75,10 +75,37 @@ var PermissionsService = (function () {
     });
   }
 
+  /**
+   * Kiểm tra trực tiếp quyền xuất/in của form. Không cache localStorage để
+   * thay đổi quyền trên ERP có hiệu lực ngay ở lần mở trang hoặc bấm nút sau.
+   */
+  function canExportExcel(formName) {
+    var groupId = _currentGroupId();
+    var endpoint = _ep('GET_ALL_MENUS_FOR_GROUP');
+    if (!endpoint || !groupId || !formName) return Promise.resolve(false);
+
+    return Http.post(endpoint, {
+      NhomNguoiDangThaoTac: groupId,
+      UserGroupID: groupId
+    }).then(function (res) {
+      var records = (res && res.records) ? res.records : (Array.isArray(res) ? res : []);
+      var target = String(formName).toLowerCase();
+      var permission = records.find(function (item) {
+        var key = item.formName || item.FormName || item.FormKey || item.formKey || '';
+        return String(key).toLowerCase() === target;
+      });
+      return !!(permission && (permission.isExportExcel == 1 || permission.isExportExcel === '1' || permission.isExportExcel === true));
+    }).catch(function (err) {
+      console.warn('[PermissionsService] Không thể kiểm tra quyền xuất:', err);
+      return false;
+    });
+  }
+
   return {
     getGroups: getGroups,
     getFullMenusByGroup: getFullMenusByGroup,
     savePermission: savePermission,
-    sync: sync
+    sync: sync,
+    canExportExcel: canExportExcel
   };
 })();

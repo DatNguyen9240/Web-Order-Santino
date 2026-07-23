@@ -10,6 +10,9 @@
     <div class="search-wrapper" style="width: 300px; max-width: 100%; flex: none;">
       <span class="material-symbols-outlined">search</span>
       <input id="dynamic-search" placeholder="Tìm kiếm nhanh..." oninput="DynamicPage.onSearch(this.value)">
+      <button id="dynamic-search-clear" class="search-clear" type="button" aria-label="Xóa nội dung tìm kiếm" onclick="DynamicPage.clearSearch()" hidden>
+        <span class="material-symbols-outlined">close</span>
+      </button>
     </div>
     <button class="btn btn-primary" onclick="DynamicPage.openModal()" style="white-space: nowrap; height: 42px;">
       <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">add</span>

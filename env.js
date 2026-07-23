@@ -8,6 +8,9 @@
 const isLocalDevelopment = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 const ENV_VARS = {
     API_BASE: isLocalDevelopment ? 'http://stntest.bms79.com/api' : '/api',
+    // Document Server được reverse proxy ở /docserver khi triển khai.
+    // Local mặc định dùng server DOCX chạy tại cổng 8081.
+    DOCUMENT_SERVER_BASE: isLocalDevelopment ? 'http://localhost:8081' : '/docserver',
 };
 
 window.API_CONFIG = {
@@ -52,6 +55,16 @@ window.API_CONFIG = {
             SAVE: '/API_LuuMenu',
             DELETE: '/API_XoaMenu',
             UPDATE_ORDER: '/API_LuuThuTuMenu'
+        },
+        DOCUMENT_MANAGER: {
+            get BASE_API() {
+                return ENV_VARS.DOCUMENT_SERVER_BASE + '/api/documents';
+            },
+            get UPLOADS_URL() {
+                return ENV_VARS.DOCUMENT_SERVER_BASE + '/uploads/';
+            },
+            // Tên mẫu đặt tại thư mục samples/ của Document Server.
+            ORDER_TEMPLATE: 'phieu-dat-hang.docx'
         }
     }
 };

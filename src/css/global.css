@@ -544,6 +544,20 @@ input.date-vn:active::before {
   color: var(--text);
 }
 
+/* Gợi ý bằng chữ cho các trường tiền tệ của DynamicPage. */
+.dynamic-number-words {
+  display: block;
+  min-height: 14px;
+  margin-top: -2px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-style: italic;
+  line-height: 14px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+
 /* --- HEAD overrides --- */
 /* Sidebar Logo & Nav */
 .logo {
@@ -2292,6 +2306,46 @@ tbody tr.row-selected td:first-child {
 
 .dark-theme .app-logo {
   filter: none;
+}
+
+/* Nút xóa của ô tìm kiếm DynamicPage. */
+#dynamic-search {
+  padding-right: 42px;
+}
+
+.search-clear {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 8px;
+  display: grid;
+  width: 26px;
+  height: 26px;
+  margin: auto 0;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.search-clear .material-symbols-outlined {
+  position: static;
+  left: auto;
+  color: inherit;
+  font-size: 18px;
+  line-height: 1;
+  pointer-events: auto;
+}
+
+.search-clear:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.search-clear[hidden] {
+  display: none;
 }
 
 /* Micro-interactions (Blueprint v2.0) */

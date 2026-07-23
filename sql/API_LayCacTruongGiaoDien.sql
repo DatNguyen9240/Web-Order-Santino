@@ -21,13 +21,15 @@ BEGIN
     DECLARE @HideColumnArr VARCHAR(MAX) = '';
     DECLARE @AddNewColumnArr VARCHAR(MAX) = '';
     DECLARE @EditorColumnArr VARCHAR(MAX) = '';
+    DECLARE @LockColumnArr VARCHAR(MAX) = '';
 
     SELECT TOP (1)
         @TableName = ISNULL(formConfig.TableName, formConfig.FormID),
         @PrimaryKey = NULLIF(LTRIM(RTRIM(formConfig.PrimaryKey)), ''),
         @HideColumnArr = ISNULL(formConfig.HideColumnArr, ''),
         @AddNewColumnArr = ISNULL(formConfig.AddNewColumnArr, ''),
-        @EditorColumnArr = ISNULL(formConfig.EditorColumnArr, '')
+        @EditorColumnArr = ISNULL(formConfig.EditorColumnArr, ''),
+        @LockColumnArr = ISNULL(formConfig.LockColumnArr, '')
     FROM dbo.SY_FrmLstTbl formConfig
     WHERE formConfig.FormID = @FormName OR formConfig.TableName = @FormName;
 
@@ -45,13 +47,6 @@ BEGIN
     -- chung để xóa an toàn theo FormName, không gọi HTTP DELETE vào route bảng.
     DECLARE @ApiDelete NVARCHAR(400) = '/API_XoaDuLieuChung';
     DECLARE @ApiConfigured BIT = 0;
-
-    -- Sản phẩm có nghiệp vụ đồng bộ SKU/size nên thêm và sửa vẫn dùng API riêng.
-    IF LOWER(@TableName) = LOWER('CF_TenHang2Tbl')
-    BEGIN
-        SET @ApiCreate = '/API_SanPham_Luu';
-        SET @ApiUpdate = '/API_SanPham_Luu';
-    END;
 
     IF EXISTS (
         SELECT 1
@@ -79,11 +74,18 @@ BEGIN
     -- Lấy cấu hình các trường từ sys.columns kết hợp với các bảng từ điển chuẩn (hỗ trợ không phân biệt chữ hoa/thường)
     SELECT 
         c.name AS [name], 
-        COALESCE(NULLIF(f.CaptionVN, ''), c.name) AS [label],
+        COALESCE(NULLIF(f.CaptionVN, ''), NULLIF(dd.Caption, ''), c.name) AS [label],
         
-        -- Cột bắt buộc nếu là NOT NULL và không phải tự tăng/computed
+        -- Cột bắt buộc nếu là NOT NULL, không tự sinh và không có DEFAULT.
         CASE 
-            WHEN c.is_nullable = 0 AND c.is_identity = 0 AND c.is_computed = 0 THEN 1 
+            WHEN c.is_nullable = 0
+             AND c.is_identity = 0
+             AND c.is_computed = 0
+             AND c.default_object_id = 0
+             AND NOT EXISTS (
+                 SELECT 1 FROM STRING_SPLIT(@LockColumnArr, ';') s
+                 WHERE LOWER(LTRIM(RTRIM(s.value))) = LOWER(c.name)
+             ) THEN 1
             ELSE 0 
         END AS [required], 
         
@@ -111,7 +113,8 @@ BEGIN
         
         -- showInEdit
         CASE 
-            WHEN c.is_identity = 1 OR c.is_computed = 1 OR LOWER(c.name) = LOWER(@PrimaryKey) THEN 0
+            -- Khóa chính vẫn hiện khi sửa nhưng bị khóa ở isReadOnlyEdit.
+            WHEN c.is_identity = 1 OR c.is_computed = 1 THEN 0
             WHEN ISNULL(dd.isInvisible, 0) = 1 THEN 0
             WHEN NULLIF(LTRIM(RTRIM(@EditorColumnArr)), '') IS NOT NULL 
                  AND NOT EXISTS (
@@ -124,6 +127,10 @@ BEGIN
         -- isReadOnlyEdit
         CASE 
             WHEN LOWER(c.name) = LOWER(@PrimaryKey) OR c.is_identity = 1 OR c.is_computed = 1 THEN 1
+            WHEN EXISTS (
+                SELECT 1 FROM STRING_SPLIT(@LockColumnArr, ';') s
+                WHERE LOWER(LTRIM(RTRIM(s.value))) = LOWER(c.name)
+            ) THEN 1
             WHEN ISNULL(dd.isLock, 0) = 1 THEN 1
             ELSE 0
         END AS [isReadOnlyEdit],
@@ -131,6 +138,10 @@ BEGIN
         -- isReadOnlyAdd
         CASE 
             WHEN c.is_identity = 1 OR c.is_computed = 1 THEN 1
+            WHEN EXISTS (
+                SELECT 1 FROM STRING_SPLIT(@LockColumnArr, ';') s
+                WHERE LOWER(LTRIM(RTRIM(s.value))) = LOWER(c.name)
+            ) THEN 1
             WHEN ISNULL(dd.isLock, 0) = 1 THEN 1
             ELSE 0
         END AS [isReadOnlyAdd],
@@ -151,6 +162,9 @@ BEGIN
         ISNULL(dd.Type, '') AS [dropdownType],
         t.name AS [dataType],
         ISNULL(dd.LinkColumn, '') AS [LinkColumn],
+        ISNULL(fm.Type, '') AS [formatType],
+        fm.NumberDecimal AS [numberDecimal],
+        ISNULL(fm.FormatString, '') AS [formatString],
         
         -- orderNo
         CASE 
@@ -163,6 +177,7 @@ BEGIN
     LEFT JOIN dbo.SY_FmatTbl fm ON LOWER(fm.FormatID) = LOWER(f.FormatID)
     LEFT JOIN dbo.SY_FrmDrdwTbl dd ON dd.FormID = @FormName AND LOWER(dd.ColumnID) = LOWER(c.name)
     WHERE c.object_id = @ObjectId
+
     ORDER BY 
         CASE 
             WHEN NULLIF(LTRIM(RTRIM(@EditorColumnArr)), '') IS NULL THEN c.column_id

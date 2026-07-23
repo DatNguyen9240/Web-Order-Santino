@@ -5,6 +5,37 @@ var OrderDetailPage = (function () {
   var itemsPerPage = 10;
   var $container = null;
   var currentOrderData = null;
+  var currentOrder = null;
+
+  async function bindPrintButton() {
+    var button = document.getElementById('order-detail-print');
+    if (!button) return;
+
+    button.hidden = true;
+    var canPrint = typeof PermissionsService !== 'undefined'
+      && typeof PermissionsService.canExportExcel === 'function'
+      && await PermissionsService.canExportExcel('WEB_OrderDetailFrm');
+    button.hidden = !canPrint;
+    if (!canPrint) return;
+
+    button.onclick = async function () {
+      if (!currentOrder || typeof OrderPrintService === 'undefined') return;
+      button.disabled = true;
+      try {
+        var stillAllowed = await PermissionsService.canExportExcel('WEB_OrderDetailFrm');
+        if (!stillAllowed) {
+          button.hidden = true;
+          if (typeof Alert !== 'undefined') Alert.warning('Không có quyền', 'Bạn không có quyền in/xuất đơn hàng.');
+          return;
+        }
+        await printOrder();
+      } catch (err) {
+        console.error('Lỗi khi in đơn hàng:', err);
+      } finally {
+        button.disabled = false;
+      }
+    };
+  }
 
   function renderLines() {
     var container = document.getElementById('detail-grid-container');
@@ -101,6 +132,7 @@ var OrderDetailPage = (function () {
       allLines = [];
       currentPage = 1;
       currentOrderData = null;
+      currentOrder = null;
       $container.classList.add('is-full-width');
 
       const html = await Router.fetchTemplate('src/pages/order-detail/order-detail.html');
@@ -163,6 +195,8 @@ var OrderDetailPage = (function () {
 
     currentOrderData = o;
     allLines = o.lines || [];
+    currentOrder = o;
+    await bindPrintButton();
 
     var titleEl = document.getElementById('detail-title');
     if (titleEl) titleEl.textContent = t('btn.detail') + ': ' + o.so_ct;

@@ -184,27 +184,6 @@ BEGIN
             RETURN;
         END;
 
-        -- Quan hệ ItemName2 + MauSac là quan hệ nghiệp vụ, CSDL hiện không có FK cascade.
-        -- Xóa danh sách size/SKU con trước khi xóa tên hàng 2.
-        IF @SchemaName = 'dbo' AND @ObjectName = 'CF_TenHang2Tbl'
-        BEGIN
-            DECLARE @ItemName2 NVARCHAR(50) = COALESCE(
-                JSON_VALUE(@q, '$.Keys.ItemName2'),
-                JSON_VALUE(@q, '$.Keys.ten_hang_2')
-            );
-            DECLARE @MauSac NVARCHAR(50) = COALESCE(
-                JSON_VALUE(@q, '$.Keys.MauSac'),
-                JSON_VALUE(@q, '$.Keys.mau')
-            );
-
-            DELETE FROM dbo.CF_ItemTbl
-            WHERE ItemName2 = @ItemName2
-              AND (
-                    (MauSac IS NULL AND @MauSac IS NULL)
-                    OR MauSac = @MauSac
-              );
-        END;
-
         SET @Sql = N'DELETE FROM ' + @QualifiedTable + N' WHERE ' + @Where + N'; SET @RowsOut = @@ROWCOUNT;';
         EXEC sys.sp_executesql
             @Sql,
