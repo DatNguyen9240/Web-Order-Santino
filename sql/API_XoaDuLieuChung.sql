@@ -3,203 +3,96 @@ IF OBJECT_ID('dbo.API_XoaDuLieuChung', 'P') IS NOT NULL
 GO
 
 CREATE PROCEDURE [dbo].[API_XoaDuLieuChung]
-    @q NVARCHAR(MAX)
+    @q NVARCHAR(MAX) = NULL,
+    @DocumentID NVARCHAR(100) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
     SET XACT_ABORT ON;
 
-    DECLARE @FormName VARCHAR(100);
-    DECLARE @Keys NVARCHAR(MAX);
+    -- 1. Tự động bóc tách mã chứng từ (DocumentID) từ mọi định dạng JSON client gửi lên
+    IF @DocumentID IS NULL AND ISJSON(ISNULL(@q, '')) = 1
+    BEGIN
+        SET @DocumentID = COALESCE(
+            JSON_VALUE(@q, '$.Keys.DocumentID'),
+            JSON_VALUE(@q, '$.DocumentID'),
+            JSON_VALUE(@q, '$.Keys.id'),
+            JSON_VALUE(@q, '$.id')
+        );
+    END;
+
+    -- 2. Nếu có DocumentID -> Tiến hành xóa Đơn hàng / Chứng từ (Chi tiết trước, Đầu đơn sau)
+    IF NULLIF(LTRIM(RTRIM(@DocumentID)), '') IS NOT NULL
+    BEGIN
+        BEGIN TRY
+            BEGIN TRANSACTION;
+
+            -- Kiểm tra nếu đơn bị khóa
+            IF EXISTS (SELECT 1 FROM dbo.WEB_OrderTbl WHERE DocumentID = @DocumentID AND ISNULL(isLock, 0) = 1)
+            BEGIN
+                ROLLBACK TRANSACTION;
+                SELECT 0 AS [Success], 1 AS [code], N'Đơn hàng ' + @DocumentID + N' đã bị khóa, không thể xóa' AS [Message], N'Đơn hàng đã bị khóa' AS [msg];
+                RETURN;
+            END;
+
+            -- Xóa chi tiết đơn hàng (nếu có)
+            IF OBJECT_ID('dbo.WEB_OrderDetailTbl', 'U') IS NOT NULL
+            BEGIN
+                DELETE FROM dbo.WEB_OrderDetailTbl WHERE DocumentID = @DocumentID;
+            END;
+
+            -- Xóa thông tin chung đơn hàng
+            IF OBJECT_ID('dbo.WEB_OrderTbl', 'U') IS NOT NULL
+            BEGIN
+                DELETE FROM dbo.WEB_OrderTbl WHERE DocumentID = @DocumentID;
+            END;
+
+            COMMIT TRANSACTION;
+            SELECT 1 AS [Success], 0 AS [code], N'Đã xóa đơn hàng ' + @DocumentID + N' thành công.' AS [Message], N'Đã xóa thành công' AS [msg];
+            RETURN;
+        END TRY
+        BEGIN CATCH
+            IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+            SELECT 0 AS [Success], 1 AS [code], ERROR_MESSAGE() AS [Message], ERROR_MESSAGE() AS [msg];
+            RETURN;
+        END CATCH;
+    END;
+
+    -- 3. Nếu là Form động danh mục thông thường -> Xóa theo Metadata SY_FrmLstTbl
+    DECLARE @FormName VARCHAR(100) = JSON_VALUE(@q, '$.FormName');
+    DECLARE @Keys NVARCHAR(MAX) = JSON_QUERY(@q, '$.Keys');
     DECLARE @TableName SYSNAME;
     DECLARE @PrimaryKey NVARCHAR(400);
-    DECLARE @ObjectID INT;
-    DECLARE @SchemaName SYSNAME;
-    DECLARE @ObjectName SYSNAME;
-    DECLARE @QualifiedTable NVARCHAR(520);
-    DECLARE @Where NVARCHAR(MAX);
     DECLARE @Sql NVARCHAR(MAX);
-    DECLARE @MatchedRows BIGINT = 0;
-    DECLARE @DeletedRows INT = 0;
-    DECLARE @DryRun BIT = 0;
-
-    IF ISJSON(ISNULL(@q, '')) <> 1
-    BEGIN
-        SELECT 1 AS [code], N'Dữ liệu xóa không phải JSON hợp lệ.' AS [msg];
-        RETURN;
-    END;
-
-    SET @FormName = JSON_VALUE(@q, '$.FormName');
-    SET @Keys = JSON_QUERY(@q, '$.Keys');
-    SET @DryRun = CASE LOWER(ISNULL(JSON_VALUE(@q, '$.DryRun'), 'false'))
-        WHEN 'true' THEN 1
-        WHEN '1' THEN 1
-        ELSE 0
-    END;
-
-    IF NULLIF(LTRIM(RTRIM(@FormName)), '') IS NULL OR ISJSON(@Keys) <> 1
-    BEGIN
-        SELECT 1 AS [code], N'Dữ liệu xóa không hợp lệ: thiếu FormName hoặc Keys.' AS [msg];
-        RETURN;
-    END;
 
     SELECT TOP (1)
         @TableName = NULLIF(LTRIM(RTRIM(ISNULL(TableName, FormID))), ''),
         @PrimaryKey = NULLIF(LTRIM(RTRIM(PrimaryKey)), '')
-    FROM dbo.SY_FrmLstTbl
-    WHERE FormID = @FormName;
+    FROM dbo.SY_FrmLstTbl WHERE FormID = @FormName;
 
-    SET @ObjectID = OBJECT_ID(@TableName, 'U');
-
-    IF @ObjectID IS NULL
+    IF @TableName IS NOT NULL AND @PrimaryKey IS NOT NULL AND ISJSON(@Keys) = 1
     BEGIN
-        SELECT 1 AS [code], N'Form không được cấu hình bảng dữ liệu hợp lệ.' AS [msg];
-        RETURN;
-    END;
+        BEGIN TRY
+            BEGIN TRANSACTION;
+            
+            DECLARE @KeyVal NVARCHAR(200) = JSON_VALUE(@Keys, '$.' + @PrimaryKey);
+            IF @KeyVal IS NOT NULL
+            BEGIN
+                SET @Sql = N'DELETE FROM ' + QUOTENAME(@TableName) + N' WHERE ' + QUOTENAME(@PrimaryKey) + N' = @Val';
+                EXEC sp_executesql @Sql, N'@Val NVARCHAR(200)', @Val = @KeyVal;
+            END;
 
-    SELECT
-        @SchemaName = OBJECT_SCHEMA_NAME(@ObjectID),
-        @ObjectName = OBJECT_NAME(@ObjectID);
-
-    SET @QualifiedTable = QUOTENAME(@SchemaName) + N'.' + QUOTENAME(@ObjectName);
-
-    IF NOT EXISTS (SELECT 1 FROM OPENJSON(@Keys))
-    BEGIN
-        SELECT 1 AS [code], N'Không có trường khóa để xác định dòng cần xóa.' AS [msg];
-        RETURN;
-    END;
-
-    -- Chỉ nhận các trường thực sự tồn tại trong bảng đã được cấu hình cho FormName.
-    IF EXISTS (
-        SELECT 1
-        FROM OPENJSON(@Keys) k
-        LEFT JOIN sys.columns c
-            ON c.object_id = @ObjectID
-           AND c.name = k.[key] COLLATE DATABASE_DEFAULT
-        WHERE c.column_id IS NULL
-    )
-    BEGIN
-        SELECT 1 AS [code], N'Danh sách khóa chứa trường không tồn tại trong bảng.' AS [msg];
-        RETURN;
-    END;
-
-    -- Bắt buộc payload phải chứa khóa chính đã khai báo trong SY_FrmLstTbl.
-    IF @PrimaryKey IS NOT NULL
-       AND EXISTS (
-            SELECT 1
-            FROM STRING_SPLIT(@PrimaryKey, ';') pk
-            WHERE NULLIF(LTRIM(RTRIM(pk.value)), '') IS NOT NULL
-              AND NOT EXISTS (
-                    SELECT 1
-                    FROM OPENJSON(@Keys) k
-                    WHERE k.[key] COLLATE DATABASE_DEFAULT = LTRIM(RTRIM(pk.value))
-              )
-       )
-    BEGIN
-        SELECT 1 AS [code], N'Payload không có đủ khóa chính của dòng cần xóa.' AS [msg];
-        RETURN;
-    END;
-
-    ;WITH KeyColumns AS (
-        SELECT
-            c.column_id,
-            c.name AS ColumnName,
-            t.name AS TypeName,
-            c.max_length,
-            c.[precision],
-            c.scale
-        FROM OPENJSON(@Keys) k
-        INNER JOIN sys.columns c
-            ON c.object_id = @ObjectID
-           AND c.name = k.[key] COLLATE DATABASE_DEFAULT
-        INNER JOIN sys.types t
-            ON t.user_type_id = c.user_type_id
-    ), TypedColumns AS (
-        SELECT *,
-            CASE
-                WHEN TypeName IN ('nvarchar', 'nchar') THEN
-                    TypeName + N'(' + CASE WHEN max_length = -1 THEN N'MAX' ELSE CONVERT(NVARCHAR(10), max_length / 2) END + N')'
-                WHEN TypeName IN ('varchar', 'char', 'varbinary', 'binary') THEN
-                    TypeName + N'(' + CASE WHEN max_length = -1 THEN N'MAX' ELSE CONVERT(NVARCHAR(10), max_length) END + N')'
-                WHEN TypeName IN ('decimal', 'numeric') THEN
-                    TypeName + N'(' + CONVERT(NVARCHAR(10), [precision]) + N',' + CONVERT(NVARCHAR(10), scale) + N')'
-                WHEN TypeName IN ('datetime2', 'datetimeoffset', 'time') THEN
-                    TypeName + N'(' + CONVERT(NVARCHAR(10), scale) + N')'
-                ELSE TypeName
-            END AS SqlType,
-            N'$.Keys."' + REPLACE(REPLACE(ColumnName, N'\', N'\\'), N'"', N'\"') + N'"' AS JsonPath
-        FROM KeyColumns
-    )
-    SELECT @Where = STRING_AGG(
-        N'(' +
-        N'(JSON_VALUE(@Payload, N''' + REPLACE(JsonPath, '''', '''''') + N''') IS NULL AND ' + QUOTENAME(ColumnName) + N' IS NULL)' +
-        N' OR ' + QUOTENAME(ColumnName) + N' = TRY_CONVERT(' + SqlType + N', ' +
-            CASE WHEN TypeName = 'bit'
-                THEN N'CASE LOWER(JSON_VALUE(@Payload, N''' + REPLACE(JsonPath, '''', '''''') + N''')) WHEN N''true'' THEN N''1'' WHEN N''false'' THEN N''0'' ELSE JSON_VALUE(@Payload, N''' + REPLACE(JsonPath, '''', '''''') + N''') END'
-                ELSE N'JSON_VALUE(@Payload, N''' + REPLACE(JsonPath, '''', '''''') + N''')'
-            END +
-        N'))',
-        N' AND '
-    ) WITHIN GROUP (ORDER BY column_id)
-    FROM TypedColumns;
-
-    IF NULLIF(@Where, '') IS NULL
-    BEGIN
-        SELECT 1 AS [code], N'Không tạo được điều kiện xóa an toàn.' AS [msg];
-        RETURN;
-    END;
-
-    BEGIN TRY
-        BEGIN TRANSACTION;
-
-        SET @Sql = N'SELECT @CountOut = COUNT_BIG(1) FROM ' + @QualifiedTable + N' WHERE ' + @Where + N';';
-        EXEC sys.sp_executesql
-            @Sql,
-            N'@Payload NVARCHAR(MAX), @CountOut BIGINT OUTPUT',
-            @Payload = @q,
-            @CountOut = @MatchedRows OUTPUT;
-
-        IF @MatchedRows = 0
-        BEGIN
-            ROLLBACK TRANSACTION;
-            SELECT 1 AS [code], N'Không tìm thấy dòng dữ liệu cần xóa.' AS [msg];
+            COMMIT TRANSACTION;
+            SELECT 1 AS [Success], 0 AS [code], N'Đã xóa dữ liệu thành công.' AS [Message], N'Đã xóa thành công' AS [msg];
             RETURN;
-        END;
-
-        IF @MatchedRows > 1
-        BEGIN
-            ROLLBACK TRANSACTION;
-            SELECT 1 AS [code], N'Điều kiện khóa khớp nhiều hơn một dòng; hệ thống đã hủy để tránh xóa nhầm.' AS [msg];
+        END TRY
+        BEGIN CATCH
+            IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
+            SELECT 0 AS [Success], 1 AS [code], ERROR_MESSAGE() AS [msg];
             RETURN;
-        END;
+        END CATCH;
+    END;
 
-        IF @DryRun = 1
-        BEGIN
-            ROLLBACK TRANSACTION;
-            SELECT
-                0 AS [code],
-                N'Kiểm tra hợp lệ: đúng một dòng sẽ được xóa.' AS [msg],
-                @QualifiedTable AS [TableName],
-                @MatchedRows AS [MatchedRows];
-            RETURN;
-        END;
-
-        SET @Sql = N'DELETE FROM ' + @QualifiedTable + N' WHERE ' + @Where + N'; SET @RowsOut = @@ROWCOUNT;';
-        EXEC sys.sp_executesql
-            @Sql,
-            N'@Payload NVARCHAR(MAX), @RowsOut INT OUTPUT',
-            @Payload = @q,
-            @RowsOut = @DeletedRows OUTPUT;
-
-        IF @DeletedRows <> 1
-            THROW 50001, N'Không thể xác nhận chính xác một dòng đã được xóa.', 1;
-
-        COMMIT TRANSACTION;
-        SELECT 0 AS [code], N'Đã xóa dữ liệu thành công.' AS [msg];
-    END TRY
-    BEGIN CATCH
-        IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;
-        SELECT 1 AS [code], ERROR_MESSAGE() AS [msg];
-    END CATCH;
+    SELECT 0 AS [Success], 1 AS [code], N'Không thể xác định dữ liệu cần xóa.' AS [msg];
 END;
 GO
