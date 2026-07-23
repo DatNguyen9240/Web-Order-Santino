@@ -60,7 +60,7 @@ window.API_CONFIG = {
                 return ENV_VARS.DOCUMENT_SERVER_BASE + '/api/documents';
             },
             get UPLOADS_URL() {
-                return ENV_VARS.DOCUMENT_SERVER_BASE + '/output/';
+                return ENV_VARS.DOCUMENT_SERVER_BASE + '/uploads/';
             },
             // Tên mẫu đặt tại thư mục samples/ của Document Server.
             ORDER_TEMPLATE: 'In Don dat hang.docx'
