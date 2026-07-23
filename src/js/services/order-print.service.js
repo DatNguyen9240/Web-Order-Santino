@@ -95,12 +95,13 @@ var OrderPrintService = (function () {
         });
       })
       .then(function (result) {
-        var downloadUrl = uploadsUrl + encodeURIComponent(result.fileName);
+        var fileName = (result.data && result.data.fileName) || result.fileName || 'Phieu_Dat_Hang.docx';
+        var downloadUrl = (result.data && result.data.fileUrl) || result.fileUrl || (uploadsUrl + encodeURIComponent(fileName));
         var anchor = document.createElement('a');
         anchor.href = downloadUrl;
         anchor.target = '_blank';
         anchor.rel = 'noopener';
-        anchor.download = result.fileName;
+        anchor.download = fileName;
         document.body.appendChild(anchor);
         anchor.click();
         anchor.remove();

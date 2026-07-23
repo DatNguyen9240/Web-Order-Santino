@@ -386,7 +386,8 @@ var OrderDetailPage = (function () {
       }
 
       if (downloadUrl) {
-        _showPreviewModal(downloadUrl, result.fileName || 'Phieu_Dat_Hang.docx');
+        var fileName = (result.data && result.data.fileName) || result.fileName || 'Phieu_Dat_Hang.docx';
+        _showPreviewModal(downloadUrl, fileName);
       } else {
         alert('Lỗi tạo phiếu xem trước: ' + (result.message || 'Chưa rõ nguyên nhân'));
       }
