@@ -297,7 +297,7 @@ var OrdersPage = (function () {
           }
         } catch (err) {
           console.error(err);
-          showToast('Lỗi khi gọi API xóa đơn hàng ' + id, 'error');
+          showToast(err.message || ('Lỗi khi gọi API xóa đơn hàng ' + id), 'error');
         }
       }
     });
