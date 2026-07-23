@@ -4,6 +4,7 @@ var OrderDetailPage = (function () {
   var currentPage = 1;
   var itemsPerPage = 10;
   var $container = null;
+  var currentOrderData = null;
 
   function renderLines() {
     var container = document.getElementById('detail-grid-container');
@@ -99,6 +100,7 @@ var OrderDetailPage = (function () {
       gridApi = null;
       allLines = [];
       currentPage = 1;
+      currentOrderData = null;
       $container.classList.add('is-full-width');
 
       const html = await Router.fetchTemplate('src/pages/order-detail/order-detail.html');
@@ -145,6 +147,9 @@ var OrderDetailPage = (function () {
       if (o && typeof o.lines === 'string') {
         try { o.lines = JSON.parse(o.lines); } catch (e) { }
       }
+      if (o && typeof o.print_items === 'string') {
+        try { o.print_items = JSON.parse(o.print_items); } catch (e) { }
+      }
     } catch (err) {
       console.warn('Lỗi tải chi tiết đơn hàng:', err);
     }
@@ -156,6 +161,7 @@ var OrderDetailPage = (function () {
       return;
     }
 
+    currentOrderData = o;
     allLines = o.lines || [];
 
     var titleEl = document.getElementById('detail-title');
@@ -164,33 +170,45 @@ var OrderDetailPage = (function () {
     var infoEl = document.getElementById('detail-info');
     if (infoEl) {
       infoEl.innerHTML = `
-        <table>
+        <table style="table-layout: fixed; width: 100%;">
           <tbody>
             <tr>
-              <td class="info-label" data-i18n="order.no">${t('order.no')}</td>
-              <td class="info-value highlight-code">${o.so_ct}</td>
+              <td class="info-label" data-i18n="order.no" style="width: 100px;">${t('order.no')}</td>
+              <td class="info-value highlight-code" style="word-break: break-word; white-space: normal;">${o.so_ct}</td>
             </tr>
             <tr>
               <td class="info-label" data-i18n="order.date">${t('order.date')}</td>
-              <td class="info-value">${o.ngay_ct || '—'}</td>
+              <td class="info-value" style="word-break: break-word; white-space: normal;">${o.ngay_ct || '—'}</td>
+            </tr>
+            <tr>
+              <td class="info-label">Khách hàng</td>
+              <td class="info-value" style="word-break: break-word; white-space: normal;"><strong>${o.kh_ten || '—'}</strong> ${o.ma_kh ? `<span style="color:var(--muted); font-size:12px;">(${o.ma_kh})</span>` : ''}</td>
+            </tr>
+            <tr>
+              <td class="info-label">Địa chỉ</td>
+              <td class="info-value" style="word-break: break-word; white-space: normal; line-height: 1.4;">${o.dia_chi || '—'}</td>
+            </tr>
+            <tr>
+              <td class="info-label">Số điện thoại</td>
+              <td class="info-value" style="word-break: break-word; white-space: normal;">${o.sdt || '—'}</td>
             </tr>
             <tr>
               <td class="info-label" data-i18n="order.branch">${t('order.branch')}</td>
-              <td class="info-value">${o.chi_nhanh || '—'}</td>
+              <td class="info-value" style="word-break: break-word; white-space: normal;">${o.chi_nhanh || '—'}</td>
             </tr>
             <tr>
               <td class="info-label" data-i18n="order.staff">${t('order.staff')}</td>
-              <td class="info-value">${o.nvkd || '—'}</td>
+              <td class="info-value" style="word-break: break-word; white-space: normal;">${o.nvkd || '—'}</td>
             </tr>
             <tr>
               <td class="info-label" data-i18n="order.promo">${t('order.promo')}</td>
-              <td class="info-value">
+              <td class="info-value" style="word-break: break-word; white-space: normal;">
                 ${o.ma_ctbh && o.ma_ctbh !== 'Không' && o.ma_ctbh !== 'none' ? `<span class="order-promo-badge"><span class="material-symbols-outlined" style="font-size:16px;">sell</span>${o.ma_ctbh}</span>` : '<span style="color:var(--muted)">—</span>'}
               </td>
             </tr>
             <tr>
               <td class="info-label" data-i18n="order.total.money">${t('order.total.money')}</td>
-              <td class="info-value highlight-money">${Utils.formatMoney(o.total_money || 0)}</td>
+              <td class="info-value highlight-money" style="word-break: break-word; white-space: normal;">${Utils.formatMoney(o.total_money || 0)}</td>
             </tr>
             <tr>
               <td colspan="2" style="border-bottom: none; padding-top: 8px;">
@@ -208,5 +226,80 @@ var OrderDetailPage = (function () {
     renderLines();
   }
 
-  return { render: render };
+  async function printOrder() {
+    var btn = document.getElementById('btn-print-order');
+    if (btn) btn.disabled = true;
+
+    try {
+      var id = window._viewOrderId;
+      if (!id && currentOrderData) {
+        id = currentOrderData.so_ct || currentOrderData.id;
+      }
+
+      if (!id) {
+        alert('Không tìm thấy mã đơn hàng!');
+        return;
+      }
+
+      // Gọi API_InDonHang để lấy đúng duy nhất các trường chuẩn thiết kế cho in phiếu Santino
+      var printData = null;
+      try {
+        const queryObj = { Loai: 'InDonHang', TimKiem: id, DocumentID: id };
+        const params = { q: JSON.stringify(queryObj), _t: Date.now() };
+        const res = await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, params);
+        if (res && res.records && res.records.length > 0) {
+          printData = res.records[0];
+        } else if (res && res.JsonPayload) {
+          printData = typeof res.JsonPayload === 'string' ? JSON.parse(res.JsonPayload) : res.JsonPayload;
+        }
+      } catch (apiErr) {
+        console.warn('Không gọi được API_InDonHang riêng, sử dụng dữ liệu trang:', apiErr);
+      }
+
+      // Nếu có printData từ API_InDonHang thì dùng, nếu chưa có thì dùng dữ liệu hiện tại
+      var rowDataPayload = printData || {
+        SoPhieu: currentOrderData.so_ct || '',
+        NgayLap: currentOrderData.ngay_ct || '',
+        TenKhachHang: currentOrderData.kh_ten || '',
+        MaKH: currentOrderData.ma_kh || '',
+        DiaChi: currentOrderData.dia_chi || '',
+        SDT: currentOrderData.sdt || '',
+        DienGiai: currentOrderData.dien_giai || currentOrderData.ghi_chu || '',
+        TongSoLuong: currentOrderData.total_qty || 0,
+        TongTienHang: currentOrderData.total_money || 0,
+        TongThanhToan: currentOrderData.total_money || 0,
+        ChiTietDonHang: currentOrderData.print_items || currentOrderData.lines || []
+      };
+
+      var payload = {
+        templateType: 'Phieu_Dat_Hang_Santino.docx',
+        outputFileName: 'Phieu_Dat_Hang_' + String(rowDataPayload.SoPhieu || id).replace(/[\/\\:*?"<>|()+]/g, '_'),
+        rowData: rowDataPayload
+      };
+
+      var docEngineUrl = (window.DOC_ENGINE_URL || 'http://localhost:8081') + '/api/documents/generate';
+      var res = await fetch(docEngineUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      var result = await res.json();
+      if (result.success && result.data && result.data.fileUrl) {
+        window.open(result.data.fileUrl, '_blank');
+      } else {
+        alert('Lỗi tạo phiếu in: ' + (result.message || 'Chưa rõ nguyên nhân'));
+      }
+    } catch (err) {
+      console.error('Lỗi khi in đơn hàng:', err);
+      alert('Lỗi khi kết nối đến server in tài liệu: ' + err.message);
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  return { 
+    render: render,
+    printOrder: printOrder
+  };
 })();

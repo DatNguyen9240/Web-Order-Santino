@@ -447,24 +447,16 @@ BEGIN
         SELECT TOP 1
             h.[DocumentID] AS [id],
             h.[DocumentID] AS [so_ct],
-            h.[DocumentDate] AS [ngay_ct],
-            h.[BranchID] AS [chi_nhanh],
+            FORMAT(ISNULL(h.[DocumentDate], GETDATE()), 'dd/MM/yyyy') AS [ngay_ct],
+            ISNULL(b.[BranchName], h.[BranchID]) AS [chi_nhanh],
             h.[ObjectID] AS [ma_kh],
-            h.[ObjectName] AS [kh_ten],
+            ISNULL(h.[ObjectName], c.[ObjectName]) AS [kh_ten],
+            ISNULL(c.[Address], N'')                AS [dia_chi],
+            ISNULL(c.[Phone], N'')                  AS [sdt],
             ISNULL(e.[EmployeeName], h.[EmployeeID]) AS [nvkd],
-            h.[Memo] AS [dien_giai],
-            h.[Notes] AS [ghi_chu],
+            ISNULL(h.[Notes], h.[Memo]) AS [ghi_chu],
             h.[CTKM] AS [ma_ctbh],
-            h.[NguoiGiao] AS [nguoi_giao],
-            h.[PTGiaoHang] AS [pt_giao],
-            h.[NguonDon] AS [nguon_don],
-            h.[MaDaiLy] AS [ma_dl],
-            h.[PaymentTermID] AS [dieu_khoan],
-            h.[PaymentTypeID] AS [ht_thanh_toan],
-            h.[NgayThanhToan] AS [ngay_tt],
             h.[BaseTotal] AS [total_money],
-            h.[KhachDua] AS [khach_dua],
-            h.[isLock] AS [is_lock],
             ISNULL((SELECT SUM(Quantity) FROM [dbo].[WEB_OrderDetailTbl] d WHERE d.DocumentID = @TimKiem), 0) AS [total_qty],
              (
                 SELECT 
@@ -493,6 +485,8 @@ BEGIN
                 FOR JSON PATH
              ) AS [lines]
         FROM [dbo].[WEB_OrderTbl] h
+        LEFT JOIN [dbo].[CF_ObjectTbl] c ON h.[ObjectID] = c.[ObjectID]
+        LEFT JOIN [dbo].[CF_BranchTbl] b ON h.[BranchID] = b.[BranchID]
         LEFT JOIN [dbo].[CF_EmployeeTbl] e ON h.[EmployeeID] = e.[EmployeeID]
         WHERE h.DocumentID = @TimKiem
           AND (
@@ -508,6 +502,12 @@ BEGIN
                   ))
                OR (ISNULL(@UserRole, '') = '' AND ISNULL(@UserEmployeeID, '') = '' AND ISNULL(@UserObjectID, '') = '')
           );
+        RETURN;
+    END
+
+    ELSE IF @Loai = 'InDonHang'
+    BEGIN
+        EXEC [dbo].[API_InDonHang] @DocumentID = @TimKiem;
         RETURN;
     END
 END

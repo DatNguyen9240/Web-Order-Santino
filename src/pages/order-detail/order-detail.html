@@ -1,20 +1,27 @@
 <div class="container-order">
-<div class="page-hdr" style="flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
-  <div style="flex: 1; min-width: 0;">
-    <h2 id="detail-title"
-      style="word-wrap: break-word; font-size: 14.5px; font-weight: 700; margin: 0; line-height: 1.2;">Chi Tiết Đơn</h2>
+  <div class="page-hdr" style="flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+    <div style="flex: 1; min-width: 0;">
+      <h2 id="detail-title"
+        style="word-wrap: break-word; font-size: 14.5px; font-weight: 700; margin: 0; line-height: 1.2;">Chi Tiết Đơn</h2>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <button class="btn btn-primary btn-sm" id="btn-print-order" onclick="OrderDetailPage.printOrder()"
+        style="white-space: nowrap; flex-shrink: 0; padding: 4px 12px; height: 28px; min-height: 28px; font-size: 12px; gap: 4px;">
+        <span class="material-symbols-outlined" style="font-size: 16px;">print</span>
+        <span>In Đơn Hàng</span>
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="Router.go('/orders')"
+        style="white-space: nowrap; flex-shrink: 0; padding: 4px 8px; height: 28px; min-height: 28px; font-size: 12px; gap: 4px;">
+        <span class="material-symbols-outlined" style="font-size: 14px;">arrow_back</span>
+        <span data-i18n="btn.back">Quay lại</span>
+      </button>
+    </div>
   </div>
-  <button class="btn btn-ghost btn-sm" onclick="Router.go('/orders')"
-    style="white-space: nowrap; flex-shrink: 0; padding: 4px 8px; height: 28px; min-height: 28px; font-size: 12px; gap: 4px;">
-    <span class="material-symbols-outlined" style="font-size: 14px;">arrow_back</span><span data-i18n="btn.back">Quay
-      lại</span>
-  </button>
-</div>
-<div class="order-detail-layout">
-  <div class="order-detail-header-card" id="detail-info"></div>
-  <div style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
-    <div id="detail-grid-container" style="height: 480px; width: 100%;"></div>
-    <div id="detail-pagination" style="margin-top: 16px; display: flex; justify-content: center;"></div>
+  <div class="order-detail-layout">
+    <div class="order-detail-header-card" id="detail-info"></div>
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div id="detail-grid-container" style="height: 480px; width: 100%;"></div>
+      <div id="detail-pagination" style="margin-top: 16px; display: flex; justify-content: center;"></div>
+    </div>
   </div>
-</div>
 </div>
