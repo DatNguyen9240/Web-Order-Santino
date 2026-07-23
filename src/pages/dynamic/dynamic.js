@@ -216,7 +216,10 @@ var DynamicPage = (function () {
       try {
         // 1. Gọi API lấy cấu hình trường (metadata) từ các bảng hệ thống SY_FmtFldTbl, SY_FrmLstTbl, SY_FrmDrdwTbl
         var resConfig = await Http.post('/API_LayCacTruongGiaoDien', { FormName: formName });
-        var rawFields = resConfig.records || resConfig.list || resConfig || [];
+        var rawFields = Array.isArray(resConfig)
+          ? resConfig
+          : (resConfig && (resConfig.data || resConfig.records || resConfig.list || resConfig.result)) || [];
+        if (!Array.isArray(rawFields)) rawFields = [];
         schemaFields = rawFields.map(function(f) {
           f.required = (f.required === true || f.required === 1 || String(f.required) === '1' || String(f.required) === 'true');
           f.showInAdd = !(f.showInAdd === false || f.showInAdd === 0 || String(f.showInAdd) === '0' || String(f.showInAdd) === 'false');
