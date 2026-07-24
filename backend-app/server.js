@@ -315,8 +315,14 @@ app.post('/api/documents/generate', async (req, res) => {
             const pythonScriptPath = "C:/Users/XinWei/.gemini/antigravity-ide/brain/d8951928-a5bc-4cc8-9458-3d4cda043b23/generate_docx_matrix.py";
             
             try {
-                const { execSync } = await import('child_process');
-                execSync(`python "${pythonScriptPath}" "${tempJsonPath}" "${outputPath}"`);
+                const { execSync } = require('child_process');
+                let pythonCmd = 'python';
+                try {
+                    execSync('python --version', { stdio: 'ignore' });
+                } catch (e) {
+                    pythonCmd = '"C:\\Users\\XinWei\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"';
+                }
+                execSync(`${pythonCmd} "${pythonScriptPath}" "${tempJsonPath}" "${outputPath}"`);
                 
                 try { fs.copyFileSync(outputPath, uploadsPath); } catch (e) {}
                 try { fs.unlinkSync(tempJsonPath); } catch (e) {}
