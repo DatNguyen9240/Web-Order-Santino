@@ -1651,7 +1651,7 @@ var OrderPrintService = (function () {
         var q = lineSizes[sz] || 0;
         lineQty += q;
         sizeTotals[sz] += q;
-        return '<td class="text-center ' + (q > 0 ? 'text-bold' : '') + '">' + (q > 0 ? q : '-') + '</td>';
+        return '<td class="text-center">' + (q > 0 ? q : '-') + '</td>';
       }).join('');
       
       totalQtyAll += lineQty;

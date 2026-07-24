@@ -280,10 +280,17 @@ var OrderDetailPage = (function () {
         const queryObj = { Loai: 'InDonHang', TimKiem: id, DocumentID: id };
         const params = { q: JSON.stringify(queryObj), _t: Date.now() };
         const res = await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, params);
-        if (res && res.records && res.records.length > 0) {
-          printData = res.records[0];
-        } else if (res && res.JsonPayload) {
-          printData = typeof res.JsonPayload === 'string' ? JSON.parse(res.JsonPayload) : res.JsonPayload;
+        var record = null;
+        if (res && res.records && res.records.length > 0) record = res.records[0];
+        else if (res && res.JsonPayload) record = res;
+        else if (Array.isArray(res) && res.length > 0) record = res[0];
+
+        if (record) {
+          if (record.JsonPayload) {
+            printData = typeof record.JsonPayload === 'string' ? JSON.parse(record.JsonPayload) : record.JsonPayload;
+          } else {
+            printData = record;
+          }
         }
       } catch (apiErr) {
         console.warn('Không gọi được API_InDonHang riêng, sử dụng dữ liệu trang:', apiErr);
@@ -336,10 +343,17 @@ var OrderDetailPage = (function () {
         const queryObj = { Loai: 'InDonHang', TimKiem: id, DocumentID: id };
         const params = { q: JSON.stringify(queryObj), _t: Date.now() };
         const res = await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, params);
-        if (res && res.records && res.records.length > 0) {
-          printData = res.records[0];
-        } else if (res && res.JsonPayload) {
-          printData = typeof res.JsonPayload === 'string' ? JSON.parse(res.JsonPayload) : res.JsonPayload;
+        var record = null;
+        if (res && res.records && res.records.length > 0) record = res.records[0];
+        else if (res && res.JsonPayload) record = res;
+        else if (Array.isArray(res) && res.length > 0) record = res[0];
+
+        if (record) {
+          if (record.JsonPayload) {
+            printData = typeof record.JsonPayload === 'string' ? JSON.parse(record.JsonPayload) : record.JsonPayload;
+          } else {
+            printData = record;
+          }
         }
       } catch (apiErr) {
         console.warn('Không gọi được API_InDonHang riêng, sử dụng dữ liệu trang:', apiErr);
