@@ -373,21 +373,22 @@ var OrderPage = (function () {
           enablePagination: true,
           showAddNew: _canAddCustomer,
           headers: ['Khách hàng', 'Tên kh/hàng', 'Địa chỉ', 'Mã NV', 'Chi nhánh'],
-          data: customers.map(function (c) { return [c.id, c.name, c.address || '', c.employee_id || '', c.branch_id || '', c.group_id || 'Khác']; }),
+          data: customers.map(function (c) { return [c.id, c.name, c.address || '', c.employee_id || '', c.branch_id || '', c.group_id || 'Khác', c.phone || '']; }),
           colFilterIndex: 1,
           colHighlightIndex: 1,
           colGroupIndex: 5,
           onSearch: function (q, page) {
             return _searchCategory('Customer', q, true, page).then(function (list) {
-              return list.map(function (c) { return [c.id, c.name, c.address || '', c.employee_id || '', c.branch_id || '', c.group_id || 'Khác']; });
+              return list.map(function (c) { return [c.id, c.name, c.address || '', c.employee_id || '', c.branch_id || '', c.group_id || 'Khác', c.phone || '']; });
             });
           },
           onSelect: function (row) {
-            var id = row[0], name = row[1], addr = row[2], empId = row[3], branchId = row[4];
+            var id = row[0], name = row[1], addr = row[2], empId = row[3], branchId = row[4], phone = row[6] || '';
             document.getElementById('o-ma-kh').value = id;
             document.getElementById('o-kh-ten').value = name;
             document.getElementById('o-kh-dc').value = addr;
-            _catValues.khach_hang = { id: id, name: name };
+            document.getElementById('o-kh-sdt').value = phone;
+            _catValues.khach_hang = { id: id, name: name, phone: phone };
 
             // Tự động tìm và set cho Chi nhánh
             if (branchId) {
@@ -1153,15 +1154,15 @@ var OrderPage = (function () {
 
   function previewOrder() {
     if (!orderRows.length) { showToast('Vui lòng chọn sản phẩm và nhập số lượng', false); return; }
-
+ 
     // Đóng danh sách tìm kiếm (nếu đang mở) để không bị đè lên modal
     closeAc();
-
+ 
     // 1. Thu thập tất cả các size có số lượng > 0
     var uniqueSizes = [];
     var sizeMap = {};
     var totalQtyAll = 0;
-
+ 
     orderRows.forEach(function (row) {
       Object.entries(row.quantities).forEach(function (e) {
         var sz = e[0], q = parseInt(e[1]) || 0;
@@ -1174,9 +1175,9 @@ var OrderPage = (function () {
         }
       });
     });
-
+ 
     if (totalQtyAll === 0) { showToast('Vui lòng nhập số lượng', false); return; }
-
+ 
     // 2. Sắp xếp uniqueSizes theo thứ tự trong cachedSizes
     var allSizeNames = cachedSizes.map(function (s) {
       return s.size || s.Size || s.ten_size || s.Ten_size || s.TenSize || s.tenSize;
@@ -1186,23 +1187,23 @@ var OrderPage = (function () {
       var idxB = allSizeNames.indexOf(b);
       return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
     });
-
+ 
     // 3. Xây dựng Header
-    var headHtml = '<tr><th style="min-width:120px">Sản phẩm</th><th>Màu</th>';
+    var headHtml = '<tr><th style="min-width:120px; text-align:left;">SẢN PHẨM</th><th>MÀU</th>';
     uniqueSizes.forEach(function (sz) {
-      headHtml += '<th style="text-align:center; min-width:40px">' + sz + '</th>';
+      headHtml += '<th class="text-center">' + sz + '</th>';
     });
-    headHtml += '<th style="text-align:center">Tổng</th><th style="text-align:right">Thành tiền</th></tr>';
-
+    headHtml += '<th class="text-center">TỔNG</th><th class="text-right">THÀNH TIỀN</th></tr>';
+ 
     // 4. Xây dựng Body
     var totalMoneyAll = 0;
     var sizeTotals = {};
     uniqueSizes.forEach(function (sz) { sizeTotals[sz] = 0; });
-
+ 
     var bodyHtml = orderRows.map(function (row) {
       var rowQty = 0;
       var hasQty = false;
-
+ 
       var rowCells = uniqueSizes.map(function (sz) {
         var q = row.quantities[sz] || 0;
         if (q > 0) {
@@ -1210,43 +1211,82 @@ var OrderPage = (function () {
           sizeTotals[sz] += q;
           hasQty = true;
         }
-        return '<td style="text-align:center">' + (q > 0 ? '<strong>' + q + '</strong>' : '-') + '</td>';
+        return '<td class="text-center ' + (q > 0 ? 'text-bold' : '') + '">' + (q > 0 ? q : '-') + '</td>';
       }).join('');
-
+ 
       if (!hasQty) return ''; // Bỏ qua sản phẩm không có số lượng
-
+ 
       var rowMoney = rowQty * (row.product.don_gia || 0);
       totalMoneyAll += rowMoney;
-
+ 
       return '<tr>' +
-        '<td><div style="font-weight:800; color:var(--primary)">' + row.ten_hang_2 + '</div><div style="font-size:11px; color:var(--muted); white-space:normal">' + row.product.ten_hang_hoa + '</div></td>' +
-        '<td><small>' + (row.product.mau || '—') + '</small></td>' +
+        '<td><div class="product-name-container"><span class="product-code">' + row.ten_hang_2 + '</span><span class="product-desc">' + row.product.ten_hang_hoa + '</span></div></td>' +
+        '<td class="text-center">' + (row.product.mau || '—') + '</td>' +
         rowCells +
-        '<td style="text-align:center; background:var(--bg); font-weight:bold">' + rowQty + '</td>' +
-        '<td style="text-align:right; font-weight:bold">' + Utils.formatMoney(rowMoney) + '</td>' +
+        '<td class="text-center text-bold">' + rowQty + '</td>' +
+        '<td class="text-right text-bold">' + Utils.formatMoney(rowMoney) + '</td>' +
         '</tr>';
     }).join('');
-
+ 
     // 5. Xây dựng Footer
-    var footHtml = '<tr style="font-weight:700; background:var(--bg)"><td colspan="2" style="text-align:right">Tổng cộng:</td>';
+    var footHtml = '<tr class="total-row"><td colspan="2" class="text-right">Tổng cộng:</td>';
     uniqueSizes.forEach(function (sz) {
-      footHtml += '<td style="text-align:center">' + sizeTotals[sz] + '</td>';
+      footHtml += '<td class="text-center orange-text">' + sizeTotals[sz] + '</td>';
     });
-    footHtml += '<td style="text-align:center; color:var(--primary)">' + totalQtyAll + '</td><td style="text-align:right; color:var(--accent)">' + Utils.formatMoney(totalMoneyAll) + '</td></tr>';
-
+    footHtml += '<td class="text-center orange-text">' + totalQtyAll + '</td><td class="text-right orange-text">' + Utils.formatMoney(totalMoneyAll) + '</td></tr>';
+ 
     // Cập nhật Modal
-    document.getElementById('preview-head').innerHTML = headHtml;
-    document.getElementById('preview-body').innerHTML = bodyHtml;
-    document.getElementById('preview-foot').innerHTML = footHtml;
-
-    var info = document.getElementById('preview-info');
-    info.innerHTML = [
-      '<div><strong>Người nhận:</strong> ' + (document.getElementById('o-kh-ten')?.value || '—') + '</div>',
-      '<div><strong>Mã KH:</strong> ' + (document.getElementById('o-ma-kh')?.value || '—') + '</div>',
-      '<div><strong>Địa chỉ:</strong> ' + (document.getElementById('o-kh-dc')?.value || '—') + '</div>',
-    ].join('');
-
+    document.getElementById('invoice-table-head').innerHTML = headHtml;
+    document.getElementById('invoice-table-body').innerHTML = bodyHtml;
+    document.getElementById('invoice-table-foot').innerHTML = footHtml;
+ 
+    var dateStr = document.getElementById('o-ngay')?.value || '';
+    var formattedDate = 'Ngày ... tháng ... năm ...';
+    if (dateStr) {
+      var date = new Date(dateStr);
+      if (!isNaN(date.getTime())) {
+        var d = String(date.getDate()).padStart(2, '0');
+        var m = String(date.getMonth() + 1).padStart(2, '0');
+        var y = date.getFullYear();
+        formattedDate = 'Ngày ' + d + ' tháng ' + m + ' năm ' + y;
+      } else {
+        var parts = dateStr.split(/[-/]/);
+        if (parts.length === 3) {
+          if (parts[0].length === 4) {
+            formattedDate = 'Ngày ' + parts[2] + ' tháng ' + parts[1] + ' năm ' + parts[0];
+          } else {
+            formattedDate = 'Ngày ' + parts[0] + ' tháng ' + parts[1] + ' năm ' + parts[2];
+          }
+        }
+      }
+    }
+    document.getElementById('invoice-date').textContent = formattedDate;
+    document.getElementById('invoice-code').textContent = document.getElementById('o-so-ct')?.value || 'VT-DH...';
+    document.getElementById('invoice-cust-name').textContent = document.getElementById('o-kh-ten')?.value || '—';
+    document.getElementById('invoice-cust-code').textContent = document.getElementById('o-ma-kh')?.value || '—';
+    document.getElementById('invoice-cust-addr').textContent = document.getElementById('o-kh-dc')?.value || '—';
+    document.getElementById('invoice-cust-phone').textContent = document.getElementById('o-kh-sdt')?.value || '—';
+    document.getElementById('invoice-remarks').textContent = document.getElementById('o-remarks')?.value || document.getElementById('o-notes')?.value || '—';
+ 
     openModal('modal-preview');
+  }
+
+  function printPreviewInvoice() {
+    var order = {
+      so_ct: document.getElementById('o-so-ct')?.value || '',
+      ngay_ct: document.getElementById('o-ngay')?.value || '',
+      kh_ten: document.getElementById('o-kh-ten')?.value || '',
+      ma_kh: document.getElementById('o-ma-kh')?.value || '',
+      dia_chi: document.getElementById('o-kh-dc')?.value || '',
+      sdt: document.getElementById('o-kh-sdt')?.value || '',
+      dien_giai: document.getElementById('o-remarks')?.value || document.getElementById('o-notes')?.value || '',
+      lines: _buildLines()
+    };
+    if (typeof OrderPrintService !== 'undefined' && typeof OrderPrintService.printBrowser === 'function') {
+      OrderPrintService.printBrowser(order);
+    } else {
+      showToast('Không tìm thấy chức năng in OrderPrintService.printBrowser', false);
+    }
   }
 
   async function saveOrder() {
@@ -1360,6 +1400,7 @@ var OrderPage = (function () {
     render: render, acSearch: acSearch, toggleAcSelect: toggleAcSelect, closeAc: closeAc,
     addSelectedProds: addSelectedProds, addProductRow: addProductRow, selectAcSingle: selectAcSingle,
     updateQty: updateQty, removeRow: removeRow, previewOrder: previewOrder,
+    printPreviewInvoice: printPreviewInvoice,
     saveOrder: saveOrder, clearOrder: clearOrder, clearSearch: clearSearch,
     updateInfoSummary: updateInfoSummary, calcChange: calcChange,
     createNewCustomer: createNewCustomer, finishOrderInfo: finishOrderInfo

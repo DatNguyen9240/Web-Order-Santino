@@ -275,7 +275,6 @@ var OrderDetailPage = (function () {
         return;
       }
 
-      // Gọi API_InDonHang để lấy đúng duy nhất các trường chuẩn thiết kế cho in phiếu Santino
       var printData = null;
       try {
         const queryObj = { Loai: 'InDonHang', TimKiem: id, DocumentID: id };
@@ -290,7 +289,62 @@ var OrderDetailPage = (function () {
         console.warn('Không gọi được API_InDonHang riêng, sử dụng dữ liệu trang:', apiErr);
       }
 
-      // Nếu có printData từ API_InDonHang thì dùng, nếu chưa có thì dùng dữ liệu hiện tại
+      var rowDataPayload = printData || {
+        SoPhieu: currentOrderData.so_ct || '',
+        NgayLap: currentOrderData.ngay_ct || '',
+        TenKhachHang: currentOrderData.kh_ten || '',
+        MaKH: currentOrderData.ma_kh || '',
+        DiaChi: currentOrderData.dia_chi || '',
+        SDT: currentOrderData.sdt || '',
+        DienGiai: currentOrderData.dien_giai || currentOrderData.ghi_chu || '',
+        TongSoLuong: currentOrderData.total_qty || 0,
+        TongTienHang: currentOrderData.total_money || 0,
+        TongThanhToan: currentOrderData.total_money || 0,
+        ChiTietDonHang: currentOrderData.print_items || currentOrderData.lines || []
+      };
+
+      if (typeof OrderPrintService !== 'undefined' && typeof OrderPrintService.printBrowser === 'function') {
+        OrderPrintService.printBrowser(rowDataPayload);
+      } else {
+        alert('Không tìm thấy chức năng in OrderPrintService.printBrowser!');
+      }
+    } catch (err) {
+      console.error('Lỗi khi in đơn hàng:', err);
+      alert('Lỗi khi in đơn hàng: ' + err.message);
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  async function exportDocx() {
+    var btn = document.getElementById('btn-export-docx');
+    if (btn) btn.disabled = true;
+
+    try {
+      var id = window._viewOrderId;
+      if (!id && currentOrderData) {
+        id = currentOrderData.so_ct || currentOrderData.id;
+      }
+
+      if (!id) {
+        alert('Không tìm thấy mã đơn hàng!');
+        return;
+      }
+
+      var printData = null;
+      try {
+        const queryObj = { Loai: 'InDonHang', TimKiem: id, DocumentID: id };
+        const params = { q: JSON.stringify(queryObj), _t: Date.now() };
+        const res = await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, params);
+        if (res && res.records && res.records.length > 0) {
+          printData = res.records[0];
+        } else if (res && res.JsonPayload) {
+          printData = typeof res.JsonPayload === 'string' ? JSON.parse(res.JsonPayload) : res.JsonPayload;
+        }
+      } catch (apiErr) {
+        console.warn('Không gọi được API_InDonHang riêng, sử dụng dữ liệu trang:', apiErr);
+      }
+
       var rowDataPayload = printData || {
         SoPhieu: currentOrderData.so_ct || '',
         NgayLap: currentOrderData.ngay_ct || '',
@@ -359,7 +413,8 @@ var OrderDetailPage = (function () {
 
   return {
     render: render,
-    printOrder: printOrder
+    printOrder: printOrder,
+    exportDocx: exportDocx
   };
 })();
 

@@ -301,6 +301,48 @@ app.post('/api/documents/generate', async (req, res) => {
             }
         }
 
+        // Intercept for dynamic matrix print template
+        if (templateType === 'In Don dat hang.docx') {
+            console.log('[GENERATE] 🚀 Detected Santino order printing. Running Python Dynamic Matrix engine.');
+            
+            const tempJsonPath = path.join(__dirname, `temp_${Date.now()}.json`);
+            fs.writeFileSync(tempJsonPath, JSON.stringify(dataMap, null, 2), 'utf8');
+
+            const finalFileName = `${safeOutputName}_${Date.now()}.docx`;
+            const outputPath = path.join(OUTPUT_DIR, finalFileName);
+            const uploadsPath = path.join(UPLOADS_DIR, finalFileName);
+
+            const pythonScriptPath = "C:/Users/XinWei/.gemini/antigravity-ide/brain/d8951928-a5bc-4cc8-9458-3d4cda043b23/generate_docx_matrix.py";
+            
+            try {
+                const { execSync } = await import('child_process');
+                execSync(`python "${pythonScriptPath}" "${tempJsonPath}" "${outputPath}"`);
+                
+                try { fs.copyFileSync(outputPath, uploadsPath); } catch (e) {}
+                try { fs.unlinkSync(tempJsonPath); } catch (e) {}
+
+                const protocol = req.protocol || 'http';
+                const host = req.get('host') || `localhost:${PORT}`;
+                const fileUrl = `${protocol}://${host}/output/${finalFileName}`;
+
+                console.log(`[GENERATE] ✅ Created matrix docx: ${finalFileName}`);
+
+                return res.json({
+                    success: true,
+                    message: 'Tạo tài liệu ma trận size thành công!',
+                    fileName: finalFileName,
+                    fileUrl: fileUrl,
+                    data: {
+                        fileName: finalFileName,
+                        fileUrl: fileUrl
+                    }
+                });
+            } catch (pyErr) {
+                console.error('[GENERATE] ❌ Lỗi chạy Python engine:', pyErr.message);
+                try { fs.unlinkSync(tempJsonPath); } catch (e) {}
+                // Fallback to normal docxtemplater below if Python fails
+            }
+        }
 
         // Tìm đường dẫn file template trong samples/
         let docxTemplatePath = findTemplatePath(SAMPLES_DIR, templateType);

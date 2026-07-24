@@ -76,24 +76,35 @@ BEGIN
                 -- Mảng danh sách chi tiết hàng hóa (ChiTietDonHang)
                 (
                     SELECT 
-                        ROW_NUMBER() OVER (ORDER BY ISNULL(NULLIF(d.[STT], 0), 999999), d.[UserAutoID]) AS [STT],
-                        ISNULL(b.[BranchName], h.[BranchID])      AS [Kho],
-                        d.[ItemID]                                AS [MaHang],
-                        d.[ItemName]                              AS [TenHang],
-                        i.[Unit]                                  AS [DVT],
-                        FORMAT(ISNULL(d.[UnitPrice], 0), '#,0')   AS [DonGia],
-                        d.[Quantity]                              AS [SoLuong],
-                        CASE 
-                            WHEN (d.[UnitPrice] * d.[Quantity]) > 0 THEN 
-                                ROUND(((d.[UnitPrice] * d.[Quantity] - d.[Amount]) / (d.[UnitPrice] * d.[Quantity])) * 100, 0)
-                            ELSE 0 
-                        END                                       AS [ChietKhau],
-                        FORMAT(ISNULL(d.[Amount], 0), '#,0')      AS [ThanhTien]
+                        ROW_NUMBER() OVER (ORDER BY MIN(ISNULL(NULLIF(d.[STT], 0), 999999))) AS [STT],
+                        MAX(ISNULL(b.[BranchName], h.[BranchID])) AS [Kho],
+                        ci.[ItemName2]                            AS [ten_hang_2],
+                        ci.[ItemName2]                            AS [MaHang],
+                        MAX(d.[ItemName])                         AS [TenHang],
+                        MAX(i.[Unit])                             AS [DVT],
+                        FORMAT(MAX(ISNULL(d.[UnitPrice], 0)), '#,0') AS [DonGia],
+                        SUM(d.[Quantity])                         AS [SoLuong],
+                        MAX(ci.[MauSac])                          AS [mau],
+                        0                                         AS [ChietKhau],
+                        FORMAT(SUM(ISNULL(d.[Amount], 0)), '#,0') AS [ThanhTien],
+                        (
+                            SELECT 
+                                subD.[Size] AS [size], 
+                                SUM(subD.[Quantity]) AS [qty]
+                            FROM [dbo].[WEB_OrderDetailTbl] subD
+                            LEFT JOIN [dbo].[CF_ItemTbl] subCI ON subD.[ItemID] = subCI.[ItemID]
+                            WHERE subD.[DocumentID] = @DocumentID
+                              AND subCI.[ItemName2] = ci.[ItemName2]
+                            GROUP BY subD.[Size]
+                            FOR JSON PATH
+                        ) AS [chi_tiet_size]
                     FROM [dbo].[WEB_OrderDetailTbl] d
                     INNER JOIN [dbo].[WEB_OrderTbl]  h ON d.[DocumentID] = h.[DocumentID]
                     LEFT JOIN  [dbo].[CF_BranchTbl]  b ON h.[BranchID]   = b.[BranchID]
+                    LEFT JOIN  [dbo].[CF_ItemTbl]    ci ON d.[ItemID]    = ci.[ItemID]
                     LEFT JOIN  [dbo].[CF_ItemTbl]    i ON d.[ItemID]     = i.[ItemID]
                     WHERE d.[DocumentID] = @DocumentID
+                    GROUP BY ci.[ItemName2]
                     FOR JSON PATH
                 ) AS [ChiTietDonHang]
             FOR JSON PATH, WITHOUT_ARRAY_WRAPPER
