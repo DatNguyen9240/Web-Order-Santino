@@ -1211,7 +1211,7 @@ var OrderPage = (function () {
           sizeTotals[sz] += q;
           hasQty = true;
         }
-        return '<td class="text-center ' + (q > 0 ? 'text-bold' : '') + '">' + (q > 0 ? q : '-') + '</td>';
+        return '<td class="text-center">' + (q > 0 ? q : '-') + '</td>';
       }).join('');
  
       if (!hasQty) return ''; // Bỏ qua sản phẩm không có số lượng
