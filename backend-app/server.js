@@ -312,16 +312,22 @@ app.post('/api/documents/generate', async (req, res) => {
             const outputPath = path.join(OUTPUT_DIR, finalFileName);
             const uploadsPath = path.join(UPLOADS_DIR, finalFileName);
 
-            const pythonScriptPath = "C:/Users/XinWei/.gemini/antigravity-ide/brain/d8951928-a5bc-4cc8-9458-3d4cda043b23/generate_docx_matrix.py";
+            const pythonScriptPath = path.join(__dirname, 'generate_docx_matrix.py');
             
             try {
                 const { execSync } = require('child_process');
-                let pythonCmd = 'python';
+                let pythonCmd = 'python3';
                 try {
-                    execSync('python --version', { stdio: 'ignore' });
+                    execSync('python3 --version', { stdio: 'ignore' });
                 } catch (e) {
-                    pythonCmd = '"C:\\Users\\XinWei\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"';
+                    try {
+                        execSync('python --version', { stdio: 'ignore' });
+                        pythonCmd = 'python';
+                    } catch (e2) {
+                        pythonCmd = '"C:\\Users\\XinWei\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"';
+                    }
                 }
+                console.log(`[GENERATE] Running python command: ${pythonCmd} "${pythonScriptPath}" "${tempJsonPath}" "${outputPath}"`);
                 execSync(`${pythonCmd} "${pythonScriptPath}" "${tempJsonPath}" "${outputPath}"`);
                 
                 try { fs.copyFileSync(outputPath, uploadsPath); } catch (e) {}
