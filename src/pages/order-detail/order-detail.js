@@ -324,7 +324,7 @@ var OrderDetailPage = (function () {
   }
 
   async function exportDocx() {
-    var btn = document.getElementById('btn-export-docx');
+    var btn = document.getElementById('btn-print-order') || document.getElementById('btn-export-docx');
     if (btn) btn.disabled = true;
 
     try {

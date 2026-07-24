@@ -6,10 +6,11 @@
       </h2>
     </div>
     <div style="display: flex; gap: 8px;">
-      <button class="btn btn-primary btn-sm" id="btn-print-order" onclick="OrderDetailPage.printOrder()"
+      <button class="btn btn-primary btn-sm" id="btn-print-order" onclick="OrderDetailPage.exportDocx()"
         style="white-space: nowrap; flex-shrink: 0; padding: 4px 12px; height: 28px; min-height: 28px; font-size: 12px; gap: 4px;">
         <span class="material-symbols-outlined" style="font-size: 16px;">print</span>
         <span>In Đơn Hàng</span>
+      </button>
       <button class="btn btn-ghost btn-sm" onclick="Router.go('/orders')"
         style="white-space: nowrap; flex-shrink: 0; padding: 4px 8px; height: 28px; min-height: 28px; font-size: 12px; gap: 4px;">
         <span class="material-symbols-outlined" style="font-size: 14px;">arrow_back</span>
