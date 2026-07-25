@@ -15,6 +15,7 @@ var TRANSLATIONS = {
     "nav.settings": "Cài đặt",
     "nav.logout": "Đăng xuất",
     "nav.customers": "Quản lý khách hàng",
+    "nav.sales_voucher": "Phiếu bán hàng",
 
     // --- Page Headers ---
     "hdr.order": "Tạo Đơn Hàng Sỉ",
@@ -187,6 +188,7 @@ var TRANSLATIONS = {
     "nav.settings": "Settings",
     "nav.logout": "Logout",
     "nav.customers": "Customer Management",
+    "nav.sales_voucher": "Sales Voucher",
 
     // --- Page Headers ---
     "hdr.order": "Create Wholesale Order",
@@ -5314,6 +5316,75 @@ var UINestedTabs = (function () {
 })();
 
 
+/* --- Tabs.js --- */
+/**
+ * Tabs Component
+ * Quản lý chuyển đổi các Tab (Ví dụ: Tab Bàn tiệc, Tab Khác...)
+ */
+var UITabs = (function () {
+
+  /**
+   * Tạo bộ Tabs
+   * @param {Array} tabsConfig - [{ id, title, content (DOM) }]
+   */
+  function create(tabsConfig) {
+    var wrapper = document.createElement('div');
+    wrapper.className = 'ui-tabs';
+
+    var header = document.createElement('div');
+    header.className = 'ui-tabs-header';
+
+    var body = document.createElement('div');
+    body.className = 'ui-tabs-body';
+
+    tabsConfig.forEach(function(tab, index) {
+      // Header Button
+      var btn = document.createElement('button');
+      btn.className = 'ui-tab-btn' + (index === 0 ? ' active' : '');
+      btn.innerText = tab.title;
+      btn.dataset.target = tab.id;
+      header.appendChild(btn);
+
+      // Panel Body
+      var panel = document.createElement('div');
+      panel.className = 'ui-tab-panel' + (index === 0 ? ' active' : '');
+      panel.id = 'panel-' + tab.id;
+      
+      if (typeof tab.content === 'string') {
+        panel.innerHTML = tab.content;
+      } else if (tab.content instanceof Node) {
+        panel.appendChild(tab.content);
+      }
+      
+      body.appendChild(panel);
+
+      // Event listener
+      btn.addEventListener('click', function() {
+        // Gỡ active toàn bộ
+        var allBtns = header.querySelectorAll('.ui-tab-btn');
+        var allPanels = body.querySelectorAll('.ui-tab-panel');
+        
+        allBtns.forEach(b => b.classList.remove('active'));
+        allPanels.forEach(p => p.classList.remove('active'));
+
+        // Set active cho nút được bấm
+        btn.classList.add('active');
+        panel.classList.add('active');
+      });
+    });
+
+    wrapper.appendChild(header);
+    wrapper.appendChild(body);
+
+    return wrapper;
+  }
+
+  return {
+    create: create
+  };
+})();
+
+
 /* --- EmptyState.js --- */
 /**
  * EmptyState Component
@@ -6545,6 +6616,7 @@ var Router = (function () {
     { path: '/order', script: 'src/pages/order/order.js', pageFn: 'OrderPage', title: 'nav.order' },
     { path: '/orders', script: 'src/pages/orders/orders.js', pageFn: 'OrdersPage', title: 'nav.orders' },
     { path: '/order-detail', script: 'src/pages/order-detail/order-detail.js', pageFn: 'OrderDetailPage', title: 'nav.order_detail' },
+    { path: '/sales-voucher', script: 'src/pages/sales-voucher/sales-voucher.js', pageFn: 'SalesVoucherPage', title: 'nav.sales_voucher' },
     { path: '/settings', script: 'src/pages/settings/settings.js', pageFn: 'SettingsPage', title: 'nav.settings' },
     { path: '/permissions', script: 'src/pages/permissions/permissions.js', pageFn: 'PermissionsPage', title: 'nav.permissions' },
     { path: '/menus', script: 'src/pages/menus/menus.js', pageFn: 'MenusPage', title: 'nav.menus' },

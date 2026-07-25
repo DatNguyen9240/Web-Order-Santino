@@ -14,6 +14,7 @@ var TRANSLATIONS = {
     "nav.settings": "Cài đặt",
     "nav.logout": "Đăng xuất",
     "nav.customers": "Quản lý khách hàng",
+    "nav.sales_voucher": "Phiếu bán hàng",
 
     // --- Page Headers ---
     "hdr.order": "Tạo Đơn Hàng Sỉ",
@@ -186,6 +187,7 @@ var TRANSLATIONS = {
     "nav.settings": "Settings",
     "nav.logout": "Logout",
     "nav.customers": "Customer Management",
+    "nav.sales_voucher": "Sales Voucher",
 
     // --- Page Headers ---
     "hdr.order": "Create Wholesale Order",

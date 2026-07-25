@@ -121,8 +121,8 @@ BEGIN TRY
     FROM dbo.SY_FrmDrdwTbl dd
     INNER JOIN @Dropdowns d ON dd.FormID = d.FormID AND LOWER(dd.ColumnID) = LOWER(d.ColumnID);
 
-    INSERT INTO dbo.SY_FrmDrdwTbl (FormID, ColumnID, Caption, [Source], ValueColumn, DisplayColumn, [Type])
-    SELECT d.FormID, d.ColumnID, d.Caption, d.[Source], d.ValueColumn, d.DisplayColumn, d.[Type]
+    INSERT INTO dbo.SY_FrmDrdwTbl (UserAutoID, FormID, ColumnID, Caption, [Source], ValueColumn, DisplayColumn, [Type])
+    SELECT CONVERT(VARCHAR(36), NEWID()), d.FormID, d.ColumnID, d.Caption, d.[Source], d.ValueColumn, d.DisplayColumn, d.[Type]
     FROM @Dropdowns d
     WHERE NOT EXISTS (
         SELECT 1 FROM dbo.SY_FrmDrdwTbl dd

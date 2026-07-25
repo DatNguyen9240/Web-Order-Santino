@@ -1,0 +1,1037 @@
+/* ═══════════════════════════════════════════
+   SALES VOUCHER (POS) STYLESHEET
+   ═══════════════════════════════════════════ */
+
+.sales-layout {
+  display: grid;
+  grid-template-columns: 520px 1fr; /* Cột trái danh sách rộng 520px thoải mái hơn, cột phải chi tiết tự giãn rộng 1fr */
+  gap: 16px;
+  margin-bottom: 50px;
+  /* Nhường chỗ cho hotkey footer */
+  align-items: start;
+  transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Trạng thái thu gọn chi tiết (Cột trái danh sách rộng 100%, cột phải chi tiết ẩn) */
+.sales-layout.detail-collapsed {
+  grid-template-columns: 1fr 0px;
+  gap: 0;
+}
+
+.sales-layout.detail-collapsed .sales-right-pane {
+  display: none;
+}
+
+/* Left Pane (Voucher List) */
+.sales-left-pane {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  max-width: 100% !important;
+  height: calc(100vh - 110px);
+  min-height: 480px;
+}
+
+#sales-pagination {
+  flex-shrink: 0 !important;
+  margin-top: auto !important;
+  padding-top: 8px !important;
+  border-top: 1px solid var(--border) !important;
+}
+
+.sales-left-pane .pane-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+.sales-left-pane .pane-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sales-left-pane .left-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sales-left-pane .filter-row {
+  display: flex;
+  gap: 8px;
+}
+
+/* Right Pane (Voucher Detail) */
+.sales-right-pane {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  max-width: 100% !important;
+}
+
+.sales-right-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Dynamic form grids - 4 columns for desktop (giúp form ngắn lại theo chiều dọc) */
+#sales-dynamic-form {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 8px 12px !important;
+  margin-top: 8px;
+}
+
+#sales-dynamic-form .form-group {
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+#sales-dynamic-form .form-group.span2 {
+  grid-column: span 2 !important;
+}
+
+#sales-dynamic-form .form-group.span3 {
+  grid-column: span 3 !important;
+}
+
+#sales-dynamic-form label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 3px;
+  display: block;
+}
+
+#sales-dynamic-form .ui-input,
+#sales-dynamic-form select,
+#sales-dynamic-form textarea {
+  height: 28px !important;
+  padding: 4px 8px !important;
+  font-size: 12px !important;
+  border-radius: 4px !important;
+  border: 1px solid var(--border) !important;
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  width: 100% !important;
+}
+
+#sales-dynamic-form textarea {
+  height: 36px !important;
+  resize: none;
+}
+
+/* Styling for DataComboBox within the form grid */
+#sales-dynamic-form .shared-dropdown-container {
+  height: 28px !important;
+  border-radius: 4px !important;
+  border: 1px solid var(--border) !important;
+  background: var(--surface) !important;
+  width: 100% !important;
+}
+
+#sales-dynamic-form .shared-dropdown-container input {
+  height: 26px !important;
+  padding: 4px 8px !important;
+  font-size: 12px !important;
+  background: transparent !important;
+  border: none !important;
+  width: 100% !important;
+}
+
+#sales-dynamic-form .loading-placeholder {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 20px;
+  color: var(--muted);
+  font-weight: 500;
+  font-style: italic;
+}
+
+/* Metric Cards Deck */
+.metric-cards-deck {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+}
+
+.metric-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.metric-card-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.metric-card-icon span {
+  font-size: 15px;
+}
+
+.metric-card-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex-grow: 1;
+}
+
+.metric-card-label {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.metric-card-value {
+  font-size: 13.5px;
+  font-weight: 800;
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.metric-card-input {
+  border: none !important;
+  background: transparent !important;
+  font-size: 13.5px !important;
+  font-weight: 800 !important;
+  width: 100%;
+  outline: none !important;
+  padding: 0 !important;
+  margin-top: 1px !important;
+  height: 18px !important;
+  font-family: inherit;
+  color: inherit;
+}
+
+/* Styling for Combobox inside Metric Cards to prevent overflow */
+.metric-card .combo-box-container {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  width: 100% !important;
+  height: 20px !important;
+  margin-top: 1px !important;
+}
+
+.metric-card .combo-box-container input {
+  border: none !important;
+  background: transparent !important;
+  height: 20px !important;
+  font-size: 13.5px !important;
+  font-weight: 800 !important;
+  padding: 0 !important;
+  color: inherit !important;
+}
+
+.metric-card .combo-box-container .combo-box-actions {
+  display: none !important; /* Ẩn nút mũi tên trong thẻ metric card để nhìn sạch sẽ */
+}
+
+/* Custom Light Background Colors for Cards */
+.bg-primary-light {
+  background: rgba(79, 70, 229, 0.05);
+  border-color: rgba(79, 70, 229, 0.15);
+}
+
+.bg-success-light {
+  background: rgba(16, 185, 129, 0.05);
+  border-color: rgba(16, 185, 129, 0.15);
+}
+
+.bg-info-light {
+  background: rgba(59, 130, 246, 0.05);
+  border-color: rgba(59, 130, 246, 0.15);
+}
+
+.bg-warning-light {
+  background: rgba(245, 158, 11, 0.05);
+  border-color: rgba(245, 158, 11, 0.15);
+}
+
+.bg-neutral-light {
+  background: rgba(107, 114, 128, 0.05);
+  border-color: rgba(107, 114, 128, 0.15);
+}
+
+/* Quick Add Bar Sizing & Alignments */
+.quick-add-bar {
+  display: flex !important;
+  gap: 10px !important;
+  align-items: flex-end !important;
+  background: var(--bg) !important;
+  border: 1px solid var(--border) !important;
+  padding: 8px 12px !important;
+  border-radius: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.quick-add-bar > div {
+  margin-bottom: 0 !important;
+}
+
+.quick-add-bar .form-label {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: var(--muted) !important;
+  margin-bottom: 3px !important;
+  display: block !important;
+}
+
+.quick-add-bar .ui-input,
+.quick-add-bar select {
+  height: 28px !important;
+  padding: 4px 8px !important;
+  font-size: 12px !important;
+  border-radius: 4px !important;
+}
+
+/* Details Table Styling */
+.sales-details-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.sales-details-table th,
+.sales-details-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  vertical-align: middle;
+}
+
+.sales-details-table th {
+  background: var(--bg);
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-align: left;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.sales-details-table tr:hover td {
+  background: rgba(79, 70, 229, 0.01);
+}
+
+.sales-details-table td .tbl-input {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--surface);
+  width: 100%;
+  outline: none;
+  text-align: center;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+  height: 26px !important;
+}
+
+.sales-details-table td .tbl-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+}
+
+/* Tab Panels */
+.tab-panel-item {
+  display: none;
+}
+
+.tab-panel-item.active {
+  display: block;
+}
+
+/* Sticky Hotkeys Footer Bar */
+.hotkeys-footer-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 44px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 20px;
+  z-index: 999;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.hotkeys-footer-bar .hotkey-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.hotkeys-footer-bar .kbd {
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 800;
+  color: var(--primary);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive collapse to single column */
+@media (max-width: 1024px) {
+  .sales-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sales-left-pane {
+    max-height: 400px;
+  }
+}
+
+/* Receipt Print layout */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #receipt-preview-area,
+  #receipt-preview-area * {
+    visibility: visible;
+  }
+
+  #receipt-preview-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm;
+    background: #fff;
+    color: #000;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    padding: 0;
+    margin: 0;
+  }
+}
+
+/* Tràn viền nhất quán cho cả header và nội dung khi ở trang POS */
+body.page-sales-voucher .container-wide,
+.container-wide.is-full-width,
+#app-content.is-full-width {
+  max-width: 100% !important;
+  width: 100% !important;
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Nút quay lại danh sách trên mobile */
+.mobile-back-btn {
+  display: none !important;
+}
+
+/* Floating open handle on the right edge of the screen */
+.sales-open-handle {
+  position: fixed;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50% !important;
+  background: var(--primary) !important;
+  color: var(--primary-fg) !important;
+  border: 1px solid var(--border) !important;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 99;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sales-open-handle:hover {
+  transform: translateY(-50%) scale(1.08);
+  background: var(--accent) !important;
+}
+
+.sales-open-handle span:not(.material-symbols-outlined) {
+  display: none !important; /* Ẩn phần chữ trên mọi màn hình để giữ nút tròn gọn gàng */
+}
+
+.sales-open-handle span.material-symbols-outlined {
+  font-size: 24px !important;
+  margin: 0 !important;
+  writing-mode: horizontal-tb !important;
+}
+
+/* Chỉ hiển thị khi layout bị collapsed */
+.sales-layout.detail-collapsed~.sales-open-handle {
+  display: flex;
+}
+
+/* ── Responsive Mobile (max-width: 768px) ── */
+@media (max-width: 768px) {
+  /* Sửa lỗi navbar top bị thụt lề ở chế độ sidebar trên mobile */
+  #main-layout,
+  .layout.mode-sidebar {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+
+  .header,
+  .navbar {
+    width: 100% !important;
+    max-width: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .mobile-back-btn {
+    display: inline-flex !important;
+  }
+
+  .sales-layout {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    margin-bottom: 20px !important;
+  }
+  
+  .sales-layout.detail-collapsed {
+    grid-template-columns: 1fr !important;
+    gap: 0 !important;
+  }
+
+  /* Mặc định trên Mobile: Chỉ hiện danh sách phiếu (.sales-left-pane), ẩn form chi tiết (.sales-right-pane) */
+  .sales-layout .sales-left-pane {
+    display: flex !important;
+    width: 100% !important;
+  }
+
+  .sales-layout .sales-right-pane {
+    display: none !important;
+  }
+
+  /* Khi mở chi tiết trên Mobile: Ẩn danh sách phiếu, hiện form chi tiết dạng full màn hình */
+  .sales-layout.mobile-show-detail .sales-left-pane {
+    display: none !important;
+  }
+
+  .sales-layout.mobile-show-detail .sales-right-pane {
+    display: flex !important;
+    width: 100% !important;
+  }
+
+  /* Ẩn triệt để nút menu và column-picker icon của cột AgGrid trên mobile */
+  #sales-grid-container .ag-header-cell-menu-button,
+  #sales-grid-container .ag-header-menu-icon,
+  #sales-grid-container .ag-icon-menu,
+  #sales-grid-container .ag-header-icon,
+  #sales-grid-container .ag-header-cell-filter-button,
+  #sales-grid-container [class*="ag-header-cell-menu"],
+  #sales-grid-container [class*="ag-header-cell-filter"],
+  #sales-grid-container .ag-side-button,
+  #sales-grid-container .ag-right-buttons {
+    display: none !important;
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    visibility: hidden !important;
+  }
+
+  #sales-dynamic-form .combo-box-container input,
+  #sales-dynamic-form select {
+    font-size: 11px !important;
+    padding-right: 22px !important;
+    text-overflow: ellipsis !important;
+  }
+
+  #sales-dynamic-form .combo-box-container .combo-action-btn {
+    width: 20px !important;
+    padding: 0 !important;
+  }
+
+  /* Định dạng các nút tiêu đề form chi tiết trên mobile đồng bộ chuẩn cao 34px */
+  .sales-right-pane .page-hdr {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  .sales-right-pane .page-hdr div[style*="display:flex"] {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+    width: 100% !important;
+  }
+
+  /* Ẩn nút Close [X] trùng lặp ở dòng 2 trên mobile vì đã có nút Quay lại [<-] ở dòng 1 */
+  .sales-right-pane .page-hdr div[style*="display:flex"]:last-child > button[title*="Đóng"] {
+    display: none !important;
+  }
+
+  .sales-right-pane .page-hdr .btn {
+    height: 34px !important;
+    min-height: 34px !important;
+    max-height: 34px !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+  }
+
+  .sales-right-pane .page-hdr .btn-icon-sm,
+  .sales-right-pane .page-hdr .btn-ghost,
+  .sales-right-pane .page-hdr .btn-sm:not(#btn-sales-save) {
+    width: 34px !important;
+    min-width: 34px !important;
+    max-width: 34px !important;
+    height: 34px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 8px !important;
+  }
+
+  .sales-right-pane .page-hdr #btn-sales-save {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin-left: auto !important;
+    padding: 0 12px !important;
+    height: 34px !important;
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+
+  .sales-right-pane .page-hdr #btn-sales-save span {
+    white-space: nowrap !important;
+  }
+
+  .mobile-back-btn {
+    display: inline-flex !important;
+    border-radius: 50% !important;
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    padding: 0 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+  }
+
+  body.page-sales-voucher .container-wide,
+  .container-wide.is-full-width,
+  #app-content.is-full-width {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+  }
+
+  .sales-left-pane {
+    width: 100% !important;
+    padding: 8px !important;
+    box-sizing: border-box !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .sales-right-pane {
+    width: 100% !important;
+    padding: 8px !important;
+    box-sizing: border-box !important;
+  }
+
+  #sales-grid-container {
+    height: 240px !important;
+    min-height: 180px !important;
+    flex: none !important;
+  }
+
+  /* Chuyển danh sách AgGrid thành dạng Card List di động tinh gọn */
+  #sales-grid-container .ag-header {
+    display: none !important;
+  }
+
+  #sales-grid-container .ag-body-horizontal-scroll {
+    display: none !important;
+    height: 0 !important;
+  }
+
+  #sales-grid-container .ag-root-wrapper {
+    border: none !important;
+    background: transparent !important;
+  }
+
+  #sales-grid-container .ag-row {
+    border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08)) !important;
+    background: transparent !important;
+    border-radius: 6px !important;
+  }
+
+  #sales-grid-container .ag-cell {
+    border: none !important;
+    padding: 4px 6px !important;
+  }
+
+  #sales-pagination {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    margin-top: 8px !important;
+    padding-top: 8px !important;
+    border-top: 1px solid var(--border) !important;
+    width: 100% !important;
+  }
+
+  /* Định dạng component phân trang gọn gàng trên mobile */
+  #sales-pagination .pagination-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+  }
+
+  #sales-pagination .pagination-info {
+    font-size: 11px !important;
+    text-align: center !important;
+    color: var(--muted) !important;
+  }
+
+  #sales-pagination .pagination-controls {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+  }
+
+  #sales-pagination .pager-btn-first,
+  #sales-pagination .pager-btn-last {
+    display: none !important;
+  }
+
+  #sales-pagination .page-btn {
+    width: 28px !important;
+    height: 28px !important;
+    padding: 0 !important;
+    font-size: 11px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Tránh tràn cạnh phải do flex header */
+  .sales-left-pane .pane-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+
+  .sales-left-pane .pane-header div[style*="display:flex"] {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .hotkeys-footer-bar {
+    display: none !important; /* Ẩn phím tắt footer trên mobile */
+  }
+
+  #sales-dynamic-form {
+    grid-template-columns: repeat(2, 1fr) !important; /* Giữ tối thiểu 2 cột trên 1 dòng để giao diện gọn gàng */
+    gap: 8px 10px !important;
+  }
+
+  #sales-dynamic-form .form-group.span2,
+  #sales-dynamic-form .form-group.span3 {
+    grid-column: span 2 !important; /* Các trường rộng vẫn tràn 2 cột */
+  }
+
+  /* Thu gọn nút Thêm hàng & Chọn combo và thanh tổng số lượng trên mobile */
+  .table-actions-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 6px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .table-actions-row > div:first-child {
+    display: flex !important;
+    gap: 6px !important;
+    width: 100% !important;
+  }
+
+  .table-actions-row .btn {
+    flex: 1 !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    max-height: 32px !important;
+    padding: 0 8px !important;
+    font-size: 11px !important;
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+    gap: 4px !important;
+    border-radius: 6px !important;
+    box-sizing: border-box !important;
+  }
+
+  .table-actions-row .btn .material-symbols-outlined {
+    font-size: 15px !important;
+  }
+
+  .table-actions-row > div:last-child {
+    font-size: 11px !important;
+    width: 100% !important;
+    text-align: right !important;
+  }
+
+  /* Thu gọn thanh Tab vừa vặn trên màn hình nhỏ */
+  .ui-tabs-header,
+  .tabs-header {
+    display: flex !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 4px !important;
+    padding-bottom: 2px !important;
+  }
+
+  .ui-tab-btn,
+  .tab-item,
+  .tab-btn {
+    padding: 4px 8px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    height: 28px !important;
+    border-radius: 4px !important;
+  }
+
+  .metric-cards-deck {
+    grid-template-columns: repeat(2, 1fr) !important; /* Xếp 2 cột cho gọn */
+    gap: 6px !important;
+  }
+
+  .metric-card {
+    padding: 6px 8px !important;
+    border-radius: 6px !important;
+    min-height: 40px !important;
+  }
+
+  .metric-card-icon {
+    width: 26px !important;
+    height: 26px !important;
+    font-size: 15px !important;
+  }
+
+  .metric-card-label {
+    font-size: 10px !important;
+  }
+
+  .metric-card-value {
+    font-size: 12px !important;
+  }
+
+  .quick-add-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  .quick-add-bar > div {
+    width: 100% !important;
+  }
+
+  .quick-add-bar .combo-box-container {
+    width: 100% !important;
+  }
+
+  /* Nút mở chi tiết dạng FAB nổi trên mobile (nổi phía trên thanh phân trang) */
+  .sales-open-handle {
+    right: 16px !important;
+    bottom: 75px !important;
+    top: auto !important;
+    transform: none !important;
+    width: 46px !important;
+    height: 46px !important;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  .sales-open-handle:hover {
+    transform: scale(1.08) !important;
+  }
+
+  /* Ẩn bớt các cột không cần thiết trong bảng chi tiết hàng hóa trên mobile */
+  .sales-details-table th:nth-child(3), /* Size */
+  .sales-details-table td:nth-child(3),
+  .sales-details-table th:nth-child(4), /* Màu */
+  .sales-details-table td:nth-child(4),
+  .sales-details-table th:nth-child(7), /* % Giảm */
+  .sales-details-table td:nth-child(7) {
+    display: none !important;
+  }
+
+  /* Bộ Tabs chuyển sang dạng trượt ngang trên mobile */
+  .ui-tabs-header {
+    display: flex !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-bottom: 1px solid var(--border) !important;
+    gap: 4px !important;
+    padding-bottom: 2px !important;
+  }
+  
+  .ui-tabs-header::-webkit-scrollbar {
+    height: 3px !important;
+  }
+  
+  .ui-tabs-header::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-radius: 2px !important;
+  }
+  
+  .ui-tab-btn {
+    flex-shrink: 0 !important;
+    padding: 6px 12px !important;
+    font-size: 11.5px !important;
+  }
+}
+
+/* ── Responsive Mobile Extra Small (max-width: 360px) ── */
+@media (max-width: 360px) {
+  .sales-left-pane .pane-header {
+    gap: 4px !important;
+  }
+
+  .sales-left-pane .pane-title {
+    font-size: 12.5px !important;
+  }
+
+  .sales-left-pane .pane-header .btn {
+    padding: 4px 6px !important;
+    font-size: 10.5px !important;
+  }
+
+  .sales-left-pane .left-filters .filter-row {
+    flex-direction: column !important;
+    gap: 6px !important;
+  }
+
+  /* Giảm cỡ chữ AgGrid ở màn hình cực bé */
+  .ag-theme-alpine, .ag-theme-balham {
+    --ag-font-size: 10.5px !important;
+    --ag-grid-size: 3px !important;
+  }
+
+  /* Dynamic Form */
+  #sales-dynamic-form label {
+    font-size: 9.5px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  #sales-dynamic-form .ui-input,
+  #sales-dynamic-form select,
+  #sales-dynamic-form textarea,
+  #sales-dynamic-form .combo-box-container input {
+    font-size: 11px !important;
+    padding: 2px 4px !important;
+    height: 26px !important;
+  }
+
+  /* Thẻ thông số */
+  .metric-cards-deck {
+    gap: 4px !important;
+  }
+  
+  .metric-card {
+    padding: 4px 6px !important;
+    gap: 4px !important;
+    border-radius: 6px !important;
+  }
+  
+  .metric-card-icon {
+    width: 22px !important;
+    height: 22px !important;
+  }
+  
+  .metric-card-icon span {
+    font-size: 11px !important;
+  }
+  
+  .metric-card-label {
+    font-size: 8px !important;
+    letter-spacing: 0px !important;
+  }
+  
+  .metric-card-value,
+  .metric-card-input,
+  .metric-card .combo-box-container input {
+    font-size: 11px !important;
+    height: 16px !important;
+  }
+}

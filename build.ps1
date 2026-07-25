@@ -47,6 +47,7 @@ $jsFiles = @(
   "components\screen-capture\ScreenCapture.js",
   "components\icon\Icon.js",
   "components\tabs\NestedTabs.js",
+  "components\tabs\Tabs.js",
   "components\empty-state\EmptyState.js",
   "components\context-menu\ContextMenu.js",
   "components\toast\Toast.js",
