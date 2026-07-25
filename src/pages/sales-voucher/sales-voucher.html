@@ -1,60 +1,67 @@
 <div class="container-wide is-full-width">
   <div class="sales-layout">
-    
+
     <!-- LEFT PANE: List of Vouchers (30%) -->
     <div class="sales-left-pane">
       <div class="pane-header">
         <h3 class="pane-title"><span class="material-symbols-outlined">receipt_long</span> Danh sách phiếu</h3>
         <div style="display:flex; gap:6px; align-items:center;">
-          <button class="btn btn-primary btn-sm" onclick="SalesVoucherPage.resetForm(); SalesVoucherPage.openDetail();" title="Thêm mới (F2)">
+          <button class="btn btn-primary btn-sm" onclick="SalesVoucherPage.resetForm(); SalesVoucherPage.openDetail();"
+            title="Thêm mới (F2)">
             <span class="material-symbols-outlined" style="font-size:16px;">add</span> <span>Tạo mới (F2)</span>
           </button>
-          <button class="btn btn-ghost btn-icon-sm" onclick="SalesVoucherPage.refreshList()" title="Tải lại danh sách">
-            <span class="material-symbols-outlined">refresh</span>
+          <button class="btn btn-ghost btn-icon-sm" onclick="SalesVoucherPage.toggleDetail()"
+            title="Mở/đóng bảng chi tiết" id="btn-toggle-detail-pane">
+            <span class="material-symbols-outlined">dock_to_right</span>
           </button>
         </div>
       </div>
-      
+
       <!-- Filter Controls -->
       <div class="left-filters">
-        <div class="search-wrapper">
-          <span class="material-symbols-outlined">search</span>
-          <input type="text" id="sales-search" placeholder="Tìm số CT hoặc khách hàng..." oninput="SalesVoucherPage.onFilterChange()">
+        <div class="filter-row filter-row-search">
+          <div class="search-wrapper"
+            style="flex: 1 !important; min-width: 0 !important; max-width: 300px !important; margin-bottom: 0 !important;">
+            <span class="material-symbols-outlined">search</span>
+            <input type="text" id="sales-search" placeholder="Tìm số CT, khách..."
+              oninput="SalesVoucherPage.onFilterChange()">
+          </div>
+          <div id="sales-filter-date-container" style="width: 115px !important; flex-shrink: 0 !important;"></div>
         </div>
-        
+
         <div class="filter-row">
           <div id="sales-filter-branch-container" style="flex: 1;"></div>
           <div id="sales-filter-status-container" style="flex: 1;"></div>
         </div>
-        
-        <div class="filter-row">
-          <input type="date" id="sales-filter-date" class="ui-input" onchange="SalesVoucherPage.onFilterChange()">
-        </div>
       </div>
-      
+
       <!-- Voucher List Grid -->
       <div id="sales-grid-container" class="ag-theme-quartz" style="flex: 1; min-height: 250px; width: 100%;"></div>
-      
+
       <!-- Pagination -->
       <div id="sales-pagination" class="pagination-container"></div>
     </div>
 
     <!-- RIGHT PANE: Detail Entry & Form (70%) -->
     <div class="sales-right-pane">
-      
+
       <!-- Form Header -->
       <div class="page-hdr" style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
         <div style="display:flex; align-items:center; gap:8px;">
-          <button class="btn btn-ghost btn-icon-sm mobile-back-btn" onclick="SalesVoucherPage.closeDetail()" title="Quay lại danh sách" style="border-radius: 50%; width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <button class="btn btn-ghost btn-icon-sm mobile-back-btn" onclick="SalesVoucherPage.closeDetail()"
+            title="Quay lại danh sách"
+            style="border-radius: 50%; width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
             <span class="material-symbols-outlined" style="font-size: 20px;">arrow_back</span>
           </button>
           <div>
             <h2 id="sales-detail-title" style="font-size: 16px; font-weight: 700; margin: 0;">Thông tin phiếu bán</h2>
-            <p class="text-muted" id="sales-detail-subtitle" style="font-size: 11px; margin: 0;">Xem chi tiết hoặc tạo phiếu bán hàng mới</p>
+            <p class="text-muted" id="sales-detail-subtitle" style="font-size: 11px; margin: 0;">Xem chi tiết hoặc tạo
+              phiếu bán hàng mới</p>
           </div>
         </div>
         <div style="display:flex; gap:8px; align-items:center;">
-          <button class="btn btn-ghost btn-icon-sm" onclick="SalesVoucherPage.closeDetail()" title="Đóng bảng chi tiết" style="margin-right: 4px;">
+          <button class="btn btn-ghost btn-icon-sm" onclick="SalesVoucherPage.closeDetail()" title="Đóng bảng chi tiết"
+            style="margin-right: 4px;">
             <span class="material-symbols-outlined">close</span>
           </button>
           <button class="btn btn-ghost btn-sm" onclick="SalesVoucherPage.printInvoice()" title="In phiếu">
@@ -71,7 +78,7 @@
 
       <!-- Right Column Inner Scroll -->
       <div class="sales-right-content">
-        
+
         <!-- Dynamic Header Form (Populated dynamically from SQL Metadata) -->
         <form id="sales-form" onsubmit="event.preventDefault();">
           <div class="form-grid" id="sales-dynamic-form">
@@ -92,7 +99,7 @@
               <span class="metric-card-value text-primary" id="card-total-money">0đ</span>
             </div>
           </div>
-          
+
           <!-- Card 2: KhachDua -->
           <div class="metric-card bg-success-light">
             <div class="metric-card-icon bg-success text-white">
@@ -100,7 +107,8 @@
             </div>
             <div class="metric-card-info">
               <span class="metric-card-label">Khách đưa</span>
-              <input type="text" id="card-input-received" class="metric-card-input text-success" value="0" oninput="SalesVoucherPage.calcChangeMoney()">
+              <input type="text" id="card-input-received" class="metric-card-input text-success" value="0"
+                oninput="SalesVoucherPage.calcChangeMoney()">
             </div>
           </div>
 
@@ -133,13 +141,15 @@
             </div>
             <div class="metric-card-info">
               <span class="metric-card-label">Người lập</span>
-              <span class="metric-card-value text-neutral" id="card-creator" style="font-size:13px; font-weight:600;">Admin</span>
+              <span class="metric-card-value text-neutral" id="card-creator"
+                style="font-size:13px; font-weight:600;">Admin</span>
             </div>
           </div>
         </div>
 
         <!-- Quick Add Product Bar -->
-        <div class="quick-add-bar" style="margin-top: 16px; display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap;">
+        <div class="quick-add-bar"
+          style="margin-top: 16px; display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap;">
           <div style="flex: 2; min-width: 250px;">
             <label class="form-label">Thêm nhanh sản phẩm (F3)</label>
             <div id="quick-product-dropdown-container"></div>
@@ -173,13 +183,15 @@
         <div class="tabs-wrapper" style="margin-top: 20px;">
           <!-- Custom tabs rendered here -->
           <div id="sales-tabs-container"></div>
-          
+
           <!-- Tab Contents -->
-          <div class="tab-contents-panel" style="background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
-            
+          <div class="tab-contents-panel"
+            style="background: var(--surface); border: 1px solid var(--border); border-top: none; padding: 16px; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
+
             <!-- Tab 1: Chi tiết hàng hóa (Active) -->
             <div id="tab-content-goods" class="tab-panel-item active">
-              <div class="table-actions-row" style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+              <div class="table-actions-row"
+                style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
                 <div style="display: flex; gap: 8px;">
                   <button class="btn btn-ghost btn-sm" onclick="SalesVoucherPage.showAddProductModal()">
                     <span class="material-symbols-outlined" style="font-size:16px;">add</span> Thêm hàng (F4)
@@ -189,10 +201,11 @@
                   </button>
                 </div>
                 <div style="font-size: 13px; font-weight: 500; color: var(--text-secondary);">
-                  Tổng số lượng: <strong id="sales-detail-total-qty" style="color: var(--primary); font-size: 15px;">0</strong>
+                  Tổng số lượng: <strong id="sales-detail-total-qty"
+                    style="color: var(--primary); font-size: 15px;">0</strong>
                 </div>
               </div>
-              
+
               <!-- Editable Goods Detail Table -->
               <div class="tbl-wrap" style="max-height: 350px; overflow-y: auto;">
                 <table class="sales-details-table" style="width: 100%;">
@@ -212,17 +225,21 @@
                   </thead>
                   <tbody id="sales-goods-tbody">
                     <tr>
-                      <td colspan="10" class="text-center" style="padding: 24px; color: var(--muted);">Chưa có sản phẩm nào trong phiếu. Quét barcode hoặc thêm nhanh ở trên.</td>
+                      <td colspan="10" class="text-center" style="padding: 24px; color: var(--muted);">Chưa có sản phẩm
+                        nào trong phiếu. Quét barcode hoặc thêm nhanh ở trên.</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
-              
+
               <!-- Table Footer Row (Totals highlight) -->
-              <div style="display: flex; justify-content: flex-end; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);">
+              <div
+                style="display: flex; justify-content: flex-end; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);">
                 <div style="display: flex; align-items: center; gap: 8px;">
                   <span style="font-weight: 600; font-size: 14px; color: var(--text);">Tổng tiền:</span>
-                  <div style="background: rgba(79, 70, 229, 0.08); border: 1px solid rgba(79, 70, 229, 0.2); padding: 8px 16px; border-radius: 6px; font-weight: 800; font-size: 18px; color: var(--primary);" id="sales-detail-total-money">0đ</div>
+                  <div
+                    style="background: rgba(79, 70, 229, 0.08); border: 1px solid rgba(79, 70, 229, 0.2); padding: 8px 16px; border-radius: 6px; font-weight: 800; font-size: 18px; color: var(--primary);"
+                    id="sales-detail-total-money">0đ</div>
                 </div>
               </div>
             </div>
@@ -265,7 +282,8 @@
         </div>
 
         <!-- Promo and coupon codes footer section -->
-        <div class="promo-section" style="margin-top: 16px; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;">
+        <div class="promo-section"
+          style="margin-top: 16px; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;">
           <div style="flex: 2; min-width: 200px;">
             <label class="form-label">Chương trình KM</label>
             <div id="promo-combobox-container"></div>
@@ -276,7 +294,8 @@
           </div>
           <div style="width: 100px;">
             <label class="form-label">% CK Tổng đơn</label>
-            <input type="number" id="promo-discount-pct" class="ui-input" value="0" min="0" max="100" style="text-align: center;">
+            <input type="number" id="promo-discount-pct" class="ui-input" value="0" min="0" max="100"
+              style="text-align: center;">
           </div>
           <button class="btn btn-primary" onclick="SalesVoucherPage.applyPromo()" style="height: 42px;">Áp dụng</button>
         </div>
@@ -290,14 +309,19 @@
     <div class="modal" style="width: 400px; padding: 16px; background: #fff; border-radius: 8px;">
       <div class="modal-hdr" style="margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
         <h3>In hóa đơn bán hàng</h3>
-        <button class="btn-icon" onclick="closeModal('modal-sales-print')"><span class="material-symbols-outlined">close</span></button>
+        <button class="btn-icon" onclick="closeModal('modal-sales-print')"><span
+            class="material-symbols-outlined">close</span></button>
       </div>
-      <div style="max-height: 400px; overflow-y: auto; background: #f9f9f9; padding: 12px; border: 1px solid #ddd; border-radius: 4px;" id="receipt-preview-area">
+      <div
+        style="max-height: 400px; overflow-y: auto; background: #f9f9f9; padding: 12px; border: 1px solid #ddd; border-radius: 4px;"
+        id="receipt-preview-area">
         <!-- Thermal receipt format generated dynamically -->
       </div>
-      <div class="modal-actions" style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid #eee; padding-top: 12px;">
+      <div class="modal-actions"
+        style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid #eee; padding-top: 12px;">
         <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-sales-print')">Hủy</button>
-        <button class="btn btn-primary btn-sm" onclick="SalesVoucherPage.executePrint()"><span class="material-symbols-outlined" style="font-size:14px;">print</span> Thực hiện in</button>
+        <button class="btn btn-primary btn-sm" onclick="SalesVoucherPage.executePrint()"><span
+            class="material-symbols-outlined" style="font-size:14px;">print</span> Thực hiện in</button>
       </div>
     </div>
   </div>
@@ -317,9 +341,4 @@
     </div>
   </div>
 
-  <!-- Floating handle to open details sidebar when collapsed -->
-  <button class="sales-open-handle" onclick="SalesVoucherPage.openDetail()" title="Mở thông tin chi tiết">
-    <span class="material-symbols-outlined">chevron_left</span>
-    <span>Mở chi tiết phiếu</span>
-  </button>
 </div>

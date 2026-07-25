@@ -7,6 +7,8 @@ var OrderPage = (function () {
   var _customerModalContent = null;
   var _cachedProvinces = [];
   var _cachedObjectGroups = [];
+  var _userPerm = { isAdmin: false, isManager: false, isAgent: false };
+  var _canAddCustomer = false;
 
   var _catValues = {
     khach_hang: { id: '', name: '' },

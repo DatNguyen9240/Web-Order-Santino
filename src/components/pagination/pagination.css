@@ -5,12 +5,12 @@
 .pagination-wrapper {
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 24px;
-  padding: 16px 24px;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  gap: 16px;
+  padding: 12px 16px;
   border-top: 1px solid var(--border, #e2e8f0);
-  background: var(--surface, #ffffff);
+  background: transparent;
 }
 
 .pagination-info {
@@ -76,6 +76,15 @@
 
 .pager-mobile-indicator {
   display: none;
+}
+
+/* Hide double arrows and capture button on screens smaller than 1024px (tablets, small laptop viewports) */
+@media (max-width: 1024px) {
+  .pager-btn-first,
+  .pager-btn-last,
+  .pager-btn-capture {
+    display: none !important;
+  }
 }
 
 /* --- RESPONSIVE STYLE --- */

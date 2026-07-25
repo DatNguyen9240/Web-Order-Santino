@@ -2,14 +2,40 @@
    SALES VOUCHER (POS) STYLESHEET
    ═══════════════════════════════════════════ */
 
+/* Khóa cuộn trang ngoài triệt để cho màn hình bán hàng POS */
+html,
+body,
+body.page-sales-voucher,
+html.page-sales-voucher {
+  overflow: hidden !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.page-sales-voucher #app,
+body.page-sales-voucher #main-layout,
+body.page-sales-voucher #vertical-main,
+body.page-sales-voucher #app-content {
+  overflow: hidden !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+}
+
 .sales-layout {
   display: grid;
-  grid-template-columns: 520px 1fr; /* Cột trái danh sách rộng 520px thoải mái hơn, cột phải chi tiết tự giãn rộng 1fr */
+  grid-template-columns: 520px 1fr;
+  /* Cột trái danh sách rộng 520px thoải mái hơn, cột phải chi tiết tự giãn rộng 1fr */
   gap: 16px;
-  margin-bottom: 50px;
-  /* Nhường chỗ cho hotkey footer */
+  margin: 0 !important;
+  height: calc(100vh - 56px - 84px) !important;
   align-items: start;
   transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden !important;
 }
 
 /* Trạng thái thu gọn chi tiết (Cột trái danh sách rộng 100%, cột phải chi tiết ẩn) */
@@ -27,52 +53,147 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 14px;
+  padding: 10px 12px 10px 12px;
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
   box-sizing: border-box !important;
   overflow: hidden !important;
   max-width: 100% !important;
-  height: calc(100vh - 110px);
-  min-height: 480px;
+  height: 100% !important;
 }
 
+#sales-grid-container {
+  flex: 1 1 0 !important;
+  /* flex-grow fills remaining space; 0 base = don't use height for calculation */
+  height: 0 !important;
+  /* prevents overflow: height is driven by flex-grow, not intrinsic content */
+  min-height: 200px !important;
+  width: 100% !important;
+}
+
+#sales-grid-container .ag-root-wrapper {
+  height: 100% !important;
+  border: none !important;
+}
+
+/* Pagination bar sitting naturally inside the left pane at the bottom */
 #sales-pagination {
   flex-shrink: 0 !important;
   margin-top: auto !important;
-  padding-top: 8px !important;
+  background: var(--surface) !important;
   border-top: 1px solid var(--border) !important;
+  border-bottom-left-radius: 8px !important;
+  border-bottom-right-radius: 8px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
 }
 
+#sales-pagination .pagination-wrapper {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  gap: 8px !important;
+  padding: 10px 12px !important;
+  margin: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+}
+
+#sales-pagination .pagination-info {
+  font-size: 12.5px !important;
+  color: var(--text-secondary) !important;
+  margin: 0 !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+}
+
+#sales-pagination .pagination-controls {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-wrap: nowrap !important;
+  gap: 4px !important;
+  margin: 0 !important;
+}
+
+@media (min-width: 768px) {
+  .sales-layout.detail-collapsed #sales-pagination .pagination-wrapper {
+    flex-direction: row !important;
+    justify-content: center !important;
+  }
+
+  .sales-layout.detail-collapsed #sales-pagination .pagination-info {
+    position: absolute !important;
+    left: 12px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    text-align: left !important;
+  }
+}
+
+/* Hide only the mobile indicator on desktop (since we show full buttons) */
+#sales-pagination .pager-mobile-indicator {
+  display: none !important;
+}
+
+#sales-pagination .page-btn {
+  height: 28px !important;
+  min-width: 28px !important;
+  padding: 0 6px !important;
+  font-size: 11.5px !important;
+  border-radius: 5px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+}
+
+#sales-pagination .page-btn .material-symbols-outlined {
+  font-size: 16px !important;
+}
+
+/* pane-header: tighter border */
 .sales-left-pane .pane-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid var(--border);
-  padding-bottom: 8px;
+  padding-bottom: 6px;
+  margin-bottom: 0;
 }
 
 .sales-left-pane .pane-title {
   margin: 0;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+}
+
+.sales-left-pane .pane-title .material-symbols-outlined {
+  font-size: 18px;
 }
 
 .sales-left-pane .left-filters {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .sales-left-pane .filter-row {
-  display: flex;
-  gap: 8px;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 8px !important;
 }
 
 /* Right Pane (Voucher Detail) */
@@ -85,8 +206,10 @@
   display: flex;
   flex-direction: column;
   box-sizing: border-box !important;
-  overflow: hidden !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
   max-width: 100% !important;
+  height: 100% !important;
 }
 
 .sales-right-content {
@@ -179,70 +302,63 @@
 
 .metric-card {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  transition: all 0.2s ease;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start !important;
+  gap: 1px !important;
+  padding: 10px 14px !important;
+  border-radius: 6px !important;
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.01), 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .metric-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02) !important;
+  border-color: var(--border-strong, #a1a1aa) !important;
 }
 
+/* Hide the generic circular icons */
 .metric-card-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.metric-card-icon span {
-  font-size: 15px;
+  display: none !important;
 }
 
 .metric-card-info {
   display: flex;
   flex-direction: column;
-  min-width: 0;
-  flex-grow: 1;
+  width: 100% !important;
 }
 
 .metric-card-label {
-  font-size: 9.5px;
-  font-weight: 600;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
+  font-size: 9.5px !important;
+  font-weight: 700 !important;
+  color: var(--muted, #71717a) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  margin-bottom: 3px !important;
 }
 
 .metric-card-value {
-  font-size: 13.5px;
-  font-weight: 800;
-  margin-top: 1px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: var(--text) !important;
+  margin-top: 0 !important;
 }
 
 .metric-card-input {
   border: none !important;
   background: transparent !important;
-  font-size: 13.5px !important;
+  font-size: 16px !important;
   font-weight: 800 !important;
-  width: 100%;
+  color: var(--text) !important;
+  width: 100% !important;
   outline: none !important;
   padding: 0 !important;
-  margin-top: 1px !important;
-  height: 18px !important;
+  margin-top: 0 !important;
+  height: 22px !important;
   font-family: inherit;
-  color: inherit;
 }
 
 /* Styling for Combobox inside Metric Cards to prevent overflow */
@@ -251,48 +367,87 @@
   background: transparent !important;
   box-shadow: none !important;
   width: 100% !important;
-  height: 20px !important;
-  margin-top: 1px !important;
+  height: 22px !important;
+  margin-top: 0 !important;
+  padding: 0 !important;
 }
 
 .metric-card .combo-box-container input {
   border: none !important;
   background: transparent !important;
-  height: 20px !important;
-  font-size: 13.5px !important;
+  height: 22px !important;
+  font-size: 15px !important;
   font-weight: 800 !important;
+  color: var(--text) !important;
   padding: 0 !important;
-  color: inherit !important;
 }
 
 .metric-card .combo-box-container .combo-box-actions {
-  display: none !important; /* Ẩn nút mũi tên trong thẻ metric card để nhìn sạch sẽ */
+  display: none !important;
+  /* Ẩn nút mũi tên trong thẻ metric card để nhìn sạch sẽ */
 }
 
-/* Custom Light Background Colors for Cards */
+/* Prevent default yellow focus outline on card inputs and apply elegant halo to the container */
+.metric-card-input:focus,
+.metric-card .combo-box-container input:focus {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.metric-card:focus-within {
+  border-color: var(--border-strong, #a1a1aa) !important;
+  box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.15) !important;
+}
+
+/* Custom Background and Border accents */
 .bg-primary-light {
-  background: rgba(79, 70, 229, 0.05);
-  border-color: rgba(79, 70, 229, 0.15);
+  border-left: 3px solid var(--primary, #FBBF24) !important;
 }
 
 .bg-success-light {
-  background: rgba(16, 185, 129, 0.05);
-  border-color: rgba(16, 185, 129, 0.15);
+  border-left: 3px solid var(--success, #059669) !important;
 }
 
 .bg-info-light {
-  background: rgba(59, 130, 246, 0.05);
-  border-color: rgba(59, 130, 246, 0.15);
+  border-left: 3px solid var(--info, #2563eb) !important;
 }
 
 .bg-warning-light {
-  background: rgba(245, 158, 11, 0.05);
-  border-color: rgba(245, 158, 11, 0.15);
+  border-left: 3px solid #d97706 !important;
 }
 
 .bg-neutral-light {
-  background: rgba(107, 114, 128, 0.05);
-  border-color: rgba(107, 114, 128, 0.15);
+  border-left: 3px solid var(--muted, #71717a) !important;
+}
+
+/* Rich, dark colors for text values for high contrast */
+.text-primary {
+  color: #b45309 !important;
+  /* Rich amber for light mode */
+}
+
+.text-success {
+  color: #047857 !important;
+  /* Deep green for light mode */
+}
+
+.text-warning {
+  color: #b45309 !important;
+  /* Rich amber for light mode */
+}
+
+/* Dark mode overrides for text value colors */
+.dark-theme .text-primary {
+  color: var(--primary) !important;
+}
+
+.dark-theme .text-success {
+  color: var(--success) !important;
+}
+
+.dark-theme .text-warning {
+  color: #fbbf24 !important;
 }
 
 /* Quick Add Bar Sizing & Alignments */
@@ -307,7 +462,7 @@
   flex-wrap: wrap !important;
 }
 
-.quick-add-bar > div {
+.quick-add-bar>div {
   margin-bottom: 0 !important;
 }
 
@@ -391,18 +546,18 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 44px;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
+  height: 38px;
+  background: var(--surface) !important;
+  border-top: none !important;
   display: flex;
   align-items: center;
   gap: 16px;
   padding: 0 20px;
   z-index: 999;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
   font-size: 12px;
   font-weight: 600;
   color: var(--text-secondary);
+  box-sizing: border-box !important;
 }
 
 .hotkeys-footer-bar .hotkey-item {
@@ -464,10 +619,14 @@ body.page-sales-voucher .container-wide,
 #app-content.is-full-width {
   max-width: 100% !important;
   width: 100% !important;
+  height: calc(100vh - 56px) !important;
   padding-left: 16px !important;
   padding-right: 16px !important;
+  padding-top: 8px !important;
+  padding-bottom: 0 !important;
   margin: 0 !important;
   box-sizing: border-box !important;
+  overflow: hidden !important;
 }
 
 /* Nút quay lại danh sách trên mobile */
@@ -475,49 +634,67 @@ body.page-sales-voucher .container-wide,
   display: none !important;
 }
 
-/* Floating open handle on the right edge of the screen */
-.sales-open-handle {
-  position: fixed;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 44px;
-  height: 44px;
-  border-radius: 50% !important;
-  background: var(--primary) !important;
-  color: var(--primary-fg) !important;
-  border: 1px solid var(--border) !important;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 99;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+/* Tinh chỉnh bộ lọc bên trái tinh tế, nhỏ gọn */
+.sales-left-pane .left-filters .search-wrapper input {
+  height: 32px !important;
+  padding: 4px 10px 4px 32px !important;
+  font-size: 12.5px !important;
+  border-radius: 6px !important;
+  font-weight: 500 !important;
 }
 
-.sales-open-handle:hover {
-  transform: translateY(-50%) scale(1.08);
-  background: var(--accent) !important;
+.sales-left-pane .left-filters .search-wrapper .material-symbols-outlined {
+  font-size: 18px !important;
+  left: 10px !important;
 }
 
-.sales-open-handle span:not(.material-symbols-outlined) {
-  display: none !important; /* Ẩn phần chữ trên mọi màn hình để giữ nút tròn gọn gàng */
-}
-
-.sales-open-handle span.material-symbols-outlined {
-  font-size: 24px !important;
+/* Custom inputs inside select/date containers in left filters */
+.sales-left-pane .left-filters .form-group {
   margin: 0 !important;
-  writing-mode: horizontal-tb !important;
+  width: 100% !important;
 }
 
-/* Chỉ hiển thị khi layout bị collapsed */
-.sales-layout.detail-collapsed~.sales-open-handle {
-  display: flex;
+.sales-left-pane .left-filters .ui-input,
+.sales-left-pane .left-filters select {
+  height: 32px !important;
+  padding: 4px 10px !important;
+  font-size: 12.5px !important;
+  border-radius: 6px !important;
 }
+
+/* For date inputs, we need extra right padding because of the absolute calendar icon */
+.sales-left-pane .left-filters #sales-filter-date-container {
+  display: flex !important;
+  justify-content: flex-start !important;
+  align-items: flex-start !important;
+  margin: 0 !important;
+  width: 115px !important;
+}
+
+.sales-left-pane .left-filters #sales-filter-date-container>* {
+  margin: 0 !important;
+  width: 100% !important;
+  align-self: flex-start !important;
+}
+
+.sales-left-pane .left-filters #sales-filter-date-container .ui-input {
+  padding-left: 6px !important;
+  padding-right: 24px !important;
+  font-size: 11.5px !important;
+}
+
+.sales-left-pane .left-filters #sales-filter-date-container .material-symbols-outlined {
+  font-size: 16px !important;
+  right: 6px !important;
+}
+
+
+
+
 
 /* ── Responsive Mobile (max-width: 768px) ── */
 @media (max-width: 768px) {
+
   /* Sửa lỗi navbar top bị thụt lề ở chế độ sidebar trên mobile */
   #main-layout,
   .layout.mode-sidebar {
@@ -544,7 +721,7 @@ body.page-sales-voucher .container-wide,
     gap: 12px !important;
     margin-bottom: 20px !important;
   }
-  
+
   .sales-layout.detail-collapsed {
     grid-template-columns: 1fr !important;
     gap: 0 !important;
@@ -615,7 +792,7 @@ body.page-sales-voucher .container-wide,
   }
 
   /* Ẩn nút Close [X] trùng lặp ở dòng 2 trên mobile vì đã có nút Quay lại [<-] ở dòng 1 */
-  .sales-right-pane .page-hdr div[style*="display:flex"]:last-child > button[title*="Đóng"] {
+  .sales-right-pane .page-hdr div[style*="display:flex"]:last-child>button[title*="Đóng"] {
     display: none !important;
   }
 
@@ -692,6 +869,12 @@ body.page-sales-voucher .container-wide,
     overflow: visible !important;
   }
 
+  .sales-left-pane .left-filters .filter-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 6px !important;
+  }
+
   .sales-right-pane {
     width: 100% !important;
     padding: 8px !important;
@@ -730,54 +913,33 @@ body.page-sales-voucher .container-wide,
     padding: 4px 6px !important;
   }
 
+
   #sales-pagination {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
-    margin-top: 8px !important;
-    padding-top: 8px !important;
+    margin-top: auto !important;
+    margin-left: -8px !important;
+    margin-right: -8px !important;
+    margin-bottom: -8px !important;
     border-top: 1px solid var(--border) !important;
-    width: 100% !important;
+    background: var(--surface) !important;
+    border-bottom-left-radius: 8px !important;
+    border-bottom-right-radius: 8px !important;
+    box-sizing: border-box !important;
   }
 
-  /* Định dạng component phân trang gọn gàng trên mobile */
   #sales-pagination .pagination-wrapper {
     display: flex !important;
     flex-direction: column !important;
-    gap: 6px !important;
+    flex-wrap: nowrap !important;
     align-items: center !important;
     justify-content: center !important;
     width: 100% !important;
+    padding: 6px 8px 8px 8px !important;
+    box-sizing: border-box !important;
   }
 
-  #sales-pagination .pagination-info {
-    font-size: 11px !important;
-    text-align: center !important;
-    color: var(--muted) !important;
-  }
-
-  #sales-pagination .pagination-controls {
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    flex-wrap: wrap !important;
-    gap: 4px !important;
-  }
-
-  #sales-pagination .pager-btn-first,
-  #sales-pagination .pager-btn-last {
-    display: none !important;
-  }
-
-  #sales-pagination .page-btn {
-    width: 28px !important;
-    height: 28px !important;
-    padding: 0 !important;
-    font-size: 11px !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
 
   /* Tránh tràn cạnh phải do flex header */
   .sales-left-pane .pane-header {
@@ -792,17 +954,20 @@ body.page-sales-voucher .container-wide,
   }
 
   .hotkeys-footer-bar {
-    display: none !important; /* Ẩn phím tắt footer trên mobile */
+    display: none !important;
+    /* Ẩn phím tắt footer trên mobile */
   }
 
   #sales-dynamic-form {
-    grid-template-columns: repeat(2, 1fr) !important; /* Giữ tối thiểu 2 cột trên 1 dòng để giao diện gọn gàng */
+    grid-template-columns: repeat(2, 1fr) !important;
+    /* Giữ tối thiểu 2 cột trên 1 dòng để giao diện gọn gàng */
     gap: 8px 10px !important;
   }
 
   #sales-dynamic-form .form-group.span2,
   #sales-dynamic-form .form-group.span3 {
-    grid-column: span 2 !important; /* Các trường rộng vẫn tràn 2 cột */
+    grid-column: span 2 !important;
+    /* Các trường rộng vẫn tràn 2 cột */
   }
 
   /* Thu gọn nút Thêm hàng & Chọn combo và thanh tổng số lượng trên mobile */
@@ -813,7 +978,7 @@ body.page-sales-voucher .container-wide,
     margin-bottom: 8px !important;
   }
 
-  .table-actions-row > div:first-child {
+  .table-actions-row>div:first-child {
     display: flex !important;
     gap: 6px !important;
     width: 100% !important;
@@ -840,7 +1005,7 @@ body.page-sales-voucher .container-wide,
     font-size: 15px !important;
   }
 
-  .table-actions-row > div:last-child {
+  .table-actions-row>div:last-child {
     font-size: 11px !important;
     width: 100% !important;
     text-align: right !important;
@@ -869,7 +1034,8 @@ body.page-sales-voucher .container-wide,
   }
 
   .metric-cards-deck {
-    grid-template-columns: repeat(2, 1fr) !important; /* Xếp 2 cột cho gọn */
+    grid-template-columns: repeat(2, 1fr) !important;
+    /* Xếp 2 cột cho gọn */
     gap: 6px !important;
   }
 
@@ -899,7 +1065,7 @@ body.page-sales-voucher .container-wide,
     gap: 8px !important;
   }
 
-  .quick-add-bar > div {
+  .quick-add-bar>div {
     width: 100% !important;
   }
 
@@ -923,11 +1089,14 @@ body.page-sales-voucher .container-wide,
   }
 
   /* Ẩn bớt các cột không cần thiết trong bảng chi tiết hàng hóa trên mobile */
-  .sales-details-table th:nth-child(3), /* Size */
+  .sales-details-table th:nth-child(3),
+  /* Size */
   .sales-details-table td:nth-child(3),
-  .sales-details-table th:nth-child(4), /* Màu */
+  .sales-details-table th:nth-child(4),
+  /* Màu */
   .sales-details-table td:nth-child(4),
-  .sales-details-table th:nth-child(7), /* % Giảm */
+  .sales-details-table th:nth-child(7),
+  /* % Giảm */
   .sales-details-table td:nth-child(7) {
     display: none !important;
   }
@@ -943,16 +1112,16 @@ body.page-sales-voucher .container-wide,
     gap: 4px !important;
     padding-bottom: 2px !important;
   }
-  
+
   .ui-tabs-header::-webkit-scrollbar {
     height: 3px !important;
   }
-  
+
   .ui-tabs-header::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.1) !important;
     border-radius: 2px !important;
   }
-  
+
   .ui-tab-btn {
     flex-shrink: 0 !important;
     padding: 6px 12px !important;
@@ -975,13 +1144,11 @@ body.page-sales-voucher .container-wide,
     font-size: 10.5px !important;
   }
 
-  .sales-left-pane .left-filters .filter-row {
-    flex-direction: column !important;
-    gap: 6px !important;
-  }
+
 
   /* Giảm cỡ chữ AgGrid ở màn hình cực bé */
-  .ag-theme-alpine, .ag-theme-balham {
+  .ag-theme-alpine,
+  .ag-theme-balham {
     --ag-font-size: 10.5px !important;
     --ag-grid-size: 3px !important;
   }
@@ -1007,27 +1174,27 @@ body.page-sales-voucher .container-wide,
   .metric-cards-deck {
     gap: 4px !important;
   }
-  
+
   .metric-card {
     padding: 4px 6px !important;
     gap: 4px !important;
     border-radius: 6px !important;
   }
-  
+
   .metric-card-icon {
     width: 22px !important;
     height: 22px !important;
   }
-  
+
   .metric-card-icon span {
     font-size: 11px !important;
   }
-  
+
   .metric-card-label {
     font-size: 8px !important;
     letter-spacing: 0px !important;
   }
-  
+
   .metric-card-value,
   .metric-card-input,
   .metric-card .combo-box-container input {

@@ -488,7 +488,7 @@ var UIInput = (function () {
     if (elementId) visibleInput.id = elementId + '_visible';
     visibleInput.readOnly = true;
     visibleInput.style.cursor = 'pointer';
-    visibleInput.placeholder = config.placeholder || 'Chọn ngày...';
+    visibleInput.placeholder = config.placeholder || 'dd/mm/yyyy';
 
     // Format display value
     var initialDate = config.value || '';
@@ -727,6 +727,32 @@ var UIInput = (function () {
   }
 
   /**
+   * Tự động chuyển đổi 1 ô input thành UIControls.createDate chuẩn dd/mm/yyyy
+   */
+  function bindDateInput(inputEl) {
+    if (!inputEl || inputEl.dataset.customDateBound) return;
+    inputEl.dataset.customDateBound = 'true';
+
+    var parent = inputEl.parentNode;
+    var name = inputEl.name || inputEl.getAttribute('name') || '';
+    var id = inputEl.id || inputEl.getAttribute('id') || '';
+    var val = inputEl.value || inputEl.getAttribute('value') || '';
+    var placeholder = inputEl.placeholder || 'dd/mm/yyyy';
+
+    var dateWrapper = createDate({
+      id: id,
+      name: name,
+      value: val,
+      placeholder: placeholder
+    });
+
+    if (parent) {
+      parent.replaceChild(dateWrapper, inputEl);
+    }
+    return dateWrapper;
+  }
+
+  /**
    * Ô Switch (Công tắc bật/tắt cho boolean)
    */
   function createSwitch(config) {
@@ -957,6 +983,7 @@ var UIInput = (function () {
     createNumber: createNumber,
     createMoney: createMoney,
     createDate: createDate,
+    bindDateInput: bindDateInput,
     createTime: createTime,
     createPassword: createPassword,
     createSwitch: createSwitch,
@@ -966,3 +993,9 @@ var UIInput = (function () {
     setupMoneyInput: setupMoneyInput
   };
 })();
+
+if (typeof window !== 'undefined') {
+  window.UIControls = window.UIControls || {};
+  window.UIControls.createDate = UIInput.createDate;
+  window.UIControls.bindDateInput = UIInput.bindDateInput;
+}

@@ -14,7 +14,7 @@ var AppGrid = {
     // Set class ban dau cho container
     container.className = self.getThemeClass();
 
-    // Chen style de hien thi duong ngan cach cot (vertical borders)
+    // Chen style de hien thi duong ngan cach cot (vertical borders) va an nut settings tren mobile
     if (!document.getElementById('ag-grid-borders-style')) {
       var style = document.createElement('style');
       style.id = 'ag-grid-borders-style';
@@ -22,6 +22,31 @@ var AppGrid = {
         '.ag-theme-quartz .ag-cell, .ag-theme-quartz-dark .ag-cell, ' +
         '.ag-theme-quartz .ag-header-cell, .ag-theme-quartz-dark .ag-header-cell { ' +
         '  border-right: 1px solid var(--ag-border-color, var(--color-border, #e2e8f0)) !important; ' +
+        '} ' +
+        '@media (max-width: 768px) { ' +
+        '  .grid-col-settings-btn, .grid-col-popover { ' +
+        '    display: none !important; ' +
+        '  } ' +
+        '  .ag-grid-mobile-card .ag-header { ' +
+        '    display: none !important; ' +
+        '  } ' +
+        '  .ag-grid-mobile-card .ag-body-horizontal-scroll { ' +
+        '    display: none !important; ' +
+        '    height: 0 !important; ' +
+        '  } ' +
+        '  .ag-grid-mobile-card .ag-root-wrapper { ' +
+        '    border: none !important; ' +
+        '    background: transparent !important; ' +
+        '  } ' +
+        '  .ag-grid-mobile-card .ag-row { ' +
+        '    border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08)) !important; ' +
+        '    background: transparent !important; ' +
+        '    border-radius: 6px !important; ' +
+        '  } ' +
+        '  .ag-grid-mobile-card .ag-cell { ' +
+        '    border: none !important; ' +
+        '    padding: 4px 6px !important; ' +
+        '  } ' +
         '}';
       document.head.appendChild(style);
     }
@@ -168,6 +193,13 @@ var AppGrid = {
     // Responsive auto-sizing columns strategy
     function adjustColumnWidths(api) {
       if (!api) return;
+
+      // If in mobile card mode, strictly fit columns to the container width to prevent overflow/scrollbars
+      if (container.classList.contains('ag-grid-mobile-card')) {
+        api.sizeColumnsToFit();
+        return;
+      }
+
       api.autoSizeAllColumns(false);
 
       var isMobile = window.innerWidth < 768;
@@ -214,6 +246,7 @@ var AppGrid = {
       }
     };
 
+    delete mergedOptions.mobileColumnDefs;
     var gridApi = agGrid.createGrid(container, mergedOptions);
 
     // Create column selector floating button if it doesn't exist
@@ -400,6 +433,46 @@ var AppGrid = {
       }
     });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    // Responsive column switching if mobileColumnDefs is provided
+    var mobileColumnDefs = customOptions.mobileColumnDefs || null;
+    if (mobileColumnDefs) {
+      var desktopColumnDefs = mergedOptions.columnDefs || [];
+      var currentMode = null;
+
+      function checkResponsiveGrid() {
+        var isMobile = window.innerWidth <= 768;
+        var mode = isMobile ? 'mobile' : 'desktop';
+        if (currentMode === mode) return;
+        currentMode = mode;
+
+        if (isMobile) {
+          container.classList.add('ag-grid-mobile-card');
+          gridApi.setGridOption('columnDefs', mobileColumnDefs);
+        } else {
+          container.classList.remove('ag-grid-mobile-card');
+          gridApi.setGridOption('columnDefs', desktopColumnDefs);
+        }
+
+        setTimeout(function () {
+          if (container.clientWidth > 0) {
+            gridApi.sizeColumnsToFit();
+          }
+        }, 50);
+      }
+
+      window.addEventListener('resize', checkResponsiveGrid);
+      checkResponsiveGrid();
+
+      // Clean up resize listener on destroy
+      var originalDestroy = gridApi.destroy;
+      gridApi.destroy = function () {
+        window.removeEventListener('resize', checkResponsiveGrid);
+        if (typeof originalDestroy === 'function') {
+          originalDestroy.apply(this, arguments);
+        }
+      };
+    }
 
     // Luu lai ref de destroy neu can
     gridApi._observer = observer;

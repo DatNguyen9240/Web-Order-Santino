@@ -3454,7 +3454,7 @@ var UIInput = (function () {
     if (elementId) visibleInput.id = elementId + '_visible';
     visibleInput.readOnly = true;
     visibleInput.style.cursor = 'pointer';
-    visibleInput.placeholder = config.placeholder || 'Chọn ngày...';
+    visibleInput.placeholder = config.placeholder || 'dd/mm/yyyy';
 
     // Format display value
     var initialDate = config.value || '';
@@ -3693,6 +3693,32 @@ var UIInput = (function () {
   }
 
   /**
+   * Tự động chuyển đổi 1 ô input thành UIControls.createDate chuẩn dd/mm/yyyy
+   */
+  function bindDateInput(inputEl) {
+    if (!inputEl || inputEl.dataset.customDateBound) return;
+    inputEl.dataset.customDateBound = 'true';
+
+    var parent = inputEl.parentNode;
+    var name = inputEl.name || inputEl.getAttribute('name') || '';
+    var id = inputEl.id || inputEl.getAttribute('id') || '';
+    var val = inputEl.value || inputEl.getAttribute('value') || '';
+    var placeholder = inputEl.placeholder || 'dd/mm/yyyy';
+
+    var dateWrapper = createDate({
+      id: id,
+      name: name,
+      value: val,
+      placeholder: placeholder
+    });
+
+    if (parent) {
+      parent.replaceChild(dateWrapper, inputEl);
+    }
+    return dateWrapper;
+  }
+
+  /**
    * Ô Switch (Công tắc bật/tắt cho boolean)
    */
   function createSwitch(config) {
@@ -3923,6 +3949,7 @@ var UIInput = (function () {
     createNumber: createNumber,
     createMoney: createMoney,
     createDate: createDate,
+    bindDateInput: bindDateInput,
     createTime: createTime,
     createPassword: createPassword,
     createSwitch: createSwitch,
@@ -3932,6 +3959,12 @@ var UIInput = (function () {
     setupMoneyInput: setupMoneyInput
   };
 })();
+
+if (typeof window !== 'undefined') {
+  window.UIControls = window.UIControls || {};
+  window.UIControls.createDate = UIInput.createDate;
+  window.UIControls.bindDateInput = UIInput.bindDateInput;
+}
 
 
 /* --- Pagination.js --- */
@@ -3967,15 +4000,17 @@ var Pagination = (function () {
     var controls = document.createElement('div');
     controls.className = 'pagination-controls';
 
-    // First Button
-    var btnFirst = document.createElement('button');
-    btnFirst.className = 'page-btn pager-btn-first';
-    btnFirst.innerHTML = '<span class="material-symbols-outlined">first_page</span>';
-    btnFirst.disabled = currentPage === 1;
-    btnFirst.onclick = function () {
-      if (typeof options.onPageChange === 'function') options.onPageChange(1);
-    };
-    controls.appendChild(btnFirst);
+    // First Button (only on screens > 1024px)
+    if (window.innerWidth > 1024) {
+      var btnFirst = document.createElement('button');
+      btnFirst.className = 'page-btn pager-btn-first';
+      btnFirst.innerHTML = '<span class="material-symbols-outlined">first_page</span>';
+      btnFirst.disabled = currentPage === 1;
+      btnFirst.onclick = function () {
+        if (typeof options.onPageChange === 'function') options.onPageChange(1);
+      };
+      controls.appendChild(btnFirst);
+    }
 
     // Prev Button
     var btnPrev = document.createElement('button');
@@ -4044,24 +4079,28 @@ var Pagination = (function () {
     };
     controls.appendChild(btnNext);
 
-    // Last Button
-    var btnLast = document.createElement('button');
-    btnLast.className = 'page-btn pager-btn-last';
-    btnLast.innerHTML = '<span class="material-symbols-outlined">last_page</span>';
-    btnLast.disabled = currentPage === totalPages || totalPages === 0;
-    btnLast.onclick = function () {
-      if (typeof options.onPageChange === 'function') options.onPageChange(totalPages);
-    };
-    controls.appendChild(btnLast);
+    // Last Button (only on screens > 1024px)
+    if (window.innerWidth > 1024) {
+      var btnLast = document.createElement('button');
+      btnLast.className = 'page-btn pager-btn-last';
+      btnLast.innerHTML = '<span class="material-symbols-outlined">last_page</span>';
+      btnLast.disabled = currentPage === totalPages || totalPages === 0;
+      btnLast.onclick = function () {
+        if (typeof options.onPageChange === 'function') options.onPageChange(totalPages);
+      };
+      controls.appendChild(btnLast);
+    }
 
-    // Separator line
-    var separator = document.createElement('div');
-    separator.className = 'pager-separator';
-    separator.style.width = '1px';
-    separator.style.height = '16px';
-    separator.style.background = 'var(--border, #e2e8f0)';
-    separator.style.margin = '0 8px';
-    controls.appendChild(separator);
+    // Separator line (only on screens > 1024px)
+    if (window.innerWidth > 1024) {
+      var separator = document.createElement('div');
+      separator.className = 'pager-separator';
+      separator.style.width = '1px';
+      separator.style.height = '16px';
+      separator.style.background = 'var(--border, #e2e8f0)';
+      separator.style.margin = '0 8px';
+      controls.appendChild(separator);
+    }
 
     // Refresh Button
     var btnRefresh = document.createElement('button');
@@ -4073,22 +4112,23 @@ var Pagination = (function () {
     };
     controls.appendChild(btnRefresh);
 
-    // Capture Button
-    var btnCapture = document.createElement('button');
-    btnCapture.className = 'page-btn pager-btn-capture';
-    btnCapture.innerHTML = '<span class="material-symbols-outlined">photo_camera</span>';
-    btnCapture.title = (typeof t !== 'undefined') ? t('btn.screenshot_title') : 'Chụp vùng màn hình';
-    btnCapture.style.color = "var(--accent, #4F46E5)";
-    btnCapture.onclick = function () {
-      if (typeof ScreenCapture !== 'undefined') {
-        ScreenCapture.start();
-      } else {
-        if (typeof showToast !== 'undefined') {
-          showToast('Công cụ chụp ảnh chưa sẵn sàng!', false);
+    // Capture Button (only on screens > 1024px)
+    if (window.innerWidth > 1024) {
+      var btnCapture = document.createElement('button');
+      btnCapture.className = 'page-btn pager-btn-capture';
+      btnCapture.innerHTML = '<span class="material-symbols-outlined">photo_camera</span>';
+      btnCapture.title = (typeof t !== 'undefined') ? t('btn.screenshot_title') : 'Chụp vùng màn hình';
+      btnCapture.onclick = function () {
+        if (typeof ScreenCapture !== 'undefined') {
+          ScreenCapture.start();
+        } else {
+          if (typeof showToast !== 'undefined') {
+            showToast('Công cụ chụp ảnh chưa sẵn sàng!', false);
+          }
         }
-      }
-    };
-    controls.appendChild(btnCapture);
+      };
+      controls.appendChild(btnCapture);
+    }
 
     wrapper.appendChild(info);
     wrapper.appendChild(controls);
@@ -6154,7 +6194,7 @@ var AppGrid = {
     // Set class ban dau cho container
     container.className = self.getThemeClass();
 
-    // Chen style de hien thi duong ngan cach cot (vertical borders)
+    // Chen style de hien thi duong ngan cach cot (vertical borders) va an nut settings tren mobile
     if (!document.getElementById('ag-grid-borders-style')) {
       var style = document.createElement('style');
       style.id = 'ag-grid-borders-style';
@@ -6162,6 +6202,31 @@ var AppGrid = {
         '.ag-theme-quartz .ag-cell, .ag-theme-quartz-dark .ag-cell, ' +
         '.ag-theme-quartz .ag-header-cell, .ag-theme-quartz-dark .ag-header-cell { ' +
         '  border-right: 1px solid var(--ag-border-color, var(--color-border, #e2e8f0)) !important; ' +
+        '} ' +
+        '@media (max-width: 768px) { ' +
+        '  .grid-col-settings-btn, .grid-col-popover { ' +
+        '    display: none !important; ' +
+        '  } ' +
+        '  .ag-grid-mobile-card .ag-header { ' +
+        '    display: none !important; ' +
+        '  } ' +
+        '  .ag-grid-mobile-card .ag-body-horizontal-scroll { ' +
+        '    display: none !important; ' +
+        '    height: 0 !important; ' +
+        '  } ' +
+        '  .ag-grid-mobile-card .ag-root-wrapper { ' +
+        '    border: none !important; ' +
+        '    background: transparent !important; ' +
+        '  } ' +
+        '  .ag-grid-mobile-card .ag-row { ' +
+        '    border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08)) !important; ' +
+        '    background: transparent !important; ' +
+        '    border-radius: 6px !important; ' +
+        '  } ' +
+        '  .ag-grid-mobile-card .ag-cell { ' +
+        '    border: none !important; ' +
+        '    padding: 4px 6px !important; ' +
+        '  } ' +
         '}';
       document.head.appendChild(style);
     }
@@ -6308,6 +6373,13 @@ var AppGrid = {
     // Responsive auto-sizing columns strategy
     function adjustColumnWidths(api) {
       if (!api) return;
+
+      // If in mobile card mode, strictly fit columns to the container width to prevent overflow/scrollbars
+      if (container.classList.contains('ag-grid-mobile-card')) {
+        api.sizeColumnsToFit();
+        return;
+      }
+
       api.autoSizeAllColumns(false);
 
       var isMobile = window.innerWidth < 768;
@@ -6354,6 +6426,7 @@ var AppGrid = {
       }
     };
 
+    delete mergedOptions.mobileColumnDefs;
     var gridApi = agGrid.createGrid(container, mergedOptions);
 
     // Create column selector floating button if it doesn't exist
@@ -6540,6 +6613,46 @@ var AppGrid = {
       }
     });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    // Responsive column switching if mobileColumnDefs is provided
+    var mobileColumnDefs = customOptions.mobileColumnDefs || null;
+    if (mobileColumnDefs) {
+      var desktopColumnDefs = mergedOptions.columnDefs || [];
+      var currentMode = null;
+
+      function checkResponsiveGrid() {
+        var isMobile = window.innerWidth <= 768;
+        var mode = isMobile ? 'mobile' : 'desktop';
+        if (currentMode === mode) return;
+        currentMode = mode;
+
+        if (isMobile) {
+          container.classList.add('ag-grid-mobile-card');
+          gridApi.setGridOption('columnDefs', mobileColumnDefs);
+        } else {
+          container.classList.remove('ag-grid-mobile-card');
+          gridApi.setGridOption('columnDefs', desktopColumnDefs);
+        }
+
+        setTimeout(function () {
+          if (container.clientWidth > 0) {
+            gridApi.sizeColumnsToFit();
+          }
+        }, 50);
+      }
+
+      window.addEventListener('resize', checkResponsiveGrid);
+      checkResponsiveGrid();
+
+      // Clean up resize listener on destroy
+      var originalDestroy = gridApi.destroy;
+      gridApi.destroy = function () {
+        window.removeEventListener('resize', checkResponsiveGrid);
+        if (typeof originalDestroy === 'function') {
+          originalDestroy.apply(this, arguments);
+        }
+      };
+    }
 
     // Luu lai ref de destroy neu can
     gridApi._observer = observer;

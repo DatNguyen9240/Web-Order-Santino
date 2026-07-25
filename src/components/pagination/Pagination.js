@@ -30,15 +30,17 @@ var Pagination = (function () {
     var controls = document.createElement('div');
     controls.className = 'pagination-controls';
 
-    // First Button
-    var btnFirst = document.createElement('button');
-    btnFirst.className = 'page-btn pager-btn-first';
-    btnFirst.innerHTML = '<span class="material-symbols-outlined">first_page</span>';
-    btnFirst.disabled = currentPage === 1;
-    btnFirst.onclick = function () {
-      if (typeof options.onPageChange === 'function') options.onPageChange(1);
-    };
-    controls.appendChild(btnFirst);
+    // First Button (only on screens > 1024px)
+    if (window.innerWidth > 1024) {
+      var btnFirst = document.createElement('button');
+      btnFirst.className = 'page-btn pager-btn-first';
+      btnFirst.innerHTML = '<span class="material-symbols-outlined">first_page</span>';
+      btnFirst.disabled = currentPage === 1;
+      btnFirst.onclick = function () {
+        if (typeof options.onPageChange === 'function') options.onPageChange(1);
+      };
+      controls.appendChild(btnFirst);
+    }
 
     // Prev Button
     var btnPrev = document.createElement('button');
@@ -107,24 +109,28 @@ var Pagination = (function () {
     };
     controls.appendChild(btnNext);
 
-    // Last Button
-    var btnLast = document.createElement('button');
-    btnLast.className = 'page-btn pager-btn-last';
-    btnLast.innerHTML = '<span class="material-symbols-outlined">last_page</span>';
-    btnLast.disabled = currentPage === totalPages || totalPages === 0;
-    btnLast.onclick = function () {
-      if (typeof options.onPageChange === 'function') options.onPageChange(totalPages);
-    };
-    controls.appendChild(btnLast);
+    // Last Button (only on screens > 1024px)
+    if (window.innerWidth > 1024) {
+      var btnLast = document.createElement('button');
+      btnLast.className = 'page-btn pager-btn-last';
+      btnLast.innerHTML = '<span class="material-symbols-outlined">last_page</span>';
+      btnLast.disabled = currentPage === totalPages || totalPages === 0;
+      btnLast.onclick = function () {
+        if (typeof options.onPageChange === 'function') options.onPageChange(totalPages);
+      };
+      controls.appendChild(btnLast);
+    }
 
-    // Separator line
-    var separator = document.createElement('div');
-    separator.className = 'pager-separator';
-    separator.style.width = '1px';
-    separator.style.height = '16px';
-    separator.style.background = 'var(--border, #e2e8f0)';
-    separator.style.margin = '0 8px';
-    controls.appendChild(separator);
+    // Separator line (only on screens > 1024px)
+    if (window.innerWidth > 1024) {
+      var separator = document.createElement('div');
+      separator.className = 'pager-separator';
+      separator.style.width = '1px';
+      separator.style.height = '16px';
+      separator.style.background = 'var(--border, #e2e8f0)';
+      separator.style.margin = '0 8px';
+      controls.appendChild(separator);
+    }
 
     // Refresh Button
     var btnRefresh = document.createElement('button');
@@ -136,22 +142,23 @@ var Pagination = (function () {
     };
     controls.appendChild(btnRefresh);
 
-    // Capture Button
-    var btnCapture = document.createElement('button');
-    btnCapture.className = 'page-btn pager-btn-capture';
-    btnCapture.innerHTML = '<span class="material-symbols-outlined">photo_camera</span>';
-    btnCapture.title = (typeof t !== 'undefined') ? t('btn.screenshot_title') : 'Chụp vùng màn hình';
-    btnCapture.style.color = "var(--accent, #4F46E5)";
-    btnCapture.onclick = function () {
-      if (typeof ScreenCapture !== 'undefined') {
-        ScreenCapture.start();
-      } else {
-        if (typeof showToast !== 'undefined') {
-          showToast('Công cụ chụp ảnh chưa sẵn sàng!', false);
+    // Capture Button (only on screens > 1024px)
+    if (window.innerWidth > 1024) {
+      var btnCapture = document.createElement('button');
+      btnCapture.className = 'page-btn pager-btn-capture';
+      btnCapture.innerHTML = '<span class="material-symbols-outlined">photo_camera</span>';
+      btnCapture.title = (typeof t !== 'undefined') ? t('btn.screenshot_title') : 'Chụp vùng màn hình';
+      btnCapture.onclick = function () {
+        if (typeof ScreenCapture !== 'undefined') {
+          ScreenCapture.start();
+        } else {
+          if (typeof showToast !== 'undefined') {
+            showToast('Công cụ chụp ảnh chưa sẵn sàng!', false);
+          }
         }
-      }
-    };
-    controls.appendChild(btnCapture);
+      };
+      controls.appendChild(btnCapture);
+    }
 
     wrapper.appendChild(info);
     wrapper.appendChild(controls);

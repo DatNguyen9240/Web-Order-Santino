@@ -7,47 +7,115 @@ var SalesVoucherPage = (function () {
   var gridApi = null;
   var currentPage = 1;
   var itemsPerPage = 20;
+  var audioCtx = null;
+  var hasUserInteracted = false;
+
+  function extractList(res) {
+    if (!res) return [];
+    var records = res.records || res.list || res.data || res;
+    if (!Array.isArray(records)) {
+      if (records && typeof records === 'object' && Array.isArray(records.records)) {
+        records = records.records;
+      } else if (records && typeof records === 'object' && Array.isArray(records.data)) {
+        records = records.data;
+      } else {
+        records = [];
+      }
+    }
+    return records;
+  }
+
+  function initAudioOnGesture() {
+    var unlock = function () {
+      hasUserInteracted = true;
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        if (audioCtx && audioCtx.state === 'running') {
+          document.removeEventListener('click', unlock);
+          document.removeEventListener('keydown', unlock);
+          document.removeEventListener('touchstart', unlock);
+        }
+      } catch (e) {
+        console.warn('[SalesVoucherPage] Audio unlock failed:', e);
+      }
+    };
+    document.addEventListener('click', unlock);
+    document.addEventListener('keydown', unlock);
+    document.addEventListener('touchstart', unlock);
+  }
 
   // Web Audio API Synth Beeps
   function playSynthBeep(type) {
+    var active = false;
+    if (window.navigator && navigator.userActivation) {
+      active = navigator.userActivation.hasBeenActive;
+    } else {
+      active = hasUserInteracted;
+    }
+
+    if (!active) {
+      return; // Fully prevent browser autoplay warnings if no user gesture has occurred yet
+    }
+
     try {
-      var ctx = new (window.AudioContext || window.webkitAudioContext)();
-      var osc = ctx.createOscillator();
-      var gain = ctx.createGain();
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(function () {});
+      }
+      if (audioCtx.state === 'suspended') {
+        return; // Avoid browser warnings if still suspended
+      }
+
+      var osc = audioCtx.createOscillator();
+      var gain = audioCtx.createGain();
       osc.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(audioCtx.destination);
 
       if (type === 'success') {
         osc.frequency.value = 950;
-        gain.gain.setValueAtTime(0.06, ctx.currentTime);
+        gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
         osc.start();
-        osc.stop(ctx.currentTime + 0.08);
+        osc.stop(audioCtx.currentTime + 0.08);
       } else if (type === 'error') {
         osc.frequency.value = 320;
-        gain.gain.setValueAtTime(0.12, ctx.currentTime);
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
         osc.start();
-        osc.stop(ctx.currentTime + 0.22);
+        osc.stop(audioCtx.currentTime + 0.22);
       } else if (type === 'save') {
-        osc.frequency.setValueAtTime(800, ctx.currentTime);
-        gain.gain.setValueAtTime(0.06, ctx.currentTime);
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
         osc.start();
-        osc.stop(ctx.currentTime + 0.06);
+        osc.stop(audioCtx.currentTime + 0.06);
         setTimeout(function () {
-          var ctx2 = new (window.AudioContext || window.webkitAudioContext)();
-          var osc2 = ctx2.createOscillator();
-          var gain2 = ctx2.createGain();
-          osc2.connect(gain2);
-          gain2.connect(ctx2.destination);
-          osc2.frequency.value = 1100;
-          gain2.gain.setValueAtTime(0.06, ctx2.currentTime);
-          osc2.start();
-          osc2.stop(ctx2.currentTime + 0.1);
+          if (!audioCtx || audioCtx.state === 'suspended') return;
+          try {
+            var osc2 = audioCtx.createOscillator();
+            var gain2 = audioCtx.createGain();
+            osc2.connect(gain2);
+            gain2.connect(audioCtx.destination);
+            osc2.frequency.value = 1100;
+            gain2.gain.setValueAtTime(0.06, audioCtx.currentTime);
+            osc2.start();
+            osc2.stop(audioCtx.currentTime + 0.1);
+          } catch (e2) {
+            console.warn('[SalesVoucherPage] Save beep step 2 failed:', e2);
+          }
         }, 80);
       }
     } catch (e) {
       console.warn('[SalesVoucherPage] Audio beep not allowed by browser:', e);
     }
   }
+
+  // Trigger audio unlock setup
+  initAudioOnGesture();
 
   // Load script/css động nếu chưa có trong bundle
   function _dynCss(src) {
@@ -146,7 +214,10 @@ var SalesVoucherPage = (function () {
       _setupBarcodeScan();
       _setupKeyboardShortcuts();
 
-      // 8. Đặt form ở chế độ Thêm mới ban đầu
+      // 8. Khởi tạo ô chọn ngày dd/mm/yyyy cùng hàng với ô Tìm kiếm
+      _initDateFilter();
+
+      // 9. Đặt form ở chế độ Thêm mới ban đầu
       resetForm();
       closeDetail();
 
@@ -255,12 +326,21 @@ var SalesVoucherPage = (function () {
               queryObj.UserEmployeeID = user.EmployeeID || '';
               queryObj.UserObjectID = user.ObjectID || '';
 
-              params.q = JSON.stringify(queryObj);
+              var dsL = endpoint.toLowerCase();
+              if (dsL.includes('danhmuc') || dsL.includes('gateway') || dsL.includes('router')) {
+                params.q = JSON.stringify(queryObj);
+              } else {
+                Object.assign(params, queryObj);
+              }
               var res = await Http.get(endpoint, params);
               var records = extractList(res);
               if (records.length === 0 && (queryObj.Loai === 'Employee' || endpoint.includes('Loai=Employee'))) {
                 queryObj.Loai = 'SalesPerson';
-                params.q = JSON.stringify(queryObj);
+                if (dsL.includes('danhmuc') || dsL.includes('gateway') || dsL.includes('router')) {
+                  params.q = JSON.stringify(queryObj);
+                } else {
+                  Object.assign(params, queryObj);
+                }
                 res = await Http.get(endpoint, params);
                 records = extractList(res);
               }
@@ -303,7 +383,17 @@ var SalesVoucherPage = (function () {
         input.id = 'field-' + f.name;
         input.name = f.name;
 
-        if (f.dataType === 'datetime' || f.renderRule === 'D') {
+        if (f.dataType === 'datetime' || f.renderRule === 'D' || f.renderRule === 'date') {
+          var dateFn = (window.UIInput && window.UIInput.createDate) || (window.UIControls && window.UIControls.createDate);
+          if (dateFn) {
+            var datePicker = dateFn({
+              id: 'field-' + f.name,
+              name: f.name,
+              placeholder: 'dd/mm/yyyy'
+            });
+            group.appendChild(datePicker);
+            return;
+          }
           input.type = 'date';
         } else if (f.dataType === 'int' || f.dataType === 'decimal') {
           input.type = 'number';
@@ -324,104 +414,86 @@ var SalesVoucherPage = (function () {
     });
   }
 
-  // --- Cập nhật cột AgGrid theo độ rộng màn hình (Responsive) ---
-  var currentGridMode = null;
-  function updateGridColumns() {
-    if (!gridApi) return;
-    var isMobile = window.innerWidth <= 768;
-    var newMode = isMobile ? 'mobile' : 'desktop';
-    if (currentGridMode === newMode) return;
-    currentGridMode = newMode;
-
-    var newDefs = [];
-    if (isMobile) {
-      newDefs = [
-        {
-          headerName: 'Phiếu',
-          flex: 1,
-          minWidth: 150,
-          cellRenderer: function (params) {
-            var soCt = params.data.so_ct || params.data.DocumentID || '';
-            var khTen = params.data.kh_ten || params.data.ObjectName || 'Khách vãng lai';
-            return `<div style="line-height: 1.3; padding: 2px 0; overflow: hidden;">
-                      <div style="font-weight: 700; color: var(--text); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${soCt}</div>
-                      <div style="font-size: 10.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;">${khTen}</div>
-                    </div>`;
-          }
-        },
-        {
-          headerName: 'Tiền & Ngày',
-          width: 110,
-          cellRenderer: function (params) {
-            var amount = Utils.formatMoney(params.data.total_money || params.data.BaseTotal || 0);
-            var date = params.data.ngay_ct || params.data.DocumentDate || '';
-            var dateStr = date ? date.split(' ')[0] : '';
-            if (dateStr) {
-              var parts = dateStr.split('-');
-              if (parts.length >= 3) dateStr = parts[2] + '/' + parts[1] + '/' + parts[0].substring(2);
-            }
-            return `<div style="line-height: 1.3; padding: 2px 0; text-align: right; overflow: hidden;">
-                      <div style="font-weight: 700; color: var(--primary, #f59e0b); font-size: 12px; white-space: nowrap;">${amount}</div>
-                      <div style="font-size: 10px; color: var(--muted); margin-top: 1px; white-space: nowrap;">${dateStr}</div>
-                    </div>`;
-          }
-        }
-      ];
-    } else {
-      newDefs = [
-        { field: 'so_ct', headerName: 'Số CT', cellStyle: { fontWeight: '700' }, width: 140, minWidth: 120 },
-        { field: 'ngay_ct', headerName: 'Ngày CT', width: 110, valueFormatter: params => params.value ? params.value.split(' ')[0] : '' },
-        { field: 'kh_ten', headerName: 'Khách hàng', minWidth: 180, flex: 1 },
-        {
-          field: 'total_money',
-          headerName: 'Tổng tiền',
-          width: 120,
-          cellStyle: { color: 'var(--primary)', fontWeight: '700', textAlign: 'right' },
-          valueFormatter: params => Utils.formatMoney(params.value || 0)
-        },
-        {
-          field: 'isLock',
-          headerName: 'Trạng thái',
-          width: 110,
-          cellRenderer: function (params) {
-            var isLocked = params.value === 1 || params.value === true || String(params.value) === '1' || String(params.value) === 'true';
-            var txt = isLocked ? 'Hoàn thành' : 'Đang xử lý';
-            var type = isLocked ? 'success' : 'primary';
-            return '<span class="status-badge ' + type + '">' + txt + '</span>';
-          }
-        }
-      ];
-    }
-    gridApi.setColumnDefs(newDefs);
-    setTimeout(function () {
-      if (gridApi) gridApi.sizeColumnsToFit();
-    }, 50);
-  }
-
   // --- Khởi tạo AgGrid danh sách phiếu bên trái ---
   function _initLeftGrid() {
     var container = document.getElementById('sales-grid-container');
     if (!container) return;
 
+    var desktopDefs = [
+      { field: 'so_ct', headerName: 'Số CT', cellStyle: { fontWeight: '700' }, width: 140, minWidth: 120 },
+      { field: 'ngay_ct', headerName: 'Ngày CT', width: 110, valueFormatter: params => params.value ? params.value.split(' ')[0] : '' },
+      { field: 'kh_ten', headerName: 'Khách hàng', minWidth: 180, flex: 1 },
+      {
+        field: 'total_money',
+        headerName: 'Tổng tiền',
+        width: 120,
+        cellStyle: { color: 'var(--primary)', fontWeight: '700', textAlign: 'right' },
+        valueFormatter: params => Utils.formatMoney(params.value || 0)
+      },
+      {
+        field: 'isLock',
+        headerName: 'Trạng thái',
+        width: 110,
+        cellRenderer: function (params) {
+          var isLocked = params.value === 1 || params.value === true || String(params.value) === '1' || String(params.value) === 'true';
+          var txt = isLocked ? 'Hoàn thành' : 'Đang xử lý';
+          var type = isLocked ? 'success' : 'primary';
+          return '<span class="status-badge ' + type + '">' + txt + '</span>';
+        }
+      }
+    ];
+
+    var mobileDefs = [
+      {
+        headerName: 'Phiếu',
+        flex: 1,
+        minWidth: 150,
+        cellRenderer: function (params) {
+          var soCt = params.data.so_ct || params.data.DocumentID || '';
+          var khTen = params.data.kh_ten || params.data.ObjectName || 'Khách vãng lai';
+          return `<div style="line-height: 1.3; padding: 2px 0; overflow: hidden;">
+                    <div style="font-weight: 700; color: var(--text); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${soCt}</div>
+                    <div style="font-size: 10.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px;">${khTen}</div>
+                  </div>`;
+        }
+      },
+      {
+        headerName: 'Tiền & Ngày',
+        width: 110,
+        cellRenderer: function (params) {
+          var amount = Utils.formatMoney(params.data.total_money || params.data.BaseTotal || 0);
+          var date = params.data.ngay_ct || params.data.DocumentDate || '';
+          var dateStr = date ? date.split(' ')[0] : '';
+          if (dateStr) {
+            var parts = dateStr.split('-');
+            if (parts.length >= 3) dateStr = parts[2] + '/' + parts[1] + '/' + parts[0].substring(2);
+          }
+          return `<div style="line-height: 1.3; padding: 2px 0; text-align: right; overflow: hidden;">
+                    <div style="font-weight: 700; color: var(--primary, #f59e0b); font-size: 12px; white-space: nowrap;">${amount}</div>
+                    <div style="font-size: 10px; color: var(--muted); margin-top: 1px; white-space: nowrap;">${dateStr}</div>
+                  </div>`;
+        }
+      }
+    ];
+
     var gridOptions = {
       pagination: false,
-      columnDefs: [], // Sẽ được gán thông qua updateGridColumns
+      columnDefs: desktopDefs,
+      mobileColumnDefs: mobileDefs,
       rowData: [],
       onRowClicked: function (params) {
         if (params.data && params.data.id) {
           selectVoucher(params.data.id);
         }
+      },
+      onGridSizeChanged: function (params) {
+        if (params.api && params.clientWidth > 0) {
+          params.api.sizeColumnsToFit();
+        }
       }
     };
 
     gridApi = AppGrid.create(container, gridOptions);
-    updateGridColumns();
-
-    var resizeTimer = null;
-    window.addEventListener('resize', function () {
-      if (resizeTimer) clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(updateGridColumns, 200);
-    });
   }
 
   // --- Tải lại danh sách phiếu bán ---
@@ -504,6 +576,33 @@ var SalesVoucherPage = (function () {
       currentPage = 1;
       refreshList();
     }, 400);
+  }
+
+  // Khởi tạo DatePicker dd/mm/yyyy cùng hàng với Tìm kiếm
+  function _initDateFilter() {
+    var container = document.getElementById('sales-filter-date-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    var dateFn = (window.UIInput && window.UIInput.createDate) || (window.UIControls && window.UIControls.createDate);
+    if (!dateFn) return;
+
+    var datePicker = dateFn({
+      id: 'sales-filter-date',
+      name: 'filter_date',
+      value: '',
+      placeholder: 'dd/mm/yyyy'
+    });
+
+    container.appendChild(datePicker);
+
+    var hiddenInput = container.querySelector('input[type="hidden"]') || container.querySelector('input');
+    if (hiddenInput) {
+      hiddenInput.addEventListener('change', function () {
+        currentPage = 1;
+        refreshList();
+      });
+    }
   }
 
   // --- Khởi tạo Autocomplete Chọn nhanh sản phẩm (F3) ---
@@ -1214,7 +1313,10 @@ var SalesVoucherPage = (function () {
       layout.classList.add('mobile-show-detail');
     }
     setTimeout(function () {
-      if (gridApi) gridApi.sizeColumnsToFit();
+      var container = document.getElementById('sales-grid-container');
+      if (gridApi && container && container.clientWidth > 0) {
+        gridApi.sizeColumnsToFit();
+      }
     }, 100);
   }
 
@@ -1225,8 +1327,24 @@ var SalesVoucherPage = (function () {
       layout.classList.remove('mobile-show-detail');
     }
     setTimeout(function () {
-      if (gridApi) gridApi.sizeColumnsToFit();
+      var container = document.getElementById('sales-grid-container');
+      if (gridApi && container && container.clientWidth > 0) {
+        gridApi.sizeColumnsToFit();
+      }
     }, 100);
+  }
+
+  function toggleDetail() {
+    var layout = document.querySelector('.sales-layout');
+    var btn = document.getElementById('btn-toggle-detail-pane');
+    var icon = btn ? btn.querySelector('.material-symbols-outlined') : null;
+    if (layout && layout.classList.contains('detail-collapsed')) {
+      openDetail();
+      if (icon) icon.textContent = 'dock_to_right';
+    } else {
+      closeDetail();
+      if (icon) icon.textContent = 'dock_to_right';
+    }
   }
 
   return {
@@ -1245,6 +1363,7 @@ var SalesVoucherPage = (function () {
     applyPromo: applyPromo,
     openSettings: openSettings,
     openDetail: openDetail,
-    closeDetail: closeDetail
+    closeDetail: closeDetail,
+    toggleDetail: toggleDetail
   };
 })();
