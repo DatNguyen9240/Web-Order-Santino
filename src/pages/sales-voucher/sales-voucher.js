@@ -103,13 +103,13 @@ var SalesVoucherPage = (function () {
           { name: 'Memo', label: 'Diễn giải', required: false, showInAdd: true, showInEdit: true, renderRule: 'textarea' },
           { name: 'Notes', label: 'Ghi chú', required: false, showInAdd: true, showInEdit: true, renderRule: 'textarea' },
           { name: 'EmployeeID', label: 'Nhân viên bán hàng', required: true, showInAdd: true, showInEdit: true, renderRule: 'dropselect', dataSource: '/API_LayCacNhanVien', dropdownType: 'dropselect' },
-          { name: 'NguoiGiao', label: 'Người giao', required: false, showInAdd: true, showInEdit: true, renderRule: 'text' },
-          { name: 'PTGiaoHang', label: 'Phương thức giao', required: false, showInAdd: true, showInEdit: true, renderRule: 'text' },
-          { name: 'NguonDon', label: 'Nguồn đơn', required: false, showInAdd: true, showInEdit: true, renderRule: 'text' },
+          { name: 'NguoiGiao', label: 'Người giao', required: false, showInAdd: true, showInEdit: true, renderRule: 'dropselect', dataSource: '/API_DanhMuc?Loai=Employee', dropdownType: 'dropselect', dropdownValueColumn: 'EmployeeID', dropdownDisplayColumn: 'EmployeeName' },
+          { name: 'PTGiaoHang', label: 'Phương thức giao', required: false, showInAdd: true, showInEdit: true, renderRule: 'dropselect', dataSource: '/API_DanhMuc?Loai=DeliveryMethod', dropdownType: 'dropselect' },
+          { name: 'NguonDon', label: 'Nguồn đơn', required: false, showInAdd: true, showInEdit: true, renderRule: 'dropselect', dataSource: '/API_DanhMuc?Loai=Source', dropdownType: 'dropselect' },
           { name: 'MaDaiLy', label: 'Mã đại lý', required: false, showInAdd: true, showInEdit: true, renderRule: 'text' },
-          { name: 'CTKM', label: 'Chương trình KM', required: false, showInAdd: true, showInEdit: true, renderRule: 'dropselect', dataSource: '/API_LayCacCTKM', dropdownType: 'dropselect' },
-          { name: 'PaymentTypeID', label: 'Hình thức thanh toán', required: false, showInAdd: true, showInEdit: true, renderRule: 'dropselect', dataSource: '/API_LayCacHinhThucThanhToan', dropdownType: 'dropselect' },
-          { name: 'PaymentTermID', label: 'Điều khoản TT', required: false, showInAdd: true, showInEdit: true, renderRule: 'text' },
+          { name: 'CTKM', label: 'Chương trình KM', required: false, showInAdd: true, showInEdit: true, renderRule: 'dropselect', dataSource: '/API_DanhMuc?Loai=Promotion', dropdownType: 'dropselect' },
+          { name: 'PaymentTypeID', label: 'Hình thức thanh toán', required: false, showInAdd: true, showInEdit: true, renderRule: 'dropselect', dataSource: '/API_DanhMuc?Loai=PaymentType', dropdownType: 'dropselect' },
+          { name: 'PaymentTermID', label: 'Điều khoản TT', required: false, showInAdd: true, showInEdit: true, renderRule: 'dropselect', dataSource: '/API_DanhMuc?Loai=PaymentTerm', dropdownType: 'dropselect' },
           { name: 'NgayThanhToan', label: 'Ngày thanh toán', required: false, showInAdd: true, showInEdit: true, renderRule: 'date' }
         ];
       }
@@ -197,6 +197,29 @@ var SalesVoucherPage = (function () {
       }
       group.appendChild(label);
 
+      // Tự động gán dataSource chuẩn cho các trường danh mục nếu chưa có
+      if (!f.dataSource || f.renderRule === 'text') {
+        if (['NguoiGiao', 'DeliveryPerson', 'Deliverer'].indexOf(f.name) !== -1) {
+          f.dataSource = '/API_DanhMuc?Loai=Employee';
+          f.dropdownType = 'dropselect';
+          f.dropdownValueColumn = 'EmployeeID';
+          f.dropdownDisplayColumn = 'EmployeeName';
+          f.renderRule = 'dropselect';
+        } else if (['PTGiaoHang', 'DeliveryMethod'].indexOf(f.name) !== -1) {
+          f.dataSource = '/API_DanhMuc?Loai=DeliveryMethod';
+          f.dropdownType = 'dropselect';
+          f.renderRule = 'dropselect';
+        } else if (['NguonDon', 'OrderSource'].indexOf(f.name) !== -1) {
+          f.dataSource = '/API_DanhMuc?Loai=Source';
+          f.dropdownType = 'dropselect';
+          f.renderRule = 'dropselect';
+        } else if (['PaymentTermID', 'DieuKhoanTT'].indexOf(f.name) !== -1) {
+          f.dataSource = '/API_DanhMuc?Loai=PaymentTerm';
+          f.dropdownType = 'dropselect';
+          f.renderRule = 'dropselect';
+        }
+      }
+
       var hasDataSource = f.dataSource && f.dataSource.length > 0;
       var dsType = (f.dropdownType || '').toLowerCase().trim();
       var isDynamicLookup = hasDataSource && (dsType === 'dropselect' || dsType === 'dropdown' || dsType === 'combo' || f.dataSource.startsWith('/'));
@@ -234,15 +257,21 @@ var SalesVoucherPage = (function () {
 
               params.q = JSON.stringify(queryObj);
               var res = await Http.get(endpoint, params);
-              var records = res.records || res.list || res.data || res;
-              if (!Array.isArray(records)) records = [];
+              var records = extractList(res);
+              if (records.length === 0 && (queryObj.Loai === 'Employee' || endpoint.includes('Loai=Employee'))) {
+                queryObj.Loai = 'SalesPerson';
+                params.q = JSON.stringify(queryObj);
+                res = await Http.get(endpoint, params);
+                records = extractList(res);
+              }
 
               return records.map(function (r) {
-                var val = r[f.dropdownValueColumn || 'id'] || r.id || r.ObjectID || r.BranchID || r.EmployeeID || r.PaymentTermID || r.PaymentTypeID || '';
-                var lbl = r[f.dropdownDisplayColumn || 'name'] || r.name || r.ObjectName || r.BranchName || r.EmployeeName || r.PaymentTermName || r.PaymentTypeName || val;
+                var val = r[f.dropdownValueColumn || 'id'] || r.id || r.ObjectID || r.BranchID || r.EmployeeID || r.PaymentTermID || r.PaymentTypeID || r.Code || '';
+                var lbl = r[f.dropdownDisplayColumn || 'name'] || r.name || r.ObjectName || r.BranchName || r.EmployeeName || r.PaymentTermName || r.PaymentTypeName || r.FullName || r.Ten || val;
                 return [val, lbl, r];
               });
             } catch (err) {
+              console.warn('Lỗi tải danh mục ' + f.name + ':', err);
               return [];
             }
           },
@@ -311,7 +340,7 @@ var SalesVoucherPage = (function () {
           headerName: 'Phiếu',
           flex: 1,
           minWidth: 150,
-          cellRenderer: function(params) {
+          cellRenderer: function (params) {
             var soCt = params.data.so_ct || params.data.DocumentID || '';
             var khTen = params.data.kh_ten || params.data.ObjectName || 'Khách vãng lai';
             return `<div style="line-height: 1.3; padding: 2px 0; overflow: hidden;">
@@ -323,7 +352,7 @@ var SalesVoucherPage = (function () {
         {
           headerName: 'Tiền & Ngày',
           width: 110,
-          cellRenderer: function(params) {
+          cellRenderer: function (params) {
             var amount = Utils.formatMoney(params.data.total_money || params.data.BaseTotal || 0);
             var date = params.data.ngay_ct || params.data.DocumentDate || '';
             var dateStr = date ? date.split(' ')[0] : '';
@@ -343,10 +372,10 @@ var SalesVoucherPage = (function () {
         { field: 'so_ct', headerName: 'Số CT', cellStyle: { fontWeight: '700' }, width: 140, minWidth: 120 },
         { field: 'ngay_ct', headerName: 'Ngày CT', width: 110, valueFormatter: params => params.value ? params.value.split(' ')[0] : '' },
         { field: 'kh_ten', headerName: 'Khách hàng', minWidth: 180, flex: 1 },
-        { 
-          field: 'total_money', 
-          headerName: 'Tổng tiền', 
-          width: 120, 
+        {
+          field: 'total_money',
+          headerName: 'Tổng tiền',
+          width: 120,
           cellStyle: { color: 'var(--primary)', fontWeight: '700', textAlign: 'right' },
           valueFormatter: params => Utils.formatMoney(params.value || 0)
         },
