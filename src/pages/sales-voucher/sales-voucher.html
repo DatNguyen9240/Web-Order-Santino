@@ -46,33 +46,88 @@
     <div class="sales-right-pane">
 
       <!-- Form Header -->
-      <div class="page-hdr" style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
+      <div class="page-hdr" style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; gap: 8px;">
         <div style="display:flex; align-items:center; gap:8px;">
           <button class="btn btn-ghost btn-icon-sm mobile-back-btn" onclick="SalesVoucherPage.closeDetail()"
             title="Quay lại danh sách"
-            style="border-radius: 50%; width: 36px; height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
-            <span class="material-symbols-outlined" style="font-size: 20px;">arrow_back</span>
+            style="border-radius: 50%; width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <span class="material-symbols-outlined" style="font-size: 18px;">arrow_back</span>
           </button>
           <div>
-            <h2 id="sales-detail-title" style="font-size: 16px; font-weight: 700; margin: 0;">Thông tin phiếu bán</h2>
-            <p class="text-muted" id="sales-detail-subtitle" style="font-size: 11px; margin: 0;">Xem chi tiết hoặc tạo
-              phiếu bán hàng mới</p>
+            <h2 id="sales-detail-title" style="font-size: 15px; font-weight: 700; margin: 0; line-height: 1.2;">Thông tin phiếu bán</h2>
+            <p class="text-muted" id="sales-detail-subtitle" style="font-size: 11px; margin: 0; line-height: 1.2;">Xem chi tiết hoặc tạo phiếu bán hàng mới</p>
           </div>
         </div>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <button class="btn btn-ghost btn-icon-sm" onclick="SalesVoucherPage.closeDetail()" title="Đóng bảng chi tiết"
-            style="margin-right: 4px;">
-            <span class="material-symbols-outlined">close</span>
-          </button>
-          <button class="btn btn-ghost btn-sm" onclick="SalesVoucherPage.printInvoice()" title="In phiếu">
-            <span class="material-symbols-outlined">print</span>
-          </button>
-          <button class="btn btn-ghost btn-sm" onclick="SalesVoucherPage.openSettings()" title="Xem thêm cấu hình">
-            <span class="material-symbols-outlined">more_vert</span>
-          </button>
-          <button class="btn btn-accent btn-sm" onclick="SalesVoucherPage.saveVoucher()" id="btn-sales-save">
-            <span class="material-symbols-outlined">save</span> <span>Lưu (F6)</span>
-          </button>
+
+        <!-- Header Actions Container: Keeps buttons on the exact same row without wrapping -->
+        <div class="page-hdr-actions" style="display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; margin-left: auto;">
+          <!-- POS Toolbar Buttons -->
+          <div class="pos-toolbar">
+            <!-- Desktop Toolbar -->
+            <div class="pos-toolbar-desktop">
+              <button class="btn btn-pos btn-pos-add" onclick="SalesVoucherPage.resetForm(); SalesVoucherPage.openDetail();" title="Thêm phiếu mới (F2)">
+                <span class="material-symbols-outlined" style="color: #2563eb;">add</span> <span>Thêm</span>
+              </button>
+              <button class="btn btn-pos btn-pos-edit" onclick="SalesVoucherPage.saveVoucher()" title="Lưu phiếu bán hàng (F6)">
+                <span class="material-symbols-outlined" style="color: #ca8a04;">edit</span> <span>Sửa</span>
+              </button>
+              <button class="btn btn-pos btn-pos-delete" onclick="SalesVoucherPage.deleteCurrentVoucher()" title="Xóa phiếu này">
+                <span class="material-symbols-outlined" style="color: #dc2626;">close</span> <span>Xóa</span>
+              </button>
+              <button class="btn btn-pos btn-pos-find" onclick="document.getElementById('sales-search').focus()" title="Tìm kiếm">
+                <span class="material-symbols-outlined" style="color: #0d9488;">search</span> <span>Tìm</span>
+              </button>
+              <button class="btn btn-pos btn-pos-print" onclick="SalesVoucherPage.printInvoice()" title="In hóa đơn (F7)">
+                <span class="material-symbols-outlined" style="color: #4b5563;">print</span> <span>In</span>
+              </button>
+              <button class="btn btn-pos btn-pos-options" onclick="SalesVoucherPage.openSettings()" title="Tùy chọn cấu hình">
+                <span class="material-symbols-outlined" style="color: #4b5563;">tune</span> <span>Tùy chọn</span>
+              </button>
+              <button class="btn btn-pos btn-pos-close" onclick="SalesVoucherPage.closeDetail()" title="Đóng bảng chi tiết">
+                <span class="material-symbols-outlined" style="color: #dc2626;">power_settings_new</span> <span>Đóng</span>
+              </button>
+            </div>
+ 
+            <!-- Mobile Dropdown -->
+            <div class="pos-toolbar-mobile dropdown">
+              <button class="btn btn-pos dropdown-toggle" onclick="SalesVoucherPage.toggleToolbarDropdown(event)" title="Thao tác">
+                <span class="material-symbols-outlined" style="color: var(--primary);">menu</span> <span>Thao tác</span>
+                <span class="material-symbols-outlined dropdown-arrow">arrow_drop_down</span>
+              </button>
+              <div class="dropdown-menu">
+                <a href="javascript:void(0)" onclick="SalesVoucherPage.resetForm(); SalesVoucherPage.openDetail(); SalesVoucherPage.closeToolbarDropdown();">
+                  <span class="material-symbols-outlined" style="color: #2563eb;">add</span> Thêm mới (F2)
+                </a>
+                <a href="javascript:void(0)" onclick="SalesVoucherPage.saveVoucher(); SalesVoucherPage.closeToolbarDropdown();">
+                  <span class="material-symbols-outlined" style="color: #ca8a04;">edit</span> Lưu phiếu (F6)
+                </a>
+                <a href="javascript:void(0)" onclick="SalesVoucherPage.deleteCurrentVoucher(); SalesVoucherPage.closeToolbarDropdown();">
+                  <span class="material-symbols-outlined" style="color: #dc2626;">close</span> Xóa phiếu
+                </a>
+                <a href="javascript:void(0)" onclick="document.getElementById('sales-search').focus(); SalesVoucherPage.closeToolbarDropdown();">
+                  <span class="material-symbols-outlined" style="color: #0d9488;">search</span> Tìm kiếm
+                </a>
+                <a href="javascript:void(0)" onclick="SalesVoucherPage.printInvoice(); SalesVoucherPage.closeToolbarDropdown();">
+                  <span class="material-symbols-outlined" style="color: #4b5563;">print</span> In hóa đơn (F7)
+                </a>
+                <a href="javascript:void(0)" onclick="SalesVoucherPage.openSettings(); SalesVoucherPage.closeToolbarDropdown();">
+                  <span class="material-symbols-outlined" style="color: #4b5563;">tune</span> Tùy chọn
+                </a>
+                <a href="javascript:void(0)" onclick="SalesVoucherPage.closeDetail(); SalesVoucherPage.closeToolbarDropdown();">
+                  <span class="material-symbols-outlined" style="color: #dc2626;">power_settings_new</span> Đóng bảng
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Far Right Action -->
+          <div class="pos-hdr-right">
+            <button class="btn btn-pos btn-export-proposal" onclick="SalesVoucherPage.showComboModal()" title="Chọn đề nghị xuất hàng">
+              <span class="material-symbols-outlined" style="font-size: 16px; color: #4f46e5;">assignment</span>
+              <span class="btn-label-desktop">Chọn đề nghị xuất hàng</span>
+              <span class="btn-label-mobile">Đề nghị xuất hàng</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -206,31 +261,8 @@
                 </div>
               </div>
 
-              <!-- Editable Goods Detail Table -->
-              <div class="tbl-wrap" style="max-height: 350px; overflow-y: auto;">
-                <table class="sales-details-table" style="width: 100%;">
-                  <thead>
-                    <tr>
-                      <th style="width: 40px; text-align: center;">#</th>
-                      <th style="width: 120px;">Mã hàng</th>
-                      <th>Tên hàng / dịch vụ</th>
-                      <th style="width: 70px; text-align: center;">Size</th>
-                      <th style="width: 80px; text-align: center;">Màu</th>
-                      <th style="width: 90px; text-align: center;">Số lượng</th>
-                      <th style="width: 120px; text-align: right;">Đơn giá</th>
-                      <th style="width: 80px; text-align: center;">% Giảm</th>
-                      <th style="width: 130px; text-align: right;">Thành tiền</th>
-                      <th style="width: 50px; text-align: center;"></th>
-                    </tr>
-                  </thead>
-                  <tbody id="sales-goods-tbody">
-                    <tr>
-                      <td colspan="10" class="text-center" style="padding: 24px; color: var(--muted);">Chưa có sản phẩm
-                        nào trong phiếu. Quét barcode hoặc thêm nhanh ở trên.</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <!-- Editable Goods Detail AgGrid -->
+              <div id="sales-details-grid-container" style="height: 300px; width: 100%;"></div>
 
               <!-- Table Footer Row (Totals highlight) -->
               <div

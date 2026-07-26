@@ -28,9 +28,9 @@ body.page-sales-voucher #app-content {
 
 .sales-layout {
   display: grid;
-  grid-template-columns: 520px 1fr;
-  /* Cột trái danh sách rộng 520px thoải mái hơn, cột phải chi tiết tự giãn rộng 1fr */
-  gap: 16px;
+  grid-template-columns: 360px 1fr;
+  /* Cột trái danh sách rộng 360px gọn gàng, dành trọn bề ngang còn lại (1fr) cho form chi tiết bên phải */
+  gap: 10px;
   margin: 0 !important;
   height: calc(100vh - 56px - 84px) !important;
   align-items: start;
@@ -201,7 +201,7 @@ body.page-sales-voucher #app-content {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 20px;
+  padding: 12px 14px;
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
@@ -577,8 +577,8 @@ body.page-sales-voucher #app-content {
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
 }
 
-/* Responsive collapse to single column */
-@media (max-width: 1024px) {
+/* Responsive collapse to single column on mobile screens */
+@media (max-width: 768px) {
   .sales-layout {
     grid-template-columns: 1fr;
   }
@@ -616,13 +616,14 @@ body.page-sales-voucher #app-content {
 /* Tràn viền nhất quán cho cả header và nội dung khi ở trang POS */
 body.page-sales-voucher .container-wide,
 .container-wide.is-full-width,
-#app-content.is-full-width {
+#app-content.is-full-width,
+#app-content {
   max-width: 100% !important;
   width: 100% !important;
   height: calc(100vh - 56px) !important;
-  padding-left: 16px !important;
-  padding-right: 16px !important;
-  padding-top: 8px !important;
+  padding-left: 4px !important;
+  padding-right: 4px !important;
+  padding-top: 6px !important;
   padding-bottom: 0 !important;
   margin: 0 !important;
   box-sizing: border-box !important;
@@ -783,7 +784,58 @@ body.page-sales-voucher .container-wide,
     gap: 8px !important;
   }
 
-  .sales-right-pane .page-hdr div[style*="display:flex"] {
+  .sales-right-pane .page-hdr .page-hdr-actions {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .sales-right-pane .page-hdr .pos-toolbar {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    max-width: none !important;
+    box-sizing: border-box !important;
+  }
+
+  .sales-right-pane .page-hdr .pos-toolbar-mobile {
+    display: block !important;
+    width: auto !important;
+  }
+
+  .sales-right-pane .page-hdr .pos-toolbar-mobile .dropdown-toggle {
+    width: auto !important;
+    min-width: 105px !important;
+    justify-content: center !important;
+    height: 34px !important;
+    padding: 0 10px !important;
+    font-size: 12px !important;
+    box-sizing: border-box !important;
+    white-space: nowrap !important;
+  }
+
+  .sales-right-pane .page-hdr .pos-hdr-right {
+    flex: 1 1 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    box-sizing: border-box !important;
+  }
+
+  .sales-right-pane .page-hdr .btn-export-proposal {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    height: 34px !important;
+    padding: 0 10px !important;
+    font-size: 12px !important;
+    box-sizing: border-box !important;
+    white-space: nowrap !important;
+  }
+
+  .sales-right-pane .page-hdr div[style*="display:flex"]:first-child {
     display: flex !important;
     align-items: center !important;
     justify-content: flex-start !important;
@@ -1201,4 +1253,207 @@ body.page-sales-voucher .container-wide,
     font-size: 11px !important;
     height: 16px !important;
   }
+}
+ 
+/* ═══════════════════════════════════════════
+   POS TOOLBAR & NEW AGGRID PINNED/TFOOT STYLES
+   ═══════════════════════════════════════════ */
+ 
+/* POS Header Toolbar */
+.pos-toolbar {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.pos-toolbar-desktop {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.pos-toolbar-mobile {
+  display: none;
+  position: relative;
+}
+
+.pos-toolbar-mobile.dropdown {
+  display: inline-block;
+}
+
+.pos-toolbar-mobile .dropdown-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+.pos-toolbar-mobile .dropdown-arrow {
+  font-size: 18px;
+  margin-left: 2px;
+  transition: transform 0.2s ease;
+}
+
+.pos-toolbar-mobile.open .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.pos-toolbar-mobile .dropdown-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  min-width: 180px;
+  z-index: 999;
+  padding: 6px 0;
+  animation: slideDownDropdown 0.2s ease;
+}
+
+.pos-toolbar-mobile.open .dropdown-menu {
+  display: block;
+}
+
+.pos-toolbar-mobile .dropdown-menu a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.15s ease;
+}
+
+.pos-toolbar-mobile .dropdown-menu a:hover {
+  background: var(--hover);
+}
+
+@keyframes slideDownDropdown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.btn-label-desktop {
+  display: inline-block;
+  white-space: nowrap;
+}
+.btn-label-mobile {
+  display: none;
+  white-space: nowrap;
+}
+
+.page-hdr-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap !important;
+  flex-shrink: 0 !important;
+  margin-left: auto;
+}
+
+@media (max-width: 992px) {
+  .btn-label-desktop {
+    display: none !important;
+  }
+  .btn-label-mobile {
+    display: inline-block !important;
+  }
+  .pos-toolbar-desktop {
+    display: none !important;
+  }
+  .pos-toolbar-mobile {
+    display: inline-block !important;
+  }
+}
+ 
+.btn-pos {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  height: 32px;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+ 
+.btn-pos:hover {
+  background: var(--hover);
+  transform: translateY(-1px);
+}
+ 
+.btn-pos span.material-symbols-outlined {
+  font-size: 16px;
+}
+ 
+/* AgGrid Pinned Bottom Row Customization */
+.ag-row-pinned {
+  background-color: var(--hover) !important;
+  font-size: 12.5px !important;
+  border-top: 2px solid var(--border) !important;
+}
+ 
+.ag-row-pinned .ag-cell {
+  font-weight: 800;
+}
+ 
+/* Goods Table Sticky Footer */
+.sales-details-table tfoot {
+  position: sticky;
+  bottom: 0;
+  background: var(--surface-secondary, #fafafa);
+  z-index: 10;
+  border-top: 2px solid var(--border);
+}
+ 
+.sales-details-table tfoot td {
+  padding: 8px 10px;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--text);
+}
+ 
+/* Checkbox Style inside Dynamic Form */
+#sales-dynamic-form .checkbox-container {
+  font-weight: 600;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+ 
+#sales-dynamic-form .checkbox-container input[type="checkbox"] {
+  accent-color: var(--primary, #f59e0b);
+  cursor: pointer;
+}
+
+/* Goods AgGrid Container */
+#sales-details-grid-container {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  background: var(--surface);
 }
