@@ -11,11 +11,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Setup directories
-const UPLOADS_DIR = path.join(__dirname, 'uploads');
 const SAMPLES_DIR = path.join(__dirname, 'samples');
 const OUTPUT_DIR = path.join(__dirname, 'output');
 
-[UPLOADS_DIR, SAMPLES_DIR, OUTPUT_DIR].forEach(dir => {
+[SAMPLES_DIR, OUTPUT_DIR].forEach(dir => {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
 
@@ -29,7 +28,6 @@ async function convertDocxToPdf(docxFileName) {
     const pdfName = docxFileName.replace(/\.docx$/i, '.pdf');
     const docxPath = path.join(OUTPUT_DIR, docxFileName);
     const pdfOutputPath = path.join(OUTPUT_DIR, pdfName);
-    const pdfUploadsPath = path.join(UPLOADS_DIR, pdfName);
 
     console.log(`[PDF] Đang chuyển đổi bằng LibreOffice: ${docxFileName}`);
 
@@ -46,20 +44,12 @@ async function convertDocxToPdf(docxFileName) {
         throw new Error('LibreOffice không tạo được file PDF.');
     }
 
-    try { fs.copyFileSync(pdfOutputPath, pdfUploadsPath); } catch (e) {}
-
     console.log(`[PDF] ✅ Chuyển đổi thành công: ${pdfName}`);
     return pdfName;
 }
 
 // Middleware
 app.use(cors({ origin: '*' }));
-
-app.use('/uploads', (req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Headers', '*');
-    next();
-}, express.static(UPLOADS_DIR));
 
 app.use('/output', (req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -500,7 +490,6 @@ app.post('/api/documents/generate', async (req, res) => {
             });
 
             fs.writeFileSync(outputPath, buf);
-            try { fs.writeFileSync(uploadsPath, buf); } catch (e) {}
             console.log(`[GENERATE] ✅ Đã tạo file: ${finalFileName}`);
         }
 

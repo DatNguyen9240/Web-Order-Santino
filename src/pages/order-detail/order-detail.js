@@ -323,114 +323,6 @@ var OrderDetailPage = (function () {
     }
   }
 
-  async function exportDocx() {
-    var btn = document.getElementById('btn-print-order') || document.getElementById('btn-export-docx');
-    if (btn) btn.disabled = true;
-
-    try {
-      var id = window._viewOrderId;
-      if (!id && currentOrderData) {
-        id = currentOrderData.so_ct || currentOrderData.id;
-      }
-
-      if (!id) {
-        alert('Không tìm thấy mã đơn hàng!');
-        return;
-      }
-
-      var printData = null;
-      try {
-        const queryObj = { Loai: 'InDonHang', TimKiem: id, DocumentID: id };
-        const params = { q: JSON.stringify(queryObj), _t: Date.now() };
-        const res = await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, params);
-        var record = null;
-        if (res && res.records && res.records.length > 0) record = res.records[0];
-        else if (res && res.JsonPayload) record = res;
-        else if (Array.isArray(res) && res.length > 0) record = res[0];
-
-        if (record) {
-          if (record.JsonPayload) {
-            printData = typeof record.JsonPayload === 'string' ? JSON.parse(record.JsonPayload) : record.JsonPayload;
-          } else {
-            printData = record;
-          }
-        }
-      } catch (apiErr) {
-        console.warn('Không gọi được API_InDonHang riêng, sử dụng dữ liệu trang:', apiErr);
-      }
-
-      var rowDataPayload = printData || {
-        SoPhieu: currentOrderData.so_ct || '',
-        NgayLap: currentOrderData.ngay_ct || '',
-        TenKhachHang: currentOrderData.kh_ten || '',
-        MaKH: currentOrderData.ma_kh || '',
-        DiaChi: currentOrderData.dia_chi || '',
-        SDT: currentOrderData.sdt || '',
-        DienGiai: currentOrderData.dien_giai || currentOrderData.ghi_chu || '',
-        TongSoLuong: currentOrderData.total_qty || 0,
-        TongTienHang: currentOrderData.total_money || 0,
-        TongThanhToan: currentOrderData.total_money || 0,
-        ChiTietDonHang: currentOrderData.print_items || currentOrderData.lines || []
-      };
-
-      if (typeof OrderPrintService !== 'undefined' && typeof OrderPrintService.generate === 'function') {
-        return OrderPrintService.generate(currentOrderData, false);
-      }
-
-      var docConfig = (window.API_CONFIG && API_CONFIG.ENDPOINTS && API_CONFIG.ENDPOINTS.DOCUMENT_MANAGER)
-        ? API_CONFIG.ENDPOINTS.DOCUMENT_MANAGER
-        : null;
-
-      if (!docConfig || !docConfig.BASE_API) {
-        alert('Chưa cấu hình DOCUMENT_MANAGER trong env.js');
-        return;
-      }
-
-      var payload = {
-        templateType: docConfig.ORDER_TEMPLATE,
-        outputFileName: 'Phieu_Dat_Hang_' + String(rowDataPayload.SoPhieu || id).replace(/[\/\\:*?"<>|()+]/g, '_'),
-        rowData: rowDataPayload
-      };
-
-      var res = await fetch(docConfig.BASE_API + '/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      var result = await res.json();
-      var downloadUrl = '';
-      if (result.success) {
-        var fileName = result.fileName || (result.data && result.data.fileName);
-        if (fileName) {
-          downloadUrl = docConfig.UPLOADS_URL + encodeURIComponent(fileName);
-        } else {
-          var fileUrl = result.fileUrl || (result.data && result.data.fileUrl);
-          if (fileUrl) {
-            downloadUrl = fileUrl;
-          }
-        }
-      }
-
-      if (downloadUrl) {
-        var anchor = document.createElement('a');
-        anchor.href = downloadUrl;
-        anchor.target = '_blank';
-        anchor.rel = 'noopener';
-        anchor.download = 'Phieu_dat_hang.docx';
-        document.body.appendChild(anchor);
-        anchor.click();
-        anchor.remove();
-      } else {
-        alert('Lỗi tạo phiếu in: ' + (result.message || 'Chưa rõ nguyên nhân'));
-      }
-    } catch (err) {
-      console.error('Lỗi khi in đơn hàng:', err);
-      alert('Lỗi khi kết nối đến server in tài liệu: ' + err.message);
-    } finally {
-      if (btn) btn.disabled = false;
-    }
-  }
 
   async function exportPdf() {
     var btn = document.getElementById('btn-print-order');
@@ -447,7 +339,6 @@ var OrderDetailPage = (function () {
   return {
     render: render,
     printOrder: printOrder,
-    exportDocx: exportDocx,
     exportPdf: exportPdf
   };
 })();
