@@ -21,6 +21,9 @@ services:
     container_name: santino_onlyoffice_server
     ports:
       - "8084:80"
+    volumes:
+      # Config: tắt JWT + cho phép private IP download
+      - ./onlyoffice-local.json:/etc/onlyoffice/documentserver/local.json
     environment:
       # Tắt JWT để không bị lỗi chặn Token khi kết nối
       - JWT_ENABLED=false

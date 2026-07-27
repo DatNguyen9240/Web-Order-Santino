@@ -1,0 +1,19 @@
+{
+    "services": {
+        "CoAuthoring": {
+            "token": {
+                "enable": {
+                    "request": {
+                        "inbox": false,
+                        "outbox": false
+                    },
+                    "browser": false
+                }
+            },
+            "ipfilter": {
+                "rules": [{"address": "*", "allowed": true}],
+                "defaultAllow": "true"
+            }
+        }
+    }
+}
