@@ -1,4 +1,4 @@
-/* --- translations.js --- */
+﻿/* --- translations.js --- */
 var TRANSLATIONS = {
   vi: {
     // --- Sidebar ---
@@ -1519,11 +1519,13 @@ var OrderPrintService = (function () {
       .then(function (result) {
         var fileName = (result && result.fileName) || (result && result.data && result.data.fileName) || '';
         var fileUrl = (result && result.fileUrl) || (result && result.data && result.data.fileUrl) || '';
-        // Uu tien fileUrl tu server (server biet URL dung),
-        // fallback sang uploadsUrl + fileName neu khong co fileUrl.
+
+        // Ưu tiên fileUrl từ server (server trả về URL chính xác),
+        // fallback sang uploadsUrl + fileName nếu không có fileUrl.
         var downloadUrl = fileUrl || (fileName ? (uploadsUrl + fileName) : '');
 
-        // Neu URL tro thang den IP:port Document Server, rewrite qua proxy.
+        // Nếu URL trỏ thẳng đến IP:port của Document Server,
+        // rewrite qua proxy /docserver để tránh lỗi 404/CORS.
         var RAW_DOCSERVER = 'http://103.190.38.46:8081';
         if (downloadUrl.indexOf(RAW_DOCSERVER) === 0) {
           downloadUrl = '/docserver' + downloadUrl.slice(RAW_DOCSERVER.length);
@@ -1534,7 +1536,7 @@ var OrderPrintService = (function () {
         }
 
         if (convertToPdf) {
-          // Mo truc tiep bang anchor tag - khong qua fetch blob de tranh loi 404/CORS
+          // Mở trực tiếp bằng anchor tag — không qua fetch blob để tránh lỗi 404/CORS
           var a = document.createElement('a');
           a.href = downloadUrl;
           a.target = '_blank';
@@ -1543,7 +1545,7 @@ var OrderPrintService = (function () {
           document.body.appendChild(a);
           a.click();
           a.remove();
-          _message('success', 'Tai PDF thanh cong!', 'File PDF da duoc luu ve may.');
+          _message('success', 'Tải PDF thành công!', 'File PDF đã được lưu về máy.');
         } else {
           var anchor = document.createElement('a');
           anchor.href = downloadUrl;
