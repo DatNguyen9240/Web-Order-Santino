@@ -11,14 +11,14 @@ services:
       - ./env.js:/app/env.js
     environment:
       # host.docker.internal cho phép container truy cập host machine (Docker Desktop Windows/Mac)
-      - ONLYOFFICE_URL=http://host.docker.internal:8082
+      - ONLYOFFICE_URL=http://host.docker.internal:8084
     restart: always
 
   onlyoffice:
     image: onlyoffice/documentserver:latest
     container_name: santino_onlyoffice_server
     ports:
-      - "8082:80"
+      - "8084:80"
     environment:
       # Tắt JWT để không bị lỗi chặn Token khi kết nối
       - JWT_ENABLED=false
