@@ -29,9 +29,10 @@ const BACKEND_INTERNAL_URL = process.env.BACKEND_INTERNAL_URL || 'http://backend
  * Chuyển đổi file DOCX sang PDF bằng OnlyOffice Conversion Service
  */
 async function convertDocxToPdf(docxFileName, req) {
-    const protocol = req.protocol || 'http';
-    const host = req.get('host') || `localhost:${PORT}`;
-    const docxUrl = `${protocol}://${host}/output/${docxFileName}`;
+    // Dùng địa chỉ nội bộ Docker để OnlyOffice tải được file .docx
+    // (req.get('host') trả về public IP qua Nginx, OnlyOffice không tải được /output từ đó)
+    const internalBase = process.env.BACKEND_INTERNAL_URL || `http://localhost:${PORT}`;
+    const docxUrl = `${internalBase}/output/${docxFileName}`;
     
     const key = `pdf_${docxFileName.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}`;
     const pdfName = docxFileName.replace(/\.docx$/i, '.pdf');
