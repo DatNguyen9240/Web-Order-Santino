@@ -324,7 +324,7 @@ app.post('/api/documents/generate', async (req, res) => {
         let generated = false;
         const finalFileName = `${safeOutputName}_${Date.now()}.docx`;
         const outputPath = path.join(OUTPUT_DIR, finalFileName);
-        const uploadsPath = path.join(UPLOADS_DIR, finalFileName);
+
 
         const protocol = req.protocol || 'http';
         const host = req.get('host') || `localhost:${PORT}`;
