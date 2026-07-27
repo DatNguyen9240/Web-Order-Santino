@@ -222,40 +222,33 @@ var OrderPrintService = (function () {
       .then(function (result) {
         var fileName = (result && result.fileName) || (result && result.data && result.data.fileName) || '';
         var fileUrl = (result && result.fileUrl) || (result && result.data && result.data.fileUrl) || '';
-        // Dùng uploadsUrl + fileName (port 8081 accessible), fallback sang fileUrl nếu không có fileName
-        var downloadUrl = fileName ? (uploadsUrl + fileName) : fileUrl;
+
+        // Ưu tiên fileUrl từ server (server trả về URL chính xác),
+        // fallback sang uploadsUrl + fileName nếu không có fileUrl.
+        var downloadUrl = fileUrl || (fileName ? (uploadsUrl + fileName) : '');
+
+        // Nếu URL trỏ thẳng đến IP:port của Document Server,
+        // rewrite qua proxy /docserver để tránh lỗi 404/CORS.
+        var RAW_DOCSERVER = 'http://103.190.38.46:8081';
+        if (downloadUrl.indexOf(RAW_DOCSERVER) === 0) {
+          downloadUrl = '/docserver' + downloadUrl.slice(RAW_DOCSERVER.length);
+        }
 
         if (!downloadUrl || downloadUrl.endsWith('/undefined')) {
           throw new Error('Server không trả về tập tin hợp lệ.');
         }
 
         if (convertToPdf) {
-          // Fetch blob để trigger download thực sự, tránh popup blocker và CORS
-          _message('info', 'Đang tải PDF...', 'Vui lòng chờ một chút.');
-          fetch(downloadUrl)
-            .then(function (r) { return r.blob(); })
-            .then(function (blob) {
-              var blobUrl = URL.createObjectURL(blob);
-              var a = document.createElement('a');
-              a.href = blobUrl;
-              a.download = fileName || 'Phieu_dat_hang.pdf';
-              document.body.appendChild(a);
-              a.click();
-              a.remove();
-              setTimeout(function () { URL.revokeObjectURL(blobUrl); }, 5000);
-              _message('success', 'Tải PDF thành công!', 'File PDF đã được lưu về máy.');
-            })
-            .catch(function () {
-              // Fallback: mở tab mới nếu blob fetch thất bại
-              var a = document.createElement('a');
-              a.href = downloadUrl;
-              a.target = '_blank';
-              a.rel = 'noopener';
-              document.body.appendChild(a);
-              a.click();
-              a.remove();
-              _message('success', 'Đã tạo phiếu đặt hàng', 'File PDF đang được mở ở tab mới.');
-            });
+          // Mở trực tiếp bằng anchor tag — không qua fetch blob để tránh lỗi 404/CORS
+          var a = document.createElement('a');
+          a.href = downloadUrl;
+          a.target = '_blank';
+          a.rel = 'noopener';
+          a.download = fileName || 'Phieu_dat_hang.pdf';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          _message('success', 'Tải PDF thành công!', 'File PDF đã được lưu về máy.');
         } else {
           var anchor = document.createElement('a');
           anchor.href = downloadUrl;
