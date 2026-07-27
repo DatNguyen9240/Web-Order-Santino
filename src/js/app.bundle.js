@@ -1527,14 +1527,32 @@ var OrderPrintService = (function () {
         }
 
         if (convertToPdf) {
-          var pdfAnchor = document.createElement('a');
-          pdfAnchor.href = downloadUrl;
-          pdfAnchor.target = '_blank';
-          pdfAnchor.rel = 'noopener';
-          document.body.appendChild(pdfAnchor);
-          pdfAnchor.click();
-          pdfAnchor.remove();
-          _message('success', 'Đã tạo phiếu đặt hàng', 'File PDF đang được mở ở tab mới để in.');
+          // Fetch blob để trigger download thực sự, tránh popup blocker và CORS
+          _message('info', 'Đang tải PDF...', 'Vui lòng chờ một chút.');
+          fetch(downloadUrl)
+            .then(function (r) { return r.blob(); })
+            .then(function (blob) {
+              var blobUrl = URL.createObjectURL(blob);
+              var a = document.createElement('a');
+              a.href = blobUrl;
+              a.download = fileName || 'Phieu_dat_hang.pdf';
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              setTimeout(function () { URL.revokeObjectURL(blobUrl); }, 5000);
+              _message('success', 'Tải PDF thành công!', 'File PDF đã được lưu về máy.');
+            })
+            .catch(function () {
+              // Fallback: mở tab mới nếu blob fetch thất bại
+              var a = document.createElement('a');
+              a.href = downloadUrl;
+              a.target = '_blank';
+              a.rel = 'noopener';
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              _message('success', 'Đã tạo phiếu đặt hàng', 'File PDF đang được mở ở tab mới.');
+            });
         } else {
           var anchor = document.createElement('a');
           anchor.href = downloadUrl;
