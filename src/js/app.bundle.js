@@ -1524,13 +1524,6 @@ var OrderPrintService = (function () {
         // fallback sang uploadsUrl + fileName nếu không có fileUrl.
         var downloadUrl = fileUrl || (fileName ? (uploadsUrl + fileName) : '');
 
-        // Nếu URL trỏ thẳng đến IP:port của Document Server,
-        // rewrite qua proxy /docserver để tránh lỗi 404/CORS.
-        var RAW_DOCSERVER = 'http://103.190.38.46:8081';
-        if (downloadUrl.indexOf(RAW_DOCSERVER) === 0) {
-          downloadUrl = '/docserver' + downloadUrl.slice(RAW_DOCSERVER.length);
-        }
-
         if (!downloadUrl || downloadUrl.endsWith('/undefined')) {
           throw new Error('Server không trả về tập tin hợp lệ.');
         }
