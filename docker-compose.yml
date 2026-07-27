@@ -10,8 +10,8 @@ services:
       - ./backend-app/samples:/app/samples
       - ./env.js:/app/env.js
     environment:
-      # Tên service OnlyOffice trong Docker network nội bộ
-      - ONLYOFFICE_URL=http://onlyoffice
+      # host.docker.internal cho phép container truy cập host machine (Docker Desktop Windows/Mac)
+      - ONLYOFFICE_URL=http://host.docker.internal:8082
     restart: always
 
   onlyoffice:
