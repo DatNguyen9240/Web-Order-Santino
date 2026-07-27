@@ -621,7 +621,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log('       ✨ GENERIC DOCUMENT ENGINE - RUNNING           ');
     console.log('=======================================================');
     console.log(`[🚀] Server : http://localhost:${PORT}`);
-    console.log(`[📁] Uploads: ${UPLOADS_DIR}`);
+    console.log(`[📁] Output : ${OUTPUT_DIR}`);
     console.log(`[📁] Samples: ${SAMPLES_DIR}`);
     console.log('=======================================================');
 });
