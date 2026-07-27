@@ -222,7 +222,8 @@ var OrderPrintService = (function () {
       .then(function (result) {
         var fileName = (result && result.fileName) || (result && result.data && result.data.fileName) || '';
         var fileUrl = (result && result.fileUrl) || (result && result.data && result.data.fileUrl) || '';
-        var downloadUrl = fileName ? (uploadsUrl + encodeURIComponent(fileName)) : fileUrl;
+        // Ưu tiên dùng fileUrl từ server (đã qua proxy đúng port), fallback sang uploadsUrl
+        var downloadUrl = fileUrl || (fileName ? (uploadsUrl + encodeURIComponent(fileName)) : '');
 
         if (!downloadUrl || downloadUrl.endsWith('/undefined')) {
           throw new Error('Server không trả về tập tin hợp lệ.');
