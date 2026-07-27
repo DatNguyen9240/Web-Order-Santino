@@ -6815,6 +6815,10 @@ var Router = (function () {
     _updateNav(hash);
     window.scrollTo({ top: 0, behavior: 'instant' });
 
+    // Clean up page-specific classes
+    document.body.classList.remove('page-sales-voucher');
+    $el.className = 'main';
+
     if (!route) {
       $el.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">search_off</span><p>Trang không tồn tại: ' + hash + '</p></div>';
       _isNavigating = false;

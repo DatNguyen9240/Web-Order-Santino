@@ -32,7 +32,7 @@ body.page-sales-voucher #app-content {
   /* Cột trái danh sách rộng 360px gọn gàng, dành trọn bề ngang còn lại (1fr) cho form chi tiết bên phải */
   gap: 10px;
   margin: 0 !important;
-  height: calc(100vh - 56px - 84px) !important;
+  height: calc(100vh - 80px - 84px) !important;
   align-items: start;
   transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden !important;
@@ -614,13 +614,13 @@ body.page-sales-voucher #app-content {
 }
 
 /* Tràn viền nhất quán cho cả header và nội dung khi ở trang POS */
-body.page-sales-voucher .container-wide,
-.container-wide.is-full-width,
-#app-content.is-full-width,
-#app-content {
+body.page-sales-voucher #app-content .container-wide,
+body.page-sales-voucher .container-wide.is-full-width,
+body.page-sales-voucher #app-content.is-full-width,
+body.page-sales-voucher #app-content {
   max-width: 100% !important;
   width: 100% !important;
-  height: calc(100vh - 56px) !important;
+  height: calc(100vh - 80px) !important;
   padding-left: 4px !important;
   padding-right: 4px !important;
   padding-top: 6px !important;
@@ -904,9 +904,9 @@ body.page-sales-voucher .container-wide,
     flex-shrink: 0 !important;
   }
 
-  body.page-sales-voucher .container-wide,
-  .container-wide.is-full-width,
-  #app-content.is-full-width {
+  body.page-sales-voucher #app-content .container-wide,
+  body.page-sales-voucher .container-wide.is-full-width,
+  body.page-sales-voucher #app-content.is-full-width {
     padding-left: 4px !important;
     padding-right: 4px !important;
   }
