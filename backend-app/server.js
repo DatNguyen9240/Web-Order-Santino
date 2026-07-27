@@ -5,7 +5,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
-import axios from 'axios';
 import { execSync } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -22,8 +21,6 @@ const OUTPUT_DIR = path.join(__dirname, 'output');
 
 const app = express();
 const PORT = process.env.PORT || 8081;
-const ONLYOFFICE_URL = process.env.ONLYOFFICE_URL || 'http://onlyoffice';
-const BACKEND_INTERNAL_URL = process.env.BACKEND_INTERNAL_URL || 'http://backend-app:8081';
 
 /**
  * Chuyển đổi file DOCX sang PDF bằng LibreOffice (local, không cần network)

@@ -9,11 +9,6 @@ services:
       - ./backend-app/uploads:/app/uploads
       - ./backend-app/samples:/app/samples
       - ./env.js:/app/env.js
-    environment:
-      # host.docker.internal cho phép container truy cập host machine (Docker Desktop Windows/Mac)
-      - ONLYOFFICE_URL=http://host.docker.internal:8084
-      # URL để OnlyOffice tải file .docx (host.docker.internal resolves host machine từ trong container)
-      - BACKEND_INTERNAL_URL=http://host.docker.internal:8081
     restart: always
 
   onlyoffice:
