@@ -155,14 +155,14 @@ var OrderPrintService = (function () {
     return payload;
   }
 
-  function generate(order) {
+  function generate(order, convertToPdf) {
     var config = _documentConfig();
     var baseApi = config && config.BASE_API;
     var template = config && config.ORDER_TEMPLATE;
     var uploadsUrl = config && config.UPLOADS_URL;
 
     if (!baseApi || !uploadsUrl || !template) {
-      _message('error', 'Chưa cấu hình in DOCX', 'Thiếu DOCUMENT_MANAGER trong env.js.');
+      _message('error', 'Chưa cấu hình in ấn', 'Thiếu DOCUMENT_MANAGER trong env.js.');
       return Promise.reject(new Error('Document Server chưa được cấu hình.'));
     }
 
@@ -206,14 +206,15 @@ var OrderPrintService = (function () {
         body: JSON.stringify({
           templateType: template,
           outputFileName: 'Phieu_dat_hang_' + _safeFilePart(finalPayload.SoPhieu || docId),
-          rowData: finalPayload
+          rowData: finalPayload,
+          convertToPdf: !!convertToPdf
         })
       });
     })
       .then(function (response) {
         return response.json().catch(function () { return {}; }).then(function (body) {
           if (!response.ok || !body.success) {
-            throw new Error(body.message || 'Document Server không thể tạo file DOCX.');
+            throw new Error(body.message || 'Document Server không thể tạo file tài liệu.');
           }
           return body;
         });
@@ -227,19 +228,25 @@ var OrderPrintService = (function () {
           throw new Error('Server không trả về tập tin hợp lệ.');
         }
 
-        var anchor = document.createElement('a');
-        anchor.href = downloadUrl;
-        anchor.target = '_blank';
-        anchor.rel = 'noopener';
-        anchor.download = fileName || 'Phieu_dat_hang.docx';
-        document.body.appendChild(anchor);
-        anchor.click();
-        anchor.remove();
-        _message('success', 'Đã tạo phiếu đặt hàng', 'File DOCX đang được tải xuống.');
+        if (convertToPdf) {
+          window.open(downloadUrl, '_blank');
+          _message('success', 'Đã tạo phiếu đặt hàng', 'File PDF đang được mở ở tab mới.');
+        } else {
+          var anchor = document.createElement('a');
+          anchor.href = downloadUrl;
+          anchor.target = '_blank';
+          anchor.rel = 'noopener';
+          anchor.download = fileName || 'Phieu_dat_hang.docx';
+          document.body.appendChild(anchor);
+          anchor.click();
+          anchor.remove();
+          _message('success', 'Đã tạo phiếu đặt hàng', 'File DOCX đang được tải xuống.');
+        }
         return result;
       })
       .catch(function (err) {
-        _message('error', 'Không thể in DOCX', err.message || 'Không kết nối được Document Server.');
+        var modeText = convertToPdf ? 'PDF' : 'DOCX';
+        _message('error', 'Không thể in ' + modeText, err.message || 'Không kết nối được Document Server.');
         throw err;
       });
   }

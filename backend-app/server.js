@@ -6,12 +6,10 @@ import { fileURLToPath } from 'url';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import axios from 'axios';
+import { execSync } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-const app = express();
-const PORT = process.env.PORT || 8081;
 
 // Setup directories
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
@@ -21,6 +19,62 @@ const OUTPUT_DIR = path.join(__dirname, 'output');
 [UPLOADS_DIR, SAMPLES_DIR, OUTPUT_DIR].forEach(dir => {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
+
+const app = express();
+const PORT = process.env.PORT || 8081;
+const ONLYOFFICE_URL = process.env.ONLYOFFICE_URL || 'http://onlyoffice';
+const BACKEND_INTERNAL_URL = process.env.BACKEND_INTERNAL_URL || 'http://backend-app:8081';
+
+/**
+ * Chuyển đổi file DOCX sang PDF bằng OnlyOffice Conversion Service
+ */
+async function convertDocxToPdf(docxFileName) {
+    const docxUrl = `${BACKEND_INTERNAL_URL}/output/${docxFileName}`;
+    const convertUrl = `${ONLYOFFICE_URL}/ConvertService.ashx`;
+    const key = `pdf_${docxFileName.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}`;
+    const pdfName = docxFileName.replace(/\.docx$/i, '.pdf');
+
+    const payload = {
+        async: false,
+        filetype: 'docx',
+        key: key,
+        outputtype: 'pdf',
+        title: pdfName,
+        url: docxUrl
+    };
+
+    console.log(`[ONLYOFFICE] Đang yêu cầu Convert: ${convertUrl}`);
+    const response = await axios.post(convertUrl, payload, {
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        timeout: 20000
+    });
+
+    const body = response.data;
+    if (body.error) {
+        throw new Error(`OnlyOffice trả về mã lỗi: ${body.error}`);
+    }
+
+    const fileUrl = body.fileUrl;
+    if (!fileUrl) {
+        throw new Error('OnlyOffice không trả về link tải file PDF.');
+    }
+
+    console.log(`[ONLYOFFICE] Đang tải file PDF từ: ${fileUrl}`);
+    const pdfOutputPath = path.join(OUTPUT_DIR, pdfName);
+    const pdfUploadsPath = path.join(UPLOADS_DIR, pdfName);
+
+    const pdfResponse = await axios({ method: 'GET', url: fileUrl, responseType: 'stream' });
+    const writer = fs.createWriteStream(pdfOutputPath);
+    pdfResponse.data.pipe(writer);
+    await new Promise((resolve, reject) => { writer.on('finish', resolve); writer.on('error', reject); });
+    
+    try { fs.copyFileSync(pdfOutputPath, pdfUploadsPath); } catch (e) {}
+    
+    return pdfName;
+}
 
 // Middleware
 app.use(cors({ origin: '*' }));
@@ -301,6 +355,15 @@ app.post('/api/documents/generate', async (req, res) => {
             }
         }
 
+        let generated = false;
+        const finalFileName = `${safeOutputName}_${Date.now()}.docx`;
+        const outputPath = path.join(OUTPUT_DIR, finalFileName);
+        const uploadsPath = path.join(UPLOADS_DIR, finalFileName);
+
+        const protocol = req.protocol || 'http';
+        const host = req.get('host') || `localhost:${PORT}`;
+        const fileUrl = `${protocol}://${host}/output/${finalFileName}`;
+
         // Intercept for dynamic matrix print template
         if (templateType === 'In Don dat hang.docx') {
             console.log('[GENERATE] 🚀 Detected Santino order printing. Running Python Dynamic Matrix engine.');
@@ -308,14 +371,9 @@ app.post('/api/documents/generate', async (req, res) => {
             const tempJsonPath = path.join(__dirname, `temp_${Date.now()}.json`);
             fs.writeFileSync(tempJsonPath, JSON.stringify(dataMap, null, 2), 'utf8');
 
-            const finalFileName = `${safeOutputName}_${Date.now()}.docx`;
-            const outputPath = path.join(OUTPUT_DIR, finalFileName);
-            const uploadsPath = path.join(UPLOADS_DIR, finalFileName);
-
             const pythonScriptPath = path.join(__dirname, 'generate_docx_matrix.py');
             
             try {
-                const { execSync } = require('child_process');
                 let pythonCmd = 'python3';
                 try {
                     execSync('python3 --version', { stdio: 'ignore' });
@@ -333,22 +391,8 @@ app.post('/api/documents/generate', async (req, res) => {
                 try { fs.copyFileSync(outputPath, uploadsPath); } catch (e) {}
                 try { fs.unlinkSync(tempJsonPath); } catch (e) {}
 
-                const protocol = req.protocol || 'http';
-                const host = req.get('host') || `localhost:${PORT}`;
-                const fileUrl = `${protocol}://${host}/output/${finalFileName}`;
-
                 console.log(`[GENERATE] ✅ Created matrix docx: ${finalFileName}`);
-
-                return res.json({
-                    success: true,
-                    message: 'Tạo tài liệu ma trận size thành công!',
-                    fileName: finalFileName,
-                    fileUrl: fileUrl,
-                    data: {
-                        fileName: finalFileName,
-                        fileUrl: fileUrl
-                    }
-                });
+                generated = true;
             } catch (pyErr) {
                 console.error('[GENERATE] ❌ Lỗi chạy Python engine:', pyErr.message);
                 try { fs.unlinkSync(tempJsonPath); } catch (e) {}
@@ -356,148 +400,162 @@ app.post('/api/documents/generate', async (req, res) => {
             }
         }
 
-        // Tìm đường dẫn file template trong samples/
-        let docxTemplatePath = findTemplatePath(SAMPLES_DIR, templateType);
-        if (!docxTemplatePath) {
-            // Fallback: Lấy file .docx đầu tiên có sẵn trong thư mục samples/
-            const sampleFiles = fs.readdirSync(SAMPLES_DIR).filter(f => f.endsWith('.docx'));
-            if (sampleFiles.length > 0) {
-                docxTemplatePath = path.join(SAMPLES_DIR, sampleFiles[0]);
-            }
-        }
-
-        if (!docxTemplatePath) {
-            return res.status(404).json({
-                success: false,
-                message: `Không tìm thấy template '${templateType}' hoặc bất kỳ file mẫu .docx nào trong thư mục samples/.`
-            });
-        }
-
-        const content = fs.readFileSync(docxTemplatePath, "binary");
-        const zip = new PizZip(content);
-
-        // Chuẩn hóa đường dẫn tập tin trong ZIP
-        try {
-            const fileNames = Object.keys(zip.files);
-            for (const name of fileNames) {
-                if (name.includes('\\')) {
-                    const normalizedName = name.replace(/\\/g, '/');
-                    zip.files[normalizedName] = zip.files[name];
-                    if (zip.files[normalizedName]) {
-                        zip.files[normalizedName].name = normalizedName;
-                    }
-                    delete zip.files[name];
+        if (!generated) {
+            // Tìm đường dẫn file template trong samples/
+            let docxTemplatePath = findTemplatePath(SAMPLES_DIR, templateType);
+            if (!docxTemplatePath) {
+                // Fallback: Lấy file .docx đầu tiên có sẵn trong thư mục samples/
+                const sampleFiles = fs.readdirSync(SAMPLES_DIR).filter(f => f.endsWith('.docx'));
+                if (sampleFiles.length > 0) {
+                    docxTemplatePath = path.join(SAMPLES_DIR, sampleFiles[0]);
                 }
             }
-        } catch (normErr) {
-            console.warn('[GENERATE] ⚠️ Lỗi chuẩn hóa đường dẫn ZIP:', normErr.message);
-        }
 
-        // Xử lý nắn Word XML tổng quát
-        try {
-            const docXmlFile = zip.file("word/document.xml");
-            if (docXmlFile) {
-                let xmlContent = docXmlFile.asText();
-                xmlContent = cleanWordXmlContent(xmlContent);
-                zip.file("word/document.xml", xmlContent);
+            if (!docxTemplatePath) {
+                return res.status(404).json({
+                    success: false,
+                    message: `Không tìm thấy template '${templateType}' hoặc bất kỳ file mẫu .docx nào trong thư mục samples/.`
+                });
             }
-        } catch (cleanErr) {
-            console.warn('[GENERATE] ⚠️ Lỗi làm sạch XML:', cleanErr.message);
-        }
 
-        // Khởi tạo Docxtemplater với parser thông minh (không phân biệt hoa/thường)
-        const doc = new Docxtemplater(zip, {
-            paragraphLoop: true,
-            linebreaks: true,
-            parser: function (tag) {
-                return {
-                    get: function (scope, context) {
-                        if (tag === '.') return scope;
-                        let val = undefined;
+            const content = fs.readFileSync(docxTemplatePath, "binary");
+            const zip = new PizZip(content);
 
-                        const scopeList = (context && context.scopeList) ? context.scopeList : [scope];
-                        for (let i = scopeList.length - 1; i >= 0; i--) {
-                            const currentScope = scopeList[i];
-                            if (currentScope && typeof currentScope === 'object') {
-                                if (currentScope[tag] !== undefined && currentScope[tag] !== null) {
-                                    val = currentScope[tag];
-                                    break;
-                                } else {
-                                    const cleanTag = tag.toLowerCase().replace(/_/g, '');
-                                    const foundKey = Object.keys(currentScope).find(k => {
-                                        const cleanKey = k.toLowerCase().replace(/_/g, '');
-                                        return cleanKey === cleanTag;
-                                    });
-                                    if (foundKey && currentScope[foundKey] !== undefined && currentScope[foundKey] !== null) {
-                                        val = currentScope[foundKey];
+            // Chuẩn hóa đường dẫn tập tin trong ZIP
+            try {
+                const fileNames = Object.keys(zip.files);
+                for (const name of fileNames) {
+                    if (name.includes('\\')) {
+                        const normalizedName = name.replace(/\\/g, '/');
+                        zip.files[normalizedName] = zip.files[name];
+                        if (zip.files[normalizedName]) {
+                            zip.files[normalizedName].name = normalizedName;
+                        }
+                        delete zip.files[name];
+                    }
+                }
+            } catch (normErr) {
+                console.warn('[GENERATE] ⚠️ Lỗi chuẩn hóa đường dẫn ZIP:', normErr.message);
+            }
+
+            // Xử lý nắn Word XML tổng quát
+            try {
+                const docXmlFile = zip.file("word/document.xml");
+                if (docXmlFile) {
+                    let xmlContent = docXmlFile.asText();
+                    xmlContent = cleanWordXmlContent(xmlContent);
+                    zip.file("word/document.xml", xmlContent);
+                }
+            } catch (cleanErr) {
+                console.warn('[GENERATE] ⚠️ Lỗi làm sạch XML:', cleanErr.message);
+            }
+
+            // Khởi tạo Docxtemplater với parser thông minh (không phân biệt hoa/thường)
+            const doc = new Docxtemplater(zip, {
+                paragraphLoop: true,
+                linebreaks: true,
+                parser: function (tag) {
+                    return {
+                        get: function (scope, context) {
+                            if (tag === '.') return scope;
+                            let val = undefined;
+
+                            const scopeList = (context && context.scopeList) ? context.scopeList : [scope];
+                            for (let i = scopeList.length - 1; i >= 0; i--) {
+                                const currentScope = scopeList[i];
+                                if (currentScope && typeof currentScope === 'object') {
+                                    if (currentScope[tag] !== undefined && currentScope[tag] !== null) {
+                                        val = currentScope[tag];
                                         break;
+                                    } else {
+                                        const cleanTag = tag.toLowerCase().replace(/_/g, '');
+                                        const foundKey = Object.keys(currentScope).find(k => {
+                                            const cleanKey = k.toLowerCase().replace(/_/g, '');
+                                            return cleanKey === cleanTag;
+                                        });
+                                        if (foundKey && currentScope[foundKey] !== undefined && currentScope[foundKey] !== null) {
+                                            val = currentScope[foundKey];
+                                            break;
+                                        }
                                     }
                                 }
                             }
-                        }
 
-                        if (val && typeof val === 'object') {
-                            return val;
+                            if (val && typeof val === 'object') {
+                                return val;
+                            }
+                            return val === null || val === undefined ? "" : String(val);
                         }
-                        return val === null || val === undefined ? "" : String(val);
-                    }
-                };
-            },
-            nullGetter() {
-                return "";
+                    };
+                },
+                nullGetter() {
+                    return "";
+                }
+            });
+
+            // Render dữ liệu vào template
+            try {
+                doc.render(dataMap);
+                console.log('[GENERATE] ✅ Render dữ liệu vào template thành công');
+
+                // Xóa các ngoặc đơn dư thừa phát sinh sau render ( )
+                const docZip = doc.getZip();
+                if (docZip && docZip.file("word/document.xml")) {
+                    let xmlContent = docZip.file("word/document.xml").asText();
+                    xmlContent = xmlContent.replace(/\s*\(\s*\)/g, '');
+                    docZip.file("word/document.xml", xmlContent);
+                }
+            } catch (renderErr) {
+                console.error('[GENERATE] ❌ Lỗi render Docxtemplater:', renderErr.message);
+                if (renderErr.properties && renderErr.properties.errors) {
+                    console.error('[GENERATE] Chi tiết lỗi:', JSON.stringify(renderErr.properties.errors));
+                }
+                throw renderErr;
             }
-        });
 
-        // Render dữ liệu vào template
-        try {
-            doc.render(dataMap);
-            console.log('[GENERATE] ✅ Render dữ liệu vào template thành công');
-
-            // Xóa các ngoặc đơn dư thừa phát sinh sau render ( )
             const docZip = doc.getZip();
-            if (docZip && docZip.file("word/document.xml")) {
-                let xmlContent = docZip.file("word/document.xml").asText();
-                xmlContent = xmlContent.replace(/\s*\(\s*\)/g, '');
-                docZip.file("word/document.xml", xmlContent);
+            if (!docZip) {
+                throw new Error('Không lấy được zip buffer sau khi render');
             }
-        } catch (renderErr) {
-            console.error('[GENERATE] ❌ Lỗi render Docxtemplater:', renderErr.message);
-            if (renderErr.properties && renderErr.properties.errors) {
-                console.error('[GENERATE] Chi tiết lỗi:', JSON.stringify(renderErr.properties.errors));
-            }
-            throw renderErr;
+
+            const buf = docZip.generate({
+                type: "nodebuffer",
+                compression: "DEFLATE",
+            });
+
+            fs.writeFileSync(outputPath, buf);
+            try { fs.writeFileSync(uploadsPath, buf); } catch (e) {}
+            console.log(`[GENERATE] ✅ Đã tạo file: ${finalFileName}`);
         }
 
-        const docZip = doc.getZip();
-        if (!docZip) {
-            throw new Error('Không lấy được zip buffer sau khi render');
+        let resultFileName = finalFileName;
+        let resultFileUrl = fileUrl;
+
+        const convertToPdf = req.body.convertToPdf || req.body.format === 'pdf';
+        if (convertToPdf) {
+            try {
+                console.log(`[PDF] Đang tiến hành chuyển đổi sang PDF bằng OnlyOffice: ${finalFileName}`);
+                const pdfName = await convertDocxToPdf(finalFileName);
+                console.log(`[PDF] ✅ Chuyển đổi PDF thành công: ${pdfName}`);
+                resultFileName = pdfName;
+                resultFileUrl = `${protocol}://${host}/output/${pdfName}`;
+            } catch (pdfErr) {
+                console.error('[PDF] ❌ Lỗi chuyển đổi PDF:', pdfErr.message);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Không thể xuất file PDF. Vui lòng kiểm tra dịch vụ OnlyOffice Document Server. Chi tiết lỗi: ' + pdfErr.message
+                });
+            }
         }
-
-        const buf = docZip.generate({
-            type: "nodebuffer",
-            compression: "DEFLATE",
-        });
-
-        const finalFileName = `${safeOutputName}_${Date.now()}.docx`;
-        const outputPath = path.join(OUTPUT_DIR, finalFileName);
-        const uploadsPath = path.join(UPLOADS_DIR, finalFileName);
-        fs.writeFileSync(outputPath, buf);
-        try { fs.writeFileSync(uploadsPath, buf); } catch (e) {}
-
-        const protocol = req.protocol || 'http';
-        const host = req.get('host') || `localhost:${PORT}`;
-        const fileUrl = `${protocol}://${host}/output/${finalFileName}`;
-
-        console.log(`[GENERATE] ✅ Đã tạo file: ${finalFileName}`);
 
         return res.json({
             success: true,
-            message: 'Tạo tài liệu thành công!',
-            fileName: finalFileName,
-            fileUrl: fileUrl,
+            message: convertToPdf ? 'Tạo tài liệu PDF thành công!' : 'Tạo tài liệu thành công!',
+            fileName: resultFileName,
+            fileUrl: resultFileUrl,
             data: {
-                fileName: finalFileName,
-                fileUrl: fileUrl
+                fileName: resultFileName,
+                fileUrl: resultFileUrl
             }
         });
 
