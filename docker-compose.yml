@@ -9,6 +9,9 @@ services:
       - ./backend-app/uploads:/app/uploads
       - ./backend-app/samples:/app/samples
       - ./env.js:/app/env.js
+    environment:
+      # Tên service OnlyOffice trong Docker network nội bộ
+      - ONLYOFFICE_URL=http://onlyoffice
     restart: always
 
   onlyoffice:
