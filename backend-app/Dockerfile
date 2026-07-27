@@ -1,7 +1,7 @@
 FROM oven/bun:1
 
-# Install Python 3 and pip
-RUN apt-get update && apt-get install -y python3 python3-pip && rm -rf /var/lib/apt/lists/*
+# Install Python 3, pip, and LibreOffice for DOCX→PDF conversion
+RUN apt-get update && apt-get install -y python3 python3-pip libreoffice --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
 # Install python-docx inside the container
 RUN pip3 install --no-cache-dir --break-system-packages python-docx
