@@ -28,9 +28,11 @@ const BACKEND_INTERNAL_URL = process.env.BACKEND_INTERNAL_URL || 'http://backend
 /**
  * Chuyển đổi file DOCX sang PDF bằng OnlyOffice Conversion Service
  */
-async function convertDocxToPdf(docxFileName) {
-    const docxUrl = `${BACKEND_INTERNAL_URL}/output/${docxFileName}`;
-    const convertUrl = `${ONLYOFFICE_URL}/ConvertService.ashx`;
+async function convertDocxToPdf(docxFileName, req) {
+    const protocol = req.protocol || 'http';
+    const host = req.get('host') || `localhost:${PORT}`;
+    const docxUrl = `${protocol}://${host}/output/${docxFileName}`;
+    
     const key = `pdf_${docxFileName.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}`;
     const pdfName = docxFileName.replace(/\.docx$/i, '.pdf');
 
@@ -43,14 +45,45 @@ async function convertDocxToPdf(docxFileName) {
         url: docxUrl
     };
 
-    console.log(`[ONLYOFFICE] Đang yêu cầu Convert: ${convertUrl}`);
-    const response = await axios.post(convertUrl, payload, {
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        },
-        timeout: 20000
-    });
+    // Dò tìm dịch vụ OnlyOffice qua các địa chỉ khả dụng
+    let urlsToTry = [];
+    if (process.env.ONLYOFFICE_URL) {
+        urlsToTry.push(process.env.ONLYOFFICE_URL);
+    } else {
+        urlsToTry = [
+            'http://onlyoffice', // Nội bộ Docker network
+            'http://localhost:8082', // Chạy host Node + Docker OnlyOffice mapped port
+            'http://127.0.0.1:8082'
+        ];
+    }
+
+    let response = null;
+    let lastErr = null;
+    let usedUrl = '';
+
+    for (const url of urlsToTry) {
+        const convertUrl = `${url}/ConvertService.ashx`;
+        console.log(`[ONLYOFFICE] Đang thử kết nối ConvertService: ${convertUrl}`);
+        try {
+            response = await axios.post(convertUrl, payload, {
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                timeout: 8000
+            });
+            usedUrl = url;
+            console.log(`[ONLYOFFICE] ✅ Kết nối và chuyển đổi thành công bằng: ${convertUrl}`);
+            break;
+        } catch (err) {
+            console.warn(`[ONLYOFFICE] ⚠️ Thử kết nối thất bại với ${convertUrl}: ${err.message}`);
+            lastErr = err;
+        }
+    }
+
+    if (!response) {
+        throw new Error(`Không kết nối được dịch vụ Convert của OnlyOffice qua bất kỳ URL nào. Lỗi cuối: ${lastErr ? lastErr.message : 'Unknown'}`);
+    }
 
     const body = response.data;
     if (body.error) {
@@ -535,7 +568,7 @@ app.post('/api/documents/generate', async (req, res) => {
         if (convertToPdf) {
             try {
                 console.log(`[PDF] Đang tiến hành chuyển đổi sang PDF bằng OnlyOffice: ${finalFileName}`);
-                const pdfName = await convertDocxToPdf(finalFileName);
+                const pdfName = await convertDocxToPdf(finalFileName, req);
                 console.log(`[PDF] ✅ Chuyển đổi PDF thành công: ${pdfName}`);
                 resultFileName = pdfName;
                 resultFileUrl = `${protocol}://${host}/output/${pdfName}`;
