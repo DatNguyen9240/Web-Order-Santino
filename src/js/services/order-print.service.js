@@ -227,6 +227,25 @@ var OrderPrintService = (function () {
         // fallback sang uploadsUrl + fileName nếu không có fileUrl.
         var downloadUrl = fileUrl || (fileName ? (uploadsUrl + fileName) : '');
 
+        // Chuẩn hóa downloadUrl
+        if (downloadUrl) {
+          var isLocal = ['localhost', '127.0.0.1'].indexOf(window.location.hostname) !== -1;
+          if (!isLocal) {
+            if (downloadUrl.indexOf('http://') === 0 || downloadUrl.indexOf('https://') === 0) {
+              try {
+                var urlObj = new URL(downloadUrl);
+                if (urlObj.pathname.indexOf('/output/') === 0) {
+                  downloadUrl = '/docserver' + urlObj.pathname;
+                }
+              } catch (e) {
+                console.warn('[OrderPrintService] Lỗi parse URL download:', e);
+              }
+            } else if (downloadUrl.indexOf('/output/') === 0) {
+              downloadUrl = '/docserver' + downloadUrl;
+            }
+          }
+        }
+
         if (!downloadUrl || downloadUrl.endsWith('/undefined')) {
           throw new Error('Server không trả về tập tin hợp lệ.');
         }
