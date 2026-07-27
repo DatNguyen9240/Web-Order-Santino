@@ -229,8 +229,14 @@ var OrderPrintService = (function () {
         }
 
         if (convertToPdf) {
-          window.open(downloadUrl, '_blank');
-          _message('success', 'Đã tạo phiếu đặt hàng', 'File PDF đang được mở ở tab mới.');
+          var pdfAnchor = document.createElement('a');
+          pdfAnchor.href = downloadUrl;
+          pdfAnchor.target = '_blank';
+          pdfAnchor.rel = 'noopener';
+          document.body.appendChild(pdfAnchor);
+          pdfAnchor.click();
+          pdfAnchor.remove();
+          _message('success', 'Đã tạo phiếu đặt hàng', 'File PDF đang được mở ở tab mới để in.');
         } else {
           var anchor = document.createElement('a');
           anchor.href = downloadUrl;
