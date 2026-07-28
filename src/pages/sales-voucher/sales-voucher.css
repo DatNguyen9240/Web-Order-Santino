@@ -540,6 +540,29 @@ body.page-sales-voucher #app-content {
   display: block;
 }
 
+/*
+ * UITabs moves the source panels into .ui-tabs-body at runtime, so the
+ * visible frame must be applied to that generated container.
+ */
+#sales-tabs-container .ui-tabs-header {
+  margin-bottom: 0;
+}
+
+#sales-tabs-container .ui-tabs-body {
+  width: 100%;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  box-sizing: border-box;
+}
+
+/* Visibility is controlled by the generated .ui-tab-panel wrappers. */
+#sales-tabs-container .tab-panel-item {
+  display: block;
+}
+
 /* Sticky Hotkeys Footer Bar */
 .hotkeys-footer-bar {
   position: fixed;
