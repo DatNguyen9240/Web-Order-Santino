@@ -724,6 +724,7 @@ var SalesVoucherPage = (function () {
  
       // 6. Khởi tạo Tabs
       _initTabs();
+      _initSplitResize();
  
       // 7. Gắn bộ quét Barcode và các phím tắt
       _setupBarcodeScan();
@@ -1480,6 +1481,110 @@ var SalesVoucherPage = (function () {
     ]);
 
     tabsContainer.appendChild(tabs);
+  }
+
+  // --- Thay đổi độ rộng hai khung ---
+  function _initSplitResize() {
+    var layout = document.querySelector('.sales-layout');
+    var splitter = layout ? layout.querySelector('.sales-splitter') : null;
+    var leftPane = layout ? layout.querySelector('.sales-left-pane') : null;
+    if (!layout || !splitter || !leftPane) return;
+
+    var storageKey = 'salesVoucherLeftPaneWidth';
+    var defaultWidth = 360;
+    var minLeftWidth = 260;
+    var minRightWidth = 480;
+    var startX = 0;
+    var startWidth = 0;
+
+    function getMaxLeftWidth() {
+      return Math.max(minLeftWidth, layout.clientWidth - splitter.offsetWidth - minRightWidth);
+    }
+
+    function setLeftWidth(width) {
+      var nextWidth = Math.min(Math.max(width, minLeftWidth), getMaxLeftWidth());
+      layout.style.setProperty('--sales-left-width', Math.round(nextWidth) + 'px');
+      splitter.setAttribute('aria-valuemin', String(minLeftWidth));
+      splitter.setAttribute('aria-valuemax', String(Math.round(getMaxLeftWidth())));
+      splitter.setAttribute('aria-valuenow', String(Math.round(nextWidth)));
+      return nextWidth;
+    }
+
+    function saveLeftWidth(width) {
+      try {
+        window.localStorage.setItem(storageKey, String(Math.round(width)));
+      } catch (e) {
+        // The splitter still works when browser storage is unavailable.
+      }
+    }
+
+    function resizeGrids() {
+      window.requestAnimationFrame(function () {
+        if (gridApi && leftPane.clientWidth > 0) gridApi.sizeColumnsToFit();
+        var detailsContainer = document.getElementById('sales-details-grid-container');
+        if (detailsGridApi && detailsContainer && detailsContainer.clientWidth > 0) {
+          detailsGridApi.sizeColumnsToFit();
+        }
+      });
+    }
+
+    var savedWidth = defaultWidth;
+    try {
+      savedWidth = parseFloat(window.localStorage.getItem(storageKey)) || defaultWidth;
+    } catch (e) {
+      savedWidth = defaultWidth;
+    }
+    setLeftWidth(savedWidth);
+
+    splitter.addEventListener('pointerdown', function (event) {
+      if (window.matchMedia('(max-width: 768px)').matches ||
+          layout.classList.contains('detail-collapsed')) return;
+
+      startX = event.clientX;
+      startWidth = leftPane.getBoundingClientRect().width;
+      layout.classList.add('is-resizing');
+      splitter.setPointerCapture(event.pointerId);
+      event.preventDefault();
+    });
+
+    splitter.addEventListener('pointermove', function (event) {
+      if (!layout.classList.contains('is-resizing')) return;
+      setLeftWidth(startWidth + event.clientX - startX);
+    });
+
+    function finishResize(event) {
+      if (!layout.classList.contains('is-resizing')) return;
+      layout.classList.remove('is-resizing');
+      if (splitter.hasPointerCapture(event.pointerId)) {
+        splitter.releasePointerCapture(event.pointerId);
+      }
+      saveLeftWidth(leftPane.getBoundingClientRect().width);
+      resizeGrids();
+    }
+
+    splitter.addEventListener('pointerup', finishResize);
+    splitter.addEventListener('pointercancel', finishResize);
+
+    splitter.addEventListener('keydown', function (event) {
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+      var direction = event.key === 'ArrowLeft' ? -1 : 1;
+      var width = setLeftWidth(leftPane.getBoundingClientRect().width + direction * 20);
+      saveLeftWidth(width);
+      resizeGrids();
+      event.preventDefault();
+    });
+
+    splitter.addEventListener('dblclick', function () {
+      var width = setLeftWidth(defaultWidth);
+      saveLeftWidth(width);
+      resizeGrids();
+    });
+
+    window.addEventListener('resize', function () {
+      if (window.matchMedia('(max-width: 768px)').matches ||
+          layout.classList.contains('detail-collapsed')) return;
+      setLeftWidth(leftPane.getBoundingClientRect().width);
+    });
   }
 
   // --- Thêm dòng hàng vào bảng chi tiết ---

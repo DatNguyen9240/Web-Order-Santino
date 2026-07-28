@@ -28,9 +28,9 @@ body.page-sales-voucher #app-content {
 
 .sales-layout {
   display: grid;
-  grid-template-columns: 360px 1fr;
+  grid-template-columns: var(--sales-left-width, 360px) 10px minmax(0, 1fr);
   /* Cột trái danh sách rộng 360px gọn gàng, dành trọn bề ngang còn lại (1fr) cho form chi tiết bên phải */
-  gap: 10px;
+  gap: 0;
   margin: 0 !important;
   height: calc(100vh - 80px - 84px) !important;
   align-items: start;
@@ -39,11 +39,46 @@ body.page-sales-voucher #app-content {
 }
 
 /* Trạng thái thu gọn chi tiết (Cột trái danh sách rộng 100%, cột phải chi tiết ẩn) */
+.sales-layout.is-resizing {
+  transition: none;
+  user-select: none;
+}
+
+.sales-splitter {
+  position: relative;
+  align-self: stretch;
+  min-height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+  outline: none;
+}
+
+.sales-splitter::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 50%;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--border);
+  transform: translateX(-50%);
+  transition: width 0.15s ease, background 0.15s ease;
+}
+
+.sales-splitter:hover::before,
+.sales-splitter:focus-visible::before,
+.sales-layout.is-resizing .sales-splitter::before {
+  width: 4px;
+  background: var(--primary);
+}
+
 .sales-layout.detail-collapsed {
-  grid-template-columns: 1fr 0px;
+  grid-template-columns: 1fr;
   gap: 0;
 }
 
+.sales-layout.detail-collapsed .sales-splitter,
 .sales-layout.detail-collapsed .sales-right-pane {
   display: none;
 }
@@ -604,6 +639,10 @@ body.page-sales-voucher #app-content {
 @media (max-width: 768px) {
   .sales-layout {
     grid-template-columns: 1fr;
+  }
+
+  .sales-splitter {
+    display: none;
   }
 
   .sales-left-pane {
