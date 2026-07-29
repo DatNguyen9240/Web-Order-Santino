@@ -7,7 +7,7 @@
 // `/api` để trình duyệt không phát sinh request CORS/preflight.
 const isLocalDevelopment = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 const ENV_VARS = {
-    API_BASE: isLocalDevelopment ? 'http://stntest.bms79.com/api' : '/api',
+    API_BASE: isLocalDevelopment ? 'http://santino.bms79.com/api' : '/api',
     // Server in tài liệu DOCX & OnlyOffice
     DOCUMENT_SERVER_BASE: isLocalDevelopment ? 'http://103.190.38.46:8081' : '/docserver',
 };

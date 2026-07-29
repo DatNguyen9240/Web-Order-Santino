@@ -7,7 +7,35 @@ BEGIN TRY
 
     DECLARE @Forms TABLE (FormID VARCHAR(100) PRIMARY KEY);
     INSERT INTO @Forms (FormID)
-    VALUES ('frmProduct'), ('TenHang2Frm'), ('products');
+    VALUES ('frmProduct');
+
+    -- DB gốc có thể chưa có form động cho sản phẩm; tạo đúng cấu hình test.
+    IF NOT EXISTS
+    (
+        SELECT 1
+        FROM dbo.SY_FrmLstTbl
+        WHERE FormID = 'frmProduct'
+    )
+    BEGIN
+        INSERT INTO dbo.SY_FrmLstTbl
+        (
+            FormID,
+            CaptionVN,
+            TableName,
+            PrimaryKey,
+            AddNewColumnArr,
+            EditorColumnArr
+        )
+        VALUES
+        (
+            'frmProduct',
+            N'Sản phẩm',
+            'dbo.VW_WebProductDynamic',
+            'ItemName2',
+            'ItemName2;CategoryID;Form;MauSac;nhom_size;UnitPrice;TenHangHoa;isDisable;isWeb',
+            'ItemName2;CategoryID;Form;MauSac;nhom_size;UnitPrice;TenHangHoa;isDisable;isWeb'
+        );
+    END;
 
     DECLARE @Actions TABLE
     (
@@ -134,6 +162,42 @@ BEGIN TRY
         FROM dbo.SY_FrmDrdwTbl existing
         WHERE existing.FormID = formData.FormID
           AND existing.ColumnID = dropdownData.ColumnID
+    );
+
+    -- Cấu hình màu sắc giống form frmProduct ở DB test.
+    INSERT INTO dbo.SY_FrmDrdwTbl
+    (
+        UserAutoID, FormID, GridName, ColumnID,
+        ValueColumn, DisplayColumn, ColumnArr, WidthArr,
+        [Source], LinkColumn, DisableAddNew, KeepValue,
+        IsNotInList, IsDisable, IsReload,
+        isLock, isInvisible, isWordWrap, isMultiValue,
+        ReloadType, EditType, TriggerOnOpenForm
+    )
+    SELECT
+        CONVERT(VARCHAR(36), NEWID()),
+        formData.FormID,
+        '',
+        'MauSac',
+        'MauSac',
+        'MauSac',
+        'MauSac',
+        '100',
+        'Select * from CF_TenHang2Tbl',
+        '',
+        0, 0,
+        0, 0, 0,
+        0, 0, 0, 0,
+        0, 0, 0
+    FROM @Forms formData
+    INNER JOIN dbo.SY_FrmLstTbl formConfig
+        ON formConfig.FormID = formData.FormID
+    WHERE NOT EXISTS
+    (
+        SELECT 1
+        FROM dbo.SY_FrmDrdwTbl existing
+        WHERE existing.FormID = formData.FormID
+          AND existing.ColumnID = 'MauSac'
     );
 
     COMMIT TRANSACTION;
