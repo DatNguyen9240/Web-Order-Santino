@@ -296,7 +296,8 @@ BEGIN
             [CTKM]      AS [id],
             [ChietKhau] AS [name]
         FROM [dbo].[CF_CTKMTbl]
-        WHERE (@TimKiem = '' OR [CTKM] LIKE N'%' + @TimKiem + N'%' OR [ChietKhau] LIKE N'%' + @TimKiem + N'%')
+        WHERE [IsWeb] = 1
+          AND (@TimKiem = '' OR [CTKM] LIKE N'%' + @TimKiem + N'%' OR [ChietKhau] LIKE N'%' + @TimKiem + N'%')
           AND ([NgayKetThuc] IS NULL OR [NgayKetThuc] >= CAST(GETDATE() AS DATE))
         ORDER BY [CTKM];
         RETURN;

@@ -113,7 +113,7 @@ BEGIN TRY
     ('WEB_OrderFrm', 'CTKM', N'Khuyến mãi', '/API_DanhMuc?Loai=Promotion', 'CTKM', 'TenCTKM', 'dropselect'),
     ('WEB_OrderFrm', 'PaymentTermID', N'Điều khoản TT', '/API_DanhMuc?Loai=PaymentTerm', 'PaymentTermID', 'PaymentTermName', 'dropselect'),
     ('WEB_OrderFrm', 'PaymentTypeID', N'Hình thức TT', '/API_DanhMuc?Loai=PaymentType', 'PaymentTypeID', 'PaymentTypeName', 'dropselect'),
-    ('WEB_OrderDetailFrm', 'ItemID', N'Hàng hóa', '/API_LaySanPham', 'ItemID', 'ItemName', 'dropselect');
+    ('WEB_OrderDetailFrm', 'ItemID', N'Hàng hóa', '/API_LaySanPham', 'ItemName2', 'TenHangHoa', 'dropselect');
 
     UPDATE dd
     SET dd.Caption = d.Caption, dd.[Source] = d.[Source], dd.ValueColumn = d.ValueColumn,

@@ -51,29 +51,21 @@ BEGIN
     CREATE CLUSTERED INDEX IX_TempSizes ON #TempSizes (ItemName2, MauSac);
 
     -- 2. Truy vấn kết quả chính (JOIN với bảng tạm để đạt hiệu năng tối đa)
+    -- API web chỉ trả thông tin sản phẩm và đơn giá; không trả tồn kho.
     SELECT 
         t2.[ItemName2]    AS [ItemName2],
-        t2.[ItemName2]    AS [ten_hang_2],
         t2.[TenHangHoa]   AS [TenHangHoa],
-        t2.[TenHangHoa]   AS [ten_hang_hoa],
         t2.[UnitPrice]    AS [UnitPrice],
-        t2.[UnitPrice]    AS [don_gia],
         t2.[MauSac]       AS [MauSac],
-        t2.[MauSac]       AS [mau],
         t2.[Form]         AS [Form],
-        t2.[Form]         AS [form],
-        t2.[FormName]     AS [ten_form],    
+        t2.[FormName]     AS [FormName],
         t2.[CategoryID]   AS [CategoryID],   
-        t2.[CategoryID]   AS [nhom_hang],   
         t2.[Design]       AS [Design],
-        t2.[Design]       AS [design],
         t2.[isDisable]    AS [isDisable],
-        t2.[isDisable]    AS [ngung_su_dung],
         ISNULL(t2.[isWeb], 0) AS [isWeb],
-        ISNULL(t2.[isWeb], 0) AS [is_web],
         
         ts.[nhom_size]    AS [nhom_size],
-        cat.[CategoryName] AS [ten_nhom_hang],
+        cat.[CategoryName] AS [CategoryName],
 
         -- Chỉ sinh JSON khi thực sự cần thiết (lấy danh sách bán trên Web) để tối ưu CPU
         CASE WHEN @IsWebOnly = 1 THEN
@@ -83,7 +75,7 @@ BEGIN
                AND ci.[MauSac] = t2.[MauSac]
                AND (ci.[isDisable] = 0 OR ci.[isDisable] IS NULL)
              FOR JSON PATH)
-        ELSE NULL END AS [sizes_json]
+        ELSE NULL END AS [SizesJson]
     FROM 
         [dbo].[CF_TenHang2Tbl] t2
     LEFT JOIN #TempSizes ts ON t2.[ItemName2] = ts.[ItemName2] AND t2.[MauSac] = ts.[MauSac]

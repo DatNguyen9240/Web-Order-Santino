@@ -82,7 +82,7 @@ BEGIN TRY
     );
     INSERT INTO @Actions ([Action], [Source], Oderby)
     VALUES
-        ('SEARCH', N'/CF_CTKMTbl', 10),
+        ('SEARCH', N'/API_LayKhuyenMai', 10),
         ('CREATE', N'/API_ThemDuLieuChung', 20),
         ('UPDATE', N'/API_CapNhatDuLieuChung', 30),
         ('DELETE', N'/API_XoaDuLieuChung', 40);

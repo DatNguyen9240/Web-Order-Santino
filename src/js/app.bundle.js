@@ -782,6 +782,36 @@ const Http = (() => {
  * Xử lý gọi API liên quan đến Sản phẩm
  */
 const ProductService = (() => {
+  function getField(product, canonicalName, legacyName) {
+    if (product[canonicalName] !== undefined) {
+      return product[canonicalName];
+    }
+    return product[legacyName];
+  }
+
+  // Các màn hình đặt hàng hiện vẫn dùng model snake_case. Chuyển đổi tại
+  // service để API có thể trả duy nhất bộ tên cột chuẩn từ cơ sở dữ liệu.
+  function toOrderProduct(product) {
+    var form = getField(product, 'Form', 'form1');
+    var design = getField(product, 'Design', 'design1');
+
+    return {
+      ten_hang_2: getField(product, 'ItemName2', 'ten_hang_2'),
+      ten_hang_hoa: getField(product, 'TenHangHoa', 'ten_hang_hoa'),
+      don_gia: getField(product, 'UnitPrice', 'don_gia'),
+      mau: getField(product, 'MauSac', 'mau'),
+      form: form !== undefined ? form : product.form,
+      ten_form: getField(product, 'FormName', 'ten_form'),
+      nhom_hang: getField(product, 'CategoryID', 'nhom_hang'),
+      design: design !== undefined ? design : product.design,
+      ngung_su_dung: getField(product, 'isDisable', 'ngung_su_dung'),
+      is_web: getField(product, 'isWeb', 'is_web'),
+      nhom_size: product.nhom_size,
+      ten_nhom_hang: getField(product, 'CategoryName', 'ten_nhom_hang'),
+      sizes_json: getField(product, 'SizesJson', 'sizes_json')
+    };
+  }
+
   /**
    * Lấy danh sách sản phẩm (có hỗ trợ tìm kiếm)
    * @param {string} searchTerm - Từ khóa tìm kiếm (mã hoặc tên)
@@ -798,8 +828,8 @@ const ProductService = (() => {
       }
       const res = await Http.get(API_CONFIG.ENDPOINTS.PRODUCTS.LIST, { q: JSON.stringify(queryObj) });
 
-      // Giả sử API trả về mảng trực tiếp hoặc nằm trong { records: [] }
-      return res.records || res;
+      const products = res.records || res;
+      return Array.isArray(products) ? products.map(toOrderProduct) : [];
     } catch (error) {
       console.warn('[ProductService] Lỗi gọi API lấy sản phẩm:', error);
       return [];
