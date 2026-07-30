@@ -9,15 +9,22 @@ const OrderService = (() => {
     return value === true || value === 1 || value === '1' || String(value).toLowerCase() === 'true';
   }
 
+  async function _loadForm(formName) {
+    var response = await Http.post('/API_LayCacTruongGiaoDien', { FormName: formName });
+    var fields = response && (response.records || response.list || response);
+    if (!Array.isArray(fields) || !fields.length) {
+      throw new Error('DB chưa cấu hình metadata ' + formName + '.');
+    }
+    return { fields: fields, config: fields[0] || {} };
+  }
+
   async function getMetadata() {
     if (_metadataPromise) return _metadataPromise;
     _metadataPromise = (async function () {
-      var response = await Http.post('/API_LayCacTruongGiaoDien', { FormName: 'WEB_OrderFrm' });
-      var fields = response && (response.records || response.list || response);
-      if (!Array.isArray(fields) || !fields.length) {
-        throw new Error('DB chưa cấu hình metadata WEB_OrderFrm.');
-      }
-      var config = fields[0];
+      var header = await _loadForm('WEB_OrderFrm');
+      var detailForm = header.config.tableDetail || 'WEB_OrderDetailFrm';
+      var detail = await _loadForm(detailForm);
+      var config = header.config;
       if (!_isTrue(config.apiConfigured)) {
         throw new Error('WEB_OrderFrm chưa cấu hình API trong SY_FrmMstActTbl.');
       }
@@ -31,7 +38,13 @@ const OrderService = (() => {
       Object.keys(endpoints).forEach(function (action) {
         if (!endpoints[action]) throw new Error('WEB_OrderFrm thiếu API action ' + action + '.');
       });
-      return { fields: fields, endpoints: endpoints };
+      return {
+        fields: header.fields,
+        detailFields: detail.fields,
+        config: config,
+        detailConfig: detail.config,
+        endpoints: endpoints
+      };
     })();
     return _metadataPromise;
   }
@@ -72,7 +85,11 @@ const OrderService = (() => {
     var query = Object.assign({ Loai: 'OrderDetail', TimKiem: documentId, chinhanh: '', Page: 1 }, _userContext());
     var response = await Http.get(metadata.endpoints.DETAIL, { q: JSON.stringify(query), _t: Date.now() });
     var records = response && response.records ? response.records : response;
-    return Array.isArray(records) && records.length ? records[0] : null;
+    var record = Array.isArray(records) && records.length ? records[0] : null;
+    if (record && typeof record.Lines === 'string') {
+      try { record.Lines = JSON.parse(record.Lines); } catch (e) { record.Lines = []; }
+    }
+    return record;
   }
 
   async function createOrder(orderData) {

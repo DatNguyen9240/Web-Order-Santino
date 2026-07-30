@@ -6,6 +6,87 @@ var OrderDetailPage = (function () {
   var $container = null;
   var currentOrderData = null;
   var currentOrder = null;
+  var orderMetadata = null;
+
+  function _splitColumnNames(value) {
+    return String(value || '').split(';').map(function (name) {
+      return name.trim();
+    }).filter(Boolean);
+  }
+
+  function _isHiddenField(field, config) {
+    var hiddenNames = _splitColumnNames(config && config.hideColumnArr).map(function (name) {
+      return name.toLowerCase();
+    });
+    var showInGrid = field && field.showInGrid;
+    return hiddenNames.indexOf(String(field.name).toLowerCase()) >= 0
+      || showInGrid === false
+      || showInGrid === 0
+      || showInGrid === '0'
+      || String(showInGrid).toLowerCase() === 'false';
+  }
+
+  function _configuredDetailFields(metadata) {
+    var fields = (metadata && metadata.detailFields) || [];
+    var config = metadata && metadata.detailConfig;
+    var byName = {};
+    fields.forEach(function (field) {
+      byName[String(field.name).toLowerCase()] = field;
+    });
+
+    var configuredNames = _splitColumnNames(config && config.defaultColumnArr);
+    var selectedFields = configuredNames.length
+      ? configuredNames.map(function (name) { return byName[name.toLowerCase()]; }).filter(Boolean)
+      : fields.slice().sort(function (a, b) {
+        return Number(a.orderNo || 0) - Number(b.orderNo || 0);
+      });
+
+    return selectedFields.filter(function (field) {
+      return !_isHiddenField(field, config);
+    });
+  }
+
+  function _buildDetailColumnDefs(metadata) {
+    return _configuredDetailFields(metadata).map(function (field) {
+      var renderRule = String(field.renderRule || '').trim().toUpperCase();
+      var column = {
+        field: field.name,
+        headerName: field.label || field.name,
+        minWidth: String(field.dataType || '').toLowerCase().indexOf('char') >= 0 ? 150 : 110
+      };
+
+      if (renderRule === 'N') {
+        column.cellStyle = { color: 'var(--accent, #4F46E5)', fontWeight: '700' };
+      } else if (renderRule === 'B') {
+        column.valueFormatter = function (params) {
+          if (typeof Utils !== 'undefined' && Utils.formatMoney) {
+            return Utils.formatMoney(params.value || 0);
+          }
+          return params.value;
+        };
+      } else if (renderRule === 'SIZE' || String(field.name).toLowerCase() === 'size') {
+        column.cellStyle = { color: 'var(--text-secondary, #6b7280)', fontSize: '13px' };
+        column.cellRenderer = function (params) {
+          var val = params.value;
+          if (!val) return '—';
+          try {
+            var arr = typeof val === 'string' ? JSON.parse(val) : val;
+            if (Array.isArray(arr)) {
+              return arr.map(function (s) {
+                var size = s.Size !== undefined ? s.Size : s.size;
+                var quantity = s.Quantity !== undefined ? s.Quantity : (s.qty !== undefined ? s.qty : s.Qty);
+                return size + '(' + quantity + ')';
+              }).join(', ');
+            }
+          } catch (e) {
+            console.warn('Error parsing size details:', e);
+          }
+          return val;
+        };
+      }
+      return column;
+    });
+  }
 
   async function bindPrintButton() {
     var button = document.getElementById('order-detail-print');
@@ -45,55 +126,7 @@ var OrderDetailPage = (function () {
 
     var gridOptions = {
       pagination: false,
-      columnDefs: [
-        { field: 'ten_hang_2', headerName: (typeof t !== 'undefined' ? t('table.col.name2') : 'Tên hàng 2'), cellStyle: { fontWeight: '700' } },
-        { field: 'ten_hang', headerName: (typeof t !== 'undefined' ? t('table.col.product_name') : 'Tên hàng hóa'), minWidth: 150 },
-        {
-          field: 'chi_tiet_size',
-          headerName: (typeof t !== 'undefined' ? t('table.col.size') : 'Size'),
-          minWidth: 150,
-          cellStyle: { color: 'var(--text-secondary, #6b7280)', fontSize: '13px' },
-          cellRenderer: function (params) {
-            var val = params.value;
-            if (!val) return '—';
-            try {
-              var arr = typeof val === 'string' ? JSON.parse(val) : val;
-              if (Array.isArray(arr)) {
-                return arr.map(function (s) { return s.size + '(' + s.qty + ')'; }).join(', ');
-              }
-            } catch (e) {
-              console.warn('Error parsing size details:', e);
-            }
-            return val;
-          }
-        },
-        {
-          field: 'so_luong',
-          headerName: (typeof t !== 'undefined' ? t('order.col.qty') : 'SL'),
-          cellStyle: { color: 'var(--accent, #4F46E5)', fontWeight: '700' }
-        },
-        {
-          field: 'don_gia',
-          headerName: (typeof t !== 'undefined' ? t('table.col.price') : 'Đơn giá'),
-          valueFormatter: function (params) {
-            if (typeof Utils !== 'undefined' && Utils.formatMoney) {
-              return Utils.formatMoney(params.value || 0);
-            }
-            return params.value;
-          }
-        },
-        {
-          field: 'thanh_tien',
-          headerName: (typeof t !== 'undefined' ? t('order.total.money') : 'Thành tiền'),
-          cellStyle: { fontWeight: '700' },
-          valueFormatter: function (params) {
-            if (typeof Utils !== 'undefined' && Utils.formatMoney) {
-              return Utils.formatMoney(params.value || 0);
-            }
-            return params.value;
-          }
-        }
-      ],
+      columnDefs: _buildDetailColumnDefs(orderMetadata),
       rowData: pageLines
     };
 
@@ -133,6 +166,7 @@ var OrderDetailPage = (function () {
       currentPage = 1;
       currentOrderData = null;
       currentOrder = null;
+      orderMetadata = null;
       $container.classList.add('is-full-width');
 
       const html = await Router.fetchTemplate('src/pages/order-detail/order-detail.html');
@@ -152,32 +186,11 @@ var OrderDetailPage = (function () {
     var o = null;
 
     try {
-      const queryObj = { Loai: 'OrderDetail', TimKiem: id };
+      orderMetadata = await OrderService.getMetadata();
+      o = await OrderService.getOrderDetail(id);
 
-      var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
-      var role = user.role || user.Group || '';
-      var empID = user.EmployeeID || '';
-      var objID = user.ObjectID || '';
-      if (objID && objID !== '') {
-        empID = '';
-      }
-      queryObj.chinhanh = '';
-      queryObj.UserRole = role;
-      queryObj.UserEmployeeID = empID;
-      queryObj.UserObjectID = objID;
-      queryObj.Page = 1;
-
-      const params = { q: JSON.stringify(queryObj), _t: Date.now() };
-      const res = await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, params);
-
-      if (res && res.records && res.records.length > 0) {
-        o = res.records[0];
-      } else if (res && res.length > 0) {
-        o = res[0];
-      }
-
-      if (o && typeof o.lines === 'string') {
-        try { o.lines = JSON.parse(o.lines); } catch (e) { }
+      if (o && typeof o.Lines === 'string') {
+        try { o.Lines = JSON.parse(o.Lines); } catch (e) { }
       }
       if (o && typeof o.print_items === 'string') {
         try { o.print_items = JSON.parse(o.print_items); } catch (e) { }
@@ -194,12 +207,12 @@ var OrderDetailPage = (function () {
     }
 
     currentOrderData = o;
-    allLines = o.lines || [];
+    allLines = o.Lines || [];
     currentOrder = o;
     await bindPrintButton();
 
     var titleEl = document.getElementById('detail-title');
-    if (titleEl) titleEl.textContent = t('btn.detail') + ': ' + o.so_ct;
+    if (titleEl) titleEl.textContent = t('btn.detail') + ': ' + o.DocumentID;
 
     var infoEl = document.getElementById('detail-info');
     if (infoEl) {
@@ -208,47 +221,47 @@ var OrderDetailPage = (function () {
           <tbody>
             <tr>
               <td class="info-label" data-i18n="order.no" style="width: 100px;">${t('order.no')}</td>
-              <td class="info-value highlight-code" style="word-break: break-word; white-space: normal;">${o.so_ct}</td>
+              <td class="info-value highlight-code" style="word-break: break-word; white-space: normal;">${o.DocumentID}</td>
             </tr>
             <tr>
               <td class="info-label" data-i18n="order.date">${t('order.date')}</td>
-              <td class="info-value" style="word-break: break-word; white-space: normal;">${o.ngay_ct || '—'}</td>
+              <td class="info-value" style="word-break: break-word; white-space: normal;">${o.DocumentDate || '—'}</td>
             </tr>
             <tr>
               <td class="info-label">Khách hàng</td>
-              <td class="info-value" style="word-break: break-word; white-space: normal;"><strong>${o.kh_ten || '—'}</strong> ${o.ma_kh ? `<span style="color:var(--muted); font-size:12px;">(${o.ma_kh})</span>` : ''}</td>
+              <td class="info-value" style="word-break: break-word; white-space: normal;"><strong>${o.ObjectName || '—'}</strong> ${o.ObjectID ? `<span style="color:var(--muted); font-size:12px;">(${o.ObjectID})</span>` : ''}</td>
             </tr>
             <tr>
               <td class="info-label">Địa chỉ</td>
-              <td class="info-value" style="word-break: break-word; white-space: normal; line-height: 1.4;">${o.dia_chi || '—'}</td>
+              <td class="info-value" style="word-break: break-word; white-space: normal; line-height: 1.4;">${o.Address || '—'}</td>
             </tr>
             <tr>
               <td class="info-label">Số điện thoại</td>
-              <td class="info-value" style="word-break: break-word; white-space: normal;">${o.sdt || '—'}</td>
+              <td class="info-value" style="word-break: break-word; white-space: normal;">${o.Phone || '—'}</td>
             </tr>
             <tr>
               <td class="info-label" data-i18n="order.branch">${t('order.branch')}</td>
-              <td class="info-value" style="word-break: break-word; white-space: normal;">${o.chi_nhanh || '—'}</td>
+              <td class="info-value" style="word-break: break-word; white-space: normal;">${o.BranchName || o.BranchID || '—'}</td>
             </tr>
             <tr>
               <td class="info-label" data-i18n="order.staff">${t('order.staff')}</td>
-              <td class="info-value" style="word-break: break-word; white-space: normal;">${o.nvkd || '—'}</td>
+              <td class="info-value" style="word-break: break-word; white-space: normal;">${o.EmployeeName || o.EmployeeID || '—'}</td>
             </tr>
             <tr>
               <td class="info-label" data-i18n="order.promo">${t('order.promo')}</td>
               <td class="info-value" style="word-break: break-word; white-space: normal;">
-                ${o.ma_ctbh && o.ma_ctbh !== 'Không' && o.ma_ctbh !== 'none' ? `<span class="order-promo-badge"><span class="material-symbols-outlined" style="font-size:16px;">sell</span>${o.ma_ctbh}</span>` : '<span style="color:var(--muted)">—</span>'}
+                ${o.CTKM && o.CTKM !== 'Không' && o.CTKM !== 'none' ? `<span class="order-promo-badge"><span class="material-symbols-outlined" style="font-size:16px;">sell</span>${o.CTKM}</span>` : '<span style="color:var(--muted)">—</span>'}
               </td>
             </tr>
             <tr>
               <td class="info-label" data-i18n="order.total.money">${t('order.total.money')}</td>
-              <td class="info-value highlight-money" style="word-break: break-word; white-space: normal;">${Utils.formatMoney(o.total_money || 0)}</td>
+              <td class="info-value highlight-money" style="word-break: break-word; white-space: normal;">${Utils.formatMoney(o.BaseTotal || 0)}</td>
             </tr>
             <tr>
               <td colspan="2" style="border-bottom: none; padding-top: 8px;">
                 <span class="info-label" data-i18n="order.note" style="display: block; margin-bottom: 4px;">${t('order.note')}</span>
                 <div class="order-info-note-box">
-                  ${o.ghi_chu || '—'}
+                  ${o.Notes || '—'}
                 </div>
               </td>
             </tr>
@@ -267,7 +280,7 @@ var OrderDetailPage = (function () {
     try {
       var id = window._viewOrderId;
       if (!id && currentOrderData) {
-        id = currentOrderData.so_ct || currentOrderData.id;
+        id = currentOrderData.DocumentID;
       }
 
       if (!id) {
@@ -297,17 +310,17 @@ var OrderDetailPage = (function () {
       }
 
       var rowDataPayload = printData || {
-        SoPhieu: currentOrderData.so_ct || '',
-        NgayLap: currentOrderData.ngay_ct || '',
-        TenKhachHang: currentOrderData.kh_ten || '',
-        MaKH: currentOrderData.ma_kh || '',
-        DiaChi: currentOrderData.dia_chi || '',
-        SDT: currentOrderData.sdt || '',
-        DienGiai: currentOrderData.dien_giai || currentOrderData.ghi_chu || '',
-        TongSoLuong: currentOrderData.total_qty || 0,
-        TongTienHang: currentOrderData.total_money || 0,
-        TongThanhToan: currentOrderData.total_money || 0,
-        ChiTietDonHang: currentOrderData.print_items || currentOrderData.lines || []
+        SoPhieu: currentOrderData.DocumentID || '',
+        NgayLap: currentOrderData.DocumentDate || '',
+        TenKhachHang: currentOrderData.ObjectName || '',
+        MaKH: currentOrderData.ObjectID || '',
+        DiaChi: currentOrderData.Address || '',
+        SDT: currentOrderData.Phone || '',
+        DienGiai: currentOrderData.Memo || currentOrderData.Notes || '',
+        TongSoLuong: currentOrderData.TotalQuantity || 0,
+        TongTienHang: currentOrderData.BaseTotal || 0,
+        TongThanhToan: currentOrderData.BaseTotal || 0,
+        ChiTietDonHang: currentOrderData.print_items || currentOrderData.Lines || []
       };
 
       if (typeof OrderPrintService !== 'undefined' && typeof OrderPrintService.printBrowser === 'function') {

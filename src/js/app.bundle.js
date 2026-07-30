@@ -1054,15 +1054,22 @@ const OrderService = (() => {
     return value === true || value === 1 || value === '1' || String(value).toLowerCase() === 'true';
   }
 
+  async function _loadForm(formName) {
+    var response = await Http.post('/API_LayCacTruongGiaoDien', { FormName: formName });
+    var fields = response && (response.records || response.list || response);
+    if (!Array.isArray(fields) || !fields.length) {
+      throw new Error('DB chưa cấu hình metadata ' + formName + '.');
+    }
+    return { fields: fields, config: fields[0] || {} };
+  }
+
   async function getMetadata() {
     if (_metadataPromise) return _metadataPromise;
     _metadataPromise = (async function () {
-      var response = await Http.post('/API_LayCacTruongGiaoDien', { FormName: 'WEB_OrderFrm' });
-      var fields = response && (response.records || response.list || response);
-      if (!Array.isArray(fields) || !fields.length) {
-        throw new Error('DB chưa cấu hình metadata WEB_OrderFrm.');
-      }
-      var config = fields[0];
+      var header = await _loadForm('WEB_OrderFrm');
+      var detailForm = header.config.tableDetail || 'WEB_OrderDetailFrm';
+      var detail = await _loadForm(detailForm);
+      var config = header.config;
       if (!_isTrue(config.apiConfigured)) {
         throw new Error('WEB_OrderFrm chưa cấu hình API trong SY_FrmMstActTbl.');
       }
@@ -1076,7 +1083,13 @@ const OrderService = (() => {
       Object.keys(endpoints).forEach(function (action) {
         if (!endpoints[action]) throw new Error('WEB_OrderFrm thiếu API action ' + action + '.');
       });
-      return { fields: fields, endpoints: endpoints };
+      return {
+        fields: header.fields,
+        detailFields: detail.fields,
+        config: config,
+        detailConfig: detail.config,
+        endpoints: endpoints
+      };
     })();
     return _metadataPromise;
   }
@@ -1117,7 +1130,11 @@ const OrderService = (() => {
     var query = Object.assign({ Loai: 'OrderDetail', TimKiem: documentId, chinhanh: '', Page: 1 }, _userContext());
     var response = await Http.get(metadata.endpoints.DETAIL, { q: JSON.stringify(query), _t: Date.now() });
     var records = response && response.records ? response.records : response;
-    return Array.isArray(records) && records.length ? records[0] : null;
+    var record = Array.isArray(records) && records.length ? records[0] : null;
+    if (record && typeof record.Lines === 'string') {
+      try { record.Lines = JSON.parse(record.Lines); } catch (e) { record.Lines = []; }
+    }
+    return record;
   }
 
   async function createOrder(orderData) {
@@ -1386,8 +1403,9 @@ var OrderPrintService = (function () {
     if (!order) return {};
     
     var rawLines = Array.isArray(order.ChiTietDonHang) ? order.ChiTietDonHang
+      : (Array.isArray(order.Lines) ? order.Lines
       : (Array.isArray(order.lines) ? order.lines
-      : (Array.isArray(order.print_items) ? order.print_items : []));
+      : (Array.isArray(order.print_items) ? order.print_items : [])));
 
     var formattedLines = rawLines.map(function (line, index) {
       var price = _parseMoney(line.don_gia || line.UnitPrice || line.DonGia);
@@ -1403,7 +1421,11 @@ var OrderPrintService = (function () {
 
       // Extract and format size breakdown (e.g. Size: 38(1), 39(2)...)
       var sizesArr = [];
-      if (typeof line.chi_tiet_size === 'string') {
+      if (typeof line.Size === 'string') {
+        try { sizesArr = JSON.parse(line.Size); } catch (e) { }
+      } else if (Array.isArray(line.Size)) {
+        sizesArr = line.Size;
+      } else if (typeof line.chi_tiet_size === 'string') {
         try { sizesArr = JSON.parse(line.chi_tiet_size); } catch (e) { }
       } else if (Array.isArray(line.chi_tiet_size)) {
         sizesArr = line.chi_tiet_size;
@@ -1630,7 +1652,7 @@ var OrderPrintService = (function () {
   function printBrowser(order) {
     if (!order) return;
     
-    var lines = order.lines || order.print_items || order.ChiTietDonHang || [];
+    var lines = order.Lines || order.lines || order.print_items || order.ChiTietDonHang || [];
     if (!lines.length) {
       _message('error', 'Không có sản phẩm để in');
       return;
@@ -1641,7 +1663,11 @@ var OrderPrintService = (function () {
     var sizeMap = {};
     lines.forEach(function (line) {
       var sizesArr = [];
-      if (typeof line.chi_tiet_size === 'string') {
+      if (typeof line.Size === 'string') {
+        try { sizesArr = JSON.parse(line.Size); } catch(e) {}
+      } else if (Array.isArray(line.Size)) {
+        sizesArr = line.Size;
+      } else if (typeof line.chi_tiet_size === 'string') {
         try { sizesArr = JSON.parse(line.chi_tiet_size); } catch(e) {}
       } else if (Array.isArray(line.chi_tiet_size)) {
         sizesArr = line.chi_tiet_size;
@@ -1693,13 +1719,17 @@ var OrderPrintService = (function () {
     uniqueSizes.forEach(function (sz) { sizeTotals[sz] = 0; });
     
     var bodyRowsHtml = lines.map(function (line) {
-      var productCode = line.ten_hang_2 || line.ma_hang || line.MaHang || '';
-      var productName = line.ten_hang || line.TenHang || '';
-      var color = line.mau || line.Mau || '—';
+      var productCode = line.ItemID || line.ten_hang_2 || line.ma_hang || line.MaHang || '';
+      var productName = line.ItemName || line.ten_hang || line.TenHang || '';
+      var color = line.MauSac || line.mau || line.Mau || '—';
       
       var lineSizes = {};
       var sizesArr = [];
-      if (typeof line.chi_tiet_size === 'string') {
+      if (typeof line.Size === 'string') {
+        try { sizesArr = JSON.parse(line.Size); } catch(e) {}
+      } else if (Array.isArray(line.Size)) {
+        sizesArr = line.Size;
+      } else if (typeof line.chi_tiet_size === 'string') {
         try { sizesArr = JSON.parse(line.chi_tiet_size); } catch(e) {}
       } else if (Array.isArray(line.chi_tiet_size)) {
         sizesArr = line.chi_tiet_size;
@@ -1724,7 +1754,8 @@ var OrderPrintService = (function () {
       }).join('');
       
       totalQtyAll += lineQty;
-      var price = typeof line.don_gia === 'string' ? parseFloat(line.don_gia.replace(/,/g, '')) : (line.don_gia || 0);
+      var rawPrice = line.UnitPrice !== undefined ? line.UnitPrice : line.don_gia;
+      var price = typeof rawPrice === 'string' ? parseFloat(rawPrice.replace(/,/g, '')) : (rawPrice || 0);
       var amount = lineQty * price;
       totalMoneyAll += amount;
       
@@ -1787,27 +1818,27 @@ var OrderPrintService = (function () {
       '    <tr>',
       '      <td style="padding: 2px 0; width: 60%;">',
       '        <span style="font-weight: bold; display: inline-block; width: 90px;">Khách hàng :</span>',
-      '        <span style="font-weight: bold;">' + (order.kh_ten || order.TenKhachHang || '—') + '</span>',
+      '        <span style="font-weight: bold;">' + (order.ObjectName || order.kh_ten || order.TenKhachHang || '—') + '</span>',
       '      </td>',
       '      <td style="padding: 2px 0; width: 40%;">',
       '        <span style="font-weight: bold; display: inline-block; width: 60px;">MKH :</span>',
-      '        <span style="font-weight: bold;">' + (order.ma_kh || order.MaKH || '—') + '</span>',
+      '        <span style="font-weight: bold;">' + (order.ObjectID || order.ma_kh || order.MaKH || '—') + '</span>',
       '      </td>',
       '    </tr>',
       '    <tr>',
       '      <td style="padding: 2px 0; vertical-align: top;">',
       '        <span style="font-weight: bold; display: inline-block; width: 90px; vertical-align: top;">Địa chỉ :</span>',
-      '        <span style="display: inline-block; width: calc(100% - 95px); line-height: 1.3;">' + (order.dia_chi || order.DiaChi || order.kh_dc || '—') + '</span>',
+      '        <span style="display: inline-block; width: calc(100% - 95px); line-height: 1.3;">' + (order.Address || order.dia_chi || order.DiaChi || order.kh_dc || '—') + '</span>',
       '      </td>',
       '      <td style="padding: 2px 0; vertical-align: top;">',
       '        <span style="font-weight: bold; display: inline-block; width: 60px;">SĐT :</span>',
-      '        <span>' + (order.sdt || order.SDT || order.kh_sdt || '—') + '</span>',
+      '        <span>' + (order.Phone || order.sdt || order.SDT || order.kh_sdt || '—') + '</span>',
       '      </td>',
       '    </tr>',
       '    <tr>',
       '      <td colspan="2" style="padding: 2px 0;">',
       '        <span style="font-weight: bold; display: inline-block; width: 90px;">Diễn giải :</span>',
-      '        <span>' + (order.dien_giai || order.DienGiai || order.ghi_chu || '—') + '</span>',
+      '        <span>' + (order.Notes || order.Memo || order.dien_giai || order.DienGiai || order.ghi_chu || '—') + '</span>',
       '      </td>',
       '    </tr>',
       '  </table>',

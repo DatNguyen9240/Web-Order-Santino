@@ -1102,7 +1102,7 @@ var SalesVoucherPage = (function () {
 
     var desktopDefs = [
       { 
-        field: 'so_ct', 
+        field: 'DocumentID',
         headerName: 'Mã số phiếu', 
         cellStyle: params => {
           if (params.node.isRowPinned()) {
@@ -1114,7 +1114,7 @@ var SalesVoucherPage = (function () {
         minWidth: 120 
       },
       { 
-        field: 'ngay_ct', 
+        field: 'DocumentDate',
         headerName: 'Ngày lập đơn', 
         width: 115, 
         valueFormatter: params => {
@@ -1132,7 +1132,7 @@ var SalesVoucherPage = (function () {
         }
       },
       {
-        field: 'total_money',
+        field: 'BaseTotal',
         headerName: 'Tổng tiền hàng',
         width: 140,
         cellStyle: params => {
@@ -1249,8 +1249,8 @@ var SalesVoucherPage = (function () {
           gridApi.hideOverlay();
           var totalSum = voucherList.reduce((sum, v) => sum + (parseFloat(v.total_money || v.BaseTotal) || 0), 0);
           gridApi.setGridOption('pinnedBottomRowData', [{
-            so_ct: '∑',
-            total_money: totalSum
+            DocumentID: '∑',
+            BaseTotal: totalSum
           }]);
         }
       }
@@ -1761,7 +1761,9 @@ var SalesVoucherPage = (function () {
       }
 
       // 3. Load chi tiết hàng hóa
-      var lines = Array.isArray(res.lines) ? res.lines : (Array.isArray(res.ChiTietDonHang) ? res.ChiTietDonHang : []);
+      var lines = Array.isArray(res.Lines) ? res.Lines
+        : (Array.isArray(res.lines) ? res.lines
+        : (Array.isArray(res.ChiTietDonHang) ? res.ChiTietDonHang : []));
       orderRows = lines.map(function (l) {
         return {
           ItemID: l.ma_hang || l.ItemID || '',

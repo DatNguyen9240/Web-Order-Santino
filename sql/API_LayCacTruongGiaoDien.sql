@@ -16,24 +16,42 @@ BEGIN
     IF @FormName IS NULL RETURN;
 
     -- Lấy thông tin cấu hình từ SY_FrmLstTbl
+    DECLARE @FormID VARCHAR(100) = '';
     DECLARE @TableName VARCHAR(100) = '';
     DECLARE @PrimaryKey VARCHAR(100) = '';
     DECLARE @HideColumnArr VARCHAR(MAX) = '';
+    DECLARE @DefaultColumnArr VARCHAR(MAX) = '';
     DECLARE @AddNewColumnArr VARCHAR(MAX) = '';
     DECLARE @EditorColumnArr VARCHAR(MAX) = '';
     DECLARE @LockColumnArr VARCHAR(MAX) = '';
+    DECLARE @TableDetail VARCHAR(100) = '';
+    DECLARE @TableDetailLeftJoinField VARCHAR(255) = '';
+    DECLARE @TableDetailSelectFrom VARCHAR(MAX) = '';
+    DECLARE @TableDetail2 VARCHAR(100) = '';
+    DECLARE @TableDetail2LeftJoinField VARCHAR(255) = '';
+    DECLARE @TableDetail2SelectFrom VARCHAR(MAX) = '';
 
     SELECT TOP (1)
+        @FormID = ISNULL(formConfig.FormID, @FormName),
         @TableName = ISNULL(formConfig.TableName, formConfig.FormID),
         @PrimaryKey = NULLIF(LTRIM(RTRIM(formConfig.PrimaryKey)), ''),
         @HideColumnArr = ISNULL(formConfig.HideColumnArr, ''),
+        @DefaultColumnArr = ISNULL(formConfig.DefaultColumnArr, ''),
         @AddNewColumnArr = ISNULL(formConfig.AddNewColumnArr, ''),
         @EditorColumnArr = ISNULL(formConfig.EditorColumnArr, ''),
-        @LockColumnArr = ISNULL(formConfig.LockColumnArr, '')
+        @LockColumnArr = ISNULL(formConfig.LockColumnArr, ''),
+        @TableDetail = ISNULL(formConfig.TableDetail, ''),
+        @TableDetailLeftJoinField = ISNULL(formConfig.TableDetailLeftJoinField, ''),
+        @TableDetailSelectFrom = ISNULL(formConfig.TableDetailSelectFrom, ''),
+        @TableDetail2 = ISNULL(formConfig.TableDetail2, ''),
+        @TableDetail2LeftJoinField = ISNULL(formConfig.TableDetail2LeftJoinField, ''),
+        @TableDetail2SelectFrom = ISNULL(formConfig.TableDetail2SelectFrom, '')
     FROM dbo.SY_FrmLstTbl formConfig
     WHERE formConfig.FormID = @FormName OR formConfig.TableName = @FormName;
 
     IF @TableName = '' SET @TableName = @FormName;
+    IF @FormID = '' SET @FormID = @FormName;
+    SET @FormName = @FormID;
 
     DECLARE @ObjectId INT = OBJECT_ID(@TableName);
 
@@ -98,6 +116,16 @@ BEGIN
         ISNULL(@ApiCreate, '')  AS [apiSave],
         ISNULL(@ApiDelete, '')  AS [apiDelete],
         @ApiConfigured          AS [apiConfigured],
+        ISNULL(@FormID, '') AS [formId],
+        ISNULL(@TableName, '') AS [tableName],
+        ISNULL(@HideColumnArr, '') AS [hideColumnArr],
+        ISNULL(@DefaultColumnArr, '') AS [defaultColumnArr],
+        ISNULL(@TableDetail, '') AS [tableDetail],
+        ISNULL(@TableDetailLeftJoinField, '') AS [tableDetailLeftJoinField],
+        ISNULL(@TableDetailSelectFrom, '') AS [tableDetailSelectFrom],
+        ISNULL(@TableDetail2, '') AS [tableDetail2],
+        ISNULL(@TableDetail2LeftJoinField, '') AS [tableDetail2LeftJoinField],
+        ISNULL(@TableDetail2SelectFrom, '') AS [tableDetail2SelectFrom],
         
         -- showInAdd
         CASE 

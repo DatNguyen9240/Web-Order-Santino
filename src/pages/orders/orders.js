@@ -2,6 +2,107 @@ var OrdersPage = (function () {
   var currentPage = 1;
   var itemsPerPage = 20;
   var gridApi = null;
+  var orderMetadata = null;
+
+  function _splitColumnNames(value) {
+    return String(value || '').split(';').map(function (name) {
+      return name.trim();
+    }).filter(Boolean);
+  }
+
+  function _isHiddenField(field, config) {
+    var hiddenNames = _splitColumnNames(config && config.hideColumnArr).map(function (name) {
+      return name.toLowerCase();
+    });
+    var showInGrid = field && field.showInGrid;
+    return hiddenNames.indexOf(String(field.name).toLowerCase()) >= 0
+      || showInGrid === false
+      || showInGrid === 0
+      || showInGrid === '0'
+      || String(showInGrid).toLowerCase() === 'false';
+  }
+
+  function _configuredFields(metadata) {
+    var fields = (metadata && metadata.fields) || [];
+    var config = metadata && metadata.config;
+    var byName = {};
+    fields.forEach(function (field) {
+      byName[String(field.name).toLowerCase()] = field;
+    });
+
+    var configuredNames = _splitColumnNames(config && config.defaultColumnArr);
+    var selectedFields = configuredNames.length
+      ? configuredNames.map(function (name) { return byName[name.toLowerCase()]; }).filter(Boolean)
+      : fields.slice().sort(function (a, b) {
+        return Number(a.orderNo || 0) - Number(b.orderNo || 0);
+      });
+
+    return selectedFields.filter(function (field) {
+      return !_isHiddenField(field, config);
+    });
+  }
+
+  function _applyMetadataFormat(column, field) {
+    var renderRule = String(field.renderRule || '').toUpperCase();
+    if (renderRule === 'B') {
+      column.valueFormatter = function (params) {
+        return typeof Utils !== 'undefined' && Utils.formatMoney
+          ? Utils.formatMoney(params.value || 0)
+          : params.value;
+      };
+    } else if (renderRule === 'D') {
+      column.valueFormatter = function (params) {
+        return params.value && typeof Utils !== 'undefined' && Utils.formatDate
+          ? Utils.formatDate(params.value)
+          : params.value;
+      };
+    }
+    return column;
+  }
+
+  function _buildListColumnDefs(metadata) {
+    var columns = _configuredFields(metadata).map(function (field) {
+      return _applyMetadataFormat({
+        field: field.name,
+        headerName: field.label || field.name,
+        minWidth: String(field.dataType || '').toLowerCase().indexOf('char') >= 0 ? 150 : 110
+      }, field);
+    });
+
+    columns.push({
+      headerName: (typeof t !== 'undefined' ? t('table.col.action') : 'Thao tác'),
+      sortable: false,
+      filter: false,
+      floatingFilter: false,
+      width: 150,
+      cellRenderer: function (params) {
+        var o = params.data;
+        var primaryKey = metadata && metadata.config && metadata.config.primaryKey;
+        var rowId = primaryKey && o ? o[primaryKey] : '';
+        var detailText = (typeof t !== 'undefined') ? t('btn.detail') : 'Chi tiết';
+        var wrapper = document.createElement('div');
+        wrapper.style.display = 'flex';
+        wrapper.style.gap = '6px';
+        wrapper.style.alignItems = 'center';
+
+        var detailButton = document.createElement('button');
+        detailButton.className = 'btn btn-ghost btn-sm';
+        detailButton.textContent = detailText;
+        detailButton.onclick = function () { view(rowId); };
+
+        var deleteButton = document.createElement('button');
+        deleteButton.className = 'btn-icon';
+        deleteButton.innerHTML = '<span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1));color:var(--danger)">delete</span>';
+        deleteButton.onclick = function () { del(rowId); };
+
+        wrapper.appendChild(detailButton);
+        wrapper.appendChild(deleteButton);
+        return wrapper;
+      }
+    });
+
+    return columns;
+  }
 
   function render($el) {
     gridApi = null;
@@ -95,72 +196,13 @@ var OrdersPage = (function () {
     }
   }
 
-  function _initGrid(orders) {
+  function _initGrid(orders, metadata) {
     const container = document.getElementById('orders-grid-container');
     if (!container) return;
 
     const gridOptions = {
       pagination: false, // Dung pagination ngoai nhu cu
-      columnDefs: [
-        { field: 'so_ct', headerName: (typeof t !== 'undefined' ? t('table.col.no') : 'Số CT'), cellStyle: { fontWeight: '700' }, width: 150, minWidth: 120 },
-        { field: 'ngay_ct', headerName: (typeof t !== 'undefined' ? t('table.col.date') : 'Ngày CT'), width: 120, minWidth: 100 },
-        { field: 'chi_nhanh', headerName: (typeof t !== 'undefined' ? t('table.col.branch') : 'Chi nhánh'), minWidth: 130 },
-        {
-          field: 'ma_ctbh',
-          headerName: (typeof t !== 'undefined' ? t('table.col.promo') : 'CTKM'),
-          cellRenderer: function (params) {
-            return params.value ? '<span class="badge badge-yellow">' + params.value + '</span>' : '<span style="color:var(--muted, #6b7280)">—</span>';
-          }
-        },
-        {
-          field: 'total_qty',
-          headerName: (typeof t !== 'undefined' ? t('table.col.total_qty') : 'Tổng SP'),
-          cellStyle: { fontWeight: '700' },
-          valueFormatter: function (params) {
-            var label = (typeof t !== 'undefined') ? t('order.preview.sp') : 'SP';
-            return (params.value || 0) + ' ' + label;
-          }
-        },
-        {
-          field: 'total_money',
-          headerName: (typeof t !== 'undefined' ? t('table.col.total_money') : 'Tổng tiền'),
-          cellStyle: { color: 'var(--accent, #4F46E5)', fontWeight: '700' },
-          valueFormatter: function (params) {
-            if (typeof Utils !== 'undefined' && Utils.formatMoney) {
-              return Utils.formatMoney(params.value || 0);
-            }
-            return params.value;
-          }
-        },
-        {
-          field: 'ghi_chu',
-          headerName: (typeof t !== 'undefined' ? t('table.col.note') : 'Ghi chú'),
-          minWidth: 150,
-          valueFormatter: params => params.value || '—'
-        },
-        {
-          headerName: (typeof t !== 'undefined' ? t('table.col.action') : 'Thao tác'),
-          sortable: false,
-          filter: false,
-          floatingFilter: false,
-          width: 150,
-          cellRenderer: function (params) {
-            var o = params.data;
-            var detailText = (typeof t !== 'undefined') ? t('btn.detail') : 'Chi tiết';
-            var wrapper = document.createElement('div');
-            wrapper.style.display = 'flex';
-            wrapper.style.gap = '6px';
-            wrapper.style.alignItems = 'center';
-            wrapper.innerHTML = `
-              <button class="btn btn-ghost btn-sm" onclick="OrdersPage.view('${o.id}')">${detailText}</button>
-              <button class="btn-icon" onclick="OrdersPage.del('${o.id}')">
-                <span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1));color:var(--danger)">delete</span>
-              </button>
-            `;
-            return wrapper;
-          }
-        }
-      ],
+      columnDefs: _buildListColumnDefs(metadata),
       rowData: orders
     };
 
@@ -180,6 +222,12 @@ var OrdersPage = (function () {
 
     var orders = [];
     var totalItems = 0;
+
+    try {
+      if (!orderMetadata) orderMetadata = await OrderService.getMetadata();
+    } catch (metadataError) {
+      console.warn('Không tải được metadata WEB_OrderFrm, dùng cấu hình cột dự phòng:', metadataError);
+    }
 
     if (gridApi) {
       gridApi.showLoadingOverlay();
@@ -215,7 +263,16 @@ var OrdersPage = (function () {
         _t: Date.now()
       };
 
-      const res = await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, params);
+      const res = orderMetadata
+        ? await OrderService.getOrders({
+          page: currentPage,
+          limit: itemsPerPage,
+          q: q,
+          from: fromDate,
+          to: toDate,
+          customer_id: subCustomerId
+        })
+        : await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, params);
       orders = res.records || res;
       if (!Array.isArray(orders)) orders = [];
 
@@ -228,7 +285,7 @@ var OrdersPage = (function () {
     if (paginationContainer) paginationContainer.innerHTML = '';
 
     if (!gridApi) {
-      _initGrid(orders);
+      _initGrid(orders, orderMetadata);
     } else {
       gridApi.setGridOption('rowData', orders);
       if (orders.length === 0) {

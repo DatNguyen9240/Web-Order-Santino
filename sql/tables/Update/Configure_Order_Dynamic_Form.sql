@@ -26,6 +26,10 @@ BEGIN TRY
             TableName = 'dbo.WEB_OrderTbl',
             PrimaryKey = 'DocumentID',
             HideColumnArr = 'UserAutoID',
+            DefaultColumnArr = 'DocumentID;DocumentDate;BranchID;ObjectName;CTKM;BaseTotal;Notes',
+            TableDetail = 'dbo.WEB_OrderDetailTbl',
+            TableDetailLeftJoinField = 'DocumentID',
+            TableDetailSelectFrom = 'DocumentID;ItemID;ItemName;Size;MauSac;Quantity;UnitPrice;Amount;TotalAmount;STT',
             AddNewColumnArr = ISNULL(@OrderBusinessColumns, ''),
             EditorColumnArr = ISNULL(@OrderBusinessColumns, ''),
             LockColumnArr = 'DocumentID'
@@ -33,8 +37,20 @@ BEGIN TRY
     END
     ELSE
     BEGIN
-        INSERT INTO dbo.SY_FrmLstTbl (FormID, CaptionVN, TableName, PrimaryKey, HideColumnArr, AddNewColumnArr, EditorColumnArr, LockColumnArr)
-        VALUES ('WEB_OrderFrm', N'Quản lý Đơn Hàng', 'dbo.WEB_OrderTbl', 'DocumentID', 'UserAutoID', ISNULL(@OrderBusinessColumns, ''), ISNULL(@OrderBusinessColumns, ''), 'DocumentID');
+        INSERT INTO dbo.SY_FrmLstTbl
+        (
+            FormID, CaptionVN, TableName, PrimaryKey, HideColumnArr,
+            DefaultColumnArr, TableDetail, TableDetailLeftJoinField,
+            TableDetailSelectFrom, AddNewColumnArr, EditorColumnArr, LockColumnArr
+        )
+        VALUES
+        (
+            'WEB_OrderFrm', N'Quản lý Đơn Hàng', 'dbo.WEB_OrderTbl', 'DocumentID',
+            'UserAutoID', 'DocumentID;DocumentDate;BranchID;ObjectName;CTKM;BaseTotal;Notes',
+            'dbo.WEB_OrderDetailTbl', 'DocumentID',
+            'DocumentID;ItemID;ItemName;Size;MauSac;Quantity;UnitPrice;Amount;TotalAmount;STT',
+            ISNULL(@OrderBusinessColumns, ''), ISNULL(@OrderBusinessColumns, ''), 'DocumentID'
+        );
     END;
 
     -- 2. Thu thập các cột nghiệp vụ cho WEB_OrderDetailTbl
@@ -56,6 +72,7 @@ BEGIN TRY
             TableName = 'dbo.WEB_OrderDetailTbl',
             PrimaryKey = 'DocumentID',
             HideColumnArr = 'UserAutoID',
+            DefaultColumnArr = 'ItemID;ItemName;Size;Quantity;UnitPrice;Amount',
             AddNewColumnArr = ISNULL(@DetailBusinessColumns, ''),
             EditorColumnArr = ISNULL(@DetailBusinessColumns, ''),
             LockColumnArr = ''
@@ -63,8 +80,18 @@ BEGIN TRY
     END
     ELSE
     BEGIN
-        INSERT INTO dbo.SY_FrmLstTbl (FormID, CaptionVN, TableName, PrimaryKey, HideColumnArr, AddNewColumnArr, EditorColumnArr, LockColumnArr)
-        VALUES ('WEB_OrderDetailFrm', N'Chi Tiết Đơn Hàng', 'dbo.WEB_OrderDetailTbl', 'DocumentID', 'UserAutoID', ISNULL(@DetailBusinessColumns, ''), ISNULL(@DetailBusinessColumns, ''), '');
+        INSERT INTO dbo.SY_FrmLstTbl
+        (
+            FormID, CaptionVN, TableName, PrimaryKey, HideColumnArr,
+            DefaultColumnArr, AddNewColumnArr, EditorColumnArr, LockColumnArr
+        )
+        VALUES
+        (
+            'WEB_OrderDetailFrm', N'Chi Tiết Đơn Hàng', 'dbo.WEB_OrderDetailTbl', 'DocumentID',
+            'UserAutoID',
+            'ItemID;ItemName;Size;Quantity;UnitPrice;Amount',
+            ISNULL(@DetailBusinessColumns, ''), ISNULL(@DetailBusinessColumns, ''), ''
+        );
     END;
 
     -- 3. Cấu hình nhãn tiếng Việt & Format cho các trường trong SY_FmtFldTbl
@@ -87,7 +114,7 @@ BEGIN TRY
     ('TotalAmount', N'Tổng thanh toán', 'B'),
     ('ItemID', N'Mã hàng hóa', ''),
     ('ItemName', N'Tên hàng hóa', ''),
-    ('Size', N'Kích cỡ (Size)', ''),
+    ('Size', N'Kích cỡ (Size)', 'SIZE'),
     ('MauSac', N'Màu sắc', '');
 
     UPDATE f
@@ -132,7 +159,8 @@ BEGIN TRY
     -- 5. Đăng ký các Master Actions trong SY_FrmMstActTbl cho WEB_OrderFrm
     DECLARE @OrderActions TABLE ([Action] VARCHAR(20) PRIMARY KEY, [Source] NVARCHAR(400) NOT NULL, Oderby INT NOT NULL);
     INSERT INTO @OrderActions VALUES
-    ('SEARCH', N'/WEB_OrderTbl', 10),
+    ('SEARCH', N'/API_DanhMuc', 10),
+    ('DETAIL', N'/API_DanhMuc', 15),
     ('CREATE', N'/API_TaoDonHang', 20),
     ('UPDATE', N'/API_CapNhatDuLieuChung', 30),
     ('DELETE', N'/API_XoaDuLieuChung', 40);

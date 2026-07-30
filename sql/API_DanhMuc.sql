@@ -406,19 +406,18 @@ BEGIN
         IF @PageSize < 1 SET @PageSize = 50;
 
         SELECT
-            [DocumentID]   AS [id],
-            [DocumentID]   AS [so_ct],
-            [DocumentDate] AS [ngay_ct],
-            [BranchID]     AS [chi_nhanh],
-            [ObjectID]     AS [ma_kh],
-            [ObjectName]   AS [kh_ten],
-            [BaseTotal]    AS [total_money],
-            [Memo]         AS [dien_giai],
-            [Notes]        AS [ghi_chu],
-            [CTKM]         AS [ma_ctbh],
-            [EmployeeID]   AS [nvkd],
-            [isLock]       AS [is_lock],
-            ISNULL((SELECT SUM(Quantity) FROM [dbo].[WEB_OrderDetailTbl] d WHERE d.DocumentID = o.DocumentID), 0) AS [total_qty]
+            [DocumentID],
+            [DocumentDate],
+            [BranchID],
+            [ObjectID],
+            [ObjectName],
+            [BaseTotal],
+            [Memo],
+            [Notes],
+            [CTKM],
+            [EmployeeID],
+            [isLock],
+            ISNULL((SELECT SUM(Quantity) FROM [dbo].[WEB_OrderDetailTbl] d WHERE d.DocumentID = o.DocumentID), 0) AS [TotalQuantity]
         FROM [dbo].[WEB_OrderTbl] o
         WHERE (@TuKhoa = '' OR [DocumentID] LIKE N'%' + @TuKhoa + N'%' OR [ObjectName] LIKE N'%' + @TuKhoa + N'%')
           AND (@FilterCustomerID IS NULL OR @FilterCustomerID = '' OR [ObjectID] = @FilterCustomerID)
@@ -446,45 +445,46 @@ BEGIN
     ELSE IF @Loai = 'OrderDetail'
     BEGIN
         SELECT TOP 1
-            h.[DocumentID] AS [id],
-            h.[DocumentID] AS [so_ct],
-            FORMAT(ISNULL(h.[DocumentDate], GETDATE()), 'dd/MM/yyyy') AS [ngay_ct],
-            ISNULL(b.[BranchName], h.[BranchID]) AS [chi_nhanh],
-            h.[ObjectID] AS [ma_kh],
-            ISNULL(h.[ObjectName], c.[ObjectName]) AS [kh_ten],
-            ISNULL(c.[Address], N'')                AS [dia_chi],
-            ISNULL(c.[Phone], N'')                  AS [sdt],
-            ISNULL(e.[EmployeeName], h.[EmployeeID]) AS [nvkd],
-            ISNULL(h.[Notes], h.[Memo]) AS [ghi_chu],
-            h.[CTKM] AS [ma_ctbh],
-            h.[BaseTotal] AS [total_money],
-            ISNULL((SELECT SUM(Quantity) FROM [dbo].[WEB_OrderDetailTbl] d WHERE d.DocumentID = @TimKiem), 0) AS [total_qty],
+            h.[DocumentID],
+            FORMAT(ISNULL(h.[DocumentDate], GETDATE()), 'dd/MM/yyyy') AS [DocumentDate],
+            h.[BranchID],
+            ISNULL(b.[BranchName], h.[BranchID]) AS [BranchName],
+            h.[ObjectID],
+            ISNULL(h.[ObjectName], c.[ObjectName]) AS [ObjectName],
+            ISNULL(c.[Address], N'') AS [Address],
+            ISNULL(c.[Phone], N'') AS [Phone],
+            h.[EmployeeID],
+            ISNULL(e.[EmployeeName], h.[EmployeeID]) AS [EmployeeName],
+            ISNULL(h.[Notes], h.[Memo]) AS [Notes],
+            h.[CTKM],
+            h.[BaseTotal],
+            ISNULL((SELECT SUM(Quantity) FROM [dbo].[WEB_OrderDetailTbl] d WHERE d.DocumentID = @TimKiem), 0) AS [TotalQuantity],
              (
                 SELECT 
-                    CI.[ItemName2] AS [ten_hang_2],
-                    MAX(D.[ItemName]) AS [ten_hang],
-                    MAX(CI.[MauSac]) AS [mau],
-                    SUM(D.[Quantity]) AS [so_luong],
-                    MAX(D.[UnitPrice]) AS [don_gia],
-                    SUM(D.[TotalAmount]) AS [thanh_tien],
+                    CI.[ItemName2] AS [ItemID],
+                    MAX(D.[ItemName]) AS [ItemName],
+                    MAX(CI.[MauSac]) AS [MauSac],
+                    SUM(D.[Quantity]) AS [Quantity],
+                    MAX(D.[UnitPrice]) AS [UnitPrice],
+                    SUM(D.[TotalAmount]) AS [Amount],
                     (
                         SELECT 
-                            subD.[Size] AS [size], 
-                            SUM(subD.[Quantity]) AS [qty]
+                            subD.[Size] AS [Size],
+                            SUM(subD.[Quantity]) AS [Quantity]
                         FROM [dbo].[WEB_OrderDetailTbl] subD
                         LEFT JOIN [dbo].[CF_ItemTbl] subCI ON subD.[ItemID] = subCI.[ItemID]
                         WHERE subD.[DocumentID] = h.[DocumentID]
                           AND subCI.[ItemName2] = CI.[ItemName2]
                         GROUP BY subD.[Size]
                         FOR JSON PATH
-                    ) AS [chi_tiet_size]
+                    ) AS [Size]
                 FROM [dbo].[WEB_OrderDetailTbl] D
                 LEFT JOIN [dbo].[CF_ItemTbl] CI ON D.[ItemID] = CI.[ItemID]
                 WHERE D.[DocumentID] = h.[DocumentID]
                 GROUP BY CI.[ItemName2]
                 ORDER BY MIN(D.[STT]) ASC
                 FOR JSON PATH
-             ) AS [lines]
+             ) AS [Lines]
         FROM [dbo].[WEB_OrderTbl] h
         LEFT JOIN [dbo].[CF_ObjectTbl] c ON h.[ObjectID] = c.[ObjectID]
         LEFT JOIN [dbo].[CF_BranchTbl] b ON h.[BranchID] = b.[BranchID]
