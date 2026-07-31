@@ -1,206 +1,55 @@
--- Cấu hình metadata cho form sản phẩm động.
--- Prerequisite: chạy sql/views/VW_WebProductDynamic.sql và sql/API_SanPham_Xoa.sql.
+-- Cấu hình Metadata tiếng Việt & Cột hiển thị cho Sản phẩm / Hàng hóa (frmProduct & CF_ItemTbl)
 SET XACT_ABORT ON;
 
 BEGIN TRY
     BEGIN TRANSACTION;
 
-    DECLARE @Forms TABLE (FormID VARCHAR(100) PRIMARY KEY);
-    INSERT INTO @Forms (FormID)
-    VALUES ('frmProduct');
+    DECLARE @FormID VARCHAR(100) = 'frmProduct';
 
-    -- DB gốc có thể chưa có form động cho sản phẩm; tạo đúng cấu hình test.
-    IF NOT EXISTS
-    (
-        SELECT 1
-        FROM dbo.SY_FrmLstTbl
-        WHERE FormID = 'frmProduct'
-    )
+    -- 1. CẤU HÌNH BAN ĐẦU HOẶC CẬP NHẬT TRONG BẢNG SY_FrmLstTbl
+    IF NOT EXISTS (SELECT 1 FROM dbo.SY_FrmLstTbl WHERE FormID = @FormID)
     BEGIN
-        INSERT INTO dbo.SY_FrmLstTbl
-        (
-            FormID,
-            CaptionVN,
-            TableName,
-            PrimaryKey,
-            AddNewColumnArr,
-            EditorColumnArr
+        INSERT INTO dbo.SY_FrmLstTbl (
+            FormID, FormType, CaptionVN, CaptionEN, TableName, PrimaryKey, 
+            AddNewColumnArr, EditorColumnArr, DefaultColumnArr, HideColumnArr
         )
-        VALUES
-        (
-            'frmProduct',
-            N'Sản phẩm',
-            'dbo.VW_WebProductDynamic',
-            'ItemName2',
-            'ItemName2;CategoryID;Form;MauSac;nhom_size;UnitPrice;TenHangHoa;isDisable;isWeb',
-            'ItemName2;CategoryID;Form;MauSac;nhom_size;UnitPrice;TenHangHoa;isDisable;isWeb'
+        VALUES (
+            @FormID, 'LISTEDIT', N'Danh mục sản phẩm', 'Product List', 'dbo.CF_ItemTbl', 'ItemID',
+            'ItemName;ItemGroupID;UnitID;Price;CostPrice;Size;MauSac;Barcode;Notes',
+            'ItemName;ItemGroupID;UnitID;Price;CostPrice;Size;MauSac;Barcode;Notes',
+            'ItemID;ItemName;ItemGroupID;UnitID;Price;CostPrice;Size;MauSac;isDisable',
+            'UserAutoID'
         );
+    END
+    ELSE
+    BEGIN
+        UPDATE dbo.SY_FrmLstTbl
+        SET TableName = 'dbo.CF_ItemTbl',
+            PrimaryKey = 'ItemID',
+            DefaultColumnArr = 'ItemID;ItemName;ItemGroupID;UnitID;Price;CostPrice;Size;MauSac;isDisable',
+            HideColumnArr = 'UserAutoID'
+        WHERE FormID = @FormID;
     END;
 
-    DECLARE @Actions TABLE
-    (
-        [Action] VARCHAR(20) PRIMARY KEY,
-        [Source] NVARCHAR(400) NOT NULL,
-        Oderby INT NOT NULL
-    );
-    INSERT INTO @Actions ([Action], [Source], Oderby)
+    -- 2. NẠP TIÊU ĐỀ TIẾNG VIỆT CHO SẢN PHẨM VÀO SY_FmtFldTbl
+    DELETE FROM dbo.SY_FmtFldTbl WHERE FormName IN ('frmProduct', 'WEB_ProductFrm');
+
+    INSERT INTO dbo.SY_FmtFldTbl (FormatID, FieldName, FormName, CaptionVN, AlignX, MinWidth, MaxWidth)
     VALUES
-        ('SEARCH', N'/API_LaySanPham', 10),
-        ('CREATE', N'/API_SanPham_Luu', 20),
-        ('UPDATE', N'/API_SanPham_Luu', 30),
-        ('DELETE', N'/API_SanPham_Xoa', 40);
-
-    DECLARE @Dropdowns TABLE
-    (
-        ColumnID VARCHAR(100) PRIMARY KEY,
-        Caption NVARCHAR(255) NOT NULL,
-        [Source] NVARCHAR(400) NOT NULL
-    );
-    INSERT INTO @Dropdowns (ColumnID, Caption, [Source])
-    VALUES
-        ('CategoryID', N'Nhóm hàng', N'/API_DanhMuc?Loai=nhom_hang'),
-        ('Form', N'Form', N'/API_DanhMuc?Loai=form'),
-        ('nhom_size', N'Nhóm size', N'/API_DanhMuc?Loai=nhom_size');
-
-    -- View chứa schema read-model có thêm nhom_size; API CRUD lấy từ action metadata ở trên.
-    UPDATE formConfig
-    SET TableName = 'dbo.VW_WebProductDynamic'
-    FROM dbo.SY_FrmLstTbl formConfig
-    INNER JOIN @Forms formData ON formData.FormID = formConfig.FormID;
-
-    -- Hiện CategoryID (Nhóm hàng) trên grid, giữ nguyên mọi cột ẩn khác.
-    UPDATE formConfig
-    SET HideColumnArr = ISNULL(cleaned.HiddenColumns, '')
-    FROM dbo.SY_FrmLstTbl formConfig
-    INNER JOIN @Forms formData ON formData.FormID = formConfig.FormID
-    CROSS APPLY
-    (
-        SELECT STUFF((
-            SELECT ';' + LTRIM(RTRIM(value))
-            FROM STRING_SPLIT(ISNULL(formConfig.HideColumnArr, ''), ';')
-            WHERE LTRIM(RTRIM(value)) <> ''
-              AND LOWER(LTRIM(RTRIM(value))) <> 'categoryid'
-            FOR XML PATH(''), TYPE
-        ).value('.', 'VARCHAR(MAX)'), 1, 1, '') AS HiddenColumns
-    ) cleaned;
-
-    UPDATE existing
-    SET
-        existing.[Source] = sourceData.[Source],
-        existing.ColumnID = '',
-        existing.IsDisable = 0,
-        existing.Oderby = sourceData.Oderby
-    FROM dbo.SY_FrmMstActTbl existing
-    INNER JOIN @Forms formData ON formData.FormID = existing.FormID
-    INNER JOIN @Actions sourceData ON sourceData.[Action] = existing.[Action]
-    WHERE existing.MaterAction = 'API';
-
-    INSERT INTO dbo.SY_FrmMstActTbl
-    (
-        UserAutoID, FormID, MaterAction, [Action],
-        [Source], ColumnID, IsDisable, Oderby
-    )
-    SELECT
-        CONVERT(VARCHAR(36), NEWID()),
-        formData.FormID,
-        'API',
-        actionData.[Action],
-        actionData.[Source],
-        '',
-        0,
-        actionData.Oderby
-    FROM @Forms formData
-    CROSS JOIN @Actions actionData
-    WHERE NOT EXISTS
-    (
-        SELECT 1
-        FROM dbo.SY_FrmMstActTbl existing
-        WHERE existing.FormID = formData.FormID
-          AND existing.MaterAction = 'API'
-          AND existing.[Action] = actionData.[Action]
-    );
-
-    UPDATE existing
-    SET
-        existing.ValueColumn = 'id',
-        existing.DisplayColumn = 'name',
-        existing.[Source] = dropdownData.[Source],
-        existing.LinkColumn = '',
-        existing.Type = 'Dropdown',
-        existing.Caption = dropdownData.Caption,
-        existing.isLock = 0,
-        existing.isInvisible = 0,
-        existing.IsDisable = 0
-    FROM dbo.SY_FrmDrdwTbl existing
-    INNER JOIN @Forms formData ON formData.FormID = existing.FormID
-    INNER JOIN @Dropdowns dropdownData ON dropdownData.ColumnID = existing.ColumnID;
-
-    INSERT INTO dbo.SY_FrmDrdwTbl
-    (
-        UserAutoID, FormID, GridName, ColumnID,
-        ValueColumn, DisplayColumn, [Source], LinkColumn,
-        DisableAddNew, Type, KeepValue, IsMultiSelect,
-        IsNotInList, IsDisable, IsReload, Caption,
-        isLock, isInvisible, isWordWrap, isMultiValue,
-        ReloadType, EditType, TriggerOnOpenForm
-    )
-    SELECT
-        CONVERT(VARCHAR(36), NEWID()),
-        formData.FormID,
-        '',
-        dropdownData.ColumnID,
-        'id', 'name', dropdownData.[Source], '',
-        0, 'Dropdown', 0, 0,
-        0, 0, 0, dropdownData.Caption,
-        0, 0, 0, 0,
-        0, 0, 0
-    FROM @Forms formData
-    CROSS JOIN @Dropdowns dropdownData
-    WHERE NOT EXISTS
-    (
-        SELECT 1
-        FROM dbo.SY_FrmDrdwTbl existing
-        WHERE existing.FormID = formData.FormID
-          AND existing.ColumnID = dropdownData.ColumnID
-    );
-
-    -- Cấu hình màu sắc giống form frmProduct ở DB test.
-    INSERT INTO dbo.SY_FrmDrdwTbl
-    (
-        UserAutoID, FormID, GridName, ColumnID,
-        ValueColumn, DisplayColumn, ColumnArr, WidthArr,
-        [Source], LinkColumn, DisableAddNew, KeepValue,
-        IsNotInList, IsDisable, IsReload,
-        isLock, isInvisible, isWordWrap, isMultiValue,
-        ReloadType, EditType, TriggerOnOpenForm
-    )
-    SELECT
-        CONVERT(VARCHAR(36), NEWID()),
-        formData.FormID,
-        '',
-        'MauSac',
-        'MauSac',
-        'MauSac',
-        'MauSac',
-        '100',
-        'Select * from CF_TenHang2Tbl',
-        '',
-        0, 0,
-        0, 0, 0,
-        0, 0, 0, 0,
-        0, 0, 0
-    FROM @Forms formData
-    INNER JOIN dbo.SY_FrmLstTbl formConfig
-        ON formConfig.FormID = formData.FormID
-    WHERE NOT EXISTS
-    (
-        SELECT 1
-        FROM dbo.SY_FrmDrdwTbl existing
-        WHERE existing.FormID = formData.FormID
-          AND existing.ColumnID = 'MauSac'
-    );
+        ('Z', 'ItemID',      'frmProduct', N'Mã sản phẩm',    'L', 130, 300),
+        ('Z', 'ItemName',    'frmProduct', N'Tên sản phẩm',   'L', 220, 500),
+        ('Z', 'ItemGroupID', 'frmProduct', N'Nhóm sản phẩm',  'L', 140, 300),
+        ('Z', 'UnitID',      'frmProduct', N'Đơn vị tính',    'C', 100, 200),
+        ('Z', 'Price',       'frmProduct', N'Giá bán',        'R', 130, 250),
+        ('Z', 'CostPrice',   'frmProduct', N'Giá vốn',        'R', 130, 250),
+        ('Z', 'Size',        'frmProduct', N'Size / Kích cỡ', 'C', 100, 200),
+        ('Z', 'MauSac',      'frmProduct', N'Màu sắc',        'L', 120, 200),
+        ('Z', 'Barcode',     'frmProduct', N'Mã vạch',        'L', 130, 300),
+        ('Z', 'Notes',       'frmProduct', N'Ghi chú',        'L', 200, 500),
+        ('Z', 'isDisable',   'frmProduct', N'Trạng thái khóa','C', 110, 200);
 
     COMMIT TRANSACTION;
+    PRINT N'=== NẠP TIÊU ĐỀ TIẾNG VIỆT CHO SẢN PHẨM THÀNH CÔNG ===';
 END TRY
 BEGIN CATCH
     IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;

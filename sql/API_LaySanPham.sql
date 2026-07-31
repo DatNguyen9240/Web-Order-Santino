@@ -21,12 +21,12 @@ BEGIN
 
     -- Nếu có truyền q dạng JSON (từ ô tìm kiếm nhanh), ta parse từ khóa tìm kiếm ra
     DECLARE @JsonStr NVARCHAR(MAX) = NULL;
-    IF @q IS NOT NULL AND @q <> '' AND ISJSON(@q) = 1
+    IF @q IS NOT NULL AND @q <> '' AND @q LIKE '%{%'
         SET @JsonStr = @q;
-    ELSE IF @TimKiem IS NOT NULL AND @TimKiem <> '' AND LEFT(LTRIM(@TimKiem), 1) = '{' AND ISJSON(@TimKiem) = 1
+    ELSE IF @TimKiem IS NOT NULL AND @TimKiem <> '' AND LEFT(LTRIM(@TimKiem), 1) = '{'
         SET @JsonStr = @TimKiem;
 
-    IF @JsonStr IS NOT NULL
+    IF @JsonStr IS NOT NULL AND ISJSON(@JsonStr) = 1
     BEGIN
         SET @TimKiem = (SELECT TOP 1 [value] FROM OPENJSON(@JsonStr) WHERE [key] LIKE '%$lk');
         IF @TimKiem IS NULL
@@ -34,7 +34,7 @@ BEGIN
         SET @TimKiem = ISNULL(REPLACE(@TimKiem, '%', ''), '');
     END
 
-    -- 1. Tạo bảng tạm gom nhóm thông tin size từ CF_ItemTbl (Chỉ quét bảng đúng 1 lần duy nhất)
+    -- 1. Tạo bảng tạm gom nhóm thông tin size từ CF_ItemTbl
     IF OBJECT_ID('tempdb..#TempSizes') IS NOT NULL DROP TABLE #TempSizes;
     
     SELECT 
@@ -47,27 +47,30 @@ BEGIN
     WHERE (ci.[isDisable] = 0 OR ci.[isDisable] IS NULL)
     GROUP BY ci.[ItemName2], ci.[MauSac];
 
-    -- Đánh chỉ mục trên bảng tạm để JOIN siêu tốc
+    -- Đánh chỉ mục trên bảng tạm
     CREATE CLUSTERED INDEX IX_TempSizes ON #TempSizes (ItemName2, MauSac);
 
-    -- 2. Truy vấn kết quả chính (JOIN với bảng tạm để đạt hiệu năng tối đa)
-    -- API web chỉ trả thông tin sản phẩm và đơn giá; không trả tồn kho.
+    -- 2. Truy vấn kết quả chính (SELECT ĐẦY ĐỦ ALIAS TRÙNG VỚI METADATA LƯỚI GRID)
     SELECT 
-        t2.[ItemName2]    AS [ItemName2],
-        t2.[TenHangHoa]   AS [TenHangHoa],
-        t2.[UnitPrice]    AS [UnitPrice],
-        t2.[MauSac]       AS [MauSac],
-        t2.[Form]         AS [Form],
-        t2.[FormName]     AS [FormName],
-        t2.[CategoryID]   AS [CategoryID],   
-        t2.[Design]       AS [Design],
-        t2.[isDisable]    AS [isDisable],
+        t2.[ItemName2]        AS [ItemID],
+        t2.[ItemName2]        AS [ItemName2],
+        t2.[TenHangHoa]       AS [ItemName],
+        t2.[TenHangHoa]       AS [TenHangHoa],
+        t2.[UnitPrice]        AS [Price],
+        t2.[UnitPrice]        AS [UnitPrice],
+        t2.[MauSac]           AS [MauSac],
+        t2.[Form]             AS [Form],
+        t2.[FormName]         AS [FormName],
+        ISNULL(cat.[CategoryName], t2.[CategoryID]) AS [ItemGroupID],
+        ISNULL(cat.[CategoryName], t2.[CategoryID]) AS [CategoryName],
+        t2.[CategoryID]       AS [CategoryID],   
+        t2.[Design]           AS [Design],
+        ISNULL(t2.[isDisable], 0) AS [isDisable],
         ISNULL(t2.[isWeb], 0) AS [isWeb],
         
-        ts.[nhom_size]    AS [nhom_size],
-        cat.[CategoryName] AS [CategoryName],
+        ISNULL(ts.[nhom_size], '') AS [Size],
+        ISNULL(ts.[nhom_size], '') AS [nhom_size],
 
-        -- Chỉ sinh JSON khi thực sự cần thiết (lấy danh sách bán trên Web) để tối ưu CPU
         CASE WHEN @IsWebOnly = 1 THEN
             (SELECT DISTINCT [Size] 
              FROM [dbo].[CF_ItemTbl] ci 

@@ -156,12 +156,13 @@ const Http = (() => {
     
     // Tự động nhận diện và chuyển đổi câu lệnh SQL SELECT thành API URL tương thích của hệ thống
     if (cleanEndpoint.toUpperCase().startsWith('SELECT')) {
-      const selectRegex = /^\s*SELECT\s+([\s\S]+?)\s+FROM\s+(\w+)(?:\s+WHERE\s+([\s\S]+))?\s*$/i;
+      const selectRegex = /^\s*SELECT\s+([\s\S]+?)\s+FROM\s+([^\s]+)(?:\s+WHERE\s+([\s\S]+?))?(?:\s+ORDER\s+BY\s+([\s\S]+))?\s*$/i;
       const match = cleanEndpoint.match(selectRegex);
       if (match) {
         const columns = match[1].split(',').map(s => s.trim()).join(';');
         const tableName = match[2].trim();
         const whereClause = match[3] ? match[3].trim() : '';
+        const orderClause = match[4] ? match[4].trim() : '';
         
         // API_CONFIG.BASE_URL already ends with `/api`, so the table route must
         // stay relative to that base (otherwise requests become `/api/api/...`).
@@ -172,6 +173,9 @@ const Http = (() => {
         if (whereClause) {
           cleanParams.w = whereClause;
         }
+        if (orderClause) {
+          cleanParams.o = orderClause;
+        }
       }
     }
 
@@ -179,8 +183,11 @@ const Http = (() => {
     const qs = new URLSearchParams(cleanParams).toString();
     const url = getApiBaseUrl() + cleanEndpoint + (qs ? `${separator}${qs}` : '');
 
-    const cached = _getFromCache(_cacheKey(url));
-    if (cached) return cached;
+    const isMetadataApi = url.includes('/API_LayCacTruongGiaoDien');
+    if (!isMetadataApi) {
+      const cached = _getFromCache(_cacheKey(url));
+      if (cached) return cached;
+    }
 
     document.body.style.cursor = 'wait';
     try {
@@ -188,7 +195,7 @@ const Http = (() => {
       const data = await _handleResponse(res);
       
       const hasData = !Array.isArray(data?.records) || data.records.length > 0;
-      if (data && (data.code === 0 || data.code === undefined) && hasData) {
+      if (data && (data.code === 0 || data.code === undefined) && hasData && !isMetadataApi) {
         _setCache(_cacheKey(url), data);
       }
       return data;

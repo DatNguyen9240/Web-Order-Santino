@@ -290,15 +290,23 @@ BEGIN
         RETURN;
     END
 
-    ELSE IF @Loai = 'Promotion'
+    ELSE IF @Loai = 'Promotion' OR @Loai = 'CTKM'
     BEGIN
         SELECT
+            [CTKM],
             [CTKM]      AS [id],
-            [ChietKhau] AS [name]
+            [ChietKhau],
+            [ChietKhau] AS [name],
+            [Memo],
+            [TyLeDoi],
+            [TyLeDoiTrongVu],
+            [NgayBatDau],
+            [NgayKetThuc],
+            [ChiTieu],
+            [NhomCTKM],
+            0 AS [IsHTLCu]
         FROM [dbo].[CF_CTKMTbl]
-        WHERE [IsWeb] = 1
-          AND (@TimKiem = '' OR [CTKM] LIKE N'%' + @TimKiem + N'%' OR [ChietKhau] LIKE N'%' + @TimKiem + N'%')
-          AND ([NgayKetThuc] IS NULL OR [NgayKetThuc] >= CAST(GETDATE() AS DATE))
+        WHERE (@TimKiem = '' OR [CTKM] LIKE N'%' + @TimKiem + N'%' OR [Memo] LIKE N'%' + @TimKiem + N'%')
         ORDER BY [CTKM];
         RETURN;
     END
@@ -396,8 +404,21 @@ BEGIN
             SET @Page = ISNULL(CAST(JSON_VALUE(@TimKiem, '$.page') AS INT), @Page);
             SET @PageSize = ISNULL(CAST(JSON_VALUE(@TimKiem, '$.limit') AS INT), @PageSize);
             SET @FilterCustomerID = JSON_VALUE(@TimKiem, '$.customer_id');
-            IF @strTuNgay IS NOT NULL AND @strTuNgay <> '' SET @TuNgay = TRY_CAST(@strTuNgay AS DATETIME);
-            IF @strDenNgay IS NOT NULL AND @strDenNgay <> '' SET @DenNgay = TRY_CAST(@strDenNgay AS DATETIME);
+            IF @strTuNgay IS NOT NULL AND @strTuNgay <> ''
+            BEGIN
+                IF @strTuNgay LIKE '%/%'
+                    SET @TuNgay = TRY_CONVERT(DATETIME, @strTuNgay, 103);
+                ELSE
+                    SET @TuNgay = TRY_CAST(@strTuNgay AS DATETIME);
+            END;
+
+            IF @strDenNgay IS NOT NULL AND @strDenNgay <> ''
+            BEGIN
+                IF @strDenNgay LIKE '%/%'
+                    SET @DenNgay = TRY_CONVERT(DATETIME, @strDenNgay, 103);
+                ELSE
+                    SET @DenNgay = TRY_CAST(@strDenNgay AS DATETIME);
+            END;
         END
 
         SET @Page = ISNULL(@Page, 1);

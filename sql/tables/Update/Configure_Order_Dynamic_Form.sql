@@ -1,186 +1,66 @@
--- =========================================================================
--- Cấu hình Metadata Chuẩn CSDL cho Form Đơn Hàng (WEB_OrderFrm / WEB_OrderDetailFrm)
--- Prerequisite: Chạy trong SSMS để bổ sung bản ghi vào SY_FrmLstTbl & SY_FrmMstActTbl
--- =========================================================================
+-- Cấu hình Metadata tiếng Việt & Cột hiển thị cho Đơn hàng (WEB_OrderFrm & WEB_OrderDetailFrm)
 SET XACT_ABORT ON;
 
 BEGIN TRY
     BEGIN TRANSACTION;
 
-    -- 1. Thu thập các cột nghiệp vụ cho WEB_OrderTbl
-    DECLARE @OrderBusinessColumns VARCHAR(MAX);
-    SELECT @OrderBusinessColumns = STRING_AGG(columnData.name, ';') WITHIN GROUP (ORDER BY columnData.column_id)
-    FROM sys.columns columnData
-    INNER JOIN sys.types typeData ON typeData.user_type_id = columnData.user_type_id
-    WHERE columnData.object_id = OBJECT_ID('dbo.WEB_OrderTbl')
-      AND LOWER(columnData.name) <> 'userautoid'
-      AND columnData.is_identity = 0 AND columnData.is_computed = 0
-      AND typeData.name NOT IN ('timestamp', 'rowversion');
+    DECLARE @FormID VARCHAR(100) = 'WEB_OrderFrm';
 
-    -- Cấu hình SY_FrmLstTbl cho WEB_OrderFrm
-    IF EXISTS (SELECT 1 FROM dbo.SY_FrmLstTbl WHERE FormID = 'WEB_OrderFrm')
+    -- 1. CẤU HÌNH BAN ĐẦU HOẶC CẬP NHẬT TRONG BẢNG SY_FrmLstTbl
+    IF NOT EXISTS (SELECT 1 FROM dbo.SY_FrmLstTbl WHERE FormID = @FormID)
     BEGIN
-        UPDATE dbo.SY_FrmLstTbl
-        SET
-            CaptionVN = N'Quản lý Đơn Hàng',
-            TableName = 'dbo.WEB_OrderTbl',
-            PrimaryKey = 'DocumentID',
-            HideColumnArr = 'UserAutoID',
-            DefaultColumnArr = 'DocumentID;DocumentDate;BranchID;ObjectName;CTKM;BaseTotal;Notes',
-            TableDetail = 'dbo.WEB_OrderDetailTbl',
-            TableDetailLeftJoinField = 'DocumentID',
-            TableDetailSelectFrom = 'DocumentID;ItemID;ItemName;Size;MauSac;Quantity;UnitPrice;Amount;TotalAmount;STT',
-            AddNewColumnArr = ISNULL(@OrderBusinessColumns, ''),
-            EditorColumnArr = ISNULL(@OrderBusinessColumns, ''),
-            LockColumnArr = 'DocumentID'
-        WHERE FormID = 'WEB_OrderFrm';
+        INSERT INTO dbo.SY_FrmLstTbl (
+            FormID, FormType, CaptionVN, CaptionEN, TableName, PrimaryKey, 
+            AddNewColumnArr, EditorColumnArr, DefaultColumnArr, HideColumnArr
+        )
+        VALUES (
+            @FormID, 'LISTEDIT', N'Danh sách đơn hàng', 'Order List', 'dbo.WEB_OrderTbl', 'DocumentID',
+            'DocumentDate;BranchID;ObjectID;ObjectName;EmployeeID;CTKM;BaseTotal;TotalAmount;Notes',
+            'DocumentDate;BranchID;ObjectID;ObjectName;EmployeeID;CTKM;BaseTotal;TotalAmount;Notes',
+            'DocumentID;DocumentDate;BranchID;ObjectID;ObjectName;EmployeeID;CTKM;BaseTotal;TotalAmount;Status',
+            'UserAutoID'
+        );
     END
     ELSE
     BEGIN
-        INSERT INTO dbo.SY_FrmLstTbl
-        (
-            FormID, CaptionVN, TableName, PrimaryKey, HideColumnArr,
-            DefaultColumnArr, TableDetail, TableDetailLeftJoinField,
-            TableDetailSelectFrom, AddNewColumnArr, EditorColumnArr, LockColumnArr
-        )
-        VALUES
-        (
-            'WEB_OrderFrm', N'Quản lý Đơn Hàng', 'dbo.WEB_OrderTbl', 'DocumentID',
-            'UserAutoID', 'DocumentID;DocumentDate;BranchID;ObjectName;CTKM;BaseTotal;Notes',
-            'dbo.WEB_OrderDetailTbl', 'DocumentID',
-            'DocumentID;ItemID;ItemName;Size;MauSac;Quantity;UnitPrice;Amount;TotalAmount;STT',
-            ISNULL(@OrderBusinessColumns, ''), ISNULL(@OrderBusinessColumns, ''), 'DocumentID'
-        );
-    END;
-
-    -- 2. Thu thập các cột nghiệp vụ cho WEB_OrderDetailTbl
-    DECLARE @DetailBusinessColumns VARCHAR(MAX);
-    SELECT @DetailBusinessColumns = STRING_AGG(columnData.name, ';') WITHIN GROUP (ORDER BY columnData.column_id)
-    FROM sys.columns columnData
-    INNER JOIN sys.types typeData ON typeData.user_type_id = columnData.user_type_id
-    WHERE columnData.object_id = OBJECT_ID('dbo.WEB_OrderDetailTbl')
-      AND LOWER(columnData.name) <> 'userautoid'
-      AND columnData.is_identity = 0 AND columnData.is_computed = 0
-      AND typeData.name NOT IN ('timestamp', 'rowversion');
-
-    -- Cấu hình SY_FrmLstTbl cho WEB_OrderDetailFrm
-    IF EXISTS (SELECT 1 FROM dbo.SY_FrmLstTbl WHERE FormID = 'WEB_OrderDetailFrm')
-    BEGIN
         UPDATE dbo.SY_FrmLstTbl
-        SET
-            CaptionVN = N'Chi Tiết Đơn Hàng',
-            TableName = 'dbo.WEB_OrderDetailTbl',
+        SET TableName = 'dbo.WEB_OrderTbl',
             PrimaryKey = 'DocumentID',
-            HideColumnArr = 'UserAutoID',
-            DefaultColumnArr = 'ItemID;ItemName;Size;Quantity;UnitPrice;Amount',
-            AddNewColumnArr = ISNULL(@DetailBusinessColumns, ''),
-            EditorColumnArr = ISNULL(@DetailBusinessColumns, ''),
-            LockColumnArr = ''
-        WHERE FormID = 'WEB_OrderDetailFrm';
-    END
-    ELSE
-    BEGIN
-        INSERT INTO dbo.SY_FrmLstTbl
-        (
-            FormID, CaptionVN, TableName, PrimaryKey, HideColumnArr,
-            DefaultColumnArr, AddNewColumnArr, EditorColumnArr, LockColumnArr
-        )
-        VALUES
-        (
-            'WEB_OrderDetailFrm', N'Chi Tiết Đơn Hàng', 'dbo.WEB_OrderDetailTbl', 'DocumentID',
-            'UserAutoID',
-            'ItemID;ItemName;Size;Quantity;UnitPrice;Amount',
-            ISNULL(@DetailBusinessColumns, ''), ISNULL(@DetailBusinessColumns, ''), ''
-        );
+            DefaultColumnArr = 'DocumentID;DocumentDate;BranchID;ObjectID;ObjectName;EmployeeID;CTKM;BaseTotal;TotalAmount;Status',
+            HideColumnArr = 'UserAutoID'
+        WHERE FormID = @FormID;
     END;
 
-    -- 3. Cấu hình nhãn tiếng Việt & Format cho các trường trong SY_FmtFldTbl
-    DECLARE @FldCaptions TABLE (FieldName VARCHAR(100), CaptionVN NVARCHAR(200), FormatID VARCHAR(50));
-    INSERT INTO @FldCaptions (FieldName, CaptionVN, FormatID) VALUES
-    ('DocumentID', N'Mã số phiếu', ''),
-    ('DocumentDate', N'Ngày lập đơn', 'D'),
-    ('BranchID', N'Kho / Chi nhánh', ''),
-    ('ObjectID', N'Khách hàng', ''),
-    ('ObjectName', N'Tên khách hàng', ''),
-    ('EmployeeID', N'Nhân viên bán hàng', ''),
-    ('Memo', N'Diễn giải', ''),
-    ('Notes', N'Ghi chú', ''),
-    ('CTKM', N'Chương trình KM', ''),
-    ('BaseTotal', N'Tổng tiền hàng', 'B'),
-    ('KhachDua', N'Tiền khách đưa', 'B'),
-    ('Quantity', N'Số lượng', 'N'),
-    ('UnitPrice', N'Đơn giá', 'B'),
-    ('Amount', N'Thành tiền', 'B'),
-    ('TotalAmount', N'Tổng thanh toán', 'B'),
-    ('ItemID', N'Mã hàng hóa', ''),
-    ('ItemName', N'Tên hàng hóa', ''),
-    ('Size', N'Kích cỡ (Size)', 'SIZE'),
-    ('MauSac', N'Màu sắc', '');
+    -- 2. NẠP ĐẦY ĐỦ TIÊU ĐỀ TIẾNG VIỆT CHO BẢNG ĐƠN HÀNG VÀO SY_FmtFldTbl
+    DELETE FROM dbo.SY_FmtFldTbl WHERE FormName IN ('WEB_OrderFrm', 'WEB_OrderDetailFrm');
 
-    UPDATE f
-    SET f.CaptionVN = c.CaptionVN,
-        f.FormatID = CASE WHEN c.FormatID <> '' THEN c.FormatID ELSE f.FormatID END
-    FROM dbo.SY_FmtFldTbl f
-    INNER JOIN @FldCaptions c ON LOWER(f.FieldName) = LOWER(c.FieldName);
-
-    INSERT INTO dbo.SY_FmtFldTbl (FieldName, CaptionVN, FormatID)
-    SELECT c.FieldName, c.CaptionVN, c.FormatID
-    FROM @FldCaptions c
-    WHERE NOT EXISTS (SELECT 1 FROM dbo.SY_FmtFldTbl f WHERE LOWER(f.FieldName) = LOWER(c.FieldName));
-
-    -- 4. Cấu hình Lookups Dropdown trong SY_FrmDrdwTbl
-    DECLARE @Dropdowns TABLE (
-        FormID VARCHAR(50), ColumnID VARCHAR(50), Caption NVARCHAR(200),
-        [Source] NVARCHAR(400), ValueColumn VARCHAR(50), DisplayColumn VARCHAR(50), [Type] VARCHAR(50)
-    );
-    INSERT INTO @Dropdowns VALUES
-    ('WEB_OrderFrm', 'ObjectID', N'Khách hàng', '/API_DanhMuc?Loai=Customer', 'ObjectID', 'ObjectName', 'dropselect'),
-    ('WEB_OrderFrm', 'BranchID', N'Chi nhánh', '/API_DanhMuc?Loai=Branch', 'BranchID', 'BranchName', 'dropselect'),
-    ('WEB_OrderFrm', 'EmployeeID', N'Nhân viên kinh doanh', '/API_DanhMuc?Loai=SalesPerson', 'EmployeeID', 'EmployeeName', 'dropselect'),
-    ('WEB_OrderFrm', 'CTKM', N'Khuyến mãi', '/API_DanhMuc?Loai=Promotion', 'CTKM', 'TenCTKM', 'dropselect'),
-    ('WEB_OrderFrm', 'PaymentTermID', N'Điều khoản TT', '/API_DanhMuc?Loai=PaymentTerm', 'PaymentTermID', 'PaymentTermName', 'dropselect'),
-    ('WEB_OrderFrm', 'PaymentTypeID', N'Hình thức TT', '/API_DanhMuc?Loai=PaymentType', 'PaymentTypeID', 'PaymentTypeName', 'dropselect'),
-    ('WEB_OrderDetailFrm', 'ItemID', N'Hàng hóa', '/API_LaySanPham', 'ItemName2', 'TenHangHoa', 'dropselect');
-
-    UPDATE dd
-    SET dd.Caption = d.Caption, dd.[Source] = d.[Source], dd.ValueColumn = d.ValueColumn,
-        dd.DisplayColumn = d.DisplayColumn, dd.[Type] = d.[Type]
-    FROM dbo.SY_FrmDrdwTbl dd
-    INNER JOIN @Dropdowns d ON dd.FormID = d.FormID AND LOWER(dd.ColumnID) = LOWER(d.ColumnID);
-
-    INSERT INTO dbo.SY_FrmDrdwTbl (UserAutoID, FormID, ColumnID, Caption, [Source], ValueColumn, DisplayColumn, [Type])
-    SELECT CONVERT(VARCHAR(36), NEWID()), d.FormID, d.ColumnID, d.Caption, d.[Source], d.ValueColumn, d.DisplayColumn, d.[Type]
-    FROM @Dropdowns d
-    WHERE NOT EXISTS (
-        SELECT 1 FROM dbo.SY_FrmDrdwTbl dd
-        WHERE dd.FormID = d.FormID AND LOWER(dd.ColumnID) = LOWER(d.ColumnID)
-    );
-
-    -- 5. Đăng ký các Master Actions trong SY_FrmMstActTbl cho WEB_OrderFrm
-    DECLARE @OrderActions TABLE ([Action] VARCHAR(20) PRIMARY KEY, [Source] NVARCHAR(400) NOT NULL, Oderby INT NOT NULL);
-    INSERT INTO @OrderActions VALUES
-    ('SEARCH', N'/API_DanhMuc', 10),
-    ('DETAIL', N'/API_DanhMuc', 15),
-    ('CREATE', N'/API_TaoDonHang', 20),
-    ('UPDATE', N'/API_CapNhatDuLieuChung', 30),
-    ('DELETE', N'/API_XoaDuLieuChung', 40);
-
-    UPDATE existing
-    SET existing.[Source] = actionData.[Source], existing.ColumnID = '', existing.IsDisable = 0, existing.Oderby = actionData.Oderby
-    FROM dbo.SY_FrmMstActTbl existing
-    INNER JOIN @OrderActions actionData ON actionData.[Action] = existing.[Action]
-    WHERE existing.FormID = 'WEB_OrderFrm' AND existing.MaterAction = 'API';
-
-    INSERT INTO dbo.SY_FrmMstActTbl (UserAutoID, FormID, MaterAction, [Action], [Source], ColumnID, IsDisable, Oderby)
-    SELECT CONVERT(VARCHAR(36), NEWID()), 'WEB_OrderFrm', 'API', actionData.[Action], actionData.[Source], '', 0, actionData.Oderby
-    FROM @OrderActions actionData
-    WHERE NOT EXISTS (
-        SELECT 1 FROM dbo.SY_FrmMstActTbl existing
-        WHERE existing.FormID = 'WEB_OrderFrm' AND existing.MaterAction = 'API' AND existing.[Action] = actionData.[Action]
-    );
+    INSERT INTO dbo.SY_FmtFldTbl (FormatID, FieldName, FormName, CaptionVN, AlignX, MinWidth, MaxWidth)
+    VALUES
+        ('Z', 'DocumentID',     'WEB_OrderFrm', N'Mã đơn hàng',         'L', 140, 300),
+        ('D', 'DocumentDate',   'WEB_OrderFrm', N'Ngày lập đơn',        'C', 120, 200),
+        ('Z', 'BranchID',       'WEB_OrderFrm', N'Kho / Chi nhánh',     'L', 140, 300),
+        ('Z', 'ObjectID',       'WEB_OrderFrm', N'Mã khách hàng',      'L', 130, 300),
+        ('Z', 'ObjectName',     'WEB_OrderFrm', N'Tên khách hàng',      'L', 200, 500),
+        ('Z', 'EmployeeID',     'WEB_OrderFrm', N'Nhân viên bán hàng',  'L', 160, 300),
+        ('Z', 'CTKM',           'WEB_OrderFrm', N'Chương trình KM',     'L', 150, 300),
+        ('Z', 'BaseTotal',      'WEB_OrderFrm', N'Tổng tiền hàng',      'R', 140, 250),
+        ('Z', 'TotalAmount',    'WEB_OrderFrm', N'Tổng thanh toán',     'R', 150, 250),
+        ('Z', 'KhachDua',       'WEB_OrderFrm', N'Tiền khách đưa',      'R', 140, 250),
+        ('Z', 'TraLai',         'WEB_OrderFrm', N'Tiền trả lại',       'R', 140, 250),
+        ('Z', 'Memo',           'WEB_OrderFrm', N'Diễn giải',           'L', 200, 500),
+        ('Z', 'Notes',          'WEB_OrderFrm', N'Ghi chú',             'L', 200, 500),
+        ('Z', 'Status',         'WEB_OrderFrm', N'Trạng thái đơn',      'C', 120, 200),
+        
+        -- Cột chi tiết đơn hàng
+        ('Z', 'ItemID',         'WEB_OrderDetailFrm', N'Mã hàng hóa',   'L', 130, 300),
+        ('Z', 'ItemName',       'WEB_OrderDetailFrm', N'Tên hàng hóa',  'L', 200, 500),
+        ('Z', 'Size',           'WEB_OrderDetailFrm', N'Size / Kích cỡ','C', 100, 200),
+        ('Z', 'Quantity',       'WEB_OrderDetailFrm', N'Số lượng',      'R', 100, 200),
+        ('Z', 'UnitPrice',      'WEB_OrderDetailFrm', N'Đơn giá',       'R', 130, 250),
+        ('Z', 'Amount',         'WEB_OrderDetailFrm', N'Thành tiền',    'R', 140, 250);
 
     COMMIT TRANSACTION;
-    PRINT N'=== CẤU HÌNH METADATA CSDL WEB_OrderFrm THÀNH CÔNG ===';
+    PRINT N'=== NẠP TIÊU ĐỀ TIẾNG VIỆT CHO ĐƠN HÀNG THÀNH CÔNG ===';
 END TRY
 BEGIN CATCH
     IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;

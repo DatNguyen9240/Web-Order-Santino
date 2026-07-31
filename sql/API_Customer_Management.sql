@@ -45,7 +45,7 @@ GO
 
 
 -- 2. API_LayDanhSachKhachHang
--- Lấy danh sách khách hàng đầy đủ và tài khoản đăng nhập đi kèm
+-- Lấy danh sách khách hàng đầy đủ và tài khoản đăng nhập đi kèm (CHỈ LẤY CÁC KHÁCH HÀNG ĐƯỢC TICK isWeb = 1 BÊN ERP)
 IF OBJECT_ID('dbo.API_LayDanhSachKhachHang') IS NOT NULL
     DROP PROCEDURE [dbo].[API_LayDanhSachKhachHang];
 GO
@@ -72,42 +72,43 @@ BEGIN
     IF @Limit IS NULL OR @Limit <= 0 SET @Limit = 20;
     
     SELECT 
-        c.[ObjectID] AS [id],
-        c.[ObjectID] AS [customer_id],
-        c.[ObjectName] AS [name],
-        c.[Phone] AS [phone],
-        c.[Address] AS [address],
-        c.[LocationID] AS [location_id],
-        l.[LocationName] AS [location_name],
-        c.[ObjectGroupID] AS [group_id],
-        g.[ObjectGroupName] AS [group_name],
-        c.[EmployeeID] AS [employee_id],
-        e.[EmployeeName] AS [employee_name],
-        c.[BranchID] AS [branch_id],
-        b.[BranchName] AS [branch_name],
-        c.[Notes] AS [notes],
-        c.[QuanHuyen] AS [quan_huyen],
-        c.[SanPhamChinh] AS [san_pham_chinh],
-        COALESCE(c.[isDefault], 0) AS [is_default],
-        c.[DinhMucNo] AS [dinh_muc_no],
-        c.[ThoiHanThanhToan] AS [thoi_han_thanh_toan],
-        c.[PaymentTypeID] AS [payment_type_id],
-        c.[PaymentTermID] AS [payment_term_id],
-        c.[TaxCode] AS [tax_code],
-        c.[DonViMuaHang] AS [don_vi_mua_hang],
-        c.[AddressHD] AS [address_hd],
-        COALESCE(c.[isDisable], 0) AS [is_disable],
-        c.[NhaPhanPhoi] AS [nha_phan_phoi],
-        u.[UserName] AS [username],
-        COALESCE(u.[Disable], 0) AS [user_disable],
-        u.[UserGroupID] AS [usergroup_id]
+        c.[ObjectID],
+        c.[ObjectName],
+        c.[Phone],
+        c.[Address],
+        c.[LocationID],
+        l.[LocationName],
+        c.[ObjectGroupID],
+        g.[ObjectGroupName],
+        c.[EmployeeID],
+        e.[EmployeeName],
+        c.[BranchID],
+        b.[BranchName],
+        c.[Notes],
+        c.[QuanHuyen],
+        c.[SanPhamChinh],
+        COALESCE(c.[isDefault], 0) AS [isDefault],
+        c.[DinhMucNo],
+        c.[ThoiHanThanhToan],
+        c.[PaymentTypeID],
+        c.[PaymentTermID],
+        c.[TaxCode],
+        c.[DonViMuaHang],
+        c.[AddressHD],
+        COALESCE(c.[isDisable], 0) AS [isDisable],
+        c.[NhaPhanPhoi],
+        COALESCE(c.[isWeb], 1) AS [isWeb],
+        u.[UserName],
+        COALESCE(u.[Disable], 0) AS [userDisable],
+        u.[UserGroupID]
     FROM [dbo].[CF_ObjectTbl] c
     LEFT JOIN [dbo].[CF_LocationTbl] l ON c.[LocationID] = l.[LocationID]
     LEFT JOIN [dbo].[CF_ObjectGroupTbl] g ON c.[ObjectGroupID] = g.[ObjectGroupID]
     LEFT JOIN [dbo].[CF_EmployeeTbl] e ON c.[EmployeeID] = e.[EmployeeID]
     LEFT JOIN [dbo].[CF_BranchTbl] b ON c.[BranchID] = b.[BranchID]
     LEFT JOIN [dbo].[SY_User] u ON c.[ObjectID] = u.[ObjectID]
-    WHERE (@TimKiem IS NULL OR @TimKiem = ''
+    WHERE ISNULL(c.[isWeb], 0) = 1
+      AND (@TimKiem IS NULL OR @TimKiem = ''
            OR c.[ObjectID] LIKE '%' + @TimKiem + '%'
            OR c.[ObjectName] LIKE N'%' + @TimKiem + '%'
            OR c.[Phone] LIKE '%' + @TimKiem + '%'

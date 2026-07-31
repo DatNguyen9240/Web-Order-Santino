@@ -1,6 +1,7 @@
 -- =========================================================================
 -- SCRIPT TẠO STORED PROCEDURE LẤY CẤU HÌNH GIAO DIỆN ĐỘNG (DYNAMIC ENGINE)
 -- HỆ THỐNG METADATA CHUẨN: SY_FrmLstTbl, SY_FmtFldTbl, SY_FrmDrdwTbl, SY_FmatTbl
+-- CHỐNG NGUYÊN NHÂN TRẢ VỀ 0 RESULT-SET GÂY LỖI 'Store Info2 error' Ở BACKEND C#
 -- =========================================================================
 
 IF OBJECT_ID('dbo.API_LayCacTruongGiaoDien', 'P') IS NOT NULL
@@ -8,15 +9,71 @@ IF OBJECT_ID('dbo.API_LayCacTruongGiaoDien', 'P') IS NOT NULL
 GO
 
 CREATE PROCEDURE [dbo].[API_LayCacTruongGiaoDien]
-    @FormName VARCHAR(50) = NULL
+    @FormName NVARCHAR(MAX) = NULL,
+    @FormID NVARCHAR(MAX) = NULL,
+    @Form NVARCHAR(MAX) = NULL,
+    @q NVARCHAR(MAX) = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
     
-    IF @FormName IS NULL RETURN;
+    -- 1. Ưu tiên lấy tên Form từ các tên tham số khác nhau mà Backend C# có thể truyền
+    SET @FormName = COALESCE(
+        NULLIF(LTRIM(RTRIM(@FormName)), ''),
+        NULLIF(LTRIM(RTRIM(@FormID)), ''),
+        NULLIF(LTRIM(RTRIM(@Form)), '')
+    );
+
+    -- 2. Bóc tách FormName nếu @FormName là chuỗi JSON
+    IF @FormName LIKE '%{%'
+    BEGIN
+        DECLARE @p1 INT = CHARINDEX('"FormName"', @FormName);
+        IF @p1 = 0 SET @p1 = CHARINDEX('"formName"', @FormName);
+        IF @p1 = 0 SET @p1 = CHARINDEX('"FormID"', @FormName);
+        IF @p1 = 0 SET @p1 = CHARINDEX('"formId"', @FormName);
+        
+        IF @p1 > 0
+        BEGIN
+            DECLARE @p2 INT = CHARINDEX(':', @FormName, @p1);
+            IF @p2 > 0
+            BEGIN
+                DECLARE @vStart INT = CHARINDEX('"', @FormName, @p2) + 1;
+                DECLARE @vEnd INT = CHARINDEX('"', @FormName, @vStart);
+                IF @vStart > 1 AND @vEnd > @vStart
+                BEGIN
+                    SET @FormName = SUBSTRING(@FormName, @vStart, @vEnd - @vStart);
+                END;
+            END;
+        END;
+    END;
+
+    -- 3. Bóc tách FormName từ @q nếu là chuỗi JSON payload
+    IF @q LIKE '%{%' AND (@FormName IS NULL OR @FormName = '' OR @FormName LIKE '%{%')
+    BEGIN
+        DECLARE @qp1 INT = CHARINDEX('"FormName"', @q);
+        IF @qp1 = 0 SET @qp1 = CHARINDEX('"formName"', @q);
+        IF @qp1 = 0 SET @qp1 = CHARINDEX('"FormID"', @q);
+        IF @qp1 = 0 SET @qp1 = CHARINDEX('"formId"', @q);
+        
+        IF @qp1 > 0
+        BEGIN
+            DECLARE @qp2 INT = CHARINDEX(':', @q, @qp1);
+            IF @qp2 > 0
+            BEGIN
+                DECLARE @qvStart INT = CHARINDEX('"', @q, @qp2) + 1;
+                DECLARE @qvEnd INT = CHARINDEX('"', @q, @qvStart);
+                IF @qvStart > 1 AND @qvEnd > @qvStart
+                BEGIN
+                    SET @FormName = SUBSTRING(@q, @qvStart, @qvEnd - @qvStart);
+                END;
+            END;
+        END;
+    END;
+
+    SET @FormName = LTRIM(RTRIM(ISNULL(@FormName, '')));
 
     -- Lấy thông tin cấu hình từ SY_FrmLstTbl
-    DECLARE @FormID VARCHAR(100) = '';
+    DECLARE @MatchedFormID VARCHAR(100) = '';
     DECLARE @TableName VARCHAR(100) = '';
     DECLARE @PrimaryKey VARCHAR(100) = '';
     DECLARE @HideColumnArr VARCHAR(MAX) = '';
@@ -24,59 +81,67 @@ BEGIN
     DECLARE @AddNewColumnArr VARCHAR(MAX) = '';
     DECLARE @EditorColumnArr VARCHAR(MAX) = '';
     DECLARE @LockColumnArr VARCHAR(MAX) = '';
-    DECLARE @TableDetail VARCHAR(100) = '';
-    DECLARE @TableDetailLeftJoinField VARCHAR(255) = '';
-    DECLARE @TableDetailSelectFrom VARCHAR(MAX) = '';
-    DECLARE @TableDetail2 VARCHAR(100) = '';
-    DECLARE @TableDetail2LeftJoinField VARCHAR(255) = '';
-    DECLARE @TableDetail2SelectFrom VARCHAR(MAX) = '';
 
     SELECT TOP (1)
-        @FormID = ISNULL(formConfig.FormID, @FormName),
+        @MatchedFormID = ISNULL(formConfig.FormID, @FormName),
         @TableName = ISNULL(formConfig.TableName, formConfig.FormID),
         @PrimaryKey = NULLIF(LTRIM(RTRIM(formConfig.PrimaryKey)), ''),
         @HideColumnArr = ISNULL(formConfig.HideColumnArr, ''),
         @DefaultColumnArr = ISNULL(formConfig.DefaultColumnArr, ''),
         @AddNewColumnArr = ISNULL(formConfig.AddNewColumnArr, ''),
         @EditorColumnArr = ISNULL(formConfig.EditorColumnArr, ''),
-        @LockColumnArr = ISNULL(formConfig.LockColumnArr, ''),
-        @TableDetail = ISNULL(formConfig.TableDetail, ''),
-        @TableDetailLeftJoinField = ISNULL(formConfig.TableDetailLeftJoinField, ''),
-        @TableDetailSelectFrom = ISNULL(formConfig.TableDetailSelectFrom, ''),
-        @TableDetail2 = ISNULL(formConfig.TableDetail2, ''),
-        @TableDetail2LeftJoinField = ISNULL(formConfig.TableDetail2LeftJoinField, ''),
-        @TableDetail2SelectFrom = ISNULL(formConfig.TableDetail2SelectFrom, '')
+        @LockColumnArr = ISNULL(formConfig.LockColumnArr, '')
     FROM dbo.SY_FrmLstTbl formConfig
     WHERE formConfig.FormID = @FormName OR formConfig.TableName = @FormName;
 
+    -- ÁNH XẠ AN TOÀN NẾU KHÔNG TÌM THẤY TÊN BẢNG TRONG BẢNG CẤU HÌNH
+    IF OBJECT_ID(@TableName) IS NULL
+    BEGIN
+        IF @FormName IN ('WEB_ProductFrm', 'frmProduct', 'ProductListFrm', 'ItemListFrm')
+        BEGIN
+            SET @TableName = 'dbo.CF_ItemTbl';
+        END
+        ELSE IF @FormName IN ('WEB_CustomerFrm', 'ObjectListFrm', 'CustomerListFrm')
+        BEGIN
+            SET @TableName = 'dbo.CF_ObjectTbl';
+        END
+        ELSE IF @FormName IN ('WEB_OrderFrm', 'OrderListFrm', 'frmOrder')
+        BEGIN
+            SET @TableName = 'dbo.WEB_OrderTbl';
+        END
+        ELSE IF @FormName IN ('frmPromotion', 'PromotionListFrm', 'CTKMFrm')
+        BEGIN
+            SET @TableName = 'dbo.CF_CTKMTbl';
+        END
+        ELSE
+        BEGIN
+            SELECT TOP 1 @TableName = sysTbl.name
+            FROM sys.tables sysTbl
+            WHERE sysTbl.name = @FormName 
+               OR sysTbl.name = 'CF_' + @FormName + 'Tbl'
+               OR sysTbl.name = 'WEB_' + @FormName + 'Tbl'
+               OR sysTbl.name LIKE '%' + @FormName + '%';
+        END
+    END;
+
     IF @TableName = '' SET @TableName = @FormName;
-    IF @FormID = '' SET @FormID = @FormName;
-    SET @FormName = @FormID;
+    IF @MatchedFormID = '' SET @MatchedFormID = @FormName;
 
     DECLARE @ObjectId INT = OBJECT_ID(@TableName);
 
-    -- Route mặc định dùng API CRUD theo tên bảng. Form có nghiệp vụ riêng có thể
-    -- override trong SY_FrmMstActTbl với MaterAction = 'API'.
     DECLARE @ApiSearch NVARCHAR(400) = '/' + @TableName;
     DECLARE @ApiDetail NVARCHAR(400) = '/' + @TableName;
     DECLARE @ApiCreate NVARCHAR(400) = '/' + @TableName;
     DECLARE @ApiUpdate NVARCHAR(400) = '/API_CapNhatDuLieuChung';
-    -- Backend triển khai chỉ cho phép GET/POST. Trang động dùng một POST API
-    -- chung để xóa an toàn theo FormName, không gọi HTTP DELETE vào route bảng.
     DECLARE @ApiDelete NVARCHAR(400) = '/API_XoaDuLieuChung';
     DECLARE @ApiConfigured BIT = 0;
 
     IF EXISTS (
-        SELECT 1
-        FROM dbo.SY_FrmMstActTbl
-        WHERE FormID = @FormName
-          AND UPPER(ISNULL(MaterAction, '')) = 'API'
-          AND ISNULL(IsDisable, 0) = 0
-          AND NULLIF(LTRIM(RTRIM(Source)), '') IS NOT NULL
+        SELECT 1 FROM dbo.SY_FrmMstActTbl
+        WHERE FormID = @MatchedFormID AND UPPER(ISNULL(MaterAction, '')) = 'API' AND ISNULL(IsDisable, 0) = 0 AND NULLIF(LTRIM(RTRIM(Source)), '') IS NOT NULL
     )
     BEGIN
         SET @ApiConfigured = 1;
-
         SELECT
             @ApiSearch = COALESCE(MAX(CASE WHEN UPPER(Action) IN ('SEARCH', 'LIST') THEN NULLIF(LTRIM(RTRIM(Source)), '') END), @ApiSearch),
             @ApiDetail = COALESCE(MAX(CASE WHEN UPPER(Action) = 'DETAIL' THEN NULLIF(LTRIM(RTRIM(Source)), '') END), @ApiDetail),
@@ -84,26 +149,17 @@ BEGIN
             @ApiUpdate = COALESCE(MAX(CASE WHEN UPPER(Action) IN ('UPDATE', 'EDIT') THEN NULLIF(LTRIM(RTRIM(Source)), '') END), @ApiUpdate),
             @ApiDelete = COALESCE(MAX(CASE WHEN UPPER(Action) = 'DELETE' THEN NULLIF(LTRIM(RTRIM(Source)), '') END), @ApiDelete)
         FROM dbo.SY_FrmMstActTbl
-        WHERE FormID = @FormName
-          AND UPPER(ISNULL(MaterAction, '')) = 'API'
-          AND ISNULL(IsDisable, 0) = 0;
+        WHERE FormID = @MatchedFormID AND UPPER(ISNULL(MaterAction, '')) = 'API' AND ISNULL(IsDisable, 0) = 0;
     END;
 
-    -- Lấy cấu hình các trường từ sys.columns kết hợp với các bảng từ điển chuẩn (hỗ trợ không phân biệt chữ hoa/thường)
+    -- TRUY VẤN CHÍNH: LUÔN TRẢ VỀ IT NHẤT 1 RESULT-SET ĐỂ BACKEND C# KHÔNG BAO GIỜ BỊ LỖI 'Store Info2 error'
     SELECT 
         c.name AS [name], 
         COALESCE(NULLIF(f.CaptionVN, ''), NULLIF(dd.Caption, ''), c.name) AS [label],
         
-        -- Cột bắt buộc nếu là NOT NULL, không tự sinh và không có DEFAULT.
         CASE 
-            WHEN c.is_nullable = 0
-             AND c.is_identity = 0
-             AND c.is_computed = 0
-             AND c.default_object_id = 0
-             AND NOT EXISTS (
-                 SELECT 1 FROM STRING_SPLIT(@LockColumnArr, ';') s
-                 WHERE LOWER(LTRIM(RTRIM(s.value))) = LOWER(c.name)
-             ) THEN 1
+            WHEN c.is_nullable = 0 AND c.is_identity = 0 AND c.is_computed = 0 AND c.default_object_id = 0
+             AND NOT EXISTS (SELECT 1 FROM STRING_SPLIT(@LockColumnArr, ';') s WHERE LOWER(LTRIM(RTRIM(s.value))) = LOWER(c.name)) THEN 1
             ELSE 0 
         END AS [required], 
         
@@ -112,74 +168,54 @@ BEGIN
         ISNULL(@ApiDetail, '')  AS [apiDetail],
         ISNULL(@ApiCreate, '')  AS [apiCreate],
         ISNULL(@ApiUpdate, '')  AS [apiUpdate],
-        -- Giữ apiSave cho DynamicPage cũ; form mới nên dùng apiCreate/apiUpdate.
         ISNULL(@ApiCreate, '')  AS [apiSave],
         ISNULL(@ApiDelete, '')  AS [apiDelete],
         @ApiConfigured          AS [apiConfigured],
-        ISNULL(@FormID, '') AS [formId],
+        ISNULL(@MatchedFormID, '') AS [formId],
         ISNULL(@TableName, '') AS [tableName],
         ISNULL(@HideColumnArr, '') AS [hideColumnArr],
         ISNULL(@DefaultColumnArr, '') AS [defaultColumnArr],
-        ISNULL(@TableDetail, '') AS [tableDetail],
-        ISNULL(@TableDetailLeftJoinField, '') AS [tableDetailLeftJoinField],
-        ISNULL(@TableDetailSelectFrom, '') AS [tableDetailSelectFrom],
-        ISNULL(@TableDetail2, '') AS [tableDetail2],
-        ISNULL(@TableDetail2LeftJoinField, '') AS [tableDetail2LeftJoinField],
-        ISNULL(@TableDetail2SelectFrom, '') AS [tableDetail2SelectFrom],
         
-        -- showInAdd
         CASE 
             WHEN c.is_identity = 1 OR c.is_computed = 1 THEN 0
             WHEN ISNULL(dd.isInvisible, 0) = 1 THEN 0
             WHEN NULLIF(LTRIM(RTRIM(@AddNewColumnArr)), '') IS NOT NULL 
-                 AND NOT EXISTS (
-                     SELECT 1 FROM STRING_SPLIT(@AddNewColumnArr, ';') s 
-                     WHERE LOWER(LTRIM(RTRIM(s.value))) = LOWER(c.name)
-                 ) THEN 0
+                 AND NOT EXISTS (SELECT 1 FROM STRING_SPLIT(@AddNewColumnArr, ';') s WHERE LOWER(LTRIM(RTRIM(s.value))) = LOWER(c.name)) THEN 0
             ELSE 1
         END AS [showInAdd],
         
-        -- showInEdit
         CASE 
-            -- Khóa chính vẫn hiện khi sửa nhưng bị khóa ở isReadOnlyEdit.
             WHEN c.is_identity = 1 OR c.is_computed = 1 THEN 0
             WHEN ISNULL(dd.isInvisible, 0) = 1 THEN 0
             WHEN NULLIF(LTRIM(RTRIM(@EditorColumnArr)), '') IS NOT NULL 
-                 AND NOT EXISTS (
-                     SELECT 1 FROM STRING_SPLIT(@EditorColumnArr, ';') s 
-                     WHERE LOWER(LTRIM(RTRIM(s.value))) = LOWER(c.name)
-                 ) THEN 0
+                 AND NOT EXISTS (SELECT 1 FROM STRING_SPLIT(@EditorColumnArr, ';') s WHERE LOWER(LTRIM(RTRIM(s.value))) = LOWER(c.name)) THEN 0
             ELSE 1
         END AS [showInEdit],
         
-        -- isReadOnlyEdit
         CASE 
             WHEN LOWER(c.name) = LOWER(@PrimaryKey) OR c.is_identity = 1 OR c.is_computed = 1 THEN 1
-            WHEN EXISTS (
-                SELECT 1 FROM STRING_SPLIT(@LockColumnArr, ';') s
-                WHERE LOWER(LTRIM(RTRIM(s.value))) = LOWER(c.name)
-            ) THEN 1
+            WHEN EXISTS (SELECT 1 FROM STRING_SPLIT(@LockColumnArr, ';') s WHERE LOWER(LTRIM(RTRIM(s.value))) = LOWER(c.name)) THEN 1
             WHEN ISNULL(dd.isLock, 0) = 1 THEN 1
             ELSE 0
         END AS [isReadOnlyEdit],
         
-        -- isReadOnlyAdd
         CASE 
             WHEN c.is_identity = 1 OR c.is_computed = 1 THEN 1
-            WHEN EXISTS (
-                SELECT 1 FROM STRING_SPLIT(@LockColumnArr, ';') s
-                WHERE LOWER(LTRIM(RTRIM(s.value))) = LOWER(c.name)
-            ) THEN 1
+            WHEN EXISTS (SELECT 1 FROM STRING_SPLIT(@LockColumnArr, ';') s WHERE LOWER(LTRIM(RTRIM(s.value))) = LOWER(c.name)) THEN 1
             WHEN ISNULL(dd.isLock, 0) = 1 THEN 1
             ELSE 0
         END AS [isReadOnlyAdd],
         
-        -- showInGrid
         CASE 
             WHEN EXISTS (
                 SELECT 1 FROM STRING_SPLIT(@HideColumnArr, ';') s 
                 WHERE LOWER(LTRIM(RTRIM(s.value))) = LOWER(c.name)
             ) THEN 0
+            WHEN NULLIF(LTRIM(RTRIM(@DefaultColumnArr)), '') IS NOT NULL 
+                 AND NOT EXISTS (
+                     SELECT 1 FROM STRING_SPLIT(@DefaultColumnArr, ';') s 
+                     WHERE LOWER(LTRIM(RTRIM(s.value))) = LOWER(c.name)
+                 ) THEN 0
             ELSE 1
         END AS [showInGrid],
 
@@ -194,16 +230,31 @@ BEGIN
         fm.NumberDecimal AS [numberDecimal],
         ISNULL(fm.FormatString, '') AS [formatString],
         
-        -- orderNo
         CASE 
             WHEN NULLIF(LTRIM(RTRIM(@EditorColumnArr)), '') IS NULL THEN c.column_id
             ELSE COALESCE(NULLIF(CHARINDEX(';' + c.name + ';', ';' + @EditorColumnArr + ';'), 0), 10000 + c.column_id)
         END AS [orderNo]
     FROM sys.columns c
     INNER JOIN sys.types t ON t.user_type_id = c.user_type_id
-    LEFT JOIN dbo.SY_FmtFldTbl f ON LOWER(f.FieldName) = LOWER(c.name)
+    
+    OUTER APPLY (
+        SELECT TOP (1) fmt.FormatID, fmt.CaptionVN
+        FROM dbo.SY_FmtFldTbl fmt
+        WHERE LOWER(fmt.FieldName) = LOWER(c.name)
+          AND (fmt.FormName = @MatchedFormID OR ISNULL(fmt.FormName, '') = '')
+        ORDER BY CASE WHEN fmt.FormName = @MatchedFormID THEN 1 ELSE 2 END ASC
+    ) f
+    
     LEFT JOIN dbo.SY_FmatTbl fm ON LOWER(fm.FormatID) = LOWER(f.FormatID)
-    LEFT JOIN dbo.SY_FrmDrdwTbl dd ON dd.FormID = @FormName AND LOWER(dd.ColumnID) = LOWER(c.name)
+    
+    OUTER APPLY (
+        SELECT TOP (1) dd1.*
+        FROM dbo.SY_FrmDrdwTbl dd1
+        WHERE LOWER(dd1.ColumnID) = LOWER(c.name)
+          AND (dd1.FormID = @MatchedFormID OR ISNULL(dd1.FormID, '') = '')
+        ORDER BY CASE WHEN dd1.FormID = @MatchedFormID THEN 1 ELSE 2 END ASC
+    ) dd
+
     WHERE c.object_id = @ObjectId
 
     ORDER BY 

@@ -1,4 +1,4 @@
-﻿/* --- translations.js --- */
+/* --- translations.js --- */
 var TRANSLATIONS = {
   vi: {
     // --- Sidebar ---
@@ -26,7 +26,7 @@ var TRANSLATIONS = {
     "hdr.promos": "Chương Trình Khuyến Mãi",
     "hdr.customers": "Quản Lý Khách Hàng",
     "hdr.customers.desc": "Danh sách khách hàng, thêm mới, chỉnh sửa thông tin, đặt lại mật khẩu và khóa tài khoản",
-    
+
     // --- Common ---
     "btn.add": "Thêm",
     "btn.save": "Lưu",
@@ -39,7 +39,7 @@ var TRANSLATIONS = {
     "pager.info": "Hiển thị {0} - {1} trong số {2} bản ghi",
     "pager.page": "Trang",
     "pager.total_count": "Tổng số: {0} khách hàng",
-    
+
     // --- Order Page ---
     "order.info": "Thông tin chung",
     "order.no": "Số CT",
@@ -129,7 +129,7 @@ var TRANSLATIONS = {
     "settings.lang.vi.desc": "Mặc định",
     "settings.lang.en.desc": "Tiếng Anh",
     "settings.lang.zh.desc": "Tiếng Trung",
-    
+
     // --- Toasts & Alerts ---
     "toast.theme_changed": "Đã đổi chế độ",
     "toast.font_changed": "Đã đổi phông chữ",
@@ -303,7 +303,7 @@ var TRANSLATIONS = {
     "settings.lang.vi.desc": "Default",
     "settings.lang.en.desc": "English",
     "settings.lang.zh.desc": "Chinese",
-    
+
     // --- Toasts & Alerts ---
     "toast.theme_changed": "Theme changed",
     "toast.font_changed": "Font changed",
@@ -531,11 +531,11 @@ const Http = (() => {
   const CACHE_PREFIX = '_api_';
 
   // Base URL của Backend (lấy từ env.js)
-  const getApiBaseUrl = () => typeof API_CONFIG !== 'undefined' ? API_CONFIG.BASE_URL : ''; 
+  const getApiBaseUrl = () => typeof API_CONFIG !== 'undefined' ? API_CONFIG.BASE_URL : '';
 
   // --- Cache layer (sessionStorage) ---
   function _cacheKey(url) { return CACHE_PREFIX + url; }
-  
+
   function _getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
@@ -559,7 +559,7 @@ const Http = (() => {
   function _setCache(key, data) {
     try {
       sessionStorage.setItem(key, JSON.stringify({ d: data, t: Date.now() }));
-    } catch (e) {}
+    } catch (e) { }
   }
 
   function clearCache() {
@@ -615,7 +615,7 @@ const Http = (() => {
       try {
         var fixed = raw.replace(/"code"\s*:\s*([A-Za-z0-9]+)(?=[,\s}])/g, '"code":"$1"');
         data = JSON.parse(fixed);
-      } catch {}
+      } catch { }
     }
 
     // 3. HTTP Error code
@@ -676,7 +676,7 @@ const Http = (() => {
   async function get(endpoint, params = {}) {
     var cleanEndpoint = String(endpoint || '').trim();
     var cleanParams = Object.assign({}, params);
-    
+
     // Tự động nhận diện và chuyển đổi câu lệnh SQL SELECT thành API URL tương thích của hệ thống
     if (cleanEndpoint.toUpperCase().startsWith('SELECT')) {
       const selectRegex = /^\s*SELECT\s+([\s\S]+?)\s+FROM\s+(\w+)(?:\s+WHERE\s+([\s\S]+))?\s*$/i;
@@ -685,7 +685,7 @@ const Http = (() => {
         const columns = match[1].split(',').map(s => s.trim()).join(';');
         const tableName = match[2].trim();
         const whereClause = match[3] ? match[3].trim() : '';
-        
+
         // API_CONFIG.BASE_URL already ends with `/api`, so the table route must
         // stay relative to that base (otherwise requests become `/api/api/...`).
         cleanEndpoint = '/' + tableName;
@@ -709,7 +709,7 @@ const Http = (() => {
     try {
       const res = await _fetchWithTimeout(url, { method: 'GET', headers: _headers() });
       const data = await _handleResponse(res);
-      
+
       const hasData = !Array.isArray(data?.records) || data.records.length > 0;
       if (data && (data.code === 0 || data.code === undefined) && hasData) {
         _setCache(_cacheKey(url), data);
@@ -773,79 +773,6 @@ const Http = (() => {
     }
   }
   return { get, post, put, del, clearCache };
-})();
-
-
-/* --- product.service.js --- */
-/**
- * Product Service
- * Xử lý gọi API liên quan đến Sản phẩm
- */
-const ProductService = (() => {
-  function getField(product, canonicalName, legacyName) {
-    if (product[canonicalName] !== undefined) {
-      return product[canonicalName];
-    }
-    return product[legacyName];
-  }
-
-  // Các màn hình đặt hàng hiện vẫn dùng model snake_case. Chuyển đổi tại
-  // service để API có thể trả duy nhất bộ tên cột chuẩn từ cơ sở dữ liệu.
-  function toOrderProduct(product) {
-    var form = getField(product, 'Form', 'form1');
-    var design = getField(product, 'Design', 'design1');
-
-    return {
-      ten_hang_2: getField(product, 'ItemName2', 'ten_hang_2'),
-      ten_hang_hoa: getField(product, 'TenHangHoa', 'ten_hang_hoa'),
-      don_gia: getField(product, 'UnitPrice', 'don_gia'),
-      mau: getField(product, 'MauSac', 'mau'),
-      form: form !== undefined ? form : product.form,
-      ten_form: getField(product, 'FormName', 'ten_form'),
-      nhom_hang: getField(product, 'CategoryID', 'nhom_hang'),
-      design: design !== undefined ? design : product.design,
-      ngung_su_dung: getField(product, 'isDisable', 'ngung_su_dung'),
-      is_web: getField(product, 'isWeb', 'is_web'),
-      nhom_size: product.nhom_size,
-      ten_nhom_hang: getField(product, 'CategoryName', 'ten_nhom_hang'),
-      sizes_json: getField(product, 'SizesJson', 'sizes_json')
-    };
-  }
-
-  /**
-   * Lấy danh sách sản phẩm (có hỗ trợ tìm kiếm)
-   * @param {string} searchTerm - Từ khóa tìm kiếm (mã hoặc tên)
-   */
-  async function getProducts(searchTerm = '', isWebOnly = false) {
-    if (!API_CONFIG.BASE_URL) {
-      return [];
-    }
-
-    try {
-      const queryObj = { TimKiem: searchTerm };
-      if (isWebOnly) {
-        queryObj.IsWebOnly = 1;
-      }
-      const res = await Http.get(API_CONFIG.ENDPOINTS.PRODUCTS.LIST, { q: JSON.stringify(queryObj) });
-
-      const products = res.records || res;
-      return Array.isArray(products) ? products.map(toOrderProduct) : [];
-    } catch (error) {
-      console.warn('[ProductService] Lỗi gọi API lấy sản phẩm:', error);
-      return [];
-    }
-  }
-  async function getSizes() {
-    try {
-      const res = await Http.get(API_CONFIG.ENDPOINTS.SIZES.LIST);
-      return res.records || res;
-    } catch (error) {
-      console.warn('[ProductService] Lỗi gọi API lấy bảng Size:', error);
-      return [];
-    }
-  }
-
-  return { getProducts, getSizes };
 })();
 
 
@@ -1193,11 +1120,11 @@ var Permission = (function () {
     var legacyPerms = JSON.parse(localStorage.getItem('app_permissions') || '{}');
     var newPerms = JSON.parse(localStorage.getItem('santino_permissions') || '{}');
     var perms = Object.keys(newPerms).length > 0 ? newPerms : legacyPerms;
-    
+
     if (Object.keys(perms).length === 0) {
       return { xem: true, them: true, sua: true, xoa: true };
     }
-    
+
     var p = perms[module];
     if (!p) {
       var target = (module || '').toLowerCase();
@@ -1209,19 +1136,19 @@ var Permission = (function () {
       }
     }
     p = p || {};
-    
+
     return {
-        xem: p.CanView == 1 || p.CanView === '1' || p.CanView === true || p.CanView === 'true' || p.xem == 1 || p.xem === '1' || p.xem === true || p.xem === 'true',
-        them: p.CanAdd == 1 || p.CanAdd === '1' || p.CanAdd === true || p.CanAdd === 'true' || p.them == 1 || p.them === '1' || p.them === true || p.them === 'true',
-        sua: p.CanEdit == 1 || p.CanEdit === '1' || p.CanEdit === true || p.CanEdit === 'true' || p.sua == 1 || p.sua === '1' || p.sua === true || p.sua === 'true',
-        xoa: p.CanDelete == 1 || p.CanDelete === '1' || p.CanDelete === true || p.CanDelete === 'true' || p.xoa == 1 || p.xoa === '1' || p.xoa === true || p.xoa === 'true'
+      xem: p.CanView == 1 || p.CanView === '1' || p.CanView === true || p.CanView === 'true' || p.xem == 1 || p.xem === '1' || p.xem === true || p.xem === 'true',
+      them: p.CanAdd == 1 || p.CanAdd === '1' || p.CanAdd === true || p.CanAdd === 'true' || p.them == 1 || p.them === '1' || p.them === true || p.them === 'true',
+      sua: p.CanEdit == 1 || p.CanEdit === '1' || p.CanEdit === true || p.CanEdit === 'true' || p.sua == 1 || p.sua === '1' || p.sua === true || p.sua === 'true',
+      xoa: p.CanDelete == 1 || p.CanDelete === '1' || p.CanDelete === true || p.CanDelete === 'true' || p.xoa == 1 || p.xoa === '1' || p.xoa === true || p.xoa === 'true'
     };
   }
 
   return {
-    canView:   function (module) { return _get(module).xem; },
-    canAdd:    function (module) { return _get(module).them; },
-    canEdit:   function (module) { return _get(module).sua; },
+    canView: function (module) { return _get(module).xem; },
+    canAdd: function (module) { return _get(module).them; },
+    canEdit: function (module) { return _get(module).sua; },
     canDelete: function (module) { return _get(module).xoa; }
   };
 })();
@@ -1401,11 +1328,11 @@ var OrderPrintService = (function () {
 
   function _printData(order) {
     if (!order) return {};
-    
+
     var rawLines = Array.isArray(order.ChiTietDonHang) ? order.ChiTietDonHang
       : (Array.isArray(order.Lines) ? order.Lines
-      : (Array.isArray(order.lines) ? order.lines
-      : (Array.isArray(order.print_items) ? order.print_items : [])));
+        : (Array.isArray(order.lines) ? order.lines
+          : (Array.isArray(order.print_items) ? order.print_items : [])));
 
     var formattedLines = rawLines.map(function (line, index) {
       var price = _parseMoney(line.don_gia || line.UnitPrice || line.DonGia);
@@ -1430,7 +1357,7 @@ var OrderPrintService = (function () {
       } else if (Array.isArray(line.chi_tiet_size)) {
         sizesArr = line.chi_tiet_size;
       }
-      
+
       var sizeText = '';
       if (Array.isArray(sizesArr) && sizesArr.length > 0) {
         sizeText = ' (Size: ' + sizesArr.map(function (s) {
@@ -1485,7 +1412,7 @@ var OrderPrintService = (function () {
       DienGiai: order.DienGiai || order.ghi_chu || order.dien_giai || order.Memo || '',
       ghi_chu: order.ghi_chu || order.DienGiai || order.Memo || '',
       dien_giai: order.dien_giai || order.DienGiai || order.Memo || '',
-      
+
       TongTienHang: _money(totalMoney),
       total_money: totalMoney,
       total_money_display: _money(totalMoney),
@@ -1651,28 +1578,28 @@ var OrderPrintService = (function () {
 
   function printBrowser(order) {
     if (!order) return;
-    
+
     var lines = order.Lines || order.lines || order.print_items || order.ChiTietDonHang || [];
     if (!lines.length) {
       _message('error', 'Không có sản phẩm để in');
       return;
     }
-    
+
     // 1. Extract unique sizes
     var uniqueSizes = [];
     var sizeMap = {};
     lines.forEach(function (line) {
       var sizesArr = [];
       if (typeof line.Size === 'string') {
-        try { sizesArr = JSON.parse(line.Size); } catch(e) {}
+        try { sizesArr = JSON.parse(line.Size); } catch (e) { }
       } else if (Array.isArray(line.Size)) {
         sizesArr = line.Size;
       } else if (typeof line.chi_tiet_size === 'string') {
-        try { sizesArr = JSON.parse(line.chi_tiet_size); } catch(e) {}
+        try { sizesArr = JSON.parse(line.chi_tiet_size); } catch (e) { }
       } else if (Array.isArray(line.chi_tiet_size)) {
         sizesArr = line.chi_tiet_size;
       }
-      
+
       if (Array.isArray(sizesArr)) {
         sizesArr.forEach(function (s) {
           var sz = s.size || s.Size || s.ten_size || s.TenSize;
@@ -1686,7 +1613,7 @@ var OrderPrintService = (function () {
         });
       }
     });
-    
+
     // 2. Sort unique sizes
     var orderSizeSortList = ['38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48', 'S', 'M', 'L', 'XL', '2XL', 'XXL', '3XL', 'XXXL', '4XL', '5XL'];
     uniqueSizes.sort(function (a, b) {
@@ -1704,37 +1631,37 @@ var OrderPrintService = (function () {
       if (idxB !== -1) return 1;
       return String(a).localeCompare(String(b));
     });
-    
+
     // 3. Build Table Headers
     var headHtml = '<tr><th style="min-width:120px; text-align:left;">SẢN PHẨM</th><th>MÀU</th>';
     uniqueSizes.forEach(function (sz) {
       headHtml += '<th class="text-center">' + sz + '</th>';
     });
     headHtml += '<th class="text-center">TỔNG</th><th class="text-right">THÀNH TIỀN</th></tr>';
-    
+
     // 4. Build Table Rows
     var totalQtyAll = 0;
     var totalMoneyAll = 0;
     var sizeTotals = {};
     uniqueSizes.forEach(function (sz) { sizeTotals[sz] = 0; });
-    
+
     var bodyRowsHtml = lines.map(function (line) {
       var productCode = line.ItemID || line.ten_hang_2 || line.ma_hang || line.MaHang || '';
       var productName = line.ItemName || line.ten_hang || line.TenHang || '';
       var color = line.MauSac || line.mau || line.Mau || '—';
-      
+
       var lineSizes = {};
       var sizesArr = [];
       if (typeof line.Size === 'string') {
-        try { sizesArr = JSON.parse(line.Size); } catch(e) {}
+        try { sizesArr = JSON.parse(line.Size); } catch (e) { }
       } else if (Array.isArray(line.Size)) {
         sizesArr = line.Size;
       } else if (typeof line.chi_tiet_size === 'string') {
-        try { sizesArr = JSON.parse(line.chi_tiet_size); } catch(e) {}
+        try { sizesArr = JSON.parse(line.chi_tiet_size); } catch (e) { }
       } else if (Array.isArray(line.chi_tiet_size)) {
         sizesArr = line.chi_tiet_size;
       }
-      
+
       if (Array.isArray(sizesArr)) {
         sizesArr.forEach(function (s) {
           var sz = s.size || s.Size || s.ten_size || s.TenSize;
@@ -1744,7 +1671,7 @@ var OrderPrintService = (function () {
           }
         });
       }
-      
+
       var lineQty = 0;
       var sizeCellsHtml = uniqueSizes.map(function (sz) {
         var q = lineSizes[sz] || 0;
@@ -1752,21 +1679,21 @@ var OrderPrintService = (function () {
         sizeTotals[sz] += q;
         return '<td class="text-center">' + (q > 0 ? q : '-') + '</td>';
       }).join('');
-      
+
       totalQtyAll += lineQty;
       var rawPrice = line.UnitPrice !== undefined ? line.UnitPrice : line.don_gia;
       var price = typeof rawPrice === 'string' ? parseFloat(rawPrice.replace(/,/g, '')) : (rawPrice || 0);
       var amount = lineQty * price;
       totalMoneyAll += amount;
-      
+
       var displayAmount = (typeof Utils !== 'undefined' && Utils.formatMoney) ? Utils.formatMoney(amount) : amount.toLocaleString('en-US');
-      
+
       return '<tr>' +
         '<td>' +
-          '<div class="product-name-container">' +
-            '<span class="product-code">' + productCode + '</span>' +
-            '<span class="product-desc">' + productName + '</span>' +
-          '</div>' +
+        '<div class="product-name-container">' +
+        '<span class="product-code">' + productCode + '</span>' +
+        '<span class="product-desc">' + productName + '</span>' +
+        '</div>' +
         '</td>' +
         '<td class="text-center">' + color + '</td>' +
         sizeCellsHtml +
@@ -1774,7 +1701,7 @@ var OrderPrintService = (function () {
         '<td class="text-right text-bold">' + displayAmount + '</td>' +
         '</tr>';
     }).join('');
-    
+
     // 5. Build Table Footer
     var displayTotalMoney = (typeof Utils !== 'undefined' && Utils.formatMoney) ? Utils.formatMoney(totalMoneyAll) : totalMoneyAll.toLocaleString('en-US');
     var footerHtml = '<tr class="total-row">' +
@@ -1785,14 +1712,14 @@ var OrderPrintService = (function () {
     footerHtml += '<td class="text-center orange-text">' + totalQtyAll + '</td>' +
       '<td class="text-right orange-text">' + displayTotalMoney + '</td>' +
       '</tr>';
-      
+
     // 6. Build Customer Info
     var documentNo = order.so_ct || order.SoPhieu || order.DocumentID || '';
     var dateStr = order.ngay_ct || order.NgayLap || order.DocumentDate || '';
     var dateFormatted = _formatDateVietnamese(dateStr);
-    
+
     var logoUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, "") + "/images/logo.png";
-    
+
     var html = [
       '<div class="invoice-container" style="background: #fff; font-family: \'Times New Roman\', Times, serif; color: #000; position: relative;">',
       '  <table style="width: 100%; border-collapse: collapse; margin-bottom: 5px;">',
@@ -1851,14 +1778,14 @@ var OrderPrintService = (function () {
       '  </div>',
       '</div>'
     ].join('\n');
-    
+
     // Open a new print window
     var printWindow = window.open('', '_blank', 'width=900,height=800');
     if (!printWindow) {
       _message('error', 'Không thể in', 'Vui lòng tắt trình chặn popup của trình duyệt.');
       return;
     }
-    
+
     printWindow.document.write('<html><head><title>Phiếu đặt hàng - ' + documentNo + '</title>');
     printWindow.document.write('<style>');
     printWindow.document.write('body { font-family: "Times New Roman", Times, serif; color: #000; margin: 1cm; padding: 0; background: #fff; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }');
@@ -1879,19 +1806,19 @@ var OrderPrintService = (function () {
     printWindow.document.write(html);
     printWindow.document.write('</body></html>');
     printWindow.document.close();
-    
-    setTimeout(function() {
+
+    setTimeout(function () {
       try {
         printWindow.focus();
         printWindow.print();
         printWindow.close();
-      } catch(e) {
+      } catch (e) {
         console.error('Lỗi khi in:', e);
       }
     }, 450);
   }
 
-  return { 
+  return {
     generate: generate,
     printBrowser: printBrowser
   };
@@ -2016,10 +1943,10 @@ const Utils = (function () {
     if (isNaN(d.getTime())) d = new Date();
     var mm = String(d.getMonth() + 1).padStart(2, '0');
     var yy = String(d.getFullYear()).slice(2);
-    
+
     // Hiển thị mặc định 0001 nếu không có đuôi số truyền vào (đáp ứng yêu cầu UI)
     var seq = existingSeq || '0001';
-    
+
     var prefix = branchCode ? (branchCode.trim() + '-DH') : 'DH';
     return prefix + mm + yy + '/' + seq;
   }
@@ -2033,7 +1960,7 @@ const Utils = (function () {
   }
 
   function escHtml(str) {
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
   function _removeDiacritics(str) {
@@ -2046,12 +1973,12 @@ const Utils = (function () {
       if (!userRaw) return '??';
       const user = JSON.parse(userRaw);
       const name = user.name || user.DisplayName || 'User';
-      
+
       const words = name.trim().split(/\s+/);
       if (words.length === 1) {
         return _removeDiacritics(words[0].substring(0, 2)).toUpperCase();
       }
-      
+
       const first = words[0][0];
       const last = words[words.length - 1][0];
       return _removeDiacritics(first + last).toUpperCase();
@@ -2165,35 +2092,35 @@ UIControls.utils = (function () {
    * Sinh HTML cho Dropdown Table List
    */
   function createDropdownTableHTML(headers, data, colHighlightIndex, colGroupIndex) {
-    var theadHTML = headers.map(function(h) { return '<th>' + h + '</th>'; }).join('');
+    var theadHTML = headers.map(function (h) { return '<th>' + h + '</th>'; }).join('');
     var tbodyHTML = '';
 
     if (colGroupIndex !== undefined && colGroupIndex >= 0) {
       var groups = {};
-      data.forEach(function(row, rIdx) {
+      data.forEach(function (row, rIdx) {
         var g = row[colGroupIndex] || 'Khác';
         if (!groups[g]) groups[g] = [];
         groups[g].push({ row: row, index: rIdx });
       });
-      
+
       var colSpan = headers.length;
-      Object.keys(groups).sort().forEach(function(g) {
-         var items = groups[g];
-         tbodyHTML += '<tr class="group-header" style="font-weight:700; cursor:default; border-top:1px solid var(--border); border-bottom:1px solid var(--border);"><td colspan="' + colSpan + '" style="padding: 8px 12px; background:var(--surface); color:var(--text);">' + g + ' (' + items.length + ')</td></tr>';
-         items.forEach(function(item) {
-            var row = item.row;
-            var rIdx = item.index;
-            var cells = headers.map(function(_, cIdx) {
-              var cell = row[cIdx];
-              var cls = (cIdx === colHighlightIndex) ? 'highlight-col' : '';
-              return '<td class="' + cls + '">' + (cell != null ? cell : '') + '</td>';
-            }).join('');
-            tbodyHTML += '<tr data-index="' + rIdx + '" class="data-row">' + cells + '</tr>';
-         });
+      Object.keys(groups).sort().forEach(function (g) {
+        var items = groups[g];
+        tbodyHTML += '<tr class="group-header" style="font-weight:700; cursor:default; border-top:1px solid var(--border); border-bottom:1px solid var(--border);"><td colspan="' + colSpan + '" style="padding: 8px 12px; background:var(--surface); color:var(--text);">' + g + ' (' + items.length + ')</td></tr>';
+        items.forEach(function (item) {
+          var row = item.row;
+          var rIdx = item.index;
+          var cells = headers.map(function (_, cIdx) {
+            var cell = row[cIdx];
+            var cls = (cIdx === colHighlightIndex) ? 'highlight-col' : '';
+            return '<td class="' + cls + '">' + (cell != null ? cell : '') + '</td>';
+          }).join('');
+          tbodyHTML += '<tr data-index="' + rIdx + '" class="data-row">' + cells + '</tr>';
+        });
       });
     } else {
-      tbodyHTML = data.map(function(row, rIdx) {
-        var cells = headers.map(function(_, cIdx) {
+      tbodyHTML = data.map(function (row, rIdx) {
+        var cells = headers.map(function (_, cIdx) {
           var cell = row[cIdx];
           var cls = (cIdx === colHighlightIndex) ? 'highlight-col' : '';
           return '<td class="' + cls + '">' + (cell != null ? cell : '') + '</td>';
@@ -2241,13 +2168,13 @@ var UIButton = (function () {
    */
   function create(config) {
     var btn = document.createElement('button');
-    
+
     // Base class
     var typeClass = config.type ? 'btn-' + config.type : 'btn-primary';
     if (config.type === 'tool') typeClass = 'btn-tool'; // Special case for toolbar
-    
+
     btn.className = 'btn ' + typeClass + (config.className ? ' ' + config.className : '');
-    
+
     if (config.id) btn.id = config.id;
     if (config.disabled) btn.disabled = true;
     if (config.tooltip) btn.title = config.tooltip;
@@ -2264,7 +2191,7 @@ var UIButton = (function () {
 
     // Gắn sự kiện
     if (typeof config.onClick === 'function') {
-      btn.addEventListener('click', function(e) {
+      btn.addEventListener('click', function (e) {
         if (!btn.disabled) {
           config.onClick(e);
         }
@@ -2282,7 +2209,7 @@ var UIButton = (function () {
     var bar = document.createElement('div');
     bar.className = 'button-bar';
 
-    buttonsConfig.forEach(function(cfg) {
+    buttonsConfig.forEach(function (cfg) {
       if (cfg === '|') {
         var div = document.createElement('div');
         div.className = 'divider';
@@ -2301,21 +2228,21 @@ var UIButton = (function () {
   function createHTML(config) {
     var typeClass = config.type ? 'btn-' + config.type : 'btn-primary';
     if (config.type === 'tool') typeClass = 'btn-tool';
-    
+
     var className = 'btn ' + typeClass + (config.className ? ' ' + config.className : '');
     var idAttr = config.id ? ` id="${config.id}"` : '';
     var disabledAttr = config.disabled ? ' disabled' : '';
     var titleAttr = config.tooltip ? ` title="${config.tooltip}"` : '';
     var onClickAttr = config.onClick ? ` onclick="${config.onClick}"` : '';
     var styleAttr = config.style ? ` style="${config.style}"` : '';
-    
+
     var dataAttrs = '';
     if (config.data) {
       for (var key in config.data) {
         dataAttrs += ` data-${key}="${config.data[key]}"`;
       }
     }
-    
+
     var innerHTML = '';
     if (config.icon) {
       var iconStyle = config.iconStyle ? ` style="${config.iconStyle}"` : '';
@@ -2343,7 +2270,7 @@ var UIButton = (function () {
  */
 var UIControls = window.UIControls || {};
 
-UIControls.createCheckbox = function(options) {
+UIControls.createCheckbox = function (options) {
   var wrapper = document.createElement('label');
   wrapper.className = 'modern-checkbox-wrapper';
 
@@ -2352,7 +2279,7 @@ UIControls.createCheckbox = function(options) {
   input.className = 'modern-checkbox';
   if (options.checked) input.checked = true;
 
-  input.addEventListener('change', function(e) {
+  input.addEventListener('change', function (e) {
     if (typeof options.onChange === 'function') {
       options.onChange(e.target.checked);
     }
@@ -2433,10 +2360,10 @@ UIControls.createDataComboBox = function (options) {
   if (swatch) {
     var nativeValueDesc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
     Object.defineProperty(input, 'value', {
-      get: function() {
+      get: function () {
         return nativeValueDesc.get.call(input);
       },
-      set: function(val) {
+      set: function (val) {
         nativeValueDesc.set.call(input, val);
         updateSwatchColor(val);
       }
@@ -2491,7 +2418,7 @@ UIControls.createDataComboBox = function (options) {
   btnAddNew.type = 'button';
   btnAddNew.className = 'dd-footer-add-btn';
   btnAddNew.innerHTML = '<span class="material-symbols-outlined">add</span> Thêm mới';
-  
+
   // Mặc định là ẩn, chỉ hiện khi có yêu cầu từ options
   btnAddNew.style.display = options.showAddNew ? 'flex' : 'none';
 
@@ -2509,7 +2436,7 @@ UIControls.createDataComboBox = function (options) {
   // Pagination Elements
   var currentPage = 1;
   var currentQuery = '';
-  
+
   var paginationWrapper = document.createElement('div');
   paginationWrapper.className = 'dd-pagination';
   paginationWrapper.style.display = 'none';
@@ -2534,12 +2461,12 @@ UIControls.createDataComboBox = function (options) {
   btnNext.style.cssText = 'border:1px solid var(--border); background:var(--surface); cursor:pointer; border-radius:6px; display:flex; align-items:center; justify-content:center; width:28px; height:28px; color:var(--muted); transition:all 0.2s;';
 
   // Hover effects
-  [btnPrev, btnNext].forEach(function(btn) {
-    btn.onmouseover = function() { this.style.borderColor = 'var(--primary)'; this.style.color = 'var(--primary)'; this.style.background = 'rgba(251, 191, 36, 0.05)'; };
-    btn.onmouseout = function() { this.style.borderColor = 'var(--border)'; this.style.color = 'var(--muted)'; this.style.background = 'var(--surface)'; };
+  [btnPrev, btnNext].forEach(function (btn) {
+    btn.onmouseover = function () { this.style.borderColor = 'var(--primary)'; this.style.color = 'var(--primary)'; this.style.background = 'rgba(251, 191, 36, 0.05)'; };
+    btn.onmouseout = function () { this.style.borderColor = 'var(--border)'; this.style.color = 'var(--muted)'; this.style.background = 'var(--surface)'; };
   });
 
-  btnPrev.addEventListener('click', function(e) {
+  btnPrev.addEventListener('click', function (e) {
     e.stopPropagation();
     if (currentPage > 1) {
       currentPage--;
@@ -2547,7 +2474,7 @@ UIControls.createDataComboBox = function (options) {
     }
   });
 
-  btnNext.addEventListener('click', function(e) {
+  btnNext.addEventListener('click', function (e) {
     e.stopPropagation();
     currentPage++;
     loadData(currentQuery, currentPage);
@@ -2579,7 +2506,7 @@ UIControls.createDataComboBox = function (options) {
       rows.forEach(function (row) {
         var dataRow = displayData[row.getAttribute('data-index')];
         var cellVal = dataRow[options.colFilterIndex || 0];
-        
+
         // Nếu là ô chọn màu sắc, chèn thêm chấm màu bên cạnh chữ
         if ((options.enableColorSwatch || (options.id && options.id.includes('MauSac'))) && cellVal) {
           var firstTd = row.querySelector('td');
@@ -2731,9 +2658,9 @@ UIControls.createDataComboBox = function (options) {
     }
     dropdown.classList.add('active');
     attachScrollListeners();
-    setTimeout(function () { 
+    setTimeout(function () {
       if (document.activeElement !== input) {
-        searchInput.focus(); 
+        searchInput.focus();
       }
     }, 50);
   }
@@ -2752,7 +2679,7 @@ UIControls.createDataComboBox = function (options) {
 
     if (typeof options.onSearch === 'function') {
       clearTimeout(_searchDebounce);
-      
+
       var hasTable = tableWrapper.querySelector('table');
       if (hasTable) {
         var overlay = tableWrapper.querySelector('.dd-loading-overlay');
@@ -2938,14 +2865,14 @@ var ConfirmModal = (function () {
 
     document.getElementById('confirm-modal-title').innerText = options.title || 'Xác nhận';
     document.getElementById('confirm-modal-message').innerHTML = options.message || 'Bạn có chắc chắn muốn thực hiện hành động này?';
-    
+
     var btnConfirm = document.getElementById('confirm-modal-btn-confirm');
     btnConfirm.innerText = options.confirmText || 'Đồng ý';
     btnConfirm.className = 'btn ' + (options.confirmClass || 'btn-primary');
 
     var btnCancel = document.getElementById('confirm-modal-btn-cancel');
     var btnClose = document.getElementById('confirm-modal-btn-close');
-    
+
     btnCancel.innerText = options.cancelText || (typeof t === 'function' ? t('btn.cancel') : 'Hủy bỏ');
 
     // Remove old listeners using clone node trick
@@ -2959,7 +2886,7 @@ var ConfirmModal = (function () {
     btnClose.parentNode.replaceChild(newBtnClose, btnClose);
 
     // Add new listeners
-    newBtnConfirm.addEventListener('click', function() {
+    newBtnConfirm.addEventListener('click', function () {
       hide();
       if (typeof options.onConfirm === 'function') options.onConfirm();
     });
@@ -3153,7 +3080,7 @@ var UIInput = (function () {
    */
   function createTime(config) {
     var initialVal = config.value || ''; // Expected standard format: HH:mm (e.g. 15:32)
-    
+
     // Parse the initial HH:mm value for display hh:mm A
     var displayVal = '';
     if (initialVal) {
@@ -3171,7 +3098,7 @@ var UIInput = (function () {
 
     var obj = _createBaseWrapper(config, 'text');
     var visibleInput = obj.input;
-    
+
     // Remove name from visible text input to avoid duplicate submission
     visibleInput.removeAttribute('name');
     var elementId = config.id || config.name;
@@ -3329,7 +3256,7 @@ var UIInput = (function () {
         backdrop.style.zIndex = '99999998';
         backdrop.addEventListener('click', closePopup);
         document.body.appendChild(backdrop);
-        
+
         popup.style.position = 'fixed';
         popup.style.zIndex = '99999999';
       } else {
@@ -3440,7 +3367,7 @@ var UIInput = (function () {
         var hVal = parseInt(hStr, 10);
         if (pStr === 'PM' && hVal < 12) hVal += 12;
         if (pStr === 'AM' && hVal === 12) hVal = 0;
-        
+
         var standardVal = String(hVal).padStart(2, '0') + ':' + mStr;
         hiddenInput.value = standardVal;
         visibleInput.value = hStr + ':' + mStr + ' ' + pStr;
@@ -3711,7 +3638,7 @@ var UIInput = (function () {
         backdrop.style.zIndex = '99999998';
         backdrop.addEventListener('click', closePopup);
         document.body.appendChild(backdrop);
-        
+
         popup.style.position = 'fixed';
         popup.style.zIndex = '99999999';
       } else {
@@ -4253,7 +4180,7 @@ var ScreenCapture = (function () {
   var currentRect = null;
   var currentCallback = null;
   var ww = 0, wh = 0;
-  
+
   var mode = 'select'; // 'select' | 'draw'
   var shapes = []; // {left, top, width, height}
   var shapeStartX = 0, shapeStartY = 0;
@@ -4274,10 +4201,10 @@ var ScreenCapture = (function () {
 
   function initOverlay() {
     if (overlayCanvas) return;
-    
+
     ww = window.innerWidth;
     wh = window.innerHeight;
-    
+
     mode = 'select';
     shapes = [];
     currentRect = null;
@@ -4289,13 +4216,13 @@ var ScreenCapture = (function () {
     overlayCanvas.className = 'screen-capture-canvas';
     overlayCanvas.width = ww;
     overlayCanvas.height = wh;
-    
+
     ctx = overlayCanvas.getContext('2d');
-    
+
     document.body.appendChild(overlayCanvas);
-    
-    drawMask(0, 0, 0, 0); 
-    
+
+    drawMask(0, 0, 0, 0);
+
     overlayCanvas.addEventListener('mousedown', onMouseDown);
     overlayCanvas.addEventListener('mousemove', onMouseMove);
     overlayCanvas.addEventListener('mouseup', onMouseUp);
@@ -4332,23 +4259,23 @@ var ScreenCapture = (function () {
     if (!toolbar) {
       toolbar = document.createElement('div');
       toolbar.className = 'screen-capture-toolbar';
-      
-      var btnRect = createToolbarBtn('crop_square', 'Vẽ khung đỏ', function() {
+
+      var btnRect = createToolbarBtn('crop_square', 'Vẽ khung đỏ', function () {
         isShapeModeActive = true;
         btnRect.classList.add('active');
         overlayCanvas.style.cursor = 'crosshair';
       });
-      
-      var btnCopy = createToolbarBtn('content_copy', 'Copy (Ctrl+C)', function() {
+
+      var btnCopy = createToolbarBtn('content_copy', 'Copy (Ctrl+C)', function () {
         captureAndAction();
       });
       btnCopy.classList.add('btn-copy');
 
-      var btnClose = createToolbarBtn('close', 'Hủy (ESC)', function() {
+      var btnClose = createToolbarBtn('close', 'Hủy (ESC)', function () {
         destroyOverlay();
       });
       btnClose.classList.add('btn-close');
-      
+
       toolbar.appendChild(btnRect);
       var divider = document.createElement('div');
       divider.style.width = '1px';
@@ -4357,18 +4284,18 @@ var ScreenCapture = (function () {
       toolbar.appendChild(divider);
       toolbar.appendChild(btnCopy);
       toolbar.appendChild(btnClose);
-      
+
       document.body.appendChild(toolbar);
     }
-    
+
     toolbar.style.display = 'flex';
-    
+
     // Position toolbar at bottom right of the selection
     var tLeft = currentRect.left + currentRect.width - 120;
     var tTop = currentRect.top + currentRect.height + 10;
     if (tLeft < 10) tLeft = 10;
     if (tTop + 50 > wh) tTop = currentRect.top - 50;
-    
+
     toolbar.style.left = tLeft + 'px';
     toolbar.style.top = tTop + 'px';
   }
@@ -4386,7 +4313,7 @@ var ScreenCapture = (function () {
 
   function drawMask(x, y, w, h) {
     if (!ctx) return;
-    
+
     ctx.clearRect(0, 0, ww, wh); // Xóa sạch canvas
     ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
     ctx.fillRect(0, 0, ww, wh);
@@ -4399,14 +4326,14 @@ var ScreenCapture = (function () {
         ctx.setLineDash([5, 5]);
         ctx.strokeRect(x, y, w, h);
       }
-      
+
       if (!isDrawing && w === 0) {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(ww/2 - 150, 20, 300, 40);
+        ctx.fillRect(ww / 2 - 150, 20, 300, 40);
         ctx.fillStyle = '#ffffff';
         ctx.font = '14px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('Nhấn và kéo chuột để chọn vùng', ww/2, 45);
+        ctx.fillText('Nhấn và kéo chuột để chọn vùng', ww / 2, 45);
       }
     } else if (mode === 'draw') {
       ctx.clearRect(currentRect.left, currentRect.top, currentRect.width, currentRect.height);
@@ -4414,14 +4341,14 @@ var ScreenCapture = (function () {
       ctx.lineWidth = 1;
       ctx.setLineDash([]);
       ctx.strokeRect(currentRect.left, currentRect.top, currentRect.width, currentRect.height);
-      
+
       ctx.strokeStyle = '#EF4444'; // Red
       ctx.lineWidth = 3;
-      
-      shapes.forEach(function(s) {
+
+      shapes.forEach(function (s) {
         ctx.strokeRect(s.left, s.top, s.width, s.height);
       });
-      
+
       if (isDrawing && currentShape && isShapeModeActive) {
         ctx.strokeRect(currentShape.left, currentShape.top, currentShape.width, currentShape.height);
       }
@@ -4436,13 +4363,13 @@ var ScreenCapture = (function () {
       drawMask(startX, startY, 0, 0);
     } else if (mode === 'draw') {
       if (!isShapeModeActive) return; // Không cho vẽ nếu chưa click nút hình
-      
+
       var cx = e.clientX;
       var cy = e.clientY;
-      
+
       // Chỉ cho phép vẽ bên trong vùng đã chọn
       if (cx >= currentRect.left && cx <= currentRect.left + currentRect.width &&
-          cy >= currentRect.top && cy <= currentRect.top + currentRect.height) {
+        cy >= currentRect.top && cy <= currentRect.top + currentRect.height) {
         isDrawing = true;
         shapeStartX = cx;
         shapeStartY = cy;
@@ -4459,7 +4386,7 @@ var ScreenCapture = (function () {
     var currentY = e.clientY;
 
     if (rafId) cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(function() {
+    rafId = requestAnimationFrame(function () {
       if (mode === 'select') {
         var left = Math.min(startX, currentX);
         var top = Math.min(startY, currentY);
@@ -4468,16 +4395,16 @@ var ScreenCapture = (function () {
         drawMask(left, top, width, height);
       } else if (mode === 'draw') {
         if (!isShapeModeActive) return;
-        
+
         // Giới hạn trong currentRect
         var limitedX = Math.max(currentRect.left, Math.min(currentX, currentRect.left + currentRect.width));
         var limitedY = Math.max(currentRect.top, Math.min(currentY, currentRect.top + currentRect.height));
-        
+
         var sLeft = Math.min(shapeStartX, limitedX);
         var sTop = Math.min(shapeStartY, limitedY);
         var sWidth = Math.abs(limitedX - shapeStartX);
         var sHeight = Math.abs(limitedY - shapeStartY);
-        
+
         currentShape = { left: sLeft, top: sTop, width: sWidth, height: sHeight };
         drawMask();
       }
@@ -4487,7 +4414,7 @@ var ScreenCapture = (function () {
   function onMouseUp(e) {
     if (!isDrawing) return;
     isDrawing = false;
-    
+
     if (mode === 'select') {
       var endX = e.clientX;
       var endY = e.clientY;
@@ -4503,7 +4430,7 @@ var ScreenCapture = (function () {
         drawMask();
         showToolbar();
       } else {
-        destroyOverlay(); 
+        destroyOverlay();
       }
     } else if (mode === 'draw') {
       if (currentShape && currentShape.width > 5 && currentShape.height > 5) {
@@ -4528,7 +4455,7 @@ var ScreenCapture = (function () {
     var shapeContainer = document.createElement('div');
     shapeContainer.className = 'screen-capture-shape-container';
 
-    shapes.forEach(function(s) {
+    shapes.forEach(function (s) {
       var div = document.createElement('div');
       div.className = 'screen-capture-shape';
       div.style.left = (s.left + window.scrollX) + 'px';
@@ -4540,11 +4467,11 @@ var ScreenCapture = (function () {
     document.body.appendChild(shapeContainer);
 
     destroyOverlay(); // Xóa canvas
-    
+
     showMsg('Đang xử lý ảnh...', true);
 
     var isDone = false;
-    var timeoutId = setTimeout(function() {
+    var timeoutId = setTimeout(function () {
       if (!isDone) {
         showMsg('Xử lý ảnh quá lâu!', false);
         if (shapeContainer.parentNode) document.body.removeChild(shapeContainer);
@@ -4563,11 +4490,11 @@ var ScreenCapture = (function () {
         scale: 1,
         logging: false,
         backgroundColor: null
-      }).then(function(canvas) {
+      }).then(function (canvas) {
         if (isDone) return;
         isDone = true;
         clearTimeout(timeoutId);
-        
+
         if (shapeContainer.parentNode) document.body.removeChild(shapeContainer);
 
         if (currentCallback) {
@@ -4589,12 +4516,12 @@ var ScreenCapture = (function () {
         }
 
         try {
-          canvas.toBlob(function(blob) {
+          canvas.toBlob(function (blob) {
             if (!blob) return fallbackDownload();
             if (navigator.clipboard && window.ClipboardItem) {
-              navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]).then(function() {
+              navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]).then(function () {
                 showMsg('Đã copy ảnh!', true);
-              }).catch(function() { fallbackDownload(); });
+              }).catch(function () { fallbackDownload(); });
             } else {
               fallbackDownload();
             }
@@ -4602,14 +4529,14 @@ var ScreenCapture = (function () {
         } catch (e) {
           fallbackDownload();
         }
-      }).catch(function(err) {
+      }).catch(function (err) {
         if (isDone) return;
         isDone = true;
         clearTimeout(timeoutId);
         if (shapeContainer.parentNode) document.body.removeChild(shapeContainer);
         showMsg('Lỗi chụp hình: ' + ((err && err.message) || 'Lỗi bảo mật hoặc CORS'), false);
       });
-    } catch(err) {
+    } catch (err) {
       if (isDone) return;
       isDone = true;
       clearTimeout(timeoutId);
@@ -4635,7 +4562,7 @@ var ScreenCapture = (function () {
  * Quản lý và render Icon (Hỗ trợ cả Material Symbols và Icon font riêng biệt)
  */
 var UIIcon = (function () {
-  
+
   /**
    * Sinh ra mã HTML của Icon
    * @param {string} iconName - Tên icon (VD: 'home', 'bar_chart', 'icon-grid')
@@ -4646,7 +4573,7 @@ var UIIcon = (function () {
     if (!iconName) return '';
     var styleAttr = style ? ' style="' + style + '"' : '';
     var extraClass = className ? ' ' + className : '';
-    
+
     // Nếu có chứa "icon-" hoặc dấu cách, hoặc dấu gạch ngang -> Dùng thẻ <i> cho Icon font
     if (iconName.indexOf('icon-') >= 0 || iconName.indexOf(' ') >= 0 || iconName.indexOf('-') > 0) {
       return '<i class="' + iconName + extraClass + '"' + styleAttr + '></i>';
@@ -4742,7 +4669,7 @@ var UINestedTabs = (function () {
 
     // ── 2. Active mặc định ──────────────────────────────────────
     var defaultParentId = options.defaultParentId || parents[0].id;
-    var activeParent    = parents.find(function (p) { return p.id === defaultParentId; }) || parents[0];
+    var activeParent = parents.find(function (p) { return p.id === defaultParentId; }) || parents[0];
 
     // ── 3. Wrapper ───────────────────────────────────────────────
     var wrapper = document.createElement('div');
@@ -4759,7 +4686,7 @@ var UINestedTabs = (function () {
     // ── 6. Render mỗi parent ────────────────────────────────────
     parents.forEach(function (parentItem) {
       var isParentActive = (parentItem.id === activeParent.id);
-      var children       = childrenMap[parentItem.id] || [];
+      var children = childrenMap[parentItem.id] || [];
 
       // ─ Parent button ─
       var pBtn = _buildParentBtn(parentItem, isParentActive, children.length, isDraggable);
@@ -4771,12 +4698,12 @@ var UINestedTabs = (function () {
       childSection.dataset.sectionId = parentItem.id;
 
       if (children.length > 0) {
-        var defaultChildId  = isParentActive ? (options.defaultChildId || children[0].id) : children[0].id;
+        var defaultChildId = isParentActive ? (options.defaultChildId || children[0].id) : children[0].id;
 
-        var childBar        = document.createElement('div');
-        childBar.className  = 'ui-nested-tabs__child-bar';
+        var childBar = document.createElement('div');
+        childBar.className = 'ui-nested-tabs__child-bar';
 
-        var panelArea       = document.createElement('div');
+        var panelArea = document.createElement('div');
         panelArea.className = 'ui-nested-tabs__panel-area';
 
         children.forEach(function (childItem) {
@@ -4841,12 +4768,12 @@ var UINestedTabs = (function () {
   function createFromDB(dbRows, options) {
     var records = (dbRows || []).map(function (row) {
       return {
-        id:       row.MenuID   || row.id       || row.menuId,
-        parent:   row.Parent   || row.parent   || row.parentId || '',
-        label:    row.VN       || row.label    || row.name || row.Label || '(Không tên)',
-        labelEN:  row.EN       || row.en       || '',
-        icon:     row.IconClass || row.icon    || '',
-        formName: row.FormName  || row.formName || ''
+        id: row.MenuID || row.id || row.menuId,
+        parent: row.Parent || row.parent || row.parentId || '',
+        label: row.VN || row.label || row.name || row.Label || '(Không tên)',
+        labelEN: row.EN || row.en || '',
+        icon: row.IconClass || row.icon || '',
+        formName: row.FormName || row.formName || ''
       };
     });
     return create(records, options);
@@ -4891,7 +4818,7 @@ var UINestedTabs = (function () {
   function _buildChildBtn(childItem, parentItem, isActive, isDraggable) {
     var btn = document.createElement('button');
     btn.className = 'ui-nested-tab-child-btn' + (isActive ? ' active' : '');
-    btn.dataset.childId  = childItem.id;
+    btn.dataset.childId = childItem.id;
     btn.dataset.parentId = parentItem.id;
 
     if (isDraggable) {
@@ -4967,7 +4894,7 @@ var UINestedTabs = (function () {
    * @param {Object}  options      - options của component
    */
   function _attachDragToBar(bar, panelArea, type, parentId, options) {
-    var dragging    = null;  // phần tử đang kéo
+    var dragging = null;  // phần tử đang kéo
     var placeholder = null;  // dải chỉ vị trí thả
 
     // Selector của các btn trong bar
@@ -5005,7 +4932,7 @@ var UINestedTabs = (function () {
       }
 
       // Xác định thả vào trước hay sau
-      var rect   = target.getBoundingClientRect();
+      var rect = target.getBoundingClientRect();
       var offset = (type === 'parent')
         ? e.clientX - rect.left    // ngang
         : e.clientX - rect.left;   // ngang (child bar cũng ngang)
@@ -5081,7 +5008,7 @@ var UINestedTabs = (function () {
     var btns = Array.from(childBar.querySelectorAll(btnSelector));
     btns.forEach(function (btn) {
       var childId = btn.dataset.childId;
-      var panel   = panelArea.querySelector('#nested-panel-' + childId);
+      var panel = panelArea.querySelector('#nested-panel-' + childId);
       if (panel) panelArea.appendChild(panel); // appendChild tự move về cuối → đúng thứ tự
     });
   }
@@ -5093,14 +5020,14 @@ var UINestedTabs = (function () {
   function _defaultPanelHTML(item, parentItem) {
     return [
       '<div class="ui-nested-tab-default-content">',
-        UIIcon.renderHtml(item.icon || 'folder_open', 'font-size:40px;opacity:0.2;display:block;margin-bottom:12px'),
-        '<div style="font-weight:600;font-size:15px;margin-bottom:6px">', item.label || item.id, '</div>',
-        parentItem
-          ? '<div style="font-size:12px;opacity:0.5">Thuộc nhóm: ' + parentItem.label + ' (' + parentItem.id + ')</div>'
-          : '',
-        item.formName
-          ? '<code style="font-size:11px;opacity:0.5;display:block;margin-top:8px">' + item.formName + '</code>'
-          : '',
+      UIIcon.renderHtml(item.icon || 'folder_open', 'font-size:40px;opacity:0.2;display:block;margin-bottom:12px'),
+      '<div style="font-weight:600;font-size:15px;margin-bottom:6px">', item.label || item.id, '</div>',
+      parentItem
+        ? '<div style="font-size:12px;opacity:0.5">Thuộc nhóm: ' + parentItem.label + ' (' + parentItem.id + ')</div>'
+        : '',
+      item.formName
+        ? '<code style="font-size:11px;opacity:0.5;display:block;margin-top:8px">' + item.formName + '</code>'
+        : '',
       '</div>'
     ].join('');
   }
@@ -5113,8 +5040,8 @@ var UINestedTabs = (function () {
     var isDraggable = options.draggable !== false;
 
     var defaultParentId = options.defaultParentId || parents[0].id;
-    var activeParent    = parents.find(function (p) { return p.id === defaultParentId; }) || parents[0];
-    var defaultChildId  = options.defaultChildId  || null;
+    var activeParent = parents.find(function (p) { return p.id === defaultParentId; }) || parents[0];
+    var defaultChildId = options.defaultChildId || null;
 
     var initChildren = childrenMap[activeParent.id] || [];
     var activeChildId = defaultChildId || (initChildren.length > 0 ? initChildren[0].id : null);
@@ -5147,9 +5074,9 @@ var UINestedTabs = (function () {
       pBtn.dataset.nodeId = node.id;
       pBtn.dataset.parentId = node.parent || '';
       if (!isRoot) {
-          pBtn.dataset.childId = node.id; 
+        pBtn.dataset.childId = node.id;
       }
-      
+
       if (level > 0) {
         pBtn.style.paddingLeft = (16 + level * 20) + 'px';
       }
@@ -5158,8 +5085,8 @@ var UINestedTabs = (function () {
         var handle = UIIcon.create('drag_indicator', 'ui-nested-drag-handle' + (isRoot ? '' : ' ui-nested-drag-handle--child'));
         pBtn.appendChild(handle);
         if (!isRoot) {
-            pBtn.draggable = true;
-            pBtn.dataset.dragType = 'child';
+          pBtn.draggable = true;
+          pBtn.dataset.dragType = 'child';
         }
       }
 
@@ -5205,10 +5132,10 @@ var UINestedTabs = (function () {
         childList.className = 'ui-nested-tabs__child-list' + (shouldOpen ? ' open' : '');
 
         children.forEach(function (childItem) {
-           var childIsActive = isNodeActive && (childItem.id === activeChildId);
-           var childShouldOpen = childIsActive;
-           var cRes = _buildSidebarNode(childItem, level + 1, childIsActive, childShouldOpen);
-           childList.appendChild(cRes.group);
+          var childIsActive = isNodeActive && (childItem.id === activeChildId);
+          var childShouldOpen = childIsActive;
+          var cRes = _buildSidebarNode(childItem, level + 1, childIsActive, childShouldOpen);
+          childList.appendChild(cRes.group);
         });
 
         parentGroup.appendChild(childList);
@@ -5234,17 +5161,17 @@ var UINestedTabs = (function () {
 
         var isPanelActive = parentPanel.classList.contains('active');
 
-        allSidebarBtns.forEach(function(b) { b.classList.remove('active'); });
-        allContentPanels.forEach(function(p) { p.classList.remove('active'); });
+        allSidebarBtns.forEach(function (b) { b.classList.remove('active'); });
+        allContentPanels.forEach(function (p) { p.classList.remove('active'); });
 
         pBtn.classList.add('active');
 
         if (!isPanelActive) {
           parentPanel.classList.add('active');
           if (childList) childList.classList.add('open');
-          
+
           var curr = parentGroup.parentElement;
-          while(curr && curr.classList.contains('ui-nested-tabs__child-list')) {
+          while (curr && curr.classList.contains('ui-nested-tabs__child-list')) {
             curr.classList.add('open');
             curr = curr.parentElement.parentElement;
           }
@@ -5295,18 +5222,18 @@ var UINestedTabs = (function () {
       resizer.classList.add('is-resizing');
       document.body.style.cursor = 'col-resize';
       document.body.style.userSelect = 'none';
-      
+
       var onMouseMove = function (e) {
         if (!isResizing) return;
-        
+
         // Tính toán độ rộng mới dựa trên vị trí chuột
         var containerRect = sidebar.parentElement.getBoundingClientRect();
         var newWidth = e.clientX - containerRect.left;
-        
+
         // Giới hạn width từ 180px đến 600px
         if (newWidth < 180) newWidth = 180;
         if (newWidth > 600) newWidth = 600;
-        
+
         sidebar.style.width = newWidth + 'px';
       };
 
@@ -5326,7 +5253,7 @@ var UINestedTabs = (function () {
 
   // ── Drag dọc cho child list ──────────────────────────────
   function _attachVerticalDrag(childList, contentArea, parentId, options) {
-    var dragging    = null;
+    var dragging = null;
     var placeholder = null;
 
     childList.addEventListener('dragstart', function (e) {
@@ -5346,7 +5273,7 @@ var UINestedTabs = (function () {
       var target = e.target.closest('.ui-nested-tabs__sidebar-parent');
       if (!target || target === dragging || target.parentElement !== childList) return;
       if (placeholder.parentNode) placeholder.parentNode.removeChild(placeholder);
-      var rect   = target.getBoundingClientRect();
+      var rect = target.getBoundingClientRect();
       var isUpper = (e.clientY - rect.top) < rect.height / 2;
       if (isUpper) childList.insertBefore(placeholder, target);
       else { var nx = target.nextSibling; if (nx) childList.insertBefore(placeholder, nx); else childList.appendChild(placeholder); }
@@ -5364,10 +5291,10 @@ var UINestedTabs = (function () {
       if (!dragging || !placeholder || !placeholder.parentNode) return;
       childList.insertBefore(dragging, placeholder);
       placeholder.parentNode.removeChild(placeholder);
-      
+
       // Sync panel order for UI (if needed, but panels are all flat in contentArea)
       // Array.from(childList.children).forEach(...) is possible, but contentArea order doesn't break CSS rendering.
-      
+
       if (typeof options.onReorder === 'function') {
         var ids = Array.from(childList.querySelectorAll(':scope > .ui-nested-tabs__sidebar-parent > .ui-nested-tab-child-btn--v')).map(function (b) { return b.dataset.childId || b.dataset.nodeId; });
         options.onReorder('child', ids, parentId);
@@ -5375,7 +5302,7 @@ var UINestedTabs = (function () {
       _vCleanup();
     });
 
-    childList.addEventListener('dragend', function(e) { e.stopPropagation(); _vCleanup(); });
+    childList.addEventListener('dragend', function (e) { e.stopPropagation(); _vCleanup(); });
 
     function _vCleanup() {
       if (dragging) { dragging.classList.remove('ui-nested-dragging'); dragging = null; }
@@ -5386,7 +5313,7 @@ var UINestedTabs = (function () {
 
   // ── Drag dọc cho parent groups ───────────────────────────
   function _attachVerticalDragParent(sidebar, options) {
-    var dragging    = null;
+    var dragging = null;
     var placeholder = null;
 
     sidebar.addEventListener('dragstart', function (e) {
@@ -5407,7 +5334,7 @@ var UINestedTabs = (function () {
       var target = e.target.closest('.ui-nested-tabs__sidebar-parent');
       if (!target || target === dragging || target.parentElement !== sidebar) return;
       if (placeholder.parentNode) placeholder.parentNode.removeChild(placeholder);
-      var rect   = target.getBoundingClientRect();
+      var rect = target.getBoundingClientRect();
       var isUpper = (e.clientY - rect.top) < rect.height / 2;
       if (isUpper) sidebar.insertBefore(placeholder, target);
       else { var nx = target.nextSibling; if (nx) sidebar.insertBefore(placeholder, nx); else sidebar.appendChild(placeholder); }
@@ -5434,7 +5361,7 @@ var UINestedTabs = (function () {
       _vpCleanup();
     });
 
-    sidebar.addEventListener('dragend', function(e) { e.stopPropagation(); _vpCleanup(); });
+    sidebar.addEventListener('dragend', function (e) { e.stopPropagation(); _vpCleanup(); });
 
     function _vpCleanup() {
       if (dragging) { dragging.classList.remove('ui-nested-dragging'); dragging = null; }
@@ -5447,7 +5374,7 @@ var UINestedTabs = (function () {
   //  EXPORTS
   // ════════════════════════════════════════════════════════════
   return {
-    create:       create,
+    create: create,
     createFromDB: createFromDB
   };
 
@@ -5475,7 +5402,7 @@ var UITabs = (function () {
     var body = document.createElement('div');
     body.className = 'ui-tabs-body';
 
-    tabsConfig.forEach(function(tab, index) {
+    tabsConfig.forEach(function (tab, index) {
       // Header Button
       var btn = document.createElement('button');
       btn.className = 'ui-tab-btn' + (index === 0 ? ' active' : '');
@@ -5487,21 +5414,21 @@ var UITabs = (function () {
       var panel = document.createElement('div');
       panel.className = 'ui-tab-panel' + (index === 0 ? ' active' : '');
       panel.id = 'panel-' + tab.id;
-      
+
       if (typeof tab.content === 'string') {
         panel.innerHTML = tab.content;
       } else if (tab.content instanceof Node) {
         panel.appendChild(tab.content);
       }
-      
+
       body.appendChild(panel);
 
       // Event listener
-      btn.addEventListener('click', function() {
+      btn.addEventListener('click', function () {
         // Gỡ active toàn bộ
         var allBtns = header.querySelectorAll('.ui-tab-btn');
         var allPanels = body.querySelectorAll('.ui-tab-panel');
-        
+
         allBtns.forEach(b => b.classList.remove('active'));
         allPanels.forEach(p => p.classList.remove('active'));
 
@@ -5614,7 +5541,7 @@ var UIEmptyState = (function () {
  * Bắt sự kiện Click Chuột Phải -> Hiện Menu thả xuống tùy chỉnh (Ví dụ: Tick/Bỏ Tick dòng, Đổi trạng thái)
  */
 var UIContextMenu = (function () {
-  
+
   var currentMenu = null;
 
   /**
@@ -5628,12 +5555,12 @@ var UIContextMenu = (function () {
 
     var menu = document.createElement('div');
     menu.className = 'ui-context-menu';
-    
+
     // Position
     menu.style.top = e.pageY + 'px';
     menu.style.left = e.pageX + 'px';
 
-    items.forEach(function(item) {
+    items.forEach(function (item) {
       if (item === '|') {
         var div = document.createElement('div');
         div.className = 'context-menu-divider';
@@ -5641,11 +5568,11 @@ var UIContextMenu = (function () {
       } else {
         var btn = document.createElement('div');
         btn.className = 'context-menu-item';
-        
+
         var iconHtml = item.icon ? '<span class="material-symbols-outlined">' + item.icon + '</span>' : '';
         btn.innerHTML = iconHtml + '<span>' + item.label + '</span>';
-        
-        btn.onclick = function() {
+
+        btn.onclick = function () {
           hide();
           if (typeof item.onClick === 'function') item.onClick();
         };
@@ -5691,7 +5618,7 @@ var UIToast = (function () {
 
   // Auto-init container
   var container = null;
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     container = document.createElement('div');
     container.id = 'toast-container';
     document.body.appendChild(container);
@@ -5728,15 +5655,15 @@ var UIToast = (function () {
     container.appendChild(toast);
 
     // Trigger animate in
-    requestAnimationFrame(function() {
+    requestAnimationFrame(function () {
       toast.classList.add('show');
     });
 
     // Tự động tắt sau 3 giây
-    setTimeout(function() {
+    setTimeout(function () {
       toast.classList.remove('show');
       // Đợi animation chạy xong rồi xóa node
-      setTimeout(function() {
+      setTimeout(function () {
         if (toast.parentNode) toast.remove();
       }, 300);
     }, 3000);
@@ -5803,24 +5730,24 @@ var Alert = (function () {
     toast.innerHTML = html;
     container.appendChild(toast);
 
-    toast.querySelector('.toast-close').addEventListener('click', function() {
+    toast.querySelector('.toast-close').addEventListener('click', function () {
       removeToast(toast);
     });
 
     // Trigger animation
-    setTimeout(function() {
+    setTimeout(function () {
       toast.classList.add('show');
     }, 10);
 
     // Auto remove
-    setTimeout(function() {
+    setTimeout(function () {
       removeToast(toast);
     }, duration);
   }
 
   function removeToast(toast) {
     toast.classList.remove('show');
-    setTimeout(function() {
+    setTimeout(function () {
       if (toast.parentNode) {
         toast.parentNode.removeChild(toast);
       }
@@ -5828,10 +5755,10 @@ var Alert = (function () {
   }
 
   return {
-    success: function(title, message, duration) { show('success', title, message, duration); },
-    error: function(title, message, duration) { show('danger', title, message, duration); },
-    warning: function(title, message, duration) { show('warning', title, message, duration); },
-    info: function(title, message, duration) { show('info', title, message, duration); }
+    success: function (title, message, duration) { show('success', title, message, duration); },
+    error: function (title, message, duration) { show('danger', title, message, duration); },
+    warning: function (title, message, duration) { show('warning', title, message, duration); },
+    info: function (title, message, duration) { show('info', title, message, duration); }
   };
 })();
 
@@ -6296,7 +6223,7 @@ var AppGrid = {
     if (!document.getElementById('ag-grid-borders-style')) {
       var style = document.createElement('style');
       style.id = 'ag-grid-borders-style';
-      style.innerHTML = 
+      style.innerHTML =
         '.ag-theme-quartz .ag-cell, .ag-theme-quartz-dark .ag-cell, ' +
         '.ag-theme-quartz .ag-header-cell, .ag-theme-quartz-dark .ag-header-cell { ' +
         '  border-right: 1px solid var(--ag-border-color, var(--color-border, #e2e8f0)) !important; ' +
@@ -6760,62 +6687,6 @@ var AppGrid = {
 };
 
 
-/* --- ProductWebSync.js --- */
-/**
- * Product Web Sync Component
- */
-var UIProductWebSync = (function () {
-  /**
-   * Tạo component thanh đồng bộ sản phẩm qua Web đặt hàng
-   * @param {Object} options - { onSync, onUnsync }
-   */
-  function create(options) {
-    options = options || {};
-
-    var container = document.createElement('div');
-    container.className = 'product-web-sync-toolbar';
-    container.style.display = 'flex';
-    container.style.gap = '12px';
-    container.style.alignItems = 'center';
-
-    var btnSync = document.createElement('button');
-    btnSync.className = 'btn btn-success btn-sm';
-    btnSync.style.whiteSpace = 'nowrap';
-    btnSync.style.height = '30px';
-    btnSync.style.padding = '0 10px';
-    btnSync.style.fontSize = '12px';
-    btnSync.innerHTML = '<span class="material-symbols-outlined" style="font-size: calc(13px * var(--text-scale, 1)); vertical-align: middle;">public</span><span>Lấy sang Web</span>';
-    btnSync.addEventListener('click', function () {
-      if (typeof options.onSync === 'function') {
-        options.onSync();
-      }
-    });
-
-    var btnUnsync = document.createElement('button');
-    btnUnsync.className = 'btn btn-danger btn-sm';
-    btnUnsync.style.whiteSpace = 'nowrap';
-    btnUnsync.style.height = '30px';
-    btnUnsync.style.padding = '0 10px';
-    btnUnsync.style.fontSize = '12px';
-    btnUnsync.innerHTML = '<span class="material-symbols-outlined" style="font-size: calc(13px * var(--text-scale, 1)); vertical-align: middle;">public_off</span><span>Hủy lấy sang Web</span>';
-    btnUnsync.addEventListener('click', function () {
-      if (typeof options.onUnsync === 'function') {
-        options.onUnsync();
-      }
-    });
-
-    container.appendChild(btnSync);
-    container.appendChild(btnUnsync);
-
-    return container;
-  }
-
-  return {
-    create: create
-  };
-})();
-
-
 /* --- router.js --- */
 /**
  * Router — Hash-based SPA
@@ -6831,7 +6702,7 @@ var Router = (function () {
     { path: '/settings', script: 'src/pages/settings/settings.js', pageFn: 'SettingsPage', title: 'nav.settings' },
     { path: '/permissions', script: 'src/pages/permissions/permissions.js', pageFn: 'PermissionsPage', title: 'nav.permissions' },
     { path: '/menus', script: 'src/pages/menus/menus.js', pageFn: 'MenusPage', title: 'nav.menus' },
-    { path: '/customers', script: 'src/pages/customers/customers.js', pageFn: 'CustomersPage', title: 'nav.customers' },
+    { path: '/customers', script: 'src/pages/dynamic/dynamic.js', pageFn: 'DynamicPage', title: 'nav.customers', formName: 'ObjectListFrm' },
   ];
 
   var _routeMap = {};
@@ -7033,9 +6904,9 @@ var SoundUtils = (function () {
 
     // Reset lại thời gian về 0 để có thể click liên tục nhiều lần không bị độ trễ
     clickAudio.currentTime = 0;
-    
+
     // Phát âm thanh, dùng catch để bỏ qua lỗi nếu trình duyệt chặn tự động phát
-    clickAudio.play().catch(function(error) {
+    clickAudio.play().catch(function (error) {
       console.warn('Trình duyệt chưa cho phép phát âm thanh, hoặc không tìm thấy file click.mp3:', error);
     });
   }

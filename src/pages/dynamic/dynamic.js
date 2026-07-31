@@ -237,14 +237,14 @@ var DynamicPage = (function () {
           ? resConfig
           : (resConfig && (resConfig.data || resConfig.records || resConfig.list || resConfig.result)) || [];
         if (!Array.isArray(rawFields)) rawFields = [];
-        schemaFields = rawFields.map(function(f) {
+        schemaFields = rawFields.map(function (f) {
           f.required = (f.required === true || f.required === 1 || String(f.required) === '1' || String(f.required) === 'true');
           f.showInAdd = !(f.showInAdd === false || f.showInAdd === 0 || String(f.showInAdd) === '0' || String(f.showInAdd) === 'false');
           f.showInEdit = !(f.showInEdit === false || f.showInEdit === 0 || String(f.showInEdit) === '0' || String(f.showInEdit) === 'false');
           f.showInGrid = !(f.showInGrid === false || f.showInGrid === 0 || String(f.showInGrid) === '0' || String(f.showInGrid) === 'false');
           f.isReadOnlyEdit = (f.isReadOnlyEdit === true || f.isReadOnlyEdit === 1 || String(f.isReadOnlyEdit) === '1' || String(f.isReadOnlyEdit) === 'true');
           f.isReadOnlyAdd = (f.isReadOnlyAdd === true || f.isReadOnlyAdd === 1 || String(f.isReadOnlyAdd) === '1' || String(f.isReadOnlyAdd) === 'true');
-          
+
           return f;
         });
 
@@ -277,22 +277,9 @@ var DynamicPage = (function () {
         // 3. Tự động sinh các ô nhập liệu của Form trong Modal
         _renderFormFields();
 
-        // Inject động các nút thao tác mở rộng của từng màn hình bằng Component
         var extraActionsEl = document.getElementById('dynamic-extra-actions');
         if (extraActionsEl) {
           extraActionsEl.innerHTML = '';
-          var syncComponentKey = 'UI' + formName.replace('frm', '') + 'WebSync';
-          if (window[syncComponentKey]) {
-            var syncToolbar = window[syncComponentKey].create({
-              onSync: function () {
-                updateProductWebStatus(1);
-              },
-              onUnsync: function () {
-                updateProductWebStatus(0);
-              }
-            });
-            extraActionsEl.appendChild(syncToolbar);
-          }
         }
 
         // 4. Lấy dữ liệu và hiển thị lên Grid
@@ -324,12 +311,12 @@ var DynamicPage = (function () {
 
   function _parseStaticOptions(dataSource) {
     if (!dataSource) return [];
-    
+
     var cleanStr = dataSource.trim();
     if (cleanStr.toUpperCase().startsWith('STATIC:')) {
       cleanStr = cleanStr.substring(7);
     }
-    
+
     // Hỗ trợ phân tách bằng dấu chấm phẩy hoặc dấu phẩy
     var separator = cleanStr.includes(';') ? ';' : ',';
     return cleanStr.split(separator).map(function (p) {
@@ -397,7 +384,7 @@ var DynamicPage = (function () {
                 try {
                   var options = [];
                   var endpoint = f.dataSource;
-                  
+
                   // Tự động phân tích và thay thế các biến tham chiếu từ trường cha trên form (ví dụ: {ProvinceID})
                   var matches = endpoint.match(/\{(\w+)\}/g);
                   if (matches) {
@@ -415,7 +402,7 @@ var DynamicPage = (function () {
                     top: 200,
                     _t: Date.now()
                   };
-                  
+
                   var queryObj = {};
                   if (endpoint.includes('?')) {
                     var parts = endpoint.split('?');
@@ -430,7 +417,7 @@ var DynamicPage = (function () {
                     queryObj.TimKiem = q;
                     queryObj.Keyword = q;
                   }
-                  
+
                   // Nếu ô nhập này phụ thuộc vào trường cha (LinkColumn), tự động lấy giá trị trường cha gửi lên API làm tham số lọc
                   if (f.LinkColumn) {
                     var parentInput = document.getElementById('field-' + f.LinkColumn);
@@ -438,7 +425,7 @@ var DynamicPage = (function () {
                       queryObj[f.LinkColumn] = parentInput.value;
                     }
                   }
-                  
+
                   var dsL = endpoint.toLowerCase();
                   if (isSelectSource) {
                     // Route bảng generic chỉ nhận page/limit/f/q. Các tham số
@@ -487,7 +474,7 @@ var DynamicPage = (function () {
                         var lblKey = f.dropdownDisplayColumn && keys.find(k => k.toLowerCase() === f.dropdownDisplayColumn.toLowerCase())
                           ? keys.find(k => k.toLowerCase() === f.dropdownDisplayColumn.toLowerCase())
                           : (keys[1] || valKey);
-                        
+
                         return { value: r[valKey], label: r[lblKey], rawRecord: r };
                       }
                       return { value: r, label: r, rawRecord: r };
@@ -580,7 +567,7 @@ var DynamicPage = (function () {
             input.style.width = 'auto';
             input.style.height = 'auto';
             input.style.marginRight = '8px';
-            
+
             // Đặt checkbox lên trước label text
             label.innerHTML = '';
             label.appendChild(input);
@@ -673,27 +660,27 @@ var DynamicPage = (function () {
         formFieldsContainer.appendChild(fieldWrapper);
       });
 
-      // Đăng ký sự kiện lắng nghe thay đổi của cha để tự động xóa trường con (Cascading Dropdowns)
-      schemaFields.forEach(function (parentField) {
-        var parentInput = document.getElementById('field-' + parentField.name);
-        if (parentInput) {
-          parentInput.addEventListener('change', function () {
-            schemaFields.forEach(function (childField) {
-              var isChild = childField.LinkColumn === parentField.name || 
-                            (childField.dataSource && childField.dataSource.toLowerCase().includes('{' + parentField.name.toLowerCase() + '}'));
-              if (isChild) {
-                var childInput = document.getElementById('field-' + childField.name);
-                if (childInput) {
-                  if (childInput.value !== '') {
-                    childInput.value = '';
-                    childInput.dispatchEvent(new Event('change'));
-                  }
+    // Đăng ký sự kiện lắng nghe thay đổi của cha để tự động xóa trường con (Cascading Dropdowns)
+    schemaFields.forEach(function (parentField) {
+      var parentInput = document.getElementById('field-' + parentField.name);
+      if (parentInput) {
+        parentInput.addEventListener('change', function () {
+          schemaFields.forEach(function (childField) {
+            var isChild = childField.LinkColumn === parentField.name ||
+              (childField.dataSource && childField.dataSource.toLowerCase().includes('{' + parentField.name.toLowerCase() + '}'));
+            if (isChild) {
+              var childInput = document.getElementById('field-' + childField.name);
+              if (childInput) {
+                if (childInput.value !== '') {
+                  childInput.value = '';
+                  childInput.dispatchEvent(new Event('change'));
                 }
               }
-            });
+            }
           });
-        }
-      });
+        });
+      }
+    });
   }
 
   async function _fetchAndRender() {
@@ -734,7 +721,7 @@ var DynamicPage = (function () {
       var user = JSON.parse(localStorage.getItem('santino_user') || '{}');
       var dsLower = endpoint.toLowerCase();
 
-      if (dsLower.includes('danhmuc') || dsLower.includes('gateway') || dsLower.includes('router')) {
+      if (dsLower.includes('danhmuc') || dsLower.includes('gateway') || dsLower.includes('router') || dsLower.includes('api_') || dsLower.includes('laydanhsach')) {
         if (hasSearch) {
           queryObj.TimKiem = searchVal.trim();
         }
@@ -742,7 +729,7 @@ var DynamicPage = (function () {
         queryObj.UserEmployeeID = user.EmployeeID || '';
         queryObj.UserManagerID = user.ManagerID || '';
         queryObj.UserObjectID = user.ObjectID || '';
-        
+
         params.q = JSON.stringify(queryObj);
       } else {
         if (hasQueryParams) {
@@ -753,7 +740,7 @@ var DynamicPage = (function () {
           if (filterField) {
             var qObj = {};
             qObj[filterField.name + '$lk'] = '%' + searchVal.trim() + '%';
-            
+
             // Route bảng generic nhận trực tiếp object điều kiện trong tham số q.
             params.q = JSON.stringify(qObj);
           }
@@ -769,7 +756,7 @@ var DynamicPage = (function () {
       var res = await Http.get(endpoint, params);
       // Bỏ qua response cũ nếu người dùng đã đổi từ khóa hoặc chuyển trang.
       if (requestId !== fetchRequestId) return;
-      
+
       // Xử lý dữ liệu mảng an toàn
       allData = res.records || res.list || res.data || res;
       if (!Array.isArray(allData)) {
@@ -787,16 +774,16 @@ var DynamicPage = (function () {
           if (!row || typeof row !== 'object') return row;
           var newRow = Object.assign({}, row);
           var rowKeys = Object.keys(row);
-          
+
           schemaFields.forEach(function (f) {
             var fName = f.name;
             var fNameClean = fName.toLowerCase().replace(/_/g, '');
-            
+
             // Tìm khớp trực tiếp (bỏ qua viết hoa/thường và gạch dưới)
             var matchedKey = rowKeys.find(function (k) {
               return k.toLowerCase().replace(/_/g, '') === fNameClean;
             });
-            
+
             if (matchedKey) {
               newRow[fName] = row[matchedKey];
             }
@@ -860,10 +847,10 @@ var DynamicPage = (function () {
             var valStr = params.value !== undefined && params.value !== null ? String(params.value).trim() : '';
             var options = _parseStaticOptions(f.dataSource);
             var matched = options.find(opt => opt.value === valStr || (opt.value === 'true' && valStr === '1') || (opt.value === 'false' && valStr === '0'));
-            
+
             var badgeText = matched ? matched.label : valStr;
             var color = (matched && matched.color) ? matched.color : '';
-            
+
             var badgeClass = 'badge-gray';
             if (color) {
               badgeClass = 'badge-' + color;
@@ -1108,7 +1095,7 @@ var DynamicPage = (function () {
           showToast('Vui lòng nhập đầy đủ: ' + f.label, 'error');
           isInvalid = true;
         }
-        
+
         var isNumeric = _isNumericField(f);
         if (input.type === 'checkbox') {
           formInputData[f.name] = val;
@@ -1298,47 +1285,6 @@ var DynamicPage = (function () {
     });
   }
 
-  function updateProductWebStatus(isWeb) {
-    if (!gridApi) return;
-    var selectedRows = gridApi.getSelectedRows();
-    if (!selectedRows || selectedRows.length === 0) {
-      showToast('Vui lòng chọn ít nhất một sản phẩm bằng cách tích chọn ô đầu dòng!', 'error');
-      return;
-    }
-
-    var items = selectedRows.map(function (row) {
-      var rowKeys = Object.keys(row);
-      // Ánh xạ động key của Grid (ItemName2 / MauSac từ Database chuẩn) sang đúng payload ten_hang_2 và mau
-      var keyItemName = rowKeys.find(k => k.toLowerCase().replace(/_/g, '') === 'itemname2' || k.toLowerCase().replace(/_/g, '') === 'tenhang2') || 'ItemName2';
-      var keyMau = rowKeys.find(k => k.toLowerCase().replace(/_/g, '') === 'mausac' || k.toLowerCase().replace(/_/g, '') === 'mau') || 'MauSac';
-      
-      return {
-        ten_hang_2: row[keyItemName],
-        mau: row[keyMau]
-      };
-    });
-
-    var statusText = isWeb === 1 ? 'lấy sang Web' : 'hủy lấy sang Web';
-    
-    var payload = {
-      q: JSON.stringify({
-        Items: JSON.stringify(items),
-        IsWeb: isWeb
-      })
-    };
-
-    if (window.LoadingSpinner) LoadingSpinner.show('Đang cập nhật...');
-    Http.post('/API_CapNhatWebSanPham', payload).then(function () {
-      showToast('Đã ' + statusText + ' thành công cho ' + items.length + ' sản phẩm!');
-      _fetchAndRender();
-    }).catch(function (err) {
-      console.error('Cập nhật trạng thái Web thất bại:', err);
-      showToast('Lỗi cập nhật trạng thái Web: ' + err.message, 'error');
-    }).finally(function () {
-      if (window.LoadingSpinner) LoadingSpinner.hide();
-    });
-  }
-
   return {
     render: render,
     onSearch: onSearch,
@@ -1346,7 +1292,6 @@ var DynamicPage = (function () {
     openModal: openModal,
     copyItem: copyItem,
     save: save,
-    del: del,
-    updateProductWebStatus: updateProductWebStatus
+    del: del
   };
 })();
