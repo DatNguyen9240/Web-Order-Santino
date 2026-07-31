@@ -26,8 +26,8 @@ BEGIN
         RETURN;
     END;
 
-    -- 2. Cập nhật hoặc Thêm mới vào bảng CF_TenHang2Tbl dựa trên khóa chính kép (ItemName2 + MauSac)
-    IF EXISTS (SELECT 1 FROM [dbo].[CF_TenHang2Tbl] WHERE [ItemName2] = @ItemName2 AND [MauSac] = @MauSac)
+    -- 2. Cập nhật hoặc Thêm mới vào bảng CF_TenHang2Tbl dựa trên khóa chính ItemName2 duy nhất (bảo đảm sửa màu hay đổi thông tin đều ăn 100%)
+    IF EXISTS (SELECT 1 FROM [dbo].[CF_TenHang2Tbl] WHERE [ItemName2] = @ItemName2)
     BEGIN
         UPDATE [dbo].[CF_TenHang2Tbl]
         SET [TenHangHoa] = ISNULL(@TenHangHoa, [TenHangHoa]),
@@ -36,8 +36,9 @@ BEGIN
             [CategoryID] = ISNULL(@CategoryID, [CategoryID]),
             [Design] = ISNULL(@Design, [Design]),
             [isDisable] = ISNULL(@isDisable, [isDisable]),
-            [isWeb] = ISNULL(@isWeb, [isWeb])
-        WHERE [ItemName2] = @ItemName2 AND [MauSac] = @MauSac;
+            [isWeb] = ISNULL(@isWeb, [isWeb]),
+            [MauSac] = CASE WHEN NULLIF(@MauSac, '') IS NOT NULL THEN @MauSac ELSE [MauSac] END
+        WHERE [ItemName2] = @ItemName2;
     END
     ELSE
     BEGIN
@@ -70,7 +71,6 @@ BEGIN
         IF @CurrentNhomSize IS NULL OR @CurrentNhomSize <> @nhom_size
         BEGIN
             -- An toàn: Chỉ xóa những ItemID chưa từng xuất hiện trong phiếu kiểm kê KiemKeDetailTbl.
-            -- Với những ItemID đã từng phát sinh kiểm kê -> ẩn đi (isDisable = 1) để không vi phạm FK.
             IF OBJECT_ID('dbo.KiemKeDetailTbl', 'U') IS NOT NULL
             BEGIN
                 DELETE FROM [dbo].[CF_ItemTbl] 
