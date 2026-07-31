@@ -1004,8 +1004,10 @@ var DynamicPage = (function () {
             var valStr = val !== undefined && val !== null ? String(val).trim() : '';
             var isTrue = valStr === 'true' || valStr === '1';
             input.value = isTrue ? 'true' : 'false';
+            input.dispatchEvent(new Event('change'));
           } else {
             input.value = val !== undefined && val !== null ? String(val) : '';
+            input.dispatchEvent(new Event('change'));
           }
           if (f.isReadOnlyEdit) {
             input.disabled = true;
@@ -1016,8 +1018,10 @@ var DynamicPage = (function () {
           } else if (isStaticSelect) {
             var options = _parseStaticOptions(f.dataSource);
             input.value = options.length > 0 ? options[0].value : 'false';
+            input.dispatchEvent(new Event('change'));
           } else {
             input.value = '';
+            input.dispatchEvent(new Event('change'));
           }
           if (f.isReadOnlyAdd) {
             input.disabled = true;
@@ -1126,6 +1130,13 @@ var DynamicPage = (function () {
     });
 
     if (isInvalid) return;
+
+    if (idHidden) {
+      var pkNames = _getPrimaryKeyNames();
+      if (pkNames.length === 1) {
+        formInputData[pkNames[0]] = idHidden;
+      }
+    }
 
     if (copySourceData) {
       Object.keys(copySourceData).forEach(function (key) {

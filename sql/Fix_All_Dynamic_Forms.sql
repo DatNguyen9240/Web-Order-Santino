@@ -12,8 +12,8 @@ BEGIN TRY
 
     INSERT INTO dbo.SY_FrmLstTbl (FormID, FormType, CaptionVN, CaptionEN, TableName, PrimaryKey, AddNewColumnArr, EditorColumnArr, DefaultColumnArr, HideColumnArr)
     VALUES 
-    ('ObjectListFrm',   'LISTEDIT', N'Danh mục khách hàng', 'Customer List', 'dbo.CF_ObjectTbl', 'ObjectID', 'ObjectName;Phone;Address;ObjectGroupID;LocationID;EmployeeID;BranchID;PaymentTypeID;PaymentTermID;Notes', 'ObjectName;Phone;Address;ObjectGroupID;LocationID;EmployeeID;BranchID;PaymentTypeID;PaymentTermID;Notes', 'ObjectID;ObjectName;Phone;Address;ObjectGroupID;LocationID;EmployeeID;BranchID', 'isWeb'),
-    ('WEB_CustomerFrm', 'LISTEDIT', N'Danh mục khách hàng', 'Customer List', 'dbo.CF_ObjectTbl', 'ObjectID', 'ObjectName;Phone;Address;ObjectGroupID;LocationID;EmployeeID;BranchID;PaymentTypeID;PaymentTermID;Notes', 'ObjectName;Phone;Address;ObjectGroupID;LocationID;EmployeeID;BranchID;PaymentTypeID;PaymentTermID;Notes', 'ObjectID;ObjectName;Phone;Address;ObjectGroupID;LocationID;EmployeeID;BranchID', 'isWeb'),
+    ('ObjectListFrm',   'LISTEDIT', N'Danh mục khách hàng', 'Customer List', 'dbo.CF_ObjectTbl', 'ObjectID', 'ObjectName;Phone;Address;ObjectGroupID;LocationID;EmployeeID;Notes', 'ObjectName;Phone;Address;ObjectGroupID;LocationID;EmployeeID;Notes', 'ObjectID;ObjectName;Phone;Address;ObjectGroupID;EmployeeID;Notes', 'isWeb;LocationID;BranchID;PaymentTypeID;PaymentTermID'),
+    ('WEB_CustomerFrm', 'LISTEDIT', N'Danh mục khách hàng', 'Customer List', 'dbo.CF_ObjectTbl', 'ObjectID', 'ObjectName;Phone;Address;ObjectGroupID;LocationID;EmployeeID;Notes', 'ObjectName;Phone;Address;ObjectGroupID;LocationID;EmployeeID;Notes', 'ObjectID;ObjectName;Phone;Address;ObjectGroupID;EmployeeID;Notes', 'isWeb;LocationID;BranchID;PaymentTypeID;PaymentTermID'),
 
     ('frmProduct',      'LISTEDIT', N'Danh mục sản phẩm', 'Product List', 'dbo.CF_ItemTbl', 'ItemID', 'ItemName;ItemGroupID;UnitID;Price;CostPrice;Size;MauSac;Barcode;Notes', 'ItemName;ItemGroupID;UnitID;Price;CostPrice;Size;MauSac;Barcode;Notes', 'ItemID;ItemName;ItemGroupID;UnitID;Price;CostPrice;Size;MauSac;isDisable', 'UserAutoID'),
     ('WEB_ProductFrm',  'LISTEDIT', N'Danh mục sản phẩm', 'Product List', 'dbo.CF_ItemTbl', 'ItemID', 'ItemName;ItemGroupID;UnitID;Price;CostPrice;Size;MauSac;Barcode;Notes', 'ItemName;ItemGroupID;UnitID;Price;CostPrice;Size;MauSac;Barcode;Notes', 'ItemID;ItemName;ItemGroupID;UnitID;Price;CostPrice;Size;MauSac;isDisable', 'UserAutoID'),
@@ -34,10 +34,10 @@ BEGIN TRY
         (CONVERT(VARCHAR(36), NEWID()), 'WEB_CustomerFrm', 'API', 'SEARCH', '/API_LayDanhSachKhachHang', '', 0, 1),
         (CONVERT(VARCHAR(36), NEWID()), 'ObjectListFrm',   'API', 'DETAIL', '/API_LayDanhSachKhachHang', '', 0, 2),
         (CONVERT(VARCHAR(36), NEWID()), 'WEB_CustomerFrm', 'API', 'DETAIL', '/API_LayDanhSachKhachHang', '', 0, 2),
-        (CONVERT(VARCHAR(36), NEWID()), 'ObjectListFrm',   'API', 'CREATE', '/API_ThemCapNhatKhachHang', '', 0, 3),
-        (CONVERT(VARCHAR(36), NEWID()), 'WEB_CustomerFrm', 'API', 'CREATE', '/API_ThemCapNhatKhachHang', '', 0, 3),
-        (CONVERT(VARCHAR(36), NEWID()), 'ObjectListFrm',   'API', 'UPDATE', '/API_ThemCapNhatKhachHang', '', 0, 4),
-        (CONVERT(VARCHAR(36), NEWID()), 'WEB_CustomerFrm', 'API', 'UPDATE', '/API_ThemCapNhatKhachHang', '', 0, 4),
+        (CONVERT(VARCHAR(36), NEWID()), 'ObjectListFrm',   'API', 'CREATE', '/API_KhachHang_Luu', '', 0, 3),
+        (CONVERT(VARCHAR(36), NEWID()), 'WEB_CustomerFrm', 'API', 'CREATE', '/API_KhachHang_Luu', '', 0, 3),
+        (CONVERT(VARCHAR(36), NEWID()), 'ObjectListFrm',   'API', 'UPDATE', '/API_KhachHang_Luu', '', 0, 4),
+        (CONVERT(VARCHAR(36), NEWID()), 'WEB_CustomerFrm', 'API', 'UPDATE', '/API_KhachHang_Luu', '', 0, 4),
 
         -- Sản phẩm -> SEARCH & DETAIL
         (CONVERT(VARCHAR(36), NEWID()), 'frmProduct',     'API', 'SEARCH', '/API_LaySanPham', '', 0, 1),
