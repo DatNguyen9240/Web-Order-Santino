@@ -15,7 +15,6 @@ BEGIN
     DECLARE @UnitPrice DECIMAL(18,2)  = CAST(COALESCE(JSON_VALUE(@q, '$.UnitPrice'), JSON_VALUE(@q, '$.don_gia'), '0') AS DECIMAL(18,2));
     DECLARE @Form NVARCHAR(100)       = COALESCE(JSON_VALUE(@q, '$.Form'), JSON_VALUE(@q, '$.form'));
     DECLARE @CategoryID NVARCHAR(50)  = COALESCE(JSON_VALUE(@q, '$.CategoryID'), JSON_VALUE(@q, '$.nhom_hang'));
-    DECLARE @Design NVARCHAR(50)      = COALESCE(JSON_VALUE(@q, '$.Design'), JSON_VALUE(@q, '$.design'));
     DECLARE @isDisable BIT            = ISNULL(CAST(COALESCE(JSON_VALUE(@q, '$.isDisable'), JSON_VALUE(@q, '$.ngung_su_dung')) AS BIT), 0);
     DECLARE @isWeb BIT                = ISNULL(CAST(COALESCE(JSON_VALUE(@q, '$.isWeb'), JSON_VALUE(@q, '$.is_web')) AS BIT), 0);
     DECLARE @nhom_size NVARCHAR(50)   = JSON_VALUE(@q, '$.nhom_size');
@@ -34,7 +33,6 @@ BEGIN
             [UnitPrice] = ISNULL(@UnitPrice, [UnitPrice]),
             [Form] = ISNULL(@Form, [Form]),
             [CategoryID] = ISNULL(@CategoryID, [CategoryID]),
-            [Design] = ISNULL(@Design, [Design]),
             [isDisable] = ISNULL(@isDisable, [isDisable]),
             [isWeb] = ISNULL(@isWeb, [isWeb]),
             [MauSac] = CASE WHEN NULLIF(@MauSac, '') IS NOT NULL THEN @MauSac ELSE [MauSac] END
@@ -43,10 +41,10 @@ BEGIN
     ELSE
     BEGIN
         INSERT INTO [dbo].[CF_TenHang2Tbl] (
-            [ItemName2], [MauSac], [TenHangHoa], [UnitPrice], [Form], [CategoryID], [Design], [isDisable], [isWeb]
+            [ItemName2], [MauSac], [TenHangHoa], [UnitPrice], [Form], [CategoryID], [isDisable], [isWeb]
         )
         VALUES (
-            @ItemName2, @MauSac, @TenHangHoa, @UnitPrice, @Form, @CategoryID, @Design, @isDisable, @isWeb
+            @ItemName2, @MauSac, @TenHangHoa, @UnitPrice, @Form, @CategoryID, @isDisable, @isWeb
         );
     END;
 
@@ -70,22 +68,8 @@ BEGIN
 
         IF @CurrentNhomSize IS NULL OR @CurrentNhomSize <> @nhom_size
         BEGIN
-            -- An toàn: Chỉ xóa những ItemID chưa từng xuất hiện trong phiếu kiểm kê KiemKeDetailTbl.
-            IF OBJECT_ID('dbo.KiemKeDetailTbl', 'U') IS NOT NULL
-            BEGIN
-                DELETE FROM [dbo].[CF_ItemTbl] 
-                WHERE [ItemName2] = @ItemName2 AND [MauSac] = @MauSac
-                  AND [ItemID] NOT IN (SELECT DISTINCT [ItemID] FROM [dbo].[KiemKeDetailTbl] WHERE [ItemID] IS NOT NULL);
-
-                UPDATE [dbo].[CF_ItemTbl] 
-                SET [isDisable] = 1
-                WHERE [ItemName2] = @ItemName2 AND [MauSac] = @MauSac;
-            END
-            ELSE
-            BEGIN
-                DELETE FROM [dbo].[CF_ItemTbl] 
-                WHERE [ItemName2] = @ItemName2 AND [MauSac] = @MauSac;
-            END;
+            DELETE FROM [dbo].[CF_ItemTbl] 
+            WHERE [ItemName2] = @ItemName2 AND [MauSac] = @MauSac;
 
             -- Upsert danh sách size mới thuộc NhomSize đã chọn
             MERGE [dbo].[CF_ItemTbl] AS target

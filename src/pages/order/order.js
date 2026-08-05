@@ -21,6 +21,27 @@ var OrderPage = (function () {
   };
   var _combos = {};
 
+  function _normalizeProduct(p) {
+    if (!p) return null;
+    var code = String(p.ItemName2 || p.ten_hang_2 || p.item_name_2 || p.ItemID || '');
+    var name = String(p.TenHangHoa || p.ten_hang_hoa || p.ItemName || '');
+    var color = String(p.MauSac || p.mau || '');
+    var price = p.UnitPrice != null ? parseFloat(p.UnitPrice) : (p.don_gia != null ? parseFloat(p.don_gia) : 0);
+    var form = String(p.Form || p.form || p.FormName || '');
+    var matchRes = code.match(/^[A-Za-z]+/);
+    var brand = matchRes ? matchRes[0] : '';
+
+    return {
+      code: code,
+      name: name,
+      color: color,
+      price: isNaN(price) ? 0 : price,
+      form: form,
+      brand: brand,
+      raw: p
+    };
+  }
+
   async function _loadUserPermission() {
     try {
       var res = await _searchCategory('UserPermission', '', false, 1);
@@ -133,45 +154,62 @@ var OrderPage = (function () {
   }
 
   async function _init() {
-    await _loadUserPermission();
-    // 1. Lấy bảng size và thông tin cơ bản
-    var resSizes = await ProductService.getSizes();
-    if (Array.isArray(resSizes) && resSizes.length > 0) {
-      cachedSizes = resSizes;
+    try {
+      await _loadUserPermission();
+    } catch (e) {
+      console.warn('[OrderPage] Lỗi loadUserPermission:', e);
     }
-    document.getElementById('o-so-ct').value = Utils.genOrderNo();
-    document.getElementById('o-ngay').value = Utils.today();
-    document.getElementById('o-ngay').addEventListener('change', function () {
-      var currentSoCT = document.getElementById('o-so-ct').value || '';
-      var existingSeq = currentSoCT.split('/')[1] || null;
-      var ngayCT = this.value;
-      var branchId = _catValues && _catValues.chi_nhanh ? _catValues.chi_nhanh.id : '';
-      document.getElementById('o-so-ct').value = Utils.genOrderNo(branchId, ngayCT, existingSeq);
+    // 1. Lấy bảng size và thông tin cơ bản
+    try {
+      var resSizes = (typeof ProductService !== 'undefined' && ProductService.getSizes)
+        ? await ProductService.getSizes()
+        : await Http.get(API_CONFIG.ENDPOINTS.SIZES.LIST);
+      if (Array.isArray(resSizes) && resSizes.length > 0) {
+        cachedSizes = resSizes;
+      }
+    } catch (e) {
+      console.warn('[OrderPage] Lỗi loadSizes:', e);
+    }
 
-      // Cập nhật Ngày TT dựa vào Điều khoản TT hiện tại
-      var days = (_catValues.dieu_khoan && _catValues.dieu_khoan.due_days) ? parseInt(_catValues.dieu_khoan.due_days, 10) : 0;
-      var d = ngayCT ? new Date(ngayCT) : new Date();
-      d.setDate(d.getDate() + days);
-      document.getElementById('o-ngay-tt').value = d.toISOString().split('T')[0];
-    });
+    if (document.getElementById('o-so-ct')) document.getElementById('o-so-ct').value = Utils.genOrderNo();
+    if (document.getElementById('o-ngay')) {
+      document.getElementById('o-ngay').value = Utils.today();
+      document.getElementById('o-ngay').addEventListener('change', function () {
+        var currentSoCT = document.getElementById('o-so-ct').value || '';
+        var existingSeq = currentSoCT.split('/')[1] || null;
+        var ngayCT = this.value;
+        var branchId = _catValues && _catValues.chi_nhanh ? _catValues.chi_nhanh.id : '';
+        if (document.getElementById('o-so-ct')) {
+          document.getElementById('o-so-ct').value = Utils.genOrderNo(branchId, ngayCT, existingSeq);
+        }
 
-    document.getElementById('o-kh-ten').value = '';
-    document.getElementById('o-ma-kh').value = '';
-    document.getElementById('o-ma-dl').value = '';
-    document.getElementById('o-ngay-tt').value = Utils.today();
-    document.getElementById('o-kh-dc').value = '';
+        // Cập nhật Ngày TT dựa vào Điều khoản TT hiện tại
+        var days = (_catValues.dieu_khoan && _catValues.dieu_khoan.due_days) ? parseInt(_catValues.dieu_khoan.due_days, 10) : 0;
+        var d = ngayCT ? new Date(ngayCT) : new Date();
+        d.setDate(d.getDate() + days);
+        if (document.getElementById('o-ngay-tt')) {
+          document.getElementById('o-ngay-tt').value = d.toISOString().split('T')[0];
+        }
+      });
+    }
+
+    if (document.getElementById('o-kh-ten')) document.getElementById('o-kh-ten').value = '';
+    if (document.getElementById('o-ma-kh')) document.getElementById('o-ma-kh').value = '';
+    if (document.getElementById('o-ma-dl')) document.getElementById('o-ma-dl').value = '';
+    if (document.getElementById('o-ngay-tt')) document.getElementById('o-ngay-tt').value = Utils.today();
+    if (document.getElementById('o-kh-dc')) document.getElementById('o-kh-dc').value = '';
     if (document.getElementById('o-remarks')) document.getElementById('o-remarks').value = '';
-    if (_combos.remark) _combos.remark.querySelector('input').value = '';
+    if (_combos.remark && _combos.remark.querySelector('input')) _combos.remark.querySelector('input').value = '';
     if (document.getElementById('o-notes')) document.getElementById('o-notes').value = '';
-    if (_combos.note) _combos.note.querySelector('input').value = '';
+    if (_combos.note && _combos.note.querySelector('input')) _combos.note.querySelector('input').value = '';
     if (document.getElementById('o-nguoi-giao')) document.getElementById('o-nguoi-giao').value = '';
-    if (_combos.delivery) _combos.delivery.querySelector('input').value = '';
+    if (_combos.delivery && _combos.delivery.querySelector('input')) _combos.delivery.querySelector('input').value = '';
     if (document.getElementById('o-nguon-don')) document.getElementById('o-nguon-don').value = '';
-    if (_combos.source) _combos.source.querySelector('input').value = '';
+    if (_combos.source && _combos.source.querySelector('input')) _combos.source.querySelector('input').value = '';
 
     // 2. Đảm bảo component đã load, rồi mới inject danh mục
     await _ensureComponents();
-    _loadCategories();
+    await _loadCategories();
 
     var sel = document.getElementById('o-ctbh');
     if (sel) {
@@ -267,11 +305,11 @@ var OrderPage = (function () {
   async function _loadCategories() {
     try {
       const [employees, customers, promotions, remarks, notes] = await Promise.all([
-        CategoryService.getCategories('Employee'),
-        CategoryService.getCategories('Customer'),
-        CategoryService.getCategories('Promotion'),
-        CategoryService.getCategories('Remark'),
-        CategoryService.getCategories('Note')
+        CategoryService.getCategories('Employee').catch(function () { return []; }),
+        CategoryService.getCategories('Customer').catch(function () { return []; }),
+        CategoryService.getCategories('Promotion').catch(function () { return []; }),
+        CategoryService.getCategories('Remark').catch(function () { return []; }),
+        CategoryService.getCategories('Note').catch(function () { return []; })
       ]);
       const branches = [];
       const payTypes = [];
@@ -845,13 +883,27 @@ var OrderPage = (function () {
     var currentSearchId = ++acSearchId;
     acSearchTimer = setTimeout(async function () {
 
-      // Gọi API qua Service lấy sản phẩm
-      var prods = await ProductService.getProducts(val, true);
+      // Gọi API lấy sản phẩm
+      var prods = [];
+      try {
+        if (typeof ProductService !== 'undefined' && ProductService.getProducts) {
+          prods = await ProductService.getProducts(val, true);
+        } else {
+          var resP = await Http.get(API_CONFIG.ENDPOINTS.PRODUCTS.LIST, { q: val });
+          prods = Array.isArray(resP) ? resP : (resP.records || resP.data || []);
+        }
+      } catch (pErr) {
+        console.warn('[OrderPage] Lỗi getProducts:', pErr);
+        prods = [];
+      }
 
       // NẾU người dùng đã đóng bảng TRƯỚC KHI API trả về kết quả, thì HỦY render
       if (currentSearchId !== acSearchId) return;
 
-      prods.forEach(function (p) { cachedProds[p.ten_hang_2] = p; });
+      prods.forEach(function (rawItem) {
+        var item = _normalizeProduct(rawItem);
+        if (item && item.code) cachedProds[item.code] = rawItem;
+      });
 
       if (!prods.length) {
         list.innerHTML = '<div class="ac-item"><small>Không tìm thấy sản phẩm</small></div>';
@@ -867,20 +919,21 @@ var OrderPage = (function () {
 
       var html = '<div class="ac-header"><div style="width:24px; margin-right:12px; flex-shrink:0"></div><div class="ac-col-1">SẢN PHẨM</div><div class="ac-col-2" style="min-width:45px">FORM</div><div class="ac-col-3" style="min-width:75px">ĐƠN GIÁ</div></div>';
 
-      html += prods.slice(0, 8).map(function (p) {
-        var pos = multiSelectedCodes.indexOf(p.ten_hang_2);
+      html += prods.slice(0, 8).map(function (rawItem) {
+        var item = _normalizeProduct(rawItem);
+        var pos = multiSelectedCodes.indexOf(item.code);
         var isChecked = pos !== -1 ? 'checked' : '';
         var numDisplay = pos !== -1 ? 'flex' : 'none';
         var numVal = pos !== -1 ? (pos + 1) : '';
-        var brand = p.ten_hang_2.match(/^[A-Z]+/); brand = brand ? brand[0] : '';
-        return '<div class="ac-table-row" onclick="OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')">' +
+
+        return '<div class="ac-table-row" onclick="OrderPage.toggleAcSelect(event, \'' + item.code + '\')">' +
           '<div style="position:relative; margin-right:12px; width:18px; height:18px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">' +
-          '<input type="checkbox" class="chk-code" ' + isChecked + ' id="chk-' + p.ten_hang_2 + '" value="' + p.ten_hang_2 + '" onclick="event.stopPropagation(); OrderPage.toggleAcSelect(event, \'' + p.ten_hang_2 + '\')" style="margin:0; width:16px; height:16px; cursor:pointer;">' +
-          '<div class="chk-num" id="chk-num-' + p.ten_hang_2 + '" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); pointer-events:none; display:' + numDisplay + '; align-items:center; justify-content:center; width:18px; height:18px; background:var(--primary); color:white; font-size:11px; font-weight:bold; border-radius:4px;">' + numVal + '</div>' +
+          '<input type="checkbox" class="chk-code" ' + isChecked + ' id="chk-' + item.code + '" value="' + item.code + '" onclick="event.stopPropagation(); OrderPage.toggleAcSelect(event, \'' + item.code + '\')" style="margin:0; width:16px; height:16px; cursor:pointer;">' +
+          '<div class="chk-num" id="chk-num-' + item.code + '" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); pointer-events:none; display:' + numDisplay + '; align-items:center; justify-content:center; width:18px; height:18px; background:var(--primary); color:white; font-size:11px; font-weight:bold; border-radius:4px;">' + numVal + '</div>' +
           '</div>' +
-          '<div class="ac-col-1" style="padding-right:4px;"><strong>' + p.ten_hang_2 + '</strong><div style="font-size:calc(12px * var(--text-scale,1)); color:var(--muted); white-space:normal; line-height:1.2"><span class="ac-desc">' + p.ten_hang_hoa + '</span> - <small>' + p.mau + '</small></div></div>' +
-          '<div class="ac-col-2" style="min-width:45px"><span class="ac-form-badge">' + brand + '</span></div>' +
-          '<div class="ac-col-3" style="min-width:75px">' + Utils.formatMoney(p.don_gia) + '</div>' +
+          '<div class="ac-col-1" style="padding-right:4px;"><strong>' + item.code + '</strong><div style="font-size:calc(12px * var(--text-scale,1)); color:var(--muted); white-space:normal; line-height:1.2"><span class="ac-desc">' + item.name + '</span> - <small>' + item.color + '</small></div></div>' +
+          '<div class="ac-col-2" style="min-width:45px"><span class="ac-form-badge">' + item.brand + '</span></div>' +
+          '<div class="ac-col-3" style="min-width:75px">' + Utils.formatMoney(item.price) + '</div>' +
           '</div>';
       }).join('');
 

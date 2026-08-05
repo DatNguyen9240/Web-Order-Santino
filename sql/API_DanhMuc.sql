@@ -140,18 +140,6 @@ BEGIN
         RETURN;
     END
 
-    IF @Loai = 'design'
-    BEGIN
-        SELECT DISTINCT
-            [Design] AS [id],
-            [Design] AS [name]
-        FROM [dbo].[CF_TenHang2Tbl]
-        WHERE [Design] IS NOT NULL AND [Design] <> ''
-          AND (@TimKiem = '' OR [Design] LIKE N'%' + @TimKiem + N'%')
-        ORDER BY [id];
-        RETURN;
-    END
-
     IF @Loai = 'UserGroup'
     BEGIN
         SELECT
