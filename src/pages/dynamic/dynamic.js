@@ -660,6 +660,56 @@ var DynamicPage = (function () {
         formFieldsContainer.appendChild(fieldWrapper);
       });
 
+    if (formName === 'ObjectListFrm') {
+      var accSection = document.getElementById('cust-account-section');
+      if (!accSection) {
+        accSection = document.createElement('div');
+        accSection.className = 'form-group span2';
+        accSection.id = 'cust-account-section';
+        accSection.style.gridColumn = 'span 2';
+        accSection.style.marginTop = '12px';
+        accSection.style.padding = '12px';
+        accSection.style.border = '1px solid var(--border)';
+        accSection.style.borderRadius = '10px';
+        accSection.style.background = 'var(--bg)';
+        accSection.innerHTML = `
+          <label style="display: flex; align-items: center; justify-content: flex-start; gap: 8px; cursor: pointer; font-weight: 600; margin-bottom: 12px;">
+            <input type="checkbox" id="cust-has-account" style="width: auto; height: auto; margin: 0; cursor: pointer;">
+            <span>Tạo tài khoản đăng nhập liên kết</span>
+          </label>
+          <div id="cust-account-fields" style="display: none; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 8px;">
+            <div class="form-group">
+              <label style="display:block; font-weight:600; margin-bottom: 4px;">Tên đăng nhập *</label>
+              <input id="cust-username" class="ui-input" placeholder="Mặc định dùng Mã khách hàng..." style="width:100%; box-sizing:border-box; height: 38px;">
+            </div>
+            <div class="form-group" id="cust-initial-password-group">
+              <label style="display:block; font-weight:600; margin-bottom: 4px;">Mật khẩu khởi tạo *</label>
+              <input id="cust-password" class="ui-input" type="password" placeholder="Nhập mật khẩu tài khoản..." style="width:100%; box-sizing:border-box; height: 38px;">
+            </div>
+            <div class="form-group" id="cust-reset-password-group" style="display: none; align-self: end;">
+              <label>&nbsp;</label>
+              <button type="button" class="btn btn-secondary" style="width: 100%; height: 38px; display: flex; align-items: center; justify-content: center; gap: 6px;" id="btn-modal-reset-pw">
+                <span class="material-symbols-outlined" style="font-size: 18px;">key</span> Đặt lại mật khẩu
+              </button>
+            </div>
+          </div>
+        `;
+        formFieldsContainer.appendChild(accSection);
+
+        // Add event listeners
+        var chkHasAcc = document.getElementById('cust-has-account');
+        var fieldsDiv = document.getElementById('cust-account-fields');
+        chkHasAcc.addEventListener('change', function () {
+          fieldsDiv.style.display = chkHasAcc.checked ? 'grid' : 'none';
+        });
+
+        document.getElementById('btn-modal-reset-pw').addEventListener('click', function () {
+          var uName = document.getElementById('cust-username').value;
+          openResetPasswordModal(uName);
+        });
+      }
+    }
+
     // Đăng ký sự kiện lắng nghe thay đổi của cha để tự động xóa trường con (Cascading Dropdowns)
     schemaFields.forEach(function (parentField) {
       var parentInput = document.getElementById('field-' + parentField.name);
@@ -892,6 +942,19 @@ var DynamicPage = (function () {
           DynamicPage.openModal(val, false, p);
         });
 
+        var btnResetPw = null;
+        var username = p.username || p.UserName || p.username_login || p.User_Login;
+        if (username) {
+          btnResetPw = document.createElement('button');
+          btnResetPw.className = 'btn-icon';
+          btnResetPw.title = 'Đặt lại mật khẩu';
+          btnResetPw.innerHTML = '<span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1)); color: var(--primary)">key</span>';
+          btnResetPw.addEventListener('click', function (e) {
+            e.stopPropagation();
+            openResetPasswordModal(username);
+          });
+        }
+
         var btnDel = document.createElement('button');
         btnDel.className = 'btn-icon';
         btnDel.innerHTML = '<span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1));color:var(--danger)">delete</span>';
@@ -901,6 +964,9 @@ var DynamicPage = (function () {
         });
 
         wrapper.appendChild(btnEdit);
+        if (btnResetPw) {
+          wrapper.appendChild(btnResetPw);
+        }
         wrapper.appendChild(btnDel);
         return wrapper;
       }
@@ -1031,6 +1097,45 @@ var DynamicPage = (function () {
         }
       }
     });
+
+    if (formName === 'ObjectListFrm') {
+      var chkHasAcc = document.getElementById('cust-has-account');
+      var fieldsDiv = document.getElementById('cust-account-fields');
+      var usernameInput = document.getElementById('cust-username');
+      var initialPwGroup = document.getElementById('cust-initial-password-group');
+      var resetPwGroup = document.getElementById('cust-reset-password-group');
+
+      if (chkHasAcc) {
+        var usernameVal = p ? (p.username || p.UserName || p.username_login || p.User_Login || '') : '';
+        if (isEditMode && usernameVal) {
+          chkHasAcc.checked = true;
+          chkHasAcc.disabled = true;
+          fieldsDiv.style.display = 'grid';
+          
+          if (usernameInput) {
+            usernameInput.value = usernameVal;
+            usernameInput.readOnly = true;
+            usernameInput.style.backgroundColor = '#f1f5f9';
+            usernameInput.style.cursor = 'not-allowed';
+          }
+          if (initialPwGroup) initialPwGroup.style.display = 'none';
+          if (resetPwGroup) resetPwGroup.style.display = 'block';
+        } else {
+          chkHasAcc.checked = false;
+          chkHasAcc.disabled = false;
+          fieldsDiv.style.display = 'none';
+
+          if (usernameInput) {
+            usernameInput.value = '';
+            usernameInput.readOnly = false;
+            usernameInput.style.backgroundColor = '';
+            usernameInput.style.cursor = '';
+          }
+          if (initialPwGroup) initialPwGroup.style.display = 'block';
+          if (resetPwGroup) resetPwGroup.style.display = 'none';
+        }
+      }
+    }
 
     _formatNumericInputs();
     _formatDateInputs();
@@ -1228,17 +1333,53 @@ var DynamicPage = (function () {
         payload = isSP ? { q: JSON.stringify(formInputData) } : formInputData;
       }
 
+      var resSave;
       if (isSP) {
-        await Http.post(endpoint, payload);
+        resSave = await Http.post(endpoint, payload);
         showToast(idHidden ? 'Đã lưu thay đổi thành công' : 'Đã thêm mới thành công');
       } else {
         if (idHidden) {
           var updateUrl = endpoint + '/' + encodeURIComponent(idHidden);
-          await Http.post(updateUrl, payload);
+          resSave = await Http.post(updateUrl, payload);
           showToast('Đã lưu thay đổi thành công');
         } else {
-          await Http.post(endpoint, payload);
+          resSave = await Http.post(endpoint, payload);
           showToast('Đã thêm mới thành công');
+        }
+      }
+
+      // Lưu tài khoản đăng nhập liên kết cho Khách hàng
+      if (formName === 'ObjectListFrm') {
+        var chkHasAcc = document.getElementById('cust-has-account');
+        if (chkHasAcc && chkHasAcc.checked) {
+          var username = document.getElementById('cust-username').value.trim();
+          var password = document.getElementById('cust-password').value;
+          var finalId = idHidden || (resSave && (resSave.id || resSave.ObjectID)) || formInputData.ObjectID || '';
+          if (!finalId) {
+            finalId = username;
+          }
+          var name = formInputData.ObjectName || '';
+          var finalUsername = username || finalId;
+
+          const userData = {
+            UserName: finalUsername,
+            HoTen: name,
+            UserGroupID: 'DL',
+            ObjectID: finalId,
+            Disable: 0
+          };
+
+          await CustomerService.saveUserAccount(userData);
+
+          var isNewAccount = !idHidden || (editOriginalData && !editOriginalData.UserName && !editOriginalData.username);
+          if (isNewAccount && password) {
+            try {
+              await CustomerService.resetPassword(finalUsername, '', password);
+            } catch (pwErr) {
+              console.warn('[DynamicPage] Khởi tạo mật khẩu thất bại:', pwErr);
+              showToast('Tài khoản đã tạo nhưng thiết lập mật khẩu khởi tạo gặp lỗi!', 'warning');
+            }
+          }
         }
       }
 
@@ -1294,6 +1435,70 @@ var DynamicPage = (function () {
         }
       }
     });
+  }
+
+  function openResetPasswordModal(username) {
+    var modal = document.getElementById('modal-reset-password');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.id = 'modal-reset-password';
+      modal.innerHTML = `
+        <div class="modal-content" style="max-width: 450px;">
+          <div class="modal-header">
+            <h3>Đặt Lại Mật Khẩu Tài Khoản</h3>
+            <button class="btn-icon" onclick="window.closeModal('modal-reset-password')">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="reset-username">
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label style="display:block; font-weight:600; margin-bottom: 4px;">Mật khẩu mới *</label>
+              <input id="reset-newpassword" class="ui-input" type="password" placeholder="Nhập mật khẩu mới..." required style="width:100%; box-sizing:border-box;">
+            </div>
+            <div class="form-group" style="margin-top: 12px; margin-bottom: 12px;">
+              <label style="display:block; font-weight:600; margin-bottom: 4px;">Nhập lại mật khẩu mới *</label>
+              <input id="reset-newpassword2" class="ui-input" type="password" placeholder="Xác nhận mật khẩu mới..." required style="width:100%; box-sizing:border-box;">
+            </div>
+          </div>
+          <div class="modal-actions" style="margin-top: 20px; display:flex; justify-content:flex-end; gap:8px;">
+            <button class="btn btn-ghost" onclick="window.closeModal('modal-reset-password')">Hủy bỏ</button>
+            <button class="btn btn-primary" id="btn-submit-reset-pw">Đặt lại mật khẩu</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      
+      document.getElementById('btn-submit-reset-pw').addEventListener('click', submitResetPassword);
+    }
+
+    document.getElementById('reset-username').value = username;
+    document.getElementById('reset-newpassword').value = '';
+    document.getElementById('reset-newpassword2').value = '';
+
+    window.openModal('modal-reset-password');
+  }
+
+  async function submitResetPassword() {
+    const username = document.getElementById('reset-username').value;
+    const newpw = document.getElementById('reset-newpassword').value;
+    const newpw2 = document.getElementById('reset-newpassword2').value;
+
+    if (!newpw) { showToast('Vui lòng nhập mật khẩu mới!', false); return; }
+    if (newpw.length < 4) { showToast('Mật khẩu tối thiểu phải từ 4 ký tự!', false); return; }
+    if (newpw !== newpw2) { showToast('Mật khẩu xác nhận không trùng khớp!', false); return; }
+
+    try {
+      if (window.LoadingSpinner) LoadingSpinner.show('Đang đặt lại mật khẩu...');
+      const res = await CustomerService.resetPassword(username, '', newpw);
+      showToast(res.msg || `Đặt lại mật khẩu cho tài khoản ${username} thành công.`, true);
+      window.closeModal('modal-reset-password');
+      if (window.LoadingSpinner) LoadingSpinner.hide();
+    } catch (err) {
+      if (window.LoadingSpinner) LoadingSpinner.hide();
+      showToast(err.message || 'Đặt lại mật khẩu thất bại', false);
+    }
   }
 
   return {
