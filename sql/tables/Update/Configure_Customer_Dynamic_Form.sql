@@ -1,6 +1,6 @@
 -- =========================================================================
 -- CẤU HÌNH METADATA ĐỘNG DÀNH RIÊNG CHO WEB APP (WA_CustomerFrm)
--- KHÔNG ẢNH HƯỞNG TỚI FORM CỦA ERP (ObjectListFrm)
+-- ẨN HOÀN TOÀN CỘT isWeb KHỎI GIAO DIỆN WEB
 -- =========================================================================
 SET XACT_ABORT ON;
 
@@ -15,11 +15,10 @@ BEGIN TRY
     BEGIN
         UPDATE dbo.WA_Menu
         SET FormName = @FormID
-        WHERE URLPara = '/customers' OR MenuID = '60' OR FormName = 'WEB_CustomerFrm';
+        WHERE URLPara = '/customers' OR MenuID = '60' OR FormName = 'WEB_CustomerFrm' OR FormName = 'ObjectListFrm';
     END;
 
-    -- 1. CẤU HÌNH CHO FORM WEB APP (WA_CustomerFrm) TRONG SY_FrmLstTbl
-    -- Cột isWeb được ẩn (HideColumnArr = 'isWeb')
+    -- 1. CẤU HÌNH CHO FORM WA_CustomerFrm TRONG SY_FrmLstTbl (ẨN isWeb KHỎI CẢ LƯỚI VÀ MODAL)
     DELETE FROM dbo.SY_FrmLstTbl WHERE FormID = @FormID;
 
     INSERT INTO dbo.SY_FrmLstTbl (
@@ -34,7 +33,7 @@ BEGIN TRY
         'isWeb'
     );
 
-    -- 2. CẤU HÌNH API ACTION ROUTING CHO WEB APP (SY_FrmMstActTbl)
+    -- 2. CẤU HÌNH API ACTION ROUTING CHO WA_CustomerFrm (SY_FrmMstActTbl)
     DELETE FROM dbo.SY_FrmMstActTbl WHERE FormID = @FormID;
 
     INSERT INTO dbo.SY_FrmMstActTbl (UserAutoID, FormID, MaterAction, [Action], [Source], ColumnID, IsDisable, Oderby)

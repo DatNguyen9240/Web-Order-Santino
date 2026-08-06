@@ -12,7 +12,7 @@ var Router = (function () {
     { path: '/settings', script: 'src/pages/settings/settings.js', pageFn: 'SettingsPage', title: 'nav.settings' },
     { path: '/permissions', script: 'src/pages/permissions/permissions.js', pageFn: 'PermissionsPage', title: 'nav.permissions' },
     { path: '/menus', script: 'src/pages/menus/menus.js', pageFn: 'MenusPage', title: 'nav.menus' },
-    { path: '/customers', script: 'src/pages/dynamic/dynamic.js', pageFn: 'DynamicPage', title: 'nav.customers', formName: 'WA_CustomerFrm' },
+    { path: '/customers', script: 'src/pages/dynamic/dynamic.js', pageFn: 'DynamicPage', title: 'nav.customers', formName: 'ObjectListFrm' },
   ];
 
   var _routeMap = {};
@@ -163,7 +163,7 @@ var Router = (function () {
 
       var route = {
         path: path,
-        script: 'src/pages/dynamic/dynamic.js?v=20260722-2',
+        script: 'src/pages/dynamic/dynamic.js?v=20260806-1745',
         pageFn: 'DynamicPage',
         title: m.VN || m.MenuName || m.FormName || '',
         formName: m.FormName || m.formName || ''

@@ -243,7 +243,7 @@ var DynamicPage = (function () {
           f.showInEdit = !(f.showInEdit === false || f.showInEdit === 0 || String(f.showInEdit) === '0' || String(f.showInEdit) === 'false');
           f.showInGrid = !(f.showInGrid === false || f.showInGrid === 0 || String(f.showInGrid) === '0' || String(f.showInGrid) === 'false');
 
-          if (f.name && f.name.toLowerCase() === 'isweb') {
+          if (f.name && (f.name.toLowerCase() === 'isweb' || f.name.toLowerCase() === 'is_web')) {
             f.showInAdd = false;
             f.showInEdit = false;
             f.showInGrid = false;
@@ -871,7 +871,7 @@ var DynamicPage = (function () {
 
     // Xây dựng ColumnDefs động từ schema của SQL
     var gridColumns = schemaFields
-      .filter(f => f.showInGrid)
+      .filter(f => f.showInGrid && f.name && f.name.toLowerCase() !== 'isweb' && f.name.toLowerCase() !== 'is_web')
       .map(function (f, index) {
         var col = {
           field: f.name,
@@ -1061,12 +1061,6 @@ var DynamicPage = (function () {
     schemaFields.forEach(function (f) {
       var input = document.getElementById('field-' + f.name);
       if (input) {
-        var wrapper = input.closest('.form-group');
-        if (wrapper) {
-          var showField = isEditMode ? f.showInEdit : f.showInAdd;
-          wrapper.style.display = showField ? '' : 'none';
-        }
-
         var hasDataSource = f.dataSource && f.dataSource.length > 0;
         var dsType = (f.dropdownType || '').toLowerCase().trim();
         var isDynamicLookup = hasDataSource && (
