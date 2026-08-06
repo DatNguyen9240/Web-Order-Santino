@@ -17,7 +17,7 @@ BEGIN TRY
         ('5010', '50',   N'Đặt hàng',            'Order',            'shopping_bag', 'Null', 'WEB_OrderFrm',         '/order',       0),
         ('5020', '50',   N'Lịch sử đơn hàng',    'Order History',    'receipt_long', 'List', 'WEB_OrderDetailFrm',   '/orders',      0),
         
-        ('60',   '',     N'Quản lý khách hàng',  'Customer Management','person',      'Null', 'WEB_CustomerFrm',      '/customers',    0),
+        ('60',   '',     N'Quản lý khách hàng',  'Customer Management','person',      'Null', 'WA_CustomerFrm',       '/customers',    0),
         
         ('70',   '',     N'Quản lý danh mục',    'Master Data',      'folder_open',  '',     '',                     '',             0),
         ('7010', '70',   N'Sản phẩm',            'Products',         'shopping_bag', 'products', 'frmProduct',       '/products',    0),

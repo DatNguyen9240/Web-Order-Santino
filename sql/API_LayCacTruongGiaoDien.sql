@@ -92,36 +92,18 @@ BEGIN
         @EditorColumnArr = ISNULL(formConfig.EditorColumnArr, ''),
         @LockColumnArr = ISNULL(formConfig.LockColumnArr, '')
     FROM dbo.SY_FrmLstTbl formConfig
-    WHERE formConfig.FormID = @FormName OR formConfig.TableName = @FormName;
+    WHERE formConfig.FormID = @FormName OR formConfig.TableName = @FormName
+    ORDER BY CASE WHEN formConfig.FormID = @FormName THEN 1 ELSE 2 END ASC;
 
-    -- ÁNH XẠ AN TOÀN NẾU KHÔNG TÌM THẤY TÊN BẢNG TRONG BẢNG CẤU HÌNH
+    -- NẾU KHÔNG TÌM THẤY TÊN BẢNG TRONG BẢNG CẤU HÌNH, THỬ TÌM TRỰC TIẾP TRONG SYS.TABLES
     IF OBJECT_ID(@TableName) IS NULL
     BEGIN
-        IF @FormName IN ('WEB_ProductFrm', 'frmProduct', 'ProductListFrm', 'ItemListFrm')
-        BEGIN
-            SET @TableName = 'dbo.CF_ItemTbl';
-        END
-        ELSE IF @FormName IN ('WEB_CustomerFrm', 'ObjectListFrm', 'CustomerListFrm')
-        BEGIN
-            SET @TableName = 'dbo.CF_ObjectTbl';
-        END
-        ELSE IF @FormName IN ('WEB_OrderFrm', 'OrderListFrm', 'frmOrder')
-        BEGIN
-            SET @TableName = 'dbo.WEB_OrderTbl';
-        END
-        ELSE IF @FormName IN ('frmPromotion', 'PromotionListFrm', 'CTKMFrm')
-        BEGIN
-            SET @TableName = 'dbo.CF_CTKMTbl';
-        END
-        ELSE
-        BEGIN
-            SELECT TOP 1 @TableName = sysTbl.name
-            FROM sys.tables sysTbl
-            WHERE sysTbl.name = @FormName 
-               OR sysTbl.name = 'CF_' + @FormName + 'Tbl'
-               OR sysTbl.name = 'WEB_' + @FormName + 'Tbl'
-               OR sysTbl.name LIKE '%' + @FormName + '%';
-        END
+        SELECT TOP 1 @TableName = sysTbl.name
+        FROM sys.tables sysTbl
+        WHERE sysTbl.name = @FormName 
+           OR sysTbl.name = 'CF_' + @FormName + 'Tbl'
+           OR sysTbl.name = 'WEB_' + @FormName + 'Tbl'
+           OR sysTbl.name = 'WA_' + @FormName + 'Tbl';
     END;
 
     IF @TableName = '' SET @TableName = @FormName;
@@ -152,7 +134,7 @@ BEGIN
         WHERE FormID = @MatchedFormID AND UPPER(ISNULL(MaterAction, '')) = 'API' AND ISNULL(IsDisable, 0) = 0;
     END;
 
-    -- TRUY VẤN CHÍNH: LUÔN TRẢ VỀ IT NHẤT 1 RESULT-SET ĐỂ BACKEND C# KHÔNG BAO GIỜ BỊ LỖI 'Store Info2 error'
+    -- TRUY VẤN CHÍNH: LUÔN TRẢ VỀ ÍT NHẤT 1 RESULT-SET ĐỂ BACKEND C# KHÔNG BAO GIỜ BỊ LỖI 'Store Info2 error'
     SELECT 
         c.name AS [name], 
         COALESCE(NULLIF(f.CaptionVN, ''), NULLIF(dd.Caption, ''), c.name) AS [label],
@@ -179,6 +161,7 @@ BEGIN
         CASE 
             WHEN c.is_identity = 1 OR c.is_computed = 1 THEN 0
             WHEN ISNULL(dd.isInvisible, 0) = 1 THEN 0
+            WHEN EXISTS (SELECT 1 FROM STRING_SPLIT(@HideColumnArr, ';') s WHERE LOWER(LTRIM(RTRIM(s.value))) = LOWER(c.name)) THEN 0
             WHEN NULLIF(LTRIM(RTRIM(@AddNewColumnArr)), '') IS NOT NULL 
                  AND NOT EXISTS (SELECT 1 FROM STRING_SPLIT(@AddNewColumnArr, ';') s WHERE LOWER(LTRIM(RTRIM(s.value))) = LOWER(c.name)) THEN 0
             ELSE 1
@@ -187,6 +170,7 @@ BEGIN
         CASE 
             WHEN c.is_identity = 1 OR c.is_computed = 1 THEN 0
             WHEN ISNULL(dd.isInvisible, 0) = 1 THEN 0
+            WHEN EXISTS (SELECT 1 FROM STRING_SPLIT(@HideColumnArr, ';') s WHERE LOWER(LTRIM(RTRIM(s.value))) = LOWER(c.name)) THEN 0
             WHEN NULLIF(LTRIM(RTRIM(@EditorColumnArr)), '') IS NOT NULL 
                  AND NOT EXISTS (SELECT 1 FROM STRING_SPLIT(@EditorColumnArr, ';') s WHERE LOWER(LTRIM(RTRIM(s.value))) = LOWER(c.name)) THEN 0
             ELSE 1

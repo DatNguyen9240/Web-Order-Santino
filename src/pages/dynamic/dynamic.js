@@ -242,6 +242,13 @@ var DynamicPage = (function () {
           f.showInAdd = !(f.showInAdd === false || f.showInAdd === 0 || String(f.showInAdd) === '0' || String(f.showInAdd) === 'false');
           f.showInEdit = !(f.showInEdit === false || f.showInEdit === 0 || String(f.showInEdit) === '0' || String(f.showInEdit) === 'false');
           f.showInGrid = !(f.showInGrid === false || f.showInGrid === 0 || String(f.showInGrid) === '0' || String(f.showInGrid) === 'false');
+
+          if (f.name && f.name.toLowerCase() === 'isweb') {
+            f.showInAdd = false;
+            f.showInEdit = false;
+            f.showInGrid = false;
+          }
+
           f.isReadOnlyEdit = (f.isReadOnlyEdit === true || f.isReadOnlyEdit === 1 || String(f.isReadOnlyEdit) === '1' || String(f.isReadOnlyEdit) === 'true');
           f.isReadOnlyAdd = (f.isReadOnlyAdd === true || f.isReadOnlyAdd === 1 || String(f.isReadOnlyAdd) === '1' || String(f.isReadOnlyAdd) === 'true');
 
@@ -1054,6 +1061,12 @@ var DynamicPage = (function () {
     schemaFields.forEach(function (f) {
       var input = document.getElementById('field-' + f.name);
       if (input) {
+        var wrapper = input.closest('.form-group');
+        if (wrapper) {
+          var showField = isEditMode ? f.showInEdit : f.showInAdd;
+          wrapper.style.display = showField ? '' : 'none';
+        }
+
         var hasDataSource = f.dataSource && f.dataSource.length > 0;
         var dsType = (f.dropdownType || '').toLowerCase().trim();
         var isDynamicLookup = hasDataSource && (
@@ -1111,7 +1124,7 @@ var DynamicPage = (function () {
           chkHasAcc.checked = true;
           chkHasAcc.disabled = true;
           fieldsDiv.style.display = 'grid';
-          
+
           if (usernameInput) {
             usernameInput.value = usernameVal;
             usernameInput.readOnly = true;
@@ -1469,7 +1482,7 @@ var DynamicPage = (function () {
         </div>
       `;
       document.body.appendChild(modal);
-      
+
       document.getElementById('btn-submit-reset-pw').addEventListener('click', submitResetPassword);
     }
 
