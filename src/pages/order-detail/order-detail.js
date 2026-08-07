@@ -280,35 +280,21 @@ var OrderDetailPage = (function () {
     try {
       var id = window._viewOrderId;
       if (!id && currentOrderData) {
-        id = currentOrderData.DocumentID;
+        id = currentOrderData.DocumentID || currentOrderData.so_ct;
       }
 
-      if (!id) {
+      if (!id && !currentOrderData) {
         alert('Không tìm thấy mã đơn hàng!');
         return;
       }
 
-      if (typeof OrderPrintService !== 'undefined' && typeof OrderPrintService.printBrowser === 'function') {
-        OrderPrintService.printBrowser(currentOrderData || id);
+      if (typeof OrderPrintService !== 'undefined' && typeof OrderPrintService.generate === 'function') {
+        await OrderPrintService.generate(currentOrderData || id);
       } else {
-        alert('Không tìm thấy chức năng in OrderPrintService.printBrowser!');
+        alert('Không tìm thấy dịch vụ in OrderPrintService.generate!');
       }
     } catch (err) {
-      console.error('Lỗi khi in đơn hàng:', err);
-      alert('Lỗi khi in đơn hàng: ' + err.message);
-    } finally {
-      if (btn) btn.disabled = false;
-    }
-  }
-
-
-  async function exportPdf() {
-    var btn = document.getElementById('btn-print-order');
-    if (btn) btn.disabled = true;
-    try {
-      await OrderPrintService.generate(currentOrderData, true);
-    } catch (err) {
-      console.error('Lỗi khi xuất PDF:', err);
+      console.error('Lỗi khi in/tạo đơn hàng:', err);
     } finally {
       if (btn) btn.disabled = false;
     }
@@ -316,8 +302,7 @@ var OrderDetailPage = (function () {
 
   return {
     render: render,
-    printOrder: printOrder,
-    exportPdf: exportPdf
+    printOrder: printOrder
   };
 })();
 

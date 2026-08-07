@@ -165,11 +165,18 @@ BEGIN
           AND ISNULL(subD.[Quantity], 0) > 0
         GROUP BY subD.[Size]
         ORDER BY 
-            -- Nhóm 1: Bắt đầu bằng chữ cái (S, M, L, XL...); Nhóm 2: Thuần số (28, 29, 30...); Nhóm 3: Size đặc biệt khác (0L, 0M, 2X...)
-            CASE 
-                WHEN subD.[Size] LIKE '[A-Za-z]%' THEN 1
-                WHEN ISNUMERIC(subD.[Size]) = 1 THEN 2
-                ELSE 3
+            CASE UPPER(RTRIM(LTRIM(subD.[Size])))
+                WHEN 'XXS' THEN 1  WHEN 'XS'  THEN 2
+                WHEN 'S'   THEN 3  WHEN '0S'  THEN 3
+                WHEN 'M'   THEN 4  WHEN '0M'  THEN 4
+                WHEN 'L'   THEN 5  WHEN '0L'  THEN 5
+                WHEN 'XL'  THEN 6  WHEN '0X'  THEN 6
+                WHEN '2XL' THEN 7  WHEN 'XXL' THEN 7 WHEN '2X' THEN 7
+                WHEN '3XL' THEN 8  WHEN 'XXXL' THEN 8 WHEN '3X' THEN 8
+                WHEN '4XL' THEN 9  WHEN '4X'  THEN 9
+                WHEN '5XL' THEN 10 WHEN '5X'  THEN 10
+                WHEN 'FREE' THEN 99 WHEN 'FREESIZE' THEN 99
+                ELSE 50
             END,
             CASE WHEN ISNUMERIC(subD.[Size]) = 1 THEN CAST(subD.[Size] AS DECIMAL(18,2)) ELSE 0 END,
             subD.[Size]
@@ -232,10 +239,18 @@ BEGIN
                               AND ISNULL(subD.[Quantity], 0) > 0
                             GROUP BY subD.[Size]
                             ORDER BY 
-                                CASE 
-                                    WHEN subD.[Size] LIKE '[A-Za-z]%' THEN 1
-                                    WHEN ISNUMERIC(subD.[Size]) = 1 THEN 2
-                                    ELSE 3
+                                CASE UPPER(RTRIM(LTRIM(subD.[Size])))
+                                    WHEN 'XXS' THEN 1  WHEN 'XS'  THEN 2
+                                    WHEN 'S'   THEN 3  WHEN '0S'  THEN 3
+                                    WHEN 'M'   THEN 4  WHEN '0M'  THEN 4
+                                    WHEN 'L'   THEN 5  WHEN '0L'  THEN 5
+                                    WHEN 'XL'  THEN 6  WHEN '0X'  THEN 6
+                                    WHEN '2XL' THEN 7  WHEN 'XXL' THEN 7 WHEN '2X' THEN 7
+                                    WHEN '3XL' THEN 8  WHEN 'XXXL' THEN 8 WHEN '3X' THEN 8
+                                    WHEN '4XL' THEN 9  WHEN '4X'  THEN 9
+                                    WHEN '5XL' THEN 10 WHEN '5X'  THEN 10
+                                    WHEN 'FREE' THEN 99 WHEN 'FREESIZE' THEN 99
+                                    ELSE 50
                                 END,
                                 CASE WHEN ISNUMERIC(subD.[Size]) = 1 THEN CAST(subD.[Size] AS DECIMAL(18,2)) ELSE 0 END,
                                 subD.[Size]
@@ -249,6 +264,22 @@ BEGIN
                             WHERE subD.[DocumentID] = @DocumentID
                               AND subCI.[ItemName2] = ci.[ItemName2]
                             GROUP BY subD.[Size]
+                            ORDER BY 
+                                CASE UPPER(RTRIM(LTRIM(subD.[Size])))
+                                    WHEN 'XXS' THEN 1  WHEN 'XS'  THEN 2
+                                    WHEN 'S'   THEN 3  WHEN '0S'  THEN 3
+                                    WHEN 'M'   THEN 4  WHEN '0M'  THEN 4
+                                    WHEN 'L'   THEN 5  WHEN '0L'  THEN 5
+                                    WHEN 'XL'  THEN 6  WHEN '0X'  THEN 6
+                                    WHEN '2XL' THEN 7  WHEN 'XXL' THEN 7 WHEN '2X' THEN 7
+                                    WHEN '3XL' THEN 8  WHEN 'XXXL' THEN 8 WHEN '3X' THEN 8
+                                    WHEN '4XL' THEN 9  WHEN '4X'  THEN 9
+                                    WHEN '5XL' THEN 10 WHEN '5X'  THEN 10
+                                    WHEN 'FREE' THEN 99 WHEN 'FREESIZE' THEN 99
+                                    ELSE 50
+                                END,
+                                CASE WHEN ISNUMERIC(subD.[Size]) = 1 THEN CAST(subD.[Size] AS DECIMAL(18,2)) ELSE 0 END,
+                                subD.[Size]
                             FOR JSON PATH
                         ) AS [chi_tiet_size]
                     FROM [dbo].[WEB_OrderDetailTbl] d

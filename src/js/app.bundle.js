@@ -1342,44 +1342,7 @@ var OrderPrintService = (function () {
   }
 
   function _sortSizes(sizes) {
-    var sizePriorityMap = {
-      'XXS': 1, 'XS': 2,
-      'S': 3, '0S': 3,
-      'M': 4, '0M': 4,
-      'L': 5, '0L': 5,
-      'XL': 6, '0X': 6,
-      '2XL': 7, 'XXL': 7, '2X': 7,
-      '3XL': 8, 'XXXL': 8, '3X': 8,
-      '4XL': 9, '4X': 9,
-      '5XL': 10, '5X': 10,
-      '6XL': 11, '6X': 11,
-      'FREE': 99, 'FREESIZE': 99
-    };
-    return sizes.sort(function (a, b) {
-      var strA = String(a || '').trim();
-      var strB = String(b || '').trim();
-
-      var upperA = strA.toUpperCase();
-      var upperB = strB.toUpperCase();
-
-      var prioA = sizePriorityMap[upperA];
-      var prioB = sizePriorityMap[upperB];
-
-      if (prioA !== undefined && prioB !== undefined) return prioA - prioB;
-      if (prioA !== undefined) return -1;
-      if (prioB !== undefined) return 1;
-
-      var numA = Number(strA);
-      var numB = Number(strB);
-      var isNumA = !isNaN(numA) && strA !== '';
-      var isNumB = !isNaN(numB) && strB !== '';
-
-      if (isNumA && isNumB) return numA - numB;
-      if (isNumA) return -1;
-      if (isNumB) return 1;
-
-      return strA.localeCompare(strB, undefined, { numeric: true, sensitivity: 'base' });
-    });
+    return sizes;
   }
 
   function _printData(order) {
@@ -1405,17 +1368,8 @@ var OrderPrintService = (function () {
       var kho = line.kho || line.Kho || line.BranchName || order.chi_nhanh || order.BranchID || '';
       var discount = line.chiet_khau || line.ChietKhau || 0;
 
-      // Extract size breakdown and populate sz<size> variables and sz_nameN / sz_qtyN dynamically (unlimited)
-      var sizeValues = {
-        sz28: '', sz29: '', sz30: '', sz31: '', sz32: '', sz33: '', sz34: '', sz35: '', sz36: '', sz37: '',
-        sz38: '', sz39: '', sz40: '', sz41: '', sz42: '', sz43: '', sz44: '', sz45: '', sz46: '', sz47: '', sz48: '',
-        szS: '', szM: '', szL: '', szXL: '', 'sz2XL': '', szXXL: '', 'sz3XL': '', szXXXL: '', 'sz4XL': '', 'sz5XL': '',
-        sz0S: '', sz0M: '', sz0L: '', sz0X: '', 'sz2X': '', 'sz3X': '', 'sz4X': '', 'sz5X': ''
-      };
-      
       var sizesArr = _parseSizeList(line);
       
-      var sizePos = 1;
       var sizeText = '';
       var formattedSizesList = [];
       var lineSizeItems = [];
@@ -1425,10 +1379,6 @@ var OrderPrintService = (function () {
           var sz = String(s.size || s.Size || s.ten_size || s.TenSize || '').trim();
           var q = Math.round(Number(s.qty || s.Qty || s.so_luong || s.Quantity || 0));
           if (sz && q > 0) {
-            sizeValues['sz' + sz] = q;
-            sizeValues['sz_name' + sizePos] = sz;
-            sizeValues['sz_qty' + sizePos] = q;
-            sizePos++;
             formattedSizesList.push({ sz: sz, q: q, size: sz, qty: q, Size: sz, Quantity: q });
             lineSizeItems.push(sz + '×' + q);
             orderTotalSizeMap[sz] = (orderTotalSizeMap[sz] || 0) + q;
@@ -1439,43 +1389,27 @@ var OrderPrintService = (function () {
       
       var sizeQtyText = lineSizeItems.join(' · ');
       var finalItemName = itemName;
-
       var color = line.mau || line.MauSac || line.Mau || line.mau_sac || '';
 
-      return Object.assign({
-        mau: color,
-        MauSac: color,
-        Mau: color
-      }, line, sizeValues, {
+      return Object.assign({}, line, {
         STT: stt,
-        stt: stt,
         Kho: kho,
-        kho: kho,
         MaHang: itemCode,
-        ma_hang: itemCode,
+        ten_hang_2: itemCode,
         TenHang: finalItemName,
-        ten_hang: finalItemName,
         ten_hang_goc: itemName,
-        chi_tiet_size_text: sizeText,
-        SizeText: sizeText,
-        size_qty_text: sizeQtyText,
-        size_breakdown: sizeQtyText,
-        sizes_list: formattedSizesList,
-        chi_tiet_size_list: formattedSizesList,
         DVT: unit,
-        dvt: unit,
-        don_vi_tinh: unit,
         DonGia: _money(price),
         don_gia: price,
-        don_gia_display: _money(price),
         SoLuong: qty,
         so_luong: qty,
-        so_luong_display: qty,
+        mau: color,
+        MauSac: color,
         ChietKhau: discount,
-        chiet_khau: discount,
         ThanhTien: _money(total),
         thanh_tien: total,
-        thanh_tien_display: _money(total)
+        size_qty_text: sizeQtyText,
+        chi_tiet_size: formattedSizesList
       });
     });
 
@@ -1488,31 +1422,22 @@ var OrderPrintService = (function () {
       NgayLap: order.NgayLap || order.ngay_ct || order.DocumentDate || '',
       ngay_ct: order.ngay_ct || order.NgayLap || order.DocumentDate || '',
       TenKhachHang: order.TenKhachHang || order.kh_ten || order.khach_hang || order.ObjectName || '',
-      kh_ten: order.kh_ten || order.TenKhachHang || order.ObjectName || '',
-      khach_hang: order.khach_hang || order.TenKhachHang || order.ObjectName || '',
       MaKH: order.MaKH || order.ma_kh || order.ObjectID || '',
-      ma_kh: order.ma_kh || order.MaKH || order.ObjectID || '',
       DiaChi: order.DiaChi || order.dia_chi || order.diachi || order.Address || '',
-      dia_chi: order.dia_chi || order.DiaChi || order.Address || '',
       SDT: order.SDT || order.sdt || order.Phone || '',
-      sdt: order.sdt || order.SDT || order.Phone || '',
       DienGiai: order.DienGiai || order.ghi_chu || order.dien_giai || order.Memo || '',
-      ghi_chu: order.ghi_chu || order.DienGiai || order.Memo || '',
-      dien_giai: order.dien_giai || order.DienGiai || order.Memo || '',
       
       TongTienHang: _money(totalMoney),
-      total_money: totalMoney,
-      total_money_display: _money(totalMoney),
       TienChietKhau: _money(order.TienChietKhau || 0),
       TienSauChietKhau: _money(order.TienSauChietKhau || totalMoney),
-      ChietKhauKhac: order.ChietKhauKhac || 0,
+      ChietKhauKhac: _money(order.ChietKhauKhac || 0),
       TongThanhToan: _money(order.TongThanhToan || totalMoney),
       TongSoLuong: totalQty,
-      total_qty: totalQty,
+      TienBangChu: order.TienBangChu || order.bang_chu || '',
+      tong_theo_size: order.tong_theo_size || order.tong_size_text || '',
 
       ChiTietDonHang: formattedLines,
-      lines: formattedLines,
-      print_items: formattedLines
+      lines: formattedLines
     });
 
     return payload;
@@ -1553,10 +1478,14 @@ var OrderPrintService = (function () {
             console.warn('[OrderPrintService] Error parsing JsonPayload:', e);
           }
         }
-        if (!apiData) {
-          apiData = record;
+        if (apiData) {
+          // SQL Server đã xử lý hoàn chỉnh JsonPayload (đọc số tiền, nhóm size, format tiền)
+          // Sử dụng trực tiếp dữ liệu từ SQL để đạt hiệu năng tối đa
+          if (!apiData.lines && apiData.ChiTietDonHang) apiData.lines = apiData.ChiTietDonHang;
+          if (!apiData.ChiTietDonHang && apiData.lines) apiData.ChiTietDonHang = apiData.lines;
+          return Object.assign({}, baseOrderObj, apiData);
         }
-        return _printData(Object.assign({}, baseOrderObj, apiData));
+        return _printData(Object.assign({}, baseOrderObj, record));
       }
       return _printData(baseOrderObj);
     }).catch(function (err) {
@@ -1565,7 +1494,7 @@ var OrderPrintService = (function () {
     });
   }
 
-  function generate(order, convertToPdf) {
+  function generate(order) {
     var config = _documentConfig();
     var baseApi = config && config.BASE_API;
     var template = config && config.ORDER_TEMPLATE;
@@ -1591,7 +1520,7 @@ var OrderPrintService = (function () {
           templateType: template,
           outputFileName: 'Phieu_dat_hang_' + _safeFilePart(finalPayload.SoPhieu || docId),
           rowData: finalPayload,
-          convertToPdf: !!convertToPdf
+          convertToPdf: false
         })
       });
     })
@@ -1631,32 +1560,19 @@ var OrderPrintService = (function () {
           throw new Error('Server không trả về tập tin hợp lệ.');
         }
 
-        if (convertToPdf) {
-          var a = document.createElement('a');
-          a.href = downloadUrl;
-          a.target = '_blank';
-          a.rel = 'noopener';
-          a.download = fileName || 'Phieu_dat_hang.pdf';
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          _message('success', 'Tải PDF thành công!', 'File PDF đã được lưu về máy.');
-        } else {
-          var anchor = document.createElement('a');
-          anchor.href = downloadUrl;
-          anchor.target = '_blank';
-          anchor.rel = 'noopener';
-          anchor.download = fileName || 'Phieu_dat_hang.docx';
-          document.body.appendChild(anchor);
-          anchor.click();
-          anchor.remove();
-          _message('success', 'Đã tạo phiếu đặt hàng', 'File DOCX đang được tải xuống.');
-        }
+        var anchor = document.createElement('a');
+        anchor.href = downloadUrl;
+        anchor.target = '_blank';
+        anchor.rel = 'noopener';
+        anchor.download = fileName || 'Phieu_dat_hang.docx';
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        _message('success', 'Đã tạo phiếu đặt hàng', 'File DOCX đang được tải xuống.');
         return result;
       })
       .catch(function (err) {
-        var modeText = convertToPdf ? 'PDF' : 'DOCX';
-        _message('error', 'Không thể in ' + modeText, err.message || 'Không kết nối được Document Server.');
+        _message('error', 'Không thể tạo file Word DOCX', err.message || 'Không kết nối được Document Server.');
         throw err;
       });
   }
@@ -1756,12 +1672,14 @@ var OrderPrintService = (function () {
         }
         
         totalQtyAll += lineQty;
-        var rawPrice = line.UnitPrice !== undefined ? line.UnitPrice : line.don_gia;
-        var price = typeof rawPrice === 'string' ? parseFloat(rawPrice.replace(/,/g, '')) : (rawPrice || 0);
-        var amount = lineQty * price;
+        var rawPrice = line.DonGia || line.don_gia || line.UnitPrice;
+        var price = _parseMoney(rawPrice);
+        var amount = (line.ThanhTien !== undefined && line.ThanhTien !== null && line.ThanhTien !== '') 
+          ? _parseMoney(line.ThanhTien) 
+          : (lineQty * price);
         totalMoneyAll += amount;
         
-        var displayAmount = (typeof Utils !== 'undefined' && Utils.formatMoney) ? Utils.formatMoney(amount) : amount.toLocaleString('en-US');
+        var displayAmount = (line.ThanhTien && String(line.ThanhTien).trim()) ? line.ThanhTien : _money(amount);
         
         return '<tr>' +
           '<td>' +
@@ -1778,7 +1696,7 @@ var OrderPrintService = (function () {
       }).join('');
       
       // 5. Build Table Footer
-      var displayTotalMoney = (typeof Utils !== 'undefined' && Utils.formatMoney) ? Utils.formatMoney(totalMoneyAll) : totalMoneyAll.toLocaleString('en-US');
+      var displayTotalMoney = finalPayload.TongTienHang || finalPayload.TongThanhToan || _money(totalMoneyAll);
       var footerHtml = '<tr class="total-row">' +
         '<td colspan="2" class="text-right">Tổng cộng:</td>';
       uniqueSizes.forEach(function (sz) {
@@ -1851,6 +1769,33 @@ var OrderPrintService = (function () {
         '      <tfoot>' + footerHtml + '</tfoot>',
         '    </table>',
         '  </div>',
+        '  <div style="border: 1px solid #000; border-top: none; padding: 6px 8px; font-size: 12.5px; font-weight: bold; background: #fff; margin-bottom: 12px;">',
+        '    Tổng theo size: <span style="font-weight: normal;">' + (finalPayload.tong_theo_size || '—') + '</span>',
+        '  </div>',
+        '  <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 13px; line-height: 1.6;">',
+        '    <tr>',
+        '      <td style="vertical-align: top; width: 55%;">',
+        '        <div style="font-weight: bold;">Tổng số lượng: <span style="font-weight: normal;">' + totalQtyAll + ' sản phẩm</span></div>',
+        '        <div style="font-style: italic; color: #333; margin-top: 4px;">Bằng chữ: ' + (finalPayload.TienBangChu || '—') + '</div>',
+        '      </td>',
+        '      <td style="vertical-align: top; width: 45%; text-align: right; line-height: 1.5;">',
+        '        <div>Tổng tiền hàng: <span style="font-weight: bold;">' + displayTotalMoney + ' đ</span></div>',
+        '        <div>Chiết khấu: <span style="font-weight: bold;">' + (finalPayload.TienChietKhau || '0') + ' đ</span></div>',
+        '        <div>Chiết khấu khác: <span style="font-weight: bold;">' + (finalPayload.ChietKhauKhac || '0') + ' đ</span></div>',
+        '        <div style="border-top: 1px solid #000; margin: 6px 0 4px auto; width: 75%;"></div>',
+        '        <div style="font-size: 14px; font-weight: bold;">TỔNG THANH TOÁN: ' + (finalPayload.TongThanhToan || displayTotalMoney) + ' đ</div>',
+        '      </td>',
+        '    </tr>',
+        '  </table>',
+        '  <table style="width: 100%; text-align: center; margin-top: 35px; font-size: 13px; line-height: 1.4;">',
+        '    <tr>',
+        '      <td style="width: 20%; vertical-align: top;"><span style="font-weight: bold;">Người nhận</span><br><span style="font-style: italic; font-size: 11px;">(Ký / họ tên)</span></td>',
+        '      <td style="width: 20%; vertical-align: top;"><span style="font-weight: bold;">Người giao</span><br><span style="font-style: italic; font-size: 11px;">(Ký / họ tên)</span></td>',
+        '      <td style="width: 20%; vertical-align: top;"><span style="font-weight: bold;">Thủ kho</span><br><span style="font-style: italic; font-size: 11px;">(Ký / họ tên)</span></td>',
+        '      <td style="width: 20%; vertical-align: top;"><span style="font-weight: bold;">Kế toán</span><br><span style="font-style: italic; font-size: 11px;">(Ký / họ tên)</span></td>',
+        '      <td style="width: 20%; vertical-align: top;"><span style="font-weight: bold;">Thủ trưởng</span><br><span style="font-style: italic; font-size: 11px;">(Ký / họ tên)</span></td>',
+        '    </tr>',
+        '  </table>',
         '</div>'
       ].join('\n');
       
