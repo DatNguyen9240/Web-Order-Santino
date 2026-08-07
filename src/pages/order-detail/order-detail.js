@@ -288,43 +288,8 @@ var OrderDetailPage = (function () {
         return;
       }
 
-      var printData = null;
-      try {
-        const queryObj = { Loai: 'InDonHang', TimKiem: id, DocumentID: id };
-        const params = { q: JSON.stringify(queryObj), _t: Date.now() };
-        const res = await Http.get(API_CONFIG.ENDPOINTS.CATEGORIES.LIST, params);
-        var record = null;
-        if (res && res.records && res.records.length > 0) record = res.records[0];
-        else if (res && res.JsonPayload) record = res;
-        else if (Array.isArray(res) && res.length > 0) record = res[0];
-
-        if (record) {
-          if (record.JsonPayload) {
-            printData = typeof record.JsonPayload === 'string' ? JSON.parse(record.JsonPayload) : record.JsonPayload;
-          } else {
-            printData = record;
-          }
-        }
-      } catch (apiErr) {
-        console.warn('Không gọi được API_InDonHang riêng, sử dụng dữ liệu trang:', apiErr);
-      }
-
-      var rowDataPayload = printData || {
-        SoPhieu: currentOrderData.DocumentID || '',
-        NgayLap: currentOrderData.DocumentDate || '',
-        TenKhachHang: currentOrderData.ObjectName || '',
-        MaKH: currentOrderData.ObjectID || '',
-        DiaChi: currentOrderData.Address || '',
-        SDT: currentOrderData.Phone || '',
-        DienGiai: currentOrderData.Memo || currentOrderData.Notes || '',
-        TongSoLuong: currentOrderData.TotalQuantity || 0,
-        TongTienHang: currentOrderData.BaseTotal || 0,
-        TongThanhToan: currentOrderData.BaseTotal || 0,
-        ChiTietDonHang: currentOrderData.print_items || currentOrderData.Lines || []
-      };
-
       if (typeof OrderPrintService !== 'undefined' && typeof OrderPrintService.printBrowser === 'function') {
-        OrderPrintService.printBrowser(rowDataPayload);
+        OrderPrintService.printBrowser(currentOrderData || id);
       } else {
         alert('Không tìm thấy chức năng in OrderPrintService.printBrowser!');
       }
