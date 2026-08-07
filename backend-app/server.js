@@ -330,41 +330,7 @@ app.post('/api/documents/generate', async (req, res) => {
         const host = req.get('host') || `localhost:${PORT}`;
         const fileUrl = `${protocol}://${host}/output/${finalFileName}`;
 
-        // Intercept for dynamic matrix print template
-        if (templateType === 'In Don dat hang.docx') {
-            console.log('[GENERATE] 🚀 Detected Santino order printing. Running Python Dynamic Matrix engine.');
-            
-            const tempJsonPath = path.join(__dirname, `temp_${Date.now()}.json`);
-            fs.writeFileSync(tempJsonPath, JSON.stringify(dataMap, null, 2), 'utf8');
-
-            const pythonScriptPath = path.join(__dirname, 'generate_docx_matrix.py');
-            
-            try {
-                let pythonCmd = 'python3';
-                try {
-                    execSync('python3 --version', { stdio: 'ignore' });
-                } catch (e) {
-                    try {
-                        execSync('python --version', { stdio: 'ignore' });
-                        pythonCmd = 'python';
-                    } catch (e2) {
-                        pythonCmd = '"C:\\Users\\XinWei\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"';
-                    }
-                }
-                console.log(`[GENERATE] Running python command: ${pythonCmd} "${pythonScriptPath}" "${tempJsonPath}" "${outputPath}"`);
-                execSync(`${pythonCmd} "${pythonScriptPath}" "${tempJsonPath}" "${outputPath}"`);
-                
-                try { fs.copyFileSync(outputPath, uploadsPath); } catch (e) {}
-                try { fs.unlinkSync(tempJsonPath); } catch (e) {}
-
-                console.log(`[GENERATE] ✅ Created matrix docx: ${finalFileName}`);
-                generated = true;
-            } catch (pyErr) {
-                console.error('[GENERATE] ❌ Lỗi chạy Python engine:', pyErr.message);
-                try { fs.unlinkSync(tempJsonPath); } catch (e) {}
-                // Fallback to normal docxtemplater below if Python fails
-            }
-        }
+        // Dynamic matrix script intercept removed to preserve custom Word template design in 'In Don dat hang.docx'
 
         if (!generated) {
             // Tìm đường dẫn file template trong samples/
