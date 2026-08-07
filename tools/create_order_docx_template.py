@@ -36,6 +36,19 @@ def set_cell_margins(cell, top=30, start=60, bottom=30, end=60):
         node.set(qn('w:w'), str(value))
         node.set(qn('w:type'), 'dxa')
 
+def set_cell_top_border(cell, color='AAAAAA', size='8'):
+    tc_pr = cell._tc.get_or_add_tcPr()
+    tc_borders = tc_pr.first_child_found_in('w:tcBorders')
+    if tc_borders is None:
+        tc_borders = OxmlElement('w:tcBorders')
+        tc_pr.append(tc_borders)
+    top = OxmlElement('w:top')
+    top.set(qn('w:val'), 'single')
+    top.set(qn('w:sz'), str(size))
+    top.set(qn('w:space'), '0')
+    top.set(qn('w:color'), color)
+    tc_borders.append(top)
+
 def set_table_borders(table, color='D0D0D0', size='4'):
     tbl_pr = table._tbl.tblPr
     borders = tbl_pr.first_child_found_in('w:tblBorders')
@@ -210,17 +223,17 @@ def main():
     
     p00 = cell_r0c0.paragraphs[0]
     p00.paragraph_format.line_spacing = 1.05
-    p00.add_run('KHÁCH HÀNG  ').bold = True
-    set_font(p00.runs[0], size=8.5, color=(90, 90, 90))
-    p00.add_run('{TenKhachHang}').bold = True
-    set_font(p00.runs[1], size=8.5, color=(17, 17, 17))
+    r00_lbl = p00.add_run('KHÁCH HÀNG  ')
+    set_font(r00_lbl, size=8.5, bold=True, color=(90, 90, 90))
+    r00_val = p00.add_run('{TenKhachHang}')
+    set_font(r00_val, size=8.5, bold=True, color=(17, 17, 17))
 
     p01 = cell_r0c1.paragraphs[0]
     p01.paragraph_format.line_spacing = 1.05
-    p01.add_run('MÃ KHÁCH HÀNG  ').bold = True
-    set_font(p01.runs[0], size=8.5, color=(90, 90, 90))
-    p01.add_run('{MaKH}').bold = True
-    set_font(p01.runs[1], size=8.5, color=(17, 17, 17))
+    r01_lbl = p01.add_run('MÃ KHÁCH HÀNG  ')
+    set_font(r01_lbl, size=8.5, bold=True, color=(90, 90, 90))
+    r01_val = p01.add_run('{MaKH}')
+    set_font(r01_val, size=8.5, bold=True, color=(17, 17, 17))
 
     # Row 1: ĐỊA CHỈ & SỐ ĐIỆN THOẠI
     cell_r1c0 = info_table.rows[1].cells[0]
@@ -232,19 +245,19 @@ def main():
 
     p10 = cell_r1c0.paragraphs[0]
     p10.paragraph_format.line_spacing = 1.05
-    p10.add_run('ĐỊA CHỈ  ').bold = True
-    set_font(p10.runs[0], size=8.5, color=(90, 90, 90))
-    p10.add_run('{DiaChi}').bold = False
-    set_font(p10.runs[1], size=8.5, color=(17, 17, 17))
+    r10_lbl = p10.add_run('ĐỊA CHỈ  ')
+    set_font(r10_lbl, size=8.5, bold=True, color=(90, 90, 90))
+    r10_val = p10.add_run('{DiaChi}')
+    set_font(r10_val, size=8.5, bold=False, color=(17, 17, 17))
 
     p11 = cell_r1c1.paragraphs[0]
     p11.paragraph_format.line_spacing = 1.05
-    p11.add_run('SỐ ĐIỆN THOẠI  ').bold = True
-    set_font(p11.runs[0], size=8.5, color=(90, 90, 90))
-    p11.add_run('{SDT}').bold = True
-    set_font(p11.runs[1], size=8.5, color=(17, 17, 17))
+    r11_lbl = p11.add_run('SỐ ĐIỆN THOẠI  ')
+    set_font(r11_lbl, size=8.5, bold=True, color=(90, 90, 90))
+    r11_val = p11.add_run('{SDT}')
+    set_font(r11_val, size=8.5, bold=True, color=(17, 17, 17))
 
-    # Row 2: Merged DIỄN GIẢI across 2 columns
+    # Row 2: Merged DIỄN GIẢI across 2 columns (với dấu 2 chấm DIỄN GIẢI:)
     cell_r2c0 = info_table.rows[2].cells[0]
     cell_r2c1 = info_table.rows[2].cells[1]
     cell_r2_merged = cell_r2c0.merge(cell_r2c1)
@@ -253,10 +266,10 @@ def main():
     
     p2 = cell_r2_merged.paragraphs[0]
     p2.paragraph_format.line_spacing = 1.05
-    p2.add_run('DIỄN GIẢI  ').bold = True
-    set_font(p2.runs[0], size=8.5, color=(90, 90, 90))
-    p2.add_run('{DienGiai}').bold = False
-    set_font(p2.runs[1], size=8.5, color=(17, 17, 17))
+    r20_lbl = p2.add_run('DIỄN GIẢI: ')
+    set_font(r20_lbl, size=8.5, bold=True, color=(90, 90, 90))
+    r20_val = p2.add_run('{DienGiai}')
+    set_font(r20_val, size=8.5, bold=False, color=(17, 17, 17))
 
     # Spacer before main table
     p_sp3 = doc.add_paragraph()
@@ -402,9 +415,13 @@ def main():
     set_font(r_val_ckk, size=8.5, bold=True, color=(17, 17, 17))
 
     # Row 3: Left: (blank) | Right: TỔNG THANH TOÁN: 63.270.000 đ
-    p_right3 = totals_table.rows[3].cells[1].paragraphs[0]
+    cell_tot_pay = totals_table.rows[3].cells[1]
+    set_cell_top_border(cell_tot_pay, color='AAAAAA', size='8')
+
+    p_right3 = cell_tot_pay.paragraphs[0]
     p_right3.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     p_right3.paragraph_format.line_spacing = 1.05
+    p_right3.paragraph_format.space_before = Pt(2)
     r_lbl_tt = p_right3.add_run('TỔNG THANH TOÁN:\n')
     set_font(r_lbl_tt, size=9.5, bold=True, color=(17, 17, 17))
     r_val_tt = p_right3.add_run('{TongThanhToan} đ')
