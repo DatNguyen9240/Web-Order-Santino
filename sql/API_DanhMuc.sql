@@ -159,6 +159,7 @@ BEGIN
             [ObjectName]   AS [name]
         FROM [dbo].[CF_ObjectTbl]
         WHERE ([isDisable] = 0 OR [isDisable] IS NULL)
+          AND ISNULL([isWeb], 0) = 1
           AND [ObjectID] IN (SELECT DISTINCT [ObjectID] FROM [dbo].[SY_User] WHERE [UserGroupID] IN ('DL', 'Ban dai ly'))
           AND (@TimKiem = '' OR [ObjectName] LIKE N'%' + @TimKiem + N'%' OR [ObjectID] LIKE N'%' + @TimKiem + N'%')
         ORDER BY [ObjectName];
@@ -250,6 +251,7 @@ BEGIN
             [ObjectGroupID] AS [group_id]
         FROM [dbo].[CF_ObjectTbl]
         WHERE ([isDisable] = 0 OR [isDisable] IS NULL)
+          AND ISNULL([isWeb], 0) = 1
           AND (@TimKiem = '' OR [ObjectName] LIKE N'%' + @TimKiem + N'%'
                              OR [ObjectID]   LIKE N'%' + @TimKiem + N'%'
                              OR [Phone]      LIKE N'%' + @TimKiem + N'%')
@@ -294,7 +296,8 @@ BEGIN
             [NhomCTKM],
             0 AS [IsHTLCu]
         FROM [dbo].[CF_CTKMTbl]
-        WHERE (@TimKiem = '' OR [CTKM] LIKE N'%' + @TimKiem + N'%' OR [Memo] LIKE N'%' + @TimKiem + N'%')
+        WHERE ISNULL([IsWeb], 0) = 1
+          AND (@TimKiem = '' OR [CTKM] LIKE N'%' + @TimKiem + N'%' OR [Memo] LIKE N'%' + @TimKiem + N'%')
         ORDER BY [CTKM];
         RETURN;
     END
@@ -524,14 +527,28 @@ END
 GO
 
 -- ── TEST trực tiếp (SSMS) ─────────────────────────────────────────────
--- Không lọc → ra hết nhân viên
-EXEC [dbo].[API_DanhMuc] @Loai = 'Employee';
-
--- Lọc trực tiếp bằng @TimKiem
-EXEC [dbo].[API_DanhMuc] @Loai = 'Employee', @TimKiem = N'ngu';
-
--- Admin xem chi tiết đơn hàng (thay 'MÃ_ĐƠN_HÀNG_Ở_ĐÂY' bằng mã thực tế)
+-- 1. Test gọi SP lấy danh sách Khách hàng có isWeb = 1 (mặc định Admin xem hết)
 EXEC [dbo].[API_DanhMuc] 
-    @Loai = 'OrderDetail', 
-    @TimKiem = 'MÃ_ĐƠN_HÀNG_Ở_ĐÂY', 
+    @Loai = 'Customer', 
+    @TimKiem = N'', 
+    @UserRole = 'Admin',
+    @Page = 1,
+    @PageSize = 20;
+
+-- 2. Test gọi SP tìm kiếm Khách hàng theo tên/mã/SĐT (ví dụ tìm từ 'Santino')
+EXEC [dbo].[API_DanhMuc] 
+    @Loai = 'Customer', 
+    @TimKiem = N'Santino', 
     @UserRole = 'Admin';
+
+-- 3. SELECT trực tiếp bảng CF_ObjectTbl kiểm tra cột isWeb
+SELECT 
+    [ObjectID], 
+    [ObjectName], 
+    [Phone], 
+    [Address], 
+    [isDisable], 
+    [isWeb]
+FROM [dbo].[CF_ObjectTbl]
+WHERE ([isDisable] = 0 OR [isDisable] IS NULL)
+  AND ISNULL([isWeb], 0) = 1;
