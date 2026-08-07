@@ -60,7 +60,7 @@ BEGIN
     LEFT JOIN #TempSizes ts ON t2.ItemName2 = ts.ItemName2 AND t2.MauSac = ts.MauSac
     LEFT JOIN dbo.CF_CategoryTbl cat WITH (NOLOCK) ON t2.CategoryID = cat.CategoryID
     LEFT JOIN dbo.CF_ItemThueTbl B WITH (NOLOCK) ON t2.ItemName2 = B.ItemName2
-    WHERE (@IsWebOnly = 0 OR (ISNULL(t2.isDisable, 0) = 0 AND t2.isWeb = 1))
+    WHERE (ISNULL(t2.isDisable, 0) = 0 AND t2.isWeb = 1)
       AND (@TimKiem IS NULL OR t2.ItemName2 LIKE '%' + @TimKiem + '%' OR t2.TenHangHoa LIKE N'%' + @TimKiem + '%')
     ORDER BY t2.ItemName2 ASC;
 

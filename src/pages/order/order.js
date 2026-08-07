@@ -318,26 +318,6 @@ var OrderPage = (function () {
       const deliveryPersons = [];
       const sources = [];
 
-      // ── Diễn giải (MỚI) ──────────────────────────────────────────
-      var wrapRemark = document.getElementById('wrap-remark');
-      if (wrapRemark && UIControls && UIControls.createDataComboBox) {
-        _combos.remark = UIControls.createDataComboBox({
-          id: 'o-remarks-search',
-          placeholder: '-- Chọn hoặc nhập diễn giải --',
-          headers: ['Diễn giải'],
-          data: remarks.map(function (r) { return [r.name]; }),
-          onSearch: function (q) {
-            return _searchCategory('Remark', q).then(function (list) {
-              return list.map(function (r) { return [r.name]; });
-            });
-          },
-          onSelect: function (row) {
-            document.getElementById('o-remarks').value = row[0];
-            _catValues.remarks = { id: row[0], name: row[0] };
-          }
-        });
-        wrapRemark.appendChild(_combos.remark);
-      }
 
       // ── Ghi chú (MỚI) ──────────────────────────────────────────
       var wrapNote = document.getElementById('wrap-note');

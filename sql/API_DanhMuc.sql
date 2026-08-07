@@ -305,14 +305,17 @@ BEGIN
     ELSE IF @Loai = 'SKU'
     BEGIN
         SELECT
-            [ItemID]    AS [id],
-            [ItemName]  AS [name],
-            [UnitPrice] AS [price]
-        FROM [dbo].[CF_ItemTbl]
-        WHERE (@TimKiem = '' 
-           OR [ItemID]   LIKE N'%' + @TimKiem + N'%'
-           OR [ItemName] LIKE N'%' + @TimKiem + N'%')
-        ORDER BY [ItemID];
+            sku.[ItemID]    AS [id],
+            sku.[ItemName]  AS [name],
+            sku.[UnitPrice] AS [price]
+        FROM [dbo].[CF_ItemTbl] sku
+        INNER JOIN [dbo].[CF_TenHang2Tbl] prod ON sku.[ItemName2] = prod.[ItemName2]
+        WHERE (sku.[isDisable] = 0 OR sku.[isDisable] IS NULL)
+          AND prod.[isWeb] = 1
+          AND (@TimKiem = '' 
+             OR sku.[ItemID]   LIKE N'%' + @TimKiem + N'%'
+             OR sku.[ItemName] LIKE N'%' + @TimKiem + N'%')
+        ORDER BY sku.[ItemID];
         RETURN;
     END
 
