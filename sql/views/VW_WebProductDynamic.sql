@@ -8,8 +8,20 @@ CREATE VIEW dbo.VW_WebProductDynamic
 AS
 SELECT
     product.*,
+    A.CategoryName,
+    B.ItemHD, 
+    B.ItemNameHD, 
+    B.VATPercent, 
+    B.ItemBanLeID, 
+    B.ItemBanLeName, 
+    B.ItemDaiLyID, 
+    B.ItemDaiLyName, 
+    B.ItemKhacID, 
+    B.ItemKhacName,
     sizeGroup.nhom_size
 FROM dbo.CF_TenHang2Tbl product
+LEFT JOIN dbo.CF_CategoryTbl A ON product.CategoryID = A.CategoryID
+LEFT JOIN dbo.CF_ItemThueTbl B ON product.ItemName2 = B.ItemName2
 OUTER APPLY
 (
     SELECT MAX(sizeConfig.NhomSize) AS nhom_size

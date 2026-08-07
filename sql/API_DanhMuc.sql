@@ -297,7 +297,7 @@ BEGIN
             0 AS [IsHTLCu]
         FROM [dbo].[CF_CTKMTbl]
         WHERE ISNULL([IsWeb], 0) = 1
-          AND (@TimKiem = '' OR [CTKM] LIKE N'%' + @TimKiem + N'%' OR [Memo] LIKE N'%' + @TimKiem + N'%')
+          AND (@TimKiem = '' OR [NhomCTKM] LIKE N'%' + @TimKiem + N'%')
         ORDER BY [CTKM];
         RETURN;
     END

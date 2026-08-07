@@ -458,7 +458,6 @@ var SalesVoucherPage = (function () {
       return { Success: 1, Message: 'Cập nhật phiếu bán hàng thành công (Offline Mode)' };
     }
   }
-
   async function _getProducts(q) {
     if (isMockMode) {
       if (!q) return MOCK_DB.products;
@@ -466,7 +465,12 @@ var SalesVoucherPage = (function () {
       return MOCK_DB.products.filter(p => p.ItemID.toLowerCase().includes(query) || p.ItemName.toLowerCase().includes(query));
     }
     try {
-      var res = await ProductService.getProducts(q);
+      var res;
+      if (typeof ProductService !== 'undefined' && ProductService.getProducts) {
+        res = await ProductService.getProducts(q);
+      } else {
+        res = await _httpGet(API_CONFIG.ENDPOINTS.PRODUCTS.LIST, { q: q });
+      }
       if (!res || res.length === 0) {
         return MOCK_DB.products.filter(p => p.ItemID.toLowerCase().includes(q.toLowerCase()) || p.ItemName.toLowerCase().includes(q.toLowerCase()));
       }
@@ -475,7 +479,6 @@ var SalesVoucherPage = (function () {
       return MOCK_DB.products.filter(p => p.ItemID.toLowerCase().includes(q.toLowerCase()) || p.ItemName.toLowerCase().includes(q.toLowerCase()));
     }
   }
-
   async function _httpGet(endpoint, params) {
     if (isMockMode) {
       return handleMockCall('GET', endpoint, params);

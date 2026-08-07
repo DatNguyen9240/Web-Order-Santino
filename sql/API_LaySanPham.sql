@@ -16,6 +16,10 @@ BEGIN
         SET @TimKiem = JSON_VALUE(@q, '$.TimKiem');
         IF LOWER(ISNULL(COALESCE(JSON_VALUE(@q, '$.isWeb'), JSON_VALUE(@q, '$.IsWebOnly'), JSON_VALUE(@q, '$.is_web')), '0')) IN ('1', 'true')
             SET @IsWebOnly = 1;
+    END
+    ELSE IF @q IS NOT NULL AND @q <> ''
+    BEGIN
+        SET @TimKiem = @q;
     END;
 
     SET @TimKiem = NULLIF(LTRIM(RTRIM(@TimKiem)), '');
@@ -38,6 +42,15 @@ BEGIN
         t2.*,
         cat.CategoryName,
         ts.nhom_size,
+        B.ItemHD, 
+        B.ItemNameHD, 
+        B.VATPercent, 
+        B.ItemBanLeID, 
+        B.ItemBanLeName, 
+        B.ItemDaiLyID, 
+        B.ItemDaiLyName, 
+        B.ItemKhacID, 
+        B.ItemKhacName,
         CASE WHEN @IsWebOnly = 1 THEN (
             SELECT DISTINCT Size FROM dbo.CF_ItemTbl ci WITH (NOLOCK)
             WHERE ci.ItemName2 = t2.ItemName2 AND ci.MauSac = t2.MauSac AND (ci.isDisable = 0 OR ci.isDisable IS NULL)
@@ -46,6 +59,7 @@ BEGIN
     FROM dbo.CF_TenHang2Tbl t2 WITH (NOLOCK)
     LEFT JOIN #TempSizes ts ON t2.ItemName2 = ts.ItemName2 AND t2.MauSac = ts.MauSac
     LEFT JOIN dbo.CF_CategoryTbl cat WITH (NOLOCK) ON t2.CategoryID = cat.CategoryID
+    LEFT JOIN dbo.CF_ItemThueTbl B WITH (NOLOCK) ON t2.ItemName2 = B.ItemName2
     WHERE (@IsWebOnly = 0 OR (ISNULL(t2.isDisable, 0) = 0 AND t2.isWeb = 1))
       AND (@TimKiem IS NULL OR t2.ItemName2 LIKE '%' + @TimKiem + '%' OR t2.TenHangHoa LIKE N'%' + @TimKiem + '%')
     ORDER BY t2.ItemName2 ASC;

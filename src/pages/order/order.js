@@ -889,7 +889,7 @@ var OrderPage = (function () {
         if (typeof ProductService !== 'undefined' && ProductService.getProducts) {
           prods = await ProductService.getProducts(val, true);
         } else {
-          var resP = await Http.get(API_CONFIG.ENDPOINTS.PRODUCTS.LIST, { q: val });
+          var resP = await Http.get(API_CONFIG.ENDPOINTS.PRODUCTS.LIST, { q: JSON.stringify({ TimKiem: val }) });
           prods = Array.isArray(resP) ? resP : (resP.records || resP.data || []);
         }
       } catch (pErr) {
