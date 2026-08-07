@@ -55,6 +55,49 @@ var OrderPrintService = (function () {
     if (typeof showToast === 'function') showToast(detail || title, type === 'success');
   }
 
+  function _parseSizeList(line) {
+    if (!line) return [];
+    var target = line.Size !== undefined ? line.Size 
+      : (line.chi_tiet_size !== undefined ? line.chi_tiet_size 
+      : (line.sizes !== undefined ? line.sizes : line.chi_tiet_size_list));
+    if (typeof target === 'string') {
+      try { return JSON.parse(target) || []; } catch (e) { return []; }
+    }
+    return Array.isArray(target) ? target : [];
+  }
+
+  function _sortSizes(sizes) {
+    var sizePriorityMap = {
+      'XXS': 1, 'XS': 2, 'S': 3, 'M': 4, 'L': 5, 'XL': 6,
+      '2XL': 7, 'XXL': 7, '3XL': 8, 'XXXL': 8, '4XL': 9, '5XL': 10, '6XL': 11, 'FREE': 99, 'FREESIZE': 99
+    };
+    return sizes.sort(function (a, b) {
+      var strA = String(a || '').trim();
+      var strB = String(b || '').trim();
+
+      var upperA = strA.toUpperCase();
+      var upperB = strB.toUpperCase();
+
+      var prioA = sizePriorityMap[upperA];
+      var prioB = sizePriorityMap[upperB];
+
+      if (prioA !== undefined && prioB !== undefined) return prioA - prioB;
+      if (prioA !== undefined) return -1;
+      if (prioB !== undefined) return 1;
+
+      var numA = Number(strA);
+      var numB = Number(strB);
+      var isNumA = !isNaN(numA) && strA !== '';
+      var isNumB = !isNaN(numB) && strB !== '';
+
+      if (isNumA && isNumB) return numA - numB;
+      if (isNumA) return -1;
+      if (isNumB) return 1;
+
+      return strA.localeCompare(strB, undefined, { numeric: true, sensitivity: 'base' });
+    });
+  }
+
   function _printData(order) {
     if (!order) return {};
     
@@ -66,14 +109,14 @@ var OrderPrintService = (function () {
     var orderTotalSizeMap = {};
 
     var formattedLines = rawLines.map(function (line, index) {
-      var price = _parseMoney(line.don_gia || line.UnitPrice || line.DonGia);
+      var price = _parseMoney(line.don_gia || line.UnitPrice || line.DonGia || line.don_gia_ban || 0);
       var qty = Number(line.so_luong || line.Quantity || line.SoLuong || 0);
       var rawTotal = line.thanh_tien || line.Amount || line.ThanhTien;
       var total = rawTotal !== undefined && rawTotal !== null ? _parseMoney(rawTotal) : (price * qty);
       var sttNum = Number(line.STT || line.stt || (index + 1));
       var stt = isNaN(sttNum) ? String(index + 1).padStart(2, '0') : String(sttNum).padStart(2, '0');
-      var itemName = line.ten_hang_goc || line.ten_hang || line.ItemName || line.TenHang || line.ten_hang_2 || '';
-      var itemCode = line.ma_hang || line.ItemID || line.MaHang || line.ten_hang_2 || '';
+      var itemName = line.ten_hang_goc || line.ten_hang || line.ItemName || line.TenHang || line.TenHangHoa || line.ten_hang_hoa || line.ten_hang_2 || '';
+      var itemCode = line.ma_hang || line.ItemID || line.MaHang || line.MaHangHoa || line.ma_hang_hoa || line.ten_hang_2 || '';
       var unit = line.dvt || line.don_vi_tinh || line.Unit || line.DVT || 'Chiếc';
       var kho = line.kho || line.Kho || line.BranchName || order.chi_nhanh || order.BranchID || '';
       var discount = line.chiet_khau || line.ChietKhau || 0;
@@ -84,16 +127,7 @@ var OrderPrintService = (function () {
         szS: '', szM: '', szL: '', szXL: '', 'sz2XL': '', szXXL: '', 'sz3XL': '', szXXXL: '', 'sz4XL': '', 'sz5XL': ''
       };
       
-      var sizesArr = [];
-      if (typeof line.Size === 'string') {
-        try { sizesArr = JSON.parse(line.Size); } catch (e) { }
-      } else if (Array.isArray(line.Size)) {
-        sizesArr = line.Size;
-      } else if (typeof line.chi_tiet_size === 'string') {
-        try { sizesArr = JSON.parse(line.chi_tiet_size); } catch (e) { }
-      } else if (Array.isArray(line.chi_tiet_size)) {
-        sizesArr = line.chi_tiet_size;
-      }
+      var sizesArr = _parseSizeList(line);
       
       var sizePos = 1;
       var sizeText = '';
@@ -120,7 +154,7 @@ var OrderPrintService = (function () {
       var sizeQtyText = lineSizeItems.join(' · ');
       var finalItemName = itemName;
 
-      var color = line.mau || line.MauSac || line.Mau || '';
+      var color = line.mau || line.MauSac || line.Mau || line.mau_sac || '';
 
       return Object.assign({
         mau: color,
@@ -374,20 +408,10 @@ var OrderPrintService = (function () {
       var uniqueSizes = [];
       var sizeMap = {};
       lines.forEach(function (line) {
-        var sizesArr = [];
-        if (typeof line.Size === 'string') {
-          try { sizesArr = JSON.parse(line.Size); } catch(e) {}
-        } else if (Array.isArray(line.Size)) {
-          sizesArr = line.Size;
-        } else if (typeof line.chi_tiet_size === 'string') {
-          try { sizesArr = JSON.parse(line.chi_tiet_size); } catch(e) {}
-        } else if (Array.isArray(line.chi_tiet_size)) {
-          sizesArr = line.chi_tiet_size;
-        }
-        
+        var sizesArr = _parseSizeList(line);
         if (Array.isArray(sizesArr)) {
           sizesArr.forEach(function (s) {
-            var sz = s.size || s.Size || s.ten_size || s.TenSize;
+            var sz = String(s.size || s.Size || s.ten_size || s.TenSize || '').trim();
             var q = parseInt(s.qty || s.Qty || s.so_luong || s.Quantity || 0);
             if (sz && q > 0) {
               if (!sizeMap[sz]) {
@@ -398,30 +422,6 @@ var OrderPrintService = (function () {
           });
         }
       });
-      
-      function _sortSizes(sizes) {
-        return sizes.sort(function (a, b) {
-          var strA = String(a || '').trim();
-          var strB = String(b || '').trim();
-
-          var isAlphaA = /^[A-Za-z]/.test(strA);
-          var isAlphaB = /^[A-Za-z]/.test(strB);
-
-          var numA = Number(strA);
-          var numB = Number(strB);
-          var isNumA = !isNaN(numA) && strA !== '';
-          var isNumB = !isNaN(numB) && strB !== '';
-
-          var groupA = isAlphaA ? 1 : (isNumA ? 2 : 3);
-          var groupB = isAlphaB ? 1 : (isNumB ? 2 : 3);
-
-          if (groupA !== groupB) return groupA - groupB;
-
-          if (isNumA && isNumB) return numA - numB;
-
-          return strA.localeCompare(strB, undefined, { numeric: true, sensitivity: 'base' });
-        });
-      }
       
       _sortSizes(uniqueSizes);
       
@@ -444,16 +444,7 @@ var OrderPrintService = (function () {
         var color = line.mau || line.MauSac || line.Mau || '—';
         
         var lineSizes = {};
-        var sizesArr = [];
-        if (typeof line.Size === 'string') {
-          try { sizesArr = JSON.parse(line.Size); } catch(e) {}
-        } else if (Array.isArray(line.Size)) {
-          sizesArr = line.Size;
-        } else if (typeof line.chi_tiet_size === 'string') {
-          try { sizesArr = JSON.parse(line.chi_tiet_size); } catch(e) {}
-        } else if (Array.isArray(line.chi_tiet_size)) {
-          sizesArr = line.chi_tiet_size;
-        }
+        var sizesArr = _parseSizeList(line);
         
         if (Array.isArray(sizesArr)) {
           sizesArr.forEach(function (s) {
@@ -472,6 +463,11 @@ var OrderPrintService = (function () {
           sizeTotals[sz] += q;
           return '<td class="text-center">' + (q > 0 ? q : '-') + '</td>';
         }).join('');
+        
+        if (uniqueSizes.length === 0 || lineQty === 0) {
+          var fallbackQty = Number(line.so_luong || line.Quantity || line.SoLuong || 0);
+          if (fallbackQty > 0) lineQty = fallbackQty;
+        }
         
         totalQtyAll += lineQty;
         var rawPrice = line.UnitPrice !== undefined ? line.UnitPrice : line.don_gia;
