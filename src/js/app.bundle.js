@@ -2364,10 +2364,10 @@ UIControls.createDataComboBox = function (options) {
   if (swatch) {
     var nativeValueDesc = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
     Object.defineProperty(input, 'value', {
-      get: function() {
+      get: function () {
         return nativeValueDesc.get.call(input);
       },
-      set: function(val) {
+      set: function (val) {
         nativeValueDesc.set.call(input, val);
         updateSwatchColor(val);
       }
@@ -2422,7 +2422,7 @@ UIControls.createDataComboBox = function (options) {
   btnAddNew.type = 'button';
   btnAddNew.className = 'dd-footer-add-btn';
   btnAddNew.innerHTML = '<span class="material-symbols-outlined">add</span> Thêm mới';
-  
+
   // Mặc định là ẩn, chỉ hiện khi có yêu cầu từ options
   btnAddNew.style.display = options.showAddNew ? 'flex' : 'none';
 
@@ -2440,7 +2440,7 @@ UIControls.createDataComboBox = function (options) {
   // Pagination Elements
   var currentPage = 1;
   var currentQuery = '';
-  
+
   var paginationWrapper = document.createElement('div');
   paginationWrapper.className = 'dd-pagination';
   paginationWrapper.style.display = 'none';
@@ -2465,12 +2465,12 @@ UIControls.createDataComboBox = function (options) {
   btnNext.style.cssText = 'border:1px solid var(--border); background:var(--surface); cursor:pointer; border-radius:6px; display:flex; align-items:center; justify-content:center; width:28px; height:28px; color:var(--muted); transition:all 0.2s;';
 
   // Hover effects
-  [btnPrev, btnNext].forEach(function(btn) {
-    btn.onmouseover = function() { this.style.borderColor = 'var(--primary)'; this.style.color = 'var(--primary)'; this.style.background = 'rgba(251, 191, 36, 0.05)'; };
-    btn.onmouseout = function() { this.style.borderColor = 'var(--border)'; this.style.color = 'var(--muted)'; this.style.background = 'var(--surface)'; };
+  [btnPrev, btnNext].forEach(function (btn) {
+    btn.onmouseover = function () { this.style.borderColor = 'var(--primary)'; this.style.color = 'var(--primary)'; this.style.background = 'rgba(251, 191, 36, 0.05)'; };
+    btn.onmouseout = function () { this.style.borderColor = 'var(--border)'; this.style.color = 'var(--muted)'; this.style.background = 'var(--surface)'; };
   });
 
-  btnPrev.addEventListener('click', function(e) {
+  btnPrev.addEventListener('click', function (e) {
     e.stopPropagation();
     if (currentPage > 1) {
       currentPage--;
@@ -2478,7 +2478,7 @@ UIControls.createDataComboBox = function (options) {
     }
   });
 
-  btnNext.addEventListener('click', function(e) {
+  btnNext.addEventListener('click', function (e) {
     e.stopPropagation();
     currentPage++;
     loadData(currentQuery, currentPage);
@@ -2510,7 +2510,7 @@ UIControls.createDataComboBox = function (options) {
       rows.forEach(function (row) {
         var dataRow = displayData[row.getAttribute('data-index')];
         var cellVal = dataRow[options.colFilterIndex || 0];
-        
+
         // Nếu là ô chọn màu sắc, chèn thêm chấm màu bên cạnh chữ
         if ((options.enableColorSwatch || (options.id && options.id.includes('MauSac'))) && cellVal) {
           var firstTd = row.querySelector('td');
@@ -2579,8 +2579,8 @@ UIControls.createDataComboBox = function (options) {
           lblPage.textContent = 'Trang 1 (' + fullData.length + ')';
           btnPrev.disabled = true;
           btnPrev.style.opacity = '0.5';
-          btnNext.disabled = (fullData.length < 200);
-          btnNext.style.opacity = (fullData.length < 200) ? '0.5' : '1';
+          btnNext.disabled = (fullData.length < 50);
+          btnNext.style.opacity = (fullData.length < 50) ? '0.5' : '1';
         }
         if (UIControls.utils) {
           UIControls.utils.computeDropdownPosition(container, dropdown);
@@ -2621,8 +2621,8 @@ UIControls.createDataComboBox = function (options) {
             lblPage.textContent = 'Trang ' + page + ' (' + result.length + ')';
             btnPrev.disabled = (page <= 1);
             btnPrev.style.opacity = (page <= 1) ? '0.5' : '1';
-            btnNext.disabled = (result.length < 200);
-            btnNext.style.opacity = (result.length < 200) ? '0.5' : '1';
+            btnNext.disabled = (result.length < 50);
+            btnNext.style.opacity = (result.length < 50) ? '0.5' : '1';
           }
           if (UIControls.utils) {
             UIControls.utils.computeDropdownPosition(container, dropdown);
@@ -2662,9 +2662,9 @@ UIControls.createDataComboBox = function (options) {
     }
     dropdown.classList.add('active');
     attachScrollListeners();
-    setTimeout(function () { 
+    setTimeout(function () {
       if (document.activeElement !== input) {
-        searchInput.focus(); 
+        searchInput.focus();
       }
     }, 50);
   }
@@ -2683,7 +2683,7 @@ UIControls.createDataComboBox = function (options) {
 
     if (typeof options.onSearch === 'function') {
       clearTimeout(_searchDebounce);
-      
+
       var hasTable = tableWrapper.querySelector('table');
       if (hasTable) {
         var overlay = tableWrapper.querySelector('.dd-loading-overlay');
@@ -6857,7 +6857,7 @@ var Router = (function () {
 
       var route = {
         path: path,
-        script: 'src/pages/dynamic/dynamic.js?v=20260722-2',
+        script: 'src/pages/dynamic/dynamic.js?v=20260806-1745',
         pageFn: 'DynamicPage',
         title: m.VN || m.MenuName || m.FormName || '',
         formName: m.FormName || m.formName || ''
