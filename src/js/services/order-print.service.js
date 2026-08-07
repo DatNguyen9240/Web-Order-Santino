@@ -63,13 +63,19 @@ var OrderPrintService = (function () {
       : (Array.isArray(order.lines) ? order.lines
       : (Array.isArray(order.print_items) ? order.print_items : [])));
 
+    var orderTotalSizeMap = {};
+
     var formattedLines = rawLines.map(function (line, index) {
       var price = _parseMoney(line.don_gia || line.UnitPrice || line.DonGia);
       var qty = Number(line.so_luong || line.Quantity || line.SoLuong || 0);
       var rawTotal = line.thanh_tien || line.Amount || line.ThanhTien;
       var total = rawTotal !== undefined && rawTotal !== null ? _parseMoney(rawTotal) : (price * qty);
-      var stt = line.STT || line.stt || (index + 1);
-      var itemName = line.ten_hang || line.ItemName || line.TenHang || line.ten_hang_2 || '';
+      var sttNum = Number(line.STT || line.stt || (index + 1));
+      var stt = isNaN(sttNum) ? String(index + 1).padStart(2, '0') : String(sttNum).padStart(2, '0');
+      var itemName = line.ten_hang_goc || line.ten_hang || line.ItemName || line.TenHang || line.ten_hang_2 || '';
+      if (itemName.indexOf(':') > 0) {
+        itemName = itemName.split(':')[0].trim();
+      }
       var itemCode = line.ma_hang || line.ItemID || line.MaHang || line.ten_hang_2 || '';
       var unit = line.dvt || line.don_vi_tinh || line.Unit || line.DVT || 'Chiếc';
       var kho = line.kho || line.Kho || line.BranchName || order.chi_nhanh || order.BranchID || '';
@@ -95,21 +101,27 @@ var OrderPrintService = (function () {
       var sizePos = 1;
       var sizeText = '';
       var formattedSizesList = [];
+      var lineSizeItems = [];
+
       if (Array.isArray(sizesArr) && sizesArr.length > 0) {
         sizeText = ' (Size: ' + sizesArr.map(function (s) {
-          var sz = String(s.size || s.Size || s.ten_size || '').trim();
-          var q = Number(s.qty || s.Qty || s.so_luong || 0);
+          var sz = String(s.size || s.Size || s.ten_size || s.TenSize || '').trim();
+          var q = Math.round(Number(s.qty || s.Qty || s.so_luong || s.Quantity || 0));
           if (sz && q > 0) {
             sizeValues['sz' + sz] = q;
             sizeValues['sz_name' + sizePos] = sz;
             sizeValues['sz_qty' + sizePos] = q;
             sizePos++;
             formattedSizesList.push({ sz: sz, q: q, size: sz, qty: q, Size: sz, Quantity: q });
+            lineSizeItems.push(sz + '×' + q);
+            orderTotalSizeMap[sz] = (orderTotalSizeMap[sz] || 0) + q;
           }
           return sz + '(' + q + ')';
         }).join(', ') + ')';
       }
-      var finalItemName = itemName + sizeText;
+      
+      var sizeQtyText = lineSizeItems.join(' · ');
+      var finalItemName = itemName;
 
       var color = line.mau || line.MauSac || line.Mau || '';
 
@@ -129,6 +141,8 @@ var OrderPrintService = (function () {
         ten_hang_goc: itemName,
         chi_tiet_size_text: sizeText,
         SizeText: sizeText,
+        size_qty_text: sizeQtyText,
+        size_breakdown: sizeQtyText,
         sizes_list: formattedSizesList,
         chi_tiet_size_list: formattedSizesList,
         DVT: unit,
