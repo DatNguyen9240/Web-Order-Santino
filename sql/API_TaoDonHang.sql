@@ -84,7 +84,6 @@ BEGIN
                 SELECT 1 FROM [dbo].[CF_ItemTbl] ci
                 WHERE ci.ItemName2 = JSON_VALUE(l.[value], '$.ten_hang_2')
                   AND ci.Size     = LTRIM(RTRIM(JSON_VALUE(sz.[value], '$.size')))
-                  AND ci.MauSac   = JSON_VALUE(l.[value], '$.mau')
             )
         )
         BEGIN
@@ -145,7 +144,6 @@ BEGIN
             (SELECT TOP 1 ci.ItemID FROM [dbo].[CF_ItemTbl] ci
              WHERE ci.ItemName2 = JSON_VALUE(l.[value], '$.ten_hang_2')
                AND ci.Size     = LTRIM(RTRIM(JSON_VALUE(sz.[value], '$.size')))
-               AND ci.MauSac   = JSON_VALUE(l.[value], '$.mau')
              ORDER BY ci.ItemID),
             JSON_VALUE(l.[value], '$.ten_hang'),
             LTRIM(RTRIM(JSON_VALUE(sz.[value], '$.size'))),

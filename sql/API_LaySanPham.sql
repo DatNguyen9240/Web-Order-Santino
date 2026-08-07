@@ -27,7 +27,7 @@ BEGIN
 
     -- Bảng tạm gom nhóm Size/Barcode
     SELECT 
-        ci.ItemName2, ci.MauSac,
+        ci.ItemName2,
         MAX(ns.NhomSize) nhom_size,
         MAX(ci.Unit) Unit,
         MAX(ci.BarCode) BarCode
@@ -35,7 +35,7 @@ BEGIN
     FROM dbo.CF_ItemTbl ci WITH (NOLOCK)
     LEFT JOIN dbo.CF_NhomSizeTbl ns WITH (NOLOCK) ON ci.Size = ns.Size
     WHERE ci.isDisable = 0 OR ci.isDisable IS NULL
-    GROUP BY ci.ItemName2, ci.MauSac;
+    GROUP BY ci.ItemName2;
 
     -- Truy vấn chính
     SELECT 
@@ -51,13 +51,13 @@ BEGIN
         B.ItemDaiLyName, 
         B.ItemKhacID, 
         B.ItemKhacName,
-        CASE WHEN @IsWebOnly = 1 THEN (
+        (
             SELECT DISTINCT Size FROM dbo.CF_ItemTbl ci WITH (NOLOCK)
-            WHERE ci.ItemName2 = t2.ItemName2 AND ci.MauSac = t2.MauSac AND (ci.isDisable = 0 OR ci.isDisable IS NULL)
+            WHERE ci.ItemName2 = t2.ItemName2 AND (ci.isDisable = 0 OR ci.isDisable IS NULL)
             FOR JSON PATH
-        ) END SizesJson
+        ) AS SizesJson
     FROM dbo.CF_TenHang2Tbl t2 WITH (NOLOCK)
-    LEFT JOIN #TempSizes ts ON t2.ItemName2 = ts.ItemName2 AND t2.MauSac = ts.MauSac
+    LEFT JOIN #TempSizes ts ON t2.ItemName2 = ts.ItemName2
     LEFT JOIN dbo.CF_CategoryTbl cat WITH (NOLOCK) ON t2.CategoryID = cat.CategoryID
     LEFT JOIN dbo.CF_ItemThueTbl B WITH (NOLOCK) ON t2.ItemName2 = B.ItemName2
     WHERE (ISNULL(t2.isDisable, 0) = 0 AND t2.isWeb = 1)

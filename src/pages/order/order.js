@@ -164,8 +164,9 @@ var OrderPage = (function () {
       var resSizes = (typeof ProductService !== 'undefined' && ProductService.getSizes)
         ? await ProductService.getSizes()
         : await Http.get(API_CONFIG.ENDPOINTS.SIZES.LIST);
-      if (Array.isArray(resSizes) && resSizes.length > 0) {
-        cachedSizes = resSizes;
+      var listSizes = Array.isArray(resSizes) ? resSizes : (resSizes && (resSizes.records || resSizes.data) ? (resSizes.records || resSizes.data) : []);
+      if (Array.isArray(listSizes) && listSizes.length > 0) {
+        cachedSizes = listSizes;
       }
     } catch (e) {
       console.warn('[OrderPage] Lỗi loadSizes:', e);
@@ -869,7 +870,7 @@ var OrderPage = (function () {
         if (typeof ProductService !== 'undefined' && ProductService.getProducts) {
           prods = await ProductService.getProducts(val, true);
         } else {
-          var resP = await Http.get(API_CONFIG.ENDPOINTS.PRODUCTS.LIST, { q: JSON.stringify({ TimKiem: val }) });
+          var resP = await Http.get(API_CONFIG.ENDPOINTS.PRODUCTS.LIST, { q: JSON.stringify({ TimKiem: val, isWeb: 1 }) });
           prods = Array.isArray(resP) ? resP : (resP.records || resP.data || []);
         }
       } catch (pErr) {
@@ -1014,16 +1015,20 @@ var OrderPage = (function () {
         var mappedNhomSize = prod.nhom_size;
 
         var sizes = [];
-        if (prod.sizes_json && prod.sizes_json !== 'null') {
+        var rawSizesJson = prod.SizesJson || prod.sizes_json || prod.SizesJSON || prod.sizesJson;
+        if (rawSizesJson && rawSizesJson !== 'null') {
           try {
-            var parsed = JSON.parse(prod.sizes_json);
+            var parsed = typeof rawSizesJson === 'string' ? JSON.parse(rawSizesJson) : rawSizesJson;
             if (parsed && Array.isArray(parsed)) {
-              var realSizes = parsed.map(function (s) { return s.Size; });
+              var realSizes = parsed.map(function (s) { return s.Size || s.size || s.ten_size; }).filter(Boolean);
               sizes = cachedSizes.filter(function (s) {
                 return realSizes.indexOf(s.size || s.Size || s.ten_size) !== -1;
               });
+              if (!sizes.length && realSizes.length) {
+                sizes = realSizes.map(function (sz, idx) { return { size: sz, ten_size: sz, stt: idx + 1 }; });
+              }
             }
-          } catch (e) { console.error('Lỗi parse sizes_json', e); }
+          } catch (e) { console.error('Lỗi parse SizesJson', e); }
         }
 
         sizes.sort(function (a, b) { return (a.stt || a.STT || 0) - (b.stt || b.STT || 0); });
@@ -1045,19 +1050,23 @@ var OrderPage = (function () {
     var prod = cachedProds[code];
     if (!prod) { showToast('Không tìm thấy sản phẩm ' + code, false); return; }
     if (orderRows.find(function (r) { return r.ten_hang_2 === code; })) { showToast('Sản phẩm đã có trong đơn', false); return; }
-    var mappedNhomSize = prod.nhom_size;
+    var mappedNhomSize = prod.nhom_size || prod.NhomSize;
 
     var sizes = [];
-    if (prod.sizes_json && prod.sizes_json !== 'null') {
+    var rawSizesJson = prod.SizesJson || prod.sizes_json || prod.SizesJSON || prod.sizesJson;
+    if (rawSizesJson && rawSizesJson !== 'null') {
       try {
-        var parsed = JSON.parse(prod.sizes_json);
+        var parsed = typeof rawSizesJson === 'string' ? JSON.parse(rawSizesJson) : rawSizesJson;
         if (parsed && Array.isArray(parsed)) {
-          var realSizes = parsed.map(function (s) { return s.Size; });
+          var realSizes = parsed.map(function (s) { return s.Size || s.size || s.ten_size; }).filter(Boolean);
           sizes = cachedSizes.filter(function (s) {
             return realSizes.indexOf(s.size || s.Size || s.ten_size) !== -1;
           });
+          if (!sizes.length && realSizes.length) {
+            sizes = realSizes.map(function (sz, idx) { return { size: sz, ten_size: sz, stt: idx + 1 }; });
+          }
         }
-      } catch (e) { console.error('Lỗi parse sizes_json', e); }
+      } catch (e) { console.error('Lỗi parse SizesJson', e); }
     }
 
     sizes.sort(function (a, b) { return (a.stt || a.STT || 0) - (b.stt || b.STT || 0); });
@@ -1089,10 +1098,14 @@ var OrderPage = (function () {
         var boxClass = isFilled ? 'size-box filled' : 'size-box';
         return '<div class="' + boxClass + '">' +
           '<div class="size-box-lbl">' + sz + '</div>' +
-          '<input type="number" inputmode="numeric" min="0" placeholder="0" value="' + qty + '" oninput="OrderPage.updateQty(' + ri + ',\'' + sz + '\',this)">' +
+          '<input type="number" inputmode="numeric" min="0" placeholder="0" value="' + qty + '" onkeydown="if([\'e\',\'E\',\'.\',\',\',\'+\',\'-\'].indexOf(event.key)!==-1) event.preventDefault();" oninput="this.value=this.value.replace(/[^0-9]/g,\'\'); OrderPage.updateQty(' + ri + ',\'' + sz + '\',this)">' +
           '</div>';
       }).join('');
       sizeRowsHtml += '</div>';
+
+      var nhomSizeStr = row.product.nhom_size || row.product.NhomSize || '';
+      var mauStr = row.product.MauSac || row.product.mau || row.product.Mau || 'Không màu';
+      var giaBan = row.product.UnitPrice != null ? parseFloat(row.product.UnitPrice) : (row.product.GiaBan != null ? parseFloat(row.product.GiaBan) : (row.product.don_gia || 0));
 
       return '<div class="card product-card">' +
         '<div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid var(--border-light); padding-bottom:12px; gap:8px;">' +
@@ -1101,7 +1114,7 @@ var OrderPage = (function () {
         '<div style="font-size: 18px; font-weight:800; color:var(--primary); word-break: break-word;">' + row.ten_hang_2 + '</div>' +
         badgeHtml +
         '</div>' +
-        '<div style="font-size: 14px; color:var(--muted);">' + (row.product.nhom_size || '') + ' | ' + (row.product.mau || 'Không màu') + ' | ' + Utils.formatMoney(row.product.don_gia || 0) + '</div>' +
+        '<div style="font-size: 14px; color:var(--muted);">' + (nhomSizeStr ? nhomSizeStr + ' | ' : '') + mauStr + ' | ' + Utils.formatMoney(giaBan) + '</div>' +
         '</div>' +
         '<div style="display:flex; gap:8px;">' +
         '<button class="btn-icon" onclick="OrderPage.removeRow(' + ri + ')" title="Xóa sản phẩm" style="color:var(--danger)"><span class="material-symbols-outlined">delete</span></button>' +
@@ -1129,7 +1142,15 @@ var OrderPage = (function () {
 
   function _updateTotal() {
     var qty = 0, money = 0;
-    orderRows.forEach(function (r) { Object.entries(r.quantities).forEach(function (e) { if (e[1] > 0) { qty += e[1]; money += e[1] * r.product.don_gia; } }); });
+    orderRows.forEach(function (r) {
+      var donGia = r.product.UnitPrice != null ? parseFloat(r.product.UnitPrice) : (r.product.GiaBan != null ? parseFloat(r.product.GiaBan) : (r.product.don_gia || 0));
+      Object.entries(r.quantities).forEach(function (e) {
+        if (e[1] > 0) {
+          qty += e[1];
+          money += e[1] * donGia;
+        }
+      });
+    });
     document.getElementById('total-qty').textContent = qty;
     document.getElementById('total-money').textContent = Utils.formatMoney(money);
     var oTongTien = document.getElementById('o-tong-tien');
@@ -1156,24 +1177,28 @@ var OrderPage = (function () {
       var chi_tiet_size = [];
       var total_qty = 0;
       var total_money = 0;
+      var donGia = row.product.UnitPrice != null ? parseFloat(row.product.UnitPrice) : (row.product.GiaBan != null ? parseFloat(row.product.GiaBan) : (row.product.don_gia || 0));
+      var mauStr = row.product.MauSac || row.product.mau || '';
+      var tenHangStr = row.product.TenHangHoa || row.product.ten_hang_hoa || '';
+      var nhomSizeStr = row.product.nhom_size || row.product.NhomSize || '';
 
       Object.entries(row.quantities).forEach(function (e) {
         var size = e[0], qty = parseInt(e[1]) || 0;
         if (qty > 0) {
           chi_tiet_size.push({ size: size, qty: qty });
           total_qty += qty;
-          total_money += qty * (row.product.don_gia || 0);
+          total_money += qty * donGia;
         }
       });
 
       if (total_qty > 0) {
         lines.push({
           ten_hang_2: row.ten_hang_2,
-          ten_hang: row.product.ten_hang_hoa,
-          nhom_size: row.product.nhom_size,
-          mau: row.product.mau,
+          ten_hang: tenHangStr,
+          nhom_size: nhomSizeStr,
+          mau: mauStr,
           so_luong: total_qty,
-          don_gia: row.product.don_gia,
+          don_gia: donGia,
           thanh_tien: total_money,
           ma_ctbh: ma_ctbh,
           ghi_chu: note,
@@ -1248,12 +1273,16 @@ var OrderPage = (function () {
  
       if (!hasQty) return ''; // Bỏ qua sản phẩm không có số lượng
  
-      var rowMoney = rowQty * (row.product.don_gia || 0);
+      var donGia = row.product.UnitPrice != null ? parseFloat(row.product.UnitPrice) : (row.product.GiaBan != null ? parseFloat(row.product.GiaBan) : (row.product.don_gia || 0));
+      var mauStr = row.product.MauSac || row.product.mau || '—';
+      var tenHangStr = row.product.TenHangHoa || row.product.ten_hang_hoa || '';
+
+      var rowMoney = rowQty * donGia;
       totalMoneyAll += rowMoney;
  
       return '<tr>' +
-        '<td><div class="product-name-container"><span class="product-code">' + row.ten_hang_2 + '</span><span class="product-desc">' + row.product.ten_hang_hoa + '</span></div></td>' +
-        '<td class="text-center">' + (row.product.mau || '—') + '</td>' +
+        '<td><div class="product-name-container"><span class="product-code">' + row.ten_hang_2 + '</span>' + (tenHangStr ? '<span class="product-desc">' + tenHangStr + '</span>' : '') + '</div></td>' +
+        '<td class="text-center">' + mauStr + '</td>' +
         rowCells +
         '<td class="text-center text-bold">' + rowQty + '</td>' +
         '<td class="text-right text-bold">' + Utils.formatMoney(rowMoney) + '</td>' +
