@@ -1343,8 +1343,17 @@ var OrderPrintService = (function () {
 
   function _sortSizes(sizes) {
     var sizePriorityMap = {
-      'XXS': 1, 'XS': 2, 'S': 3, 'M': 4, 'L': 5, 'XL': 6,
-      '2XL': 7, 'XXL': 7, '3XL': 8, 'XXXL': 8, '4XL': 9, '5XL': 10, '6XL': 11, 'FREE': 99, 'FREESIZE': 99
+      'XXS': 1, 'XS': 2,
+      'S': 3, '0S': 3,
+      'M': 4, '0M': 4,
+      'L': 5, '0L': 5,
+      'XL': 6, '0X': 6,
+      '2XL': 7, 'XXL': 7, '2X': 7,
+      '3XL': 8, 'XXXL': 8, '3X': 8,
+      '4XL': 9, '4X': 9,
+      '5XL': 10, '5X': 10,
+      '6XL': 11, '6X': 11,
+      'FREE': 99, 'FREESIZE': 99
     };
     return sizes.sort(function (a, b) {
       var strA = String(a || '').trim();
@@ -1398,8 +1407,10 @@ var OrderPrintService = (function () {
 
       // Extract size breakdown and populate sz<size> variables and sz_nameN / sz_qtyN dynamically (unlimited)
       var sizeValues = {
+        sz28: '', sz29: '', sz30: '', sz31: '', sz32: '', sz33: '', sz34: '', sz35: '', sz36: '', sz37: '',
         sz38: '', sz39: '', sz40: '', sz41: '', sz42: '', sz43: '', sz44: '', sz45: '', sz46: '', sz47: '', sz48: '',
-        szS: '', szM: '', szL: '', szXL: '', 'sz2XL': '', szXXL: '', 'sz3XL': '', szXXXL: '', 'sz4XL': '', 'sz5XL': ''
+        szS: '', szM: '', szL: '', szXL: '', 'sz2XL': '', szXXL: '', 'sz3XL': '', szXXXL: '', 'sz4XL': '', 'sz5XL': '',
+        sz0S: '', sz0M: '', sz0L: '', sz0X: '', 'sz2X': '', 'sz3X': '', 'sz4X': '', 'sz5X': ''
       };
       
       var sizesArr = _parseSizeList(line);
