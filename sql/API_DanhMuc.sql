@@ -159,7 +159,7 @@ BEGIN
             [ObjectName]   AS [name]
         FROM [dbo].[CF_ObjectTbl]
         WHERE ([isDisable] = 0 OR [isDisable] IS NULL)
-          AND ISNULL([isWeb], 0) = 1
+          AND ISNULL([isWeb], 0) = 1 AND ObjectGroupID <> 'CC'
           AND [ObjectID] IN (SELECT DISTINCT [ObjectID] FROM [dbo].[SY_User] WHERE [UserGroupID] IN ('DL', 'Ban dai ly'))
           AND (@TimKiem = '' OR [ObjectName] LIKE N'%' + @TimKiem + N'%' OR [ObjectID] LIKE N'%' + @TimKiem + N'%')
         ORDER BY [ObjectName];
@@ -251,7 +251,7 @@ BEGIN
             [ObjectGroupID] AS [group_id]
         FROM [dbo].[CF_ObjectTbl]
         WHERE ([isDisable] = 0 OR [isDisable] IS NULL)
-          AND ISNULL([isWeb], 0) = 1
+          AND ISNULL([isWeb], 0) = 1 and ObjectGroupID <> 'CC'
           AND (@TimKiem = '' OR [ObjectName] LIKE N'%' + @TimKiem + N'%'
                              OR [ObjectID]   LIKE N'%' + @TimKiem + N'%'
                              OR [Phone]      LIKE N'%' + @TimKiem + N'%')
@@ -551,4 +551,4 @@ SELECT
     [isWeb]
 FROM [dbo].[CF_ObjectTbl]
 WHERE ([isDisable] = 0 OR [isDisable] IS NULL)
-  AND ISNULL([isWeb], 0) = 1;
+  AND ISNULL([isWeb], 0) = 1 AND ObjectGroupID <> 'CC';

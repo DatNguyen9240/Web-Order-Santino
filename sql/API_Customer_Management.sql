@@ -107,7 +107,7 @@ BEGIN
     LEFT JOIN [dbo].[CF_EmployeeTbl] e ON c.[EmployeeID] = e.[EmployeeID]
     LEFT JOIN [dbo].[CF_BranchTbl] b ON c.[BranchID] = b.[BranchID]
     LEFT JOIN [dbo].[SY_User] u ON c.[ObjectID] = u.[ObjectID]
-    WHERE ISNULL(c.[isWeb], 0) = 1
+    WHERE ISNULL(c.[isWeb], 0) = 1 AND c.[ObjectGroupID] <> 'CC'
       AND (@TimKiem IS NULL OR @TimKiem = ''
            OR c.[ObjectID] LIKE '%' + @TimKiem + '%'
            OR c.[ObjectName] LIKE N'%' + @TimKiem + '%'
