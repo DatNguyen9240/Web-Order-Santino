@@ -3,12 +3,11 @@
 -- Create date: 2026-07-23
 -- Update date: 2026-08-07
 -- Description: Stored Procedure API lấy toàn bộ dữ liệu đơn hàng (Header & Detail) 
---              định dạng JSON cho Document Server để xuất file DOCX/PDF Santino.
---              Bổ sung fn_DocSoThanhChu, sắp xếp size chuẩn theo ma trận, 
---              bỏ số thập phân (.00) và format STT 2 chữ số (01, 02...).
+--              định dạng JSON cho Document Server xuất file DOCX/PDF Santino.
+--              Hoàn toàn ĐỘNG (Dynamic), không gắn cứng (hardcode) bất kỳ giá trị mẫu nào.
 -- =============================================
 
--- 1. Hàm đọc số thành chữ tiếng Việt
+-- 1. Hàm đọc số tiền thành chữ tiếng Việt hoàn toàn ĐỘNG (Dynamic)
 IF OBJECT_ID('[dbo].[fn_DocSoThanhChu]', 'FN') IS NOT NULL
     DROP FUNCTION [dbo].[fn_DocSoThanhChu];
 GO
@@ -18,40 +17,94 @@ RETURNS NVARCHAR(MAX)
 AS
 BEGIN
     IF @Number IS NULL OR @Number = 0 RETURN N'Không đồng';
-
+    
     DECLARE @Val BIGINT = ABS(@Number);
     IF @Val = 0 RETURN N'Không đồng';
 
     DECLARE @Result NVARCHAR(MAX) = N'';
-    DECLARE @Trien BIGINT, @Trieu BIGINT, @Nghin BIGINT, @Dong BIGINT;
+    
+    -- Khai báo bảng tra chữ số
+    DECLARE @ChuSo TABLE (Num INT, Name NVARCHAR(20));
+    INSERT INTO @ChuSo VALUES 
+    (0, N'không'), (1, N'một'), (2, N'hai'), (3, N'ba'), (4, N'bốn'),
+    (5, N'năm'), (6, N'sáu'), (7, N'bảy'), (8, N'tám'), (9, N'chín');
 
-    SET @Trien = @Val / 1000000000;
-    SET @Val   = @Val % 1000000000;
-    SET @Trieu = @Val / 1000000;
-    SET @Val   = @Val % 1000000;
-    SET @Nghin = @Val / 1000;
-    SET @Dong  = @Val % 1000;
+    DECLARE @Lop TABLE (LopID INT, Name NVARCHAR(20));
+    INSERT INTO @Lop VALUES 
+    (0, N''), (1, N'nghìn'), (2, N'triệu'), (3, N'tỷ'), (4, N'nghìn tỷ');
 
-    -- Helper đọc nhóm 3 số
-    DECLARE @ReadGroup TABLE (Val INT, Str NVARCHAR(200));
+    DECLARE @LopIndex INT = 0;
 
-    -- Đơn giản hóa chuỗi kết quả đọc số tiền
-    DECLARE @StrTrien NVARCHAR(100) = CASE WHEN @Trien > 0 THEN CAST(@Trien AS NVARCHAR) + N' tỷ' ELSE N'' END;
-    DECLARE @StrTrieu NVARCHAR(100) = CASE WHEN @Trieu > 0 THEN CAST(@Trieu AS NVARCHAR) + N' triệu' ELSE N'' END;
-    DECLARE @StrNghin NVARCHAR(100) = CASE WHEN @Nghin > 0 THEN CAST(@Nghin AS NVARCHAR) + N' nghìn' ELSE N'' END;
-    DECLARE @StrDong  NVARCHAR(100) = CASE WHEN @Dong > 0  THEN CAST(@Dong AS NVARCHAR) ELSE N'' END;
+    WHILE @Val > 0
+    BEGIN
+        DECLARE @Group INT = @Val % 1000;
+        IF @Group > 0
+        BEGIN
+            DECLARE @Tram INT = @Group / 100;
+            DECLARE @Chuc INT = (@Group % 100) / 10;
+            DECLARE @DonVi INT = @Group % 10;
+            DECLARE @ReadGroup NVARCHAR(MAX) = N'';
 
-    -- Chuyển số cơ bản sang chữ
-    -- Ví dụ với số tiền phổ biến:
-    IF @Number = 63270000
-        RETURN N'Sáu mươi ba triệu hai trăm bảy mươi nghìn đồng chẵn.';
+            IF @Tram > 0 OR @Val >= 1000
+            BEGIN
+                SELECT @ReadGroup = Name + N' trăm' FROM @ChuSo WHERE Num = @Tram;
+                IF @Chuc = 0 AND @DonVi > 0 SET @ReadGroup = @ReadGroup + N' lẻ';
+            END
 
-    -- Trả về chuỗi định dạng chung nếu là số khác
-    RETURN N'Sáu mươi ba triệu hai trăm bảy mươi nghìn đồng chẵn.';
+            IF @Chuc > 1
+            BEGIN
+                DECLARE @ChucName NVARCHAR(20);
+                SELECT @ChucName = Name FROM @ChuSo WHERE Num = @Chuc;
+                SET @ReadGroup = ISNULL(NULLIF(@ReadGroup, N''), N'') + N' ' + @ChucName + N' mươi';
+                
+                IF @DonVi = 1 SET @ReadGroup = @ReadGroup + N' mốt';
+                ELSE IF @DonVi = 5 SET @ReadGroup = @ReadGroup + N' lăm';
+                ELSE IF @DonVi > 0 
+                BEGIN
+                    DECLARE @DvName NVARCHAR(20);
+                    SELECT @DvName = Name FROM @ChuSo WHERE Num = @DonVi;
+                    SET @ReadGroup = @ReadGroup + N' ' + @DvName;
+                END
+            END
+            ELSE IF @Chuc = 1
+            BEGIN
+                SET @ReadGroup = ISNULL(NULLIF(@ReadGroup, N''), N'') + N' mười';
+                IF @DonVi = 1 SET @ReadGroup = @ReadGroup + N' một';
+                ELSE IF @DonVi = 5 SET @ReadGroup = @ReadGroup + N' lăm';
+                ELSE IF @DonVi > 0 
+                BEGIN
+                    DECLARE @DvName1 NVARCHAR(20);
+                    SELECT @DvName1 = Name FROM @ChuSo WHERE Num = @DonVi;
+                    SET @ReadGroup = @ReadGroup + N' ' + @DvName1;
+                END
+            END
+            ELSE IF @DonVi > 0
+            BEGIN
+                DECLARE @DvName2 NVARCHAR(20);
+                SELECT @DvName2 = Name FROM @ChuSo WHERE Num = @DonVi;
+                SET @ReadGroup = ISNULL(NULLIF(@ReadGroup, N''), N'') + N' ' + @DvName2;
+            END
+
+            DECLARE @LopName NVARCHAR(20);
+            SELECT @LopName = Name FROM @Lop WHERE LopID = @LopIndex;
+            IF @LopName <> N'' SET @ReadGroup = @ReadGroup + N' ' + @LopName;
+
+            SET @Result = LTRIM(RTRIM(@ReadGroup)) + N' ' + @Result;
+        END
+
+        SET @Val = @Val / 1000;
+        SET @LopIndex = @LopIndex + 1;
+    END
+
+    SET @Result = LTRIM(RTRIM(@Result));
+    IF LEN(@Result) > 0
+        SET @Result = UPPER(LEFT(@Result, 1)) + SUBSTRING(@Result, 2, LEN(@Result)) + N' đồng chẵn.';
+
+    RETURN @Result;
 END
 GO
 
--- 2. Stored Procedure API_InDonHang
+-- 2. Stored Procedure API_InDonHang (Hoàn toàn ĐỘNG)
 IF OBJECT_ID('[dbo].[API_InDonHang]', 'P') IS NOT NULL
 BEGIN
     DROP PROCEDURE [dbo].[API_InDonHang];
@@ -101,9 +154,10 @@ BEGIN
     LEFT JOIN [dbo].[CF_ObjectTbl] c ON h.[ObjectID] = c.[ObjectID]
     WHERE h.[DocumentID] = @DocumentID;
 
+    -- Đọc số tiền thành chữ tự động từ tổng tiền thực tế
     SET @TienBangChu = dbo.fn_DocSoThanhChu(@TongTienHang);
 
-    -- Tính chuỗi tổng theo size cho toàn đơn hàng với thứ tự ưu tiên chuẩn (XL -> Số -> 0L, 0M -> 2X, 3X)
+    -- Tính chuỗi tổng theo size tự động xếp thứ tự số & chữ tự nhiên (Natural Dynamic Sort)
     SELECT @TongTheoSize = STUFF((
         SELECT N' · ' + subD.[Size] + N'×' + CAST(CAST(SUM(subD.[Quantity]) AS INT) AS NVARCHAR)
         FROM [dbo].[WEB_OrderDetailTbl] subD
@@ -111,21 +165,8 @@ BEGIN
           AND ISNULL(subD.[Quantity], 0) > 0
         GROUP BY subD.[Size]
         ORDER BY 
-            CASE 
-                WHEN subD.[Size] IN ('S', 'M', 'L', 'XL', '2XL', 'XXL', '3XL', 'XXXL', '4XL', '5XL') THEN 1
-                WHEN ISNUMERIC(subD.[Size]) = 1 THEN 2
-                ELSE 3
-            END,
-            CASE 
-                WHEN subD.[Size] = 'S' THEN 1
-                WHEN subD.[Size] = 'M' THEN 2
-                WHEN subD.[Size] = 'L' THEN 3
-                WHEN subD.[Size] = 'XL' THEN 4
-                WHEN subD.[Size] IN ('2XL', 'XXL', '2X') THEN 5
-                WHEN subD.[Size] IN ('3XL', 'XXXL', '3X') THEN 6
-                WHEN ISNUMERIC(subD.[Size]) = 1 THEN CAST(subD.[Size] AS INT)
-                ELSE 99
-            END,
+            CASE WHEN ISNUMERIC(subD.[Size]) = 1 THEN 1 ELSE 0 END,
+            CASE WHEN ISNUMERIC(subD.[Size]) = 1 THEN CAST(subD.[Size] AS DECIMAL(18,2)) ELSE 0 END,
             subD.[Size]
         FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 3, N'');
 
@@ -162,21 +203,15 @@ BEGIN
                 -- Tính tổng số lượng
                 (SELECT CAST(ISNULL(SUM([Quantity]), 0) AS INT) FROM [dbo].[WEB_OrderDetailTbl] WHERE [DocumentID] = @DocumentID) AS [TongSoLuong],
 
-                -- Mảng danh sách chi tiết hàng hóa (ChiTietDonHang)
+                -- Mảng danh sách chi tiết hàng hóa (ChiTietDonHang động từ DB)
                 (
                     SELECT 
                         RIGHT('0' + CAST(ROW_NUMBER() OVER (ORDER BY MIN(ISNULL(NULLIF(d.[STT], 0), 999999))) AS VARCHAR(2)), 2) AS [STT],
                         MAX(ISNULL(b.[BranchName], h.[BranchID])) AS [Kho],
                         ci.[ItemName2]                            AS [ten_hang_2],
                         ci.[ItemName2]                            AS [MaHang],
-                        MAX(CASE 
-                            WHEN CHARINDEX(':', d.[ItemName]) > 0 THEN RTRIM(LTRIM(LEFT(d.[ItemName], CHARINDEX(':', d.[ItemName]) - 1))) 
-                            ELSE d.[ItemName] 
-                        END)                                      AS [TenHang],
-                        MAX(CASE 
-                            WHEN CHARINDEX(':', d.[ItemName]) > 0 THEN RTRIM(LTRIM(LEFT(d.[ItemName], CHARINDEX(':', d.[ItemName]) - 1))) 
-                            ELSE d.[ItemName] 
-                        END)                                      AS [ten_hang_goc],
+                        MAX(ISNULL(d.[ItemName], ci.[ItemName]))  AS [TenHang],
+                        MAX(ISNULL(d.[ItemName], ci.[ItemName]))  AS [ten_hang_goc],
                         MAX(i.[Unit])                             AS [DVT],
                         FORMAT(MAX(ISNULL(d.[UnitPrice], 0)), '#,0') AS [DonGia],
                         CAST(SUM(d.[Quantity]) AS INT)            AS [SoLuong],
@@ -192,21 +227,8 @@ BEGIN
                               AND ISNULL(subD.[Quantity], 0) > 0
                             GROUP BY subD.[Size]
                             ORDER BY 
-                                CASE 
-                                    WHEN subD.[Size] IN ('S', 'M', 'L', 'XL', '2XL', 'XXL', '3XL', 'XXXL', '4XL', '5XL') THEN 1
-                                    WHEN ISNUMERIC(subD.[Size]) = 1 THEN 2
-                                    ELSE 3
-                                END,
-                                CASE 
-                                    WHEN subD.[Size] = 'S' THEN 1
-                                    WHEN subD.[Size] = 'M' THEN 2
-                                    WHEN subD.[Size] = 'L' THEN 3
-                                    WHEN subD.[Size] = 'XL' THEN 4
-                                    WHEN subD.[Size] IN ('2XL', 'XXL', '2X') THEN 5
-                                    WHEN subD.[Size] IN ('3XL', 'XXXL', '3X') THEN 6
-                                    WHEN ISNUMERIC(subD.[Size]) = 1 THEN CAST(subD.[Size] AS INT)
-                                    ELSE 99
-                                END,
+                                CASE WHEN ISNUMERIC(subD.[Size]) = 1 THEN 1 ELSE 0 END,
+                                CASE WHEN ISNUMERIC(subD.[Size]) = 1 THEN CAST(subD.[Size] AS DECIMAL(18,2)) ELSE 0 END,
                                 subD.[Size]
                             FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 3, N'') AS [size_qty_text],
                         (

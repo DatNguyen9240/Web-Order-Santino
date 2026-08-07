@@ -13,8 +13,7 @@ OUTPUT_SAMPLES = ROOT / 'backend-app' / 'samples' / 'In Don dat hang.docx'
 OUTPUT_TEMPLATES = ROOT / 'docx-templates' / 'phieu-dat-hang.docx'
 LOGO = ROOT / 'images' / 'logo.png'
 
-# Font mặc định khớp chuẩn thiết kế giao diện (Segoe UI / Arial)
-DEFAULT_FONT = 'Segoe UI'
+DEFAULT_FONT = 'Times New Roman'
 
 def set_cell_shading(cell, fill):
     tc_pr = cell._tc.get_or_add_tcPr()
@@ -135,34 +134,34 @@ def main():
     if LOGO.exists():
         p_logo = logo_cell.paragraphs[0]
         p_logo.alignment = WD_ALIGN_PARAGRAPH.LEFT
-        p_logo.add_run().add_picture(str(LOGO), width=Cm(3.5))
+        p_logo.add_run().add_picture(str(LOGO), width=Cm(3.6))
     else:
         add_text(logo_cell, 'SANTINO', size=20, bold=True, color=(156, 107, 48), alignment=WD_ALIGN_PARAGRAPH.LEFT)
 
-    add_text(company_cell, 'CÔNG TY CP LSP VIỆT NAM', size=11, bold=True, color=(20, 20, 20), alignment=WD_ALIGN_PARAGRAPH.RIGHT)
+    add_text(company_cell, 'CÔNG TY CP LSP VIỆT NAM', size=11, bold=True, color=(0, 0, 0), alignment=WD_ALIGN_PARAGRAPH.RIGHT)
     
     p = company_cell.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     p.paragraph_format.space_after = Pt(0)
-    set_font(p.add_run('Số 48, Phố Lạc Trung, Q. Hai Bà Trưng, Hà Nội'), size=8.5, color=(100, 100, 100))
+    set_font(p.add_run('Số 48, Phố Lạc Trung, Q. Hai Bà Trưng, Hà Nội'), size=8.5, color=(80, 80, 80))
     
     p = company_cell.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     p.paragraph_format.space_after = Pt(0)
-    set_font(p.add_run('Tel: (024) 3204 9988  |  Fax: (024) 3215 1142'), size=8.5, color=(100, 100, 100))
+    set_font(p.add_run('Tel: (024) 3204 9988  |  Fax: (024) 3215 1142'), size=8.5, color=(80, 80, 80))
     
     p = company_cell.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     p.paragraph_format.space_after = Pt(0)
-    set_font(p.add_run('Email: info@santino.com.vn  |  www.santino.com.vn'), size=8.5, color=(100, 100, 100))
+    set_font(p.add_run('Email: info@santino.com.vn  |  www.santino.com.vn'), size=8.5, color=(80, 80, 80))
 
     # ==================== 2. TITLE ====================
     p_title = doc.add_paragraph()
     p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p_title.paragraph_format.space_before = Pt(4)
+    p_title.paragraph_format.space_before = Pt(6)
     p_title.paragraph_format.space_after = Pt(2)
     run_title = p_title.add_run('PHIẾU ĐẶT HÀNG')
-    set_font(run_title, size=16, bold=True, color=(17, 17, 17))
+    set_font(run_title, size=16, bold=True, color=(0, 0, 0))
 
     # Sub row: Date left/center, Document No boxed right
     sub_table = doc.add_table(rows=1, cols=2)
@@ -174,12 +173,12 @@ def main():
     date_cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
     doc_no_cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
     
-    add_text(date_cell, '{NgayLap}', size=9.5, italic=True, color=(80, 80, 80), alignment=WD_ALIGN_PARAGRAPH.CENTER)
+    add_text(date_cell, '{NgayLap}', size=9.5, italic=True, color=(60, 60, 60), alignment=WD_ALIGN_PARAGRAPH.CENTER)
     
     # Doc No with nice tan/gold shaded box
-    set_cell_shading(doc_no_cell, 'F4EFE5')
+    set_cell_shading(doc_no_cell, 'F4EFE4')
     set_cell_margins(doc_no_cell, top=40, bottom=40, start=80, end=80)
-    add_text(doc_no_cell, 'Số: {SoPhieu}', size=9.5, bold=True, color=(17, 17, 17), alignment=WD_ALIGN_PARAGRAPH.CENTER)
+    add_text(doc_no_cell, 'Số: {SoPhieu}', size=9.5, bold=True, color=(0, 0, 0), alignment=WD_ALIGN_PARAGRAPH.CENTER)
 
     # Spacer
     p_sp2 = doc.add_paragraph()
@@ -190,36 +189,60 @@ def main():
     info_table = doc.add_table(rows=3, cols=2)
     info_table.alignment = WD_TABLE_ALIGNMENT.CENTER
     set_table_widths(info_table, [12.0, 7.0])
-    set_table_borders(info_table, color='E5E5E5', size='4')
+    set_table_borders(info_table, color='E0E0E0', size='4')
     
-    info_rows = [
-        [('KHÁCH HÀNG', '{TenKhachHang}'), ('MÃ KHÁCH HÀNG', '{MaKH}')],
-        [('ĐỊA CHỈ', '{DiaChi}'), ('SỐ ĐIỆN THOẠI', '{SDT}')],
-        [('DIỄN GIẢI', '{DienGiai}'), ('', '')]
-    ]
+    # Row 0: KHÁCH HÀNG & MÃ KHÁCH HÀNG
+    cell_r0c0 = info_table.rows[0].cells[0]
+    cell_r0c1 = info_table.rows[0].cells[1]
+    set_cell_margins(cell_r0c0, top=40, bottom=40, start=80, end=80)
+    set_cell_margins(cell_r0c1, top=40, bottom=40, start=80, end=80)
+    set_cell_shading(cell_r0c0, 'F7F7F5')
+    set_cell_shading(cell_r0c1, 'F7F7F5')
+    
+    p00 = cell_r0c0.paragraphs[0]
+    p00.add_run('KHÁCH HÀNG  ').bold = True
+    set_font(p00.runs[0], size=8.5, color=(90, 90, 90))
+    p00.add_run('{TenKhachHang}').bold = True
+    set_font(p00.runs[1], size=9, color=(0, 0, 0))
 
-    for row_idx, data_row in enumerate(info_rows):
-        row_cells = info_table.rows[row_idx].cells
-        for col_idx, (label, val) in enumerate(data_row):
-            cell = row_cells[col_idx]
-            cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-            set_cell_margins(cell, top=40, bottom=40, start=80, end=80)
-            
-            if row_idx == 2:
-                set_cell_shading(cell, 'FAF7F0')
-            else:
-                set_cell_shading(cell, 'F8F8F6')
-                
-            if label:
-                p = cell.paragraphs[0]
-                p.alignment = WD_ALIGN_PARAGRAPH.LEFT
-                p.paragraph_format.space_before = Pt(0)
-                p.paragraph_format.space_after = Pt(0)
-                p.paragraph_format.line_spacing = 1.15
-                run_lbl = p.add_run(label + '  ')
-                set_font(run_lbl, size=8.5, bold=True, color=(100, 100, 100))
-                run_val = p.add_run(val)
-                set_font(run_val, size=9, bold=(label != 'DIỄN GIẢI'), color=(17, 17, 17))
+    p01 = cell_r0c1.paragraphs[0]
+    p01.add_run('MÃ KHÁCH HÀNG  ').bold = True
+    set_font(p01.runs[0], size=8.5, color=(90, 90, 90))
+    p01.add_run('{MaKH}').bold = True
+    set_font(p01.runs[1], size=9, color=(0, 0, 0))
+
+    # Row 1: ĐỊA CHỈ & SỐ ĐIỆN THOẠI
+    cell_r1c0 = info_table.rows[1].cells[0]
+    cell_r1c1 = info_table.rows[1].cells[1]
+    set_cell_margins(cell_r1c0, top=40, bottom=40, start=80, end=80)
+    set_cell_margins(cell_r1c1, top=40, bottom=40, start=80, end=80)
+    set_cell_shading(cell_r1c0, 'F7F7F5')
+    set_cell_shading(cell_r1c1, 'F7F7F5')
+
+    p10 = cell_r1c0.paragraphs[0]
+    p10.add_run('ĐỊA CHỈ  ').bold = True
+    set_font(p10.runs[0], size=8.5, color=(90, 90, 90))
+    p10.add_run('{DiaChi}').bold = False
+    set_font(p10.runs[1], size=9, color=(0, 0, 0))
+
+    p11 = cell_r1c1.paragraphs[0]
+    p11.add_run('SỐ ĐIỆN THOẠI  ').bold = True
+    set_font(p11.runs[0], size=8.5, color=(90, 90, 90))
+    p11.add_run('{SDT}').bold = True
+    set_font(p11.runs[1], size=9, color=(0, 0, 0))
+
+    # Row 2: Merged DIỄN GIẢI across 2 columns
+    cell_r2c0 = info_table.rows[2].cells[0]
+    cell_r2c1 = info_table.rows[2].cells[1]
+    cell_r2_merged = cell_r2c0.merge(cell_r2c1)
+    set_cell_margins(cell_r2_merged, top=40, bottom=40, start=80, end=80)
+    set_cell_shading(cell_r2_merged, 'FAF6EE')
+    
+    p2 = cell_r2_merged.paragraphs[0]
+    p2.add_run('DIỄN GIẢI  ').bold = True
+    set_font(p2.runs[0], size=8.5, color=(90, 90, 90))
+    p2.add_run('{DienGiai}').bold = False
+    set_font(p2.runs[1], size=9, color=(0, 0, 0))
 
     # Spacer before main table
     p_sp3 = doc.add_paragraph()
@@ -227,11 +250,11 @@ def main():
     p_sp3.paragraph_format.space_after = Pt(3)
 
     # ==================== 4. MAIN PRODUCTS TABLE ====================
-    # 5 Columns: STT (1.0cm), SẢN PHẨM (5.5cm), SIZE × SỐ LƯỢNG (6.6cm), TỔNG (1.8cm), THÀNH TIỀN (4.1cm)
+    # 5 Columns: STT (0.9cm), SẢN PHẨM (5.8cm), SIZE × SỐ LƯỢNG (6.5cm), TỔNG (1.8cm), THÀNH TIỀN (4.0cm)
     items_table = doc.add_table(rows=2, cols=5)
     items_table.alignment = WD_TABLE_ALIGNMENT.CENTER
-    set_table_widths(items_table, [1.0, 5.5, 6.6, 1.8, 4.1])
-    set_table_borders(items_table, color='D0D0D0', size='6')
+    set_table_widths(items_table, [0.9, 5.8, 6.5, 1.8, 4.0])
+    set_table_borders(items_table, color='B0B0B0', size='6')
 
     # Header Row - White Background, Black Bold Text
     headers = ['STT', 'SẢN PHẨM', 'SIZE × SỐ LƯỢNG', 'TỔNG', 'THÀNH TIỀN']
@@ -242,7 +265,7 @@ def main():
         cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
         set_cell_shading(cell, 'FFFFFF') # White Background
         set_cell_margins(cell, top=80, bottom=80, start=80, end=80)
-        add_text(cell, text, size=9, bold=True, color=(17, 17, 17), alignment=header_aligns[idx])
+        add_text(cell, text, size=9, bold=True, color=(0, 0, 0), alignment=header_aligns[idx])
 
     # Detail Row inside Docxtemplater Loop {#ChiTietDonHang}
     detail_row = items_table.rows[1]
@@ -251,7 +274,7 @@ def main():
     cell_stt = detail_row.cells[0]
     cell_stt.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
     set_cell_margins(cell_stt, top=60, bottom=60)
-    add_text(cell_stt, '{#ChiTietDonHang}{STT}', size=9, bold=True, color=(17, 17, 17), alignment=WD_ALIGN_PARAGRAPH.CENTER)
+    add_text(cell_stt, '{#ChiTietDonHang}{STT}', size=9, bold=True, color=(0, 0, 0), alignment=WD_ALIGN_PARAGRAPH.CENTER)
 
     # Cell 1: SẢN PHẨM (MaHang bold gold/brown, ten_hang_goc, mau)
     cell_prod = detail_row.cells[1]
@@ -264,27 +287,27 @@ def main():
     run_code = p_prod.add_run('{MaHang}\n')
     set_font(run_code, size=9.5, bold=True, color=(156, 107, 48)) # Brown/Gold Product Code
     run_name = p_prod.add_run('{ten_hang_goc}\n')
-    set_font(run_name, size=8.5, color=(60, 60, 60))
+    set_font(run_name, size=8.5, color=(50, 50, 50))
     run_color = p_prod.add_run('Màu: {mau}')
-    set_font(run_color, size=8.5, italic=False, color=(120, 120, 120))
+    set_font(run_color, size=8.5, italic=False, color=(100, 100, 100))
 
     # Cell 2: SIZE × SỐ LƯỢNG
     cell_size = detail_row.cells[2]
     cell_size.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
     set_cell_margins(cell_size, top=60, bottom=60, start=80, end=80)
-    add_text(cell_size, '{size_qty_text}', size=9, color=(17, 17, 17), alignment=WD_ALIGN_PARAGRAPH.LEFT)
+    add_text(cell_size, '{size_qty_text}', size=9, color=(0, 0, 0), alignment=WD_ALIGN_PARAGRAPH.LEFT)
 
     # Cell 3: TỔNG (Quantity)
     cell_qty = detail_row.cells[3]
     cell_qty.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
     set_cell_margins(cell_qty, top=60, bottom=60)
-    add_text(cell_qty, '{SoLuong}', size=9.5, bold=True, color=(17, 17, 17), alignment=WD_ALIGN_PARAGRAPH.CENTER)
+    add_text(cell_qty, '{SoLuong}', size=9.5, bold=True, color=(0, 0, 0), alignment=WD_ALIGN_PARAGRAPH.CENTER)
 
     # Cell 4: THÀNH TIỀN
     cell_money = detail_row.cells[4]
     cell_money.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
     set_cell_margins(cell_money, top=60, bottom=60, start=80, end=80)
-    add_text(cell_money, '{ThanhTien} đ{/ChiTietDonHang}', size=9.5, bold=True, color=(17, 17, 17), alignment=WD_ALIGN_PARAGRAPH.RIGHT)
+    add_text(cell_money, '{ThanhTien} đ{/ChiTietDonHang}', size=9.5, bold=True, color=(0, 0, 0), alignment=WD_ALIGN_PARAGRAPH.RIGHT)
 
     # ==================== 5. SUMMARY LINE BELOW TABLE ====================
     summary_table = doc.add_table(rows=1, cols=1)
@@ -303,10 +326,10 @@ def main():
     p_sum.paragraph_format.space_after = Pt(0)
     
     r_sum_title = p_sum.add_run('Tổng theo size: ')
-    set_font(r_sum_title, size=9, bold=True, color=(50, 50, 50))
+    set_font(r_sum_title, size=9, bold=True, color=(40, 40, 40))
     
     r_sum_val = p_sum.add_run('{tong_theo_size}')
-    set_font(r_sum_val, size=9, bold=False, color=(30, 30, 30))
+    set_font(r_sum_val, size=9, bold=False, color=(20, 20, 20))
 
     # Spacer
     p_sp4 = doc.add_paragraph()
@@ -326,16 +349,16 @@ def main():
     # Row 0: Left: Tổng số lượng: 46 sản phẩm | Right: Tổng tiền hàng: 63.270.000 đ
     p_left0 = totals_table.rows[0].cells[0].paragraphs[0]
     r_lbl_qty = p_left0.add_run('Tổng số lượng: ')
-    set_font(r_lbl_qty, size=9.5, bold=True, color=(17, 17, 17))
+    set_font(r_lbl_qty, size=9.5, bold=True, color=(0, 0, 0))
     r_val_qty = p_left0.add_run('{TongSoLuong} sản phẩm')
-    set_font(r_val_qty, size=9.5, bold=True, color=(17, 17, 17))
+    set_font(r_val_qty, size=9.5, bold=True, color=(0, 0, 0))
 
     p_right0 = totals_table.rows[0].cells[1].paragraphs[0]
     p_right0.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     r_lbl_th = p_right0.add_run('Tổng tiền hàng: ')
     set_font(r_lbl_th, size=9.5, bold=True, color=(80, 80, 80))
     r_val_th = p_right0.add_run('{TongTienHang} đ')
-    set_font(r_val_th, size=9.5, bold=True, color=(17, 17, 17))
+    set_font(r_val_th, size=9.5, bold=True, color=(0, 0, 0))
 
     # Row 1: Left: Bằng chữ: ... | Right: Chiết khấu: 0 đ
     p_left1 = totals_table.rows[1].cells[0].paragraphs[0]
@@ -349,7 +372,7 @@ def main():
     r_lbl_ck = p_right1.add_run('Chiết khấu: ')
     set_font(r_lbl_ck, size=9, color=(80, 80, 80))
     r_val_ck = p_right1.add_run('{TienChietKhau} đ')
-    set_font(r_val_ck, size=9, bold=True, color=(17, 17, 17))
+    set_font(r_val_ck, size=9, bold=True, color=(0, 0, 0))
 
     # Row 2: Left: (blank) | Right: Chiết khấu khác: 0 đ
     p_right2 = totals_table.rows[2].cells[1].paragraphs[0]
@@ -357,13 +380,13 @@ def main():
     r_lbl_ckk = p_right2.add_run('Chiết khấu khác: ')
     set_font(r_lbl_ckk, size=9, color=(80, 80, 80))
     r_val_ckk = p_right2.add_run('{ChietKhauKhac} đ')
-    set_font(r_val_ckk, size=9, bold=True, color=(17, 17, 17))
+    set_font(r_val_ckk, size=9, bold=True, color=(0, 0, 0))
 
     # Row 3: Left: (blank) | Right: TỔNG THANH TOÁN: 63.270.000 đ
     p_right3 = totals_table.rows[3].cells[1].paragraphs[0]
     p_right3.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     r_lbl_tt = p_right3.add_run('TỔNG THANH TOÁN:\n')
-    set_font(r_lbl_tt, size=10, bold=True, color=(17, 17, 17))
+    set_font(r_lbl_tt, size=10, bold=True, color=(0, 0, 0))
     r_val_tt = p_right3.add_run('{TongThanhToan} đ')
     set_font(r_val_tt, size=12, bold=True, color=(156, 107, 48))
 
@@ -382,7 +405,7 @@ def main():
     for idx, label in enumerate(labels):
         cell_top = signs.rows[0].cells[idx]
         cell_top.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-        add_text(cell_top, label, size=9.5, bold=True, color=(17, 17, 17), alignment=WD_ALIGN_PARAGRAPH.CENTER)
+        add_text(cell_top, label, size=9.5, bold=True, color=(0, 0, 0), alignment=WD_ALIGN_PARAGRAPH.CENTER)
         
         cell_btm = signs.rows[1].cells[idx]
         cell_btm.vertical_alignment = WD_ALIGN_VERTICAL.CENTER

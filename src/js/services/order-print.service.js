@@ -73,9 +73,6 @@ var OrderPrintService = (function () {
       var sttNum = Number(line.STT || line.stt || (index + 1));
       var stt = isNaN(sttNum) ? String(index + 1).padStart(2, '0') : String(sttNum).padStart(2, '0');
       var itemName = line.ten_hang_goc || line.ten_hang || line.ItemName || line.TenHang || line.ten_hang_2 || '';
-      if (itemName.indexOf(':') > 0) {
-        itemName = itemName.split(':')[0].trim();
-      }
       var itemCode = line.ma_hang || line.ItemID || line.MaHang || line.ten_hang_2 || '';
       var unit = line.dvt || line.don_vi_tinh || line.Unit || line.DVT || 'Chiếc';
       var kho = line.kho || line.Kho || line.BranchName || order.chi_nhanh || order.BranchID || '';
@@ -403,22 +400,24 @@ var OrderPrintService = (function () {
       });
       
       // 2. Sort unique sizes
-      var orderSizeSortList = ['38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48', 'S', 'M', 'L', 'XL', '2XL', 'XXL', '3XL', 'XXXL', '4XL', '5XL'];
-      uniqueSizes.sort(function (a, b) {
-        var numA = parseFloat(a);
-        var numB = parseFloat(b);
-        if (!isNaN(numA) && !isNaN(numB)) {
-          return numA - numB;
-        }
-        if (!isNaN(numA)) return -1;
-        if (!isNaN(numB)) return 1;
-        var idxA = orderSizeSortList.indexOf(String(a).toUpperCase());
-        var idxB = orderSizeSortList.indexOf(String(b).toUpperCase());
-        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-        if (idxA !== -1) return -1;
-        if (idxB !== -1) return 1;
-        return String(a).localeCompare(String(b));
-      });
+      function _sortSizes(sizes) {
+        return sizes.sort(function (a, b) {
+          var strA = String(a || '').trim();
+          var strB = String(b || '').trim();
+          var numA = Number(strA);
+          var numB = Number(strB);
+          var isNumA = !isNaN(numA) && strA !== '';
+          var isNumB = !isNaN(numB) && strB !== '';
+
+          if (isNumA && isNumB) return numA - numB;
+          if (isNumA) return -1;
+          if (isNumB) return 1;
+
+          return strA.localeCompare(strB, undefined, { numeric: true, sensitivity: 'base' });
+        });
+      }
+      
+      _sortSizes(uniqueSizes);
       
       // 3. Build Table Headers
       var headHtml = '<tr><th style="min-width:120px; text-align:left;">SẢN PHẨM</th><th>MÀU</th>';
