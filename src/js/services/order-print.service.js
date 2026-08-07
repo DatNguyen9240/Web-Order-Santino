@@ -399,19 +399,25 @@ var OrderPrintService = (function () {
         }
       });
       
-      // 2. Sort unique sizes
       function _sortSizes(sizes) {
         return sizes.sort(function (a, b) {
           var strA = String(a || '').trim();
           var strB = String(b || '').trim();
+
+          var isAlphaA = /^[A-Za-z]/.test(strA);
+          var isAlphaB = /^[A-Za-z]/.test(strB);
+
           var numA = Number(strA);
           var numB = Number(strB);
           var isNumA = !isNaN(numA) && strA !== '';
           var isNumB = !isNaN(numB) && strB !== '';
 
+          var groupA = isAlphaA ? 1 : (isNumA ? 2 : 3);
+          var groupB = isAlphaB ? 1 : (isNumB ? 2 : 3);
+
+          if (groupA !== groupB) return groupA - groupB;
+
           if (isNumA && isNumB) return numA - numB;
-          if (isNumA) return -1;
-          if (isNumB) return 1;
 
           return strA.localeCompare(strB, undefined, { numeric: true, sensitivity: 'base' });
         });

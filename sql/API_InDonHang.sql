@@ -4,10 +4,11 @@
 -- Update date: 2026-08-07
 -- Description: Stored Procedure API lấy toàn bộ dữ liệu đơn hàng (Header & Detail) 
 --              định dạng JSON cho Document Server xuất file DOCX/PDF Santino.
---              Hoàn toàn ĐỘNG (Dynamic), không gắn cứng (hardcode) bất kỳ giá trị mẫu nào.
+--              Thuật toán phân loại nhóm Size ĐỘNG 100% (Pattern Match: Alpha -> Numeric -> Special).
+--              Không gắn cứng (hardcode) bất kỳ giá trị mẫu hay mảng size nào.
 -- =============================================
 
--- 1. Hàm đọc số tiền thành chữ tiếng Việt hoàn toàn ĐỘNG (Dynamic)
+-- 1. Hàm đọc số tiền thành chữ tiếng Việt
 IF OBJECT_ID('[dbo].[fn_DocSoThanhChu]', 'FN') IS NOT NULL
     DROP FUNCTION [dbo].[fn_DocSoThanhChu];
 GO
@@ -23,7 +24,6 @@ BEGIN
 
     DECLARE @Result NVARCHAR(MAX) = N'';
     
-    -- Khai báo bảng tra chữ số
     DECLARE @ChuSo TABLE (Num INT, Name NVARCHAR(20));
     INSERT INTO @ChuSo VALUES 
     (0, N'không'), (1, N'một'), (2, N'hai'), (3, N'ba'), (4, N'bốn'),
@@ -104,7 +104,7 @@ BEGIN
 END
 GO
 
--- 2. Stored Procedure API_InDonHang (Hoàn toàn ĐỘNG)
+-- 2. Stored Procedure API_InDonHang
 IF OBJECT_ID('[dbo].[API_InDonHang]', 'P') IS NOT NULL
 BEGIN
     DROP PROCEDURE [dbo].[API_InDonHang];
@@ -157,7 +157,7 @@ BEGIN
     -- Đọc số tiền thành chữ tự động từ tổng tiền thực tế
     SET @TienBangChu = dbo.fn_DocSoThanhChu(@TongTienHang);
 
-    -- Tính chuỗi tổng theo size tự động xếp thứ tự số & chữ tự nhiên (Natural Dynamic Sort)
+    -- Tính chuỗi tổng theo size với phân nhóm ĐỘNG 100% (Pattern Match: Starts with letter -> Numeric -> Special)
     SELECT @TongTheoSize = STUFF((
         SELECT N' · ' + subD.[Size] + N'×' + CAST(CAST(SUM(subD.[Quantity]) AS INT) AS NVARCHAR)
         FROM [dbo].[WEB_OrderDetailTbl] subD
@@ -165,7 +165,12 @@ BEGIN
           AND ISNULL(subD.[Quantity], 0) > 0
         GROUP BY subD.[Size]
         ORDER BY 
-            CASE WHEN ISNUMERIC(subD.[Size]) = 1 THEN 1 ELSE 0 END,
+            -- Nhóm 1: Bắt đầu bằng chữ cái (S, M, L, XL...); Nhóm 2: Thuần số (28, 29, 30...); Nhóm 3: Size đặc biệt khác (0L, 0M, 2X...)
+            CASE 
+                WHEN subD.[Size] LIKE '[A-Za-z]%' THEN 1
+                WHEN ISNUMERIC(subD.[Size]) = 1 THEN 2
+                ELSE 3
+            END,
             CASE WHEN ISNUMERIC(subD.[Size]) = 1 THEN CAST(subD.[Size] AS DECIMAL(18,2)) ELSE 0 END,
             subD.[Size]
         FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 3, N'');
@@ -210,8 +215,8 @@ BEGIN
                         MAX(ISNULL(b.[BranchName], h.[BranchID])) AS [Kho],
                         ci.[ItemName2]                            AS [ten_hang_2],
                         ci.[ItemName2]                            AS [MaHang],
-                        MAX(ISNULL(d.[ItemName], ci.[ItemName]))  AS [TenHang],
-                        MAX(ISNULL(d.[ItemName], ci.[ItemName]))  AS [ten_hang_goc],
+                        MAX(REPLACE(ISNULL(d.[ItemName], ci.[ItemName]), ':', ' -')) AS [TenHang],
+                        MAX(REPLACE(ISNULL(d.[ItemName], ci.[ItemName]), ':', ' -')) AS [ten_hang_goc],
                         MAX(i.[Unit])                             AS [DVT],
                         FORMAT(MAX(ISNULL(d.[UnitPrice], 0)), '#,0') AS [DonGia],
                         CAST(SUM(d.[Quantity]) AS INT)            AS [SoLuong],
@@ -227,7 +232,11 @@ BEGIN
                               AND ISNULL(subD.[Quantity], 0) > 0
                             GROUP BY subD.[Size]
                             ORDER BY 
-                                CASE WHEN ISNUMERIC(subD.[Size]) = 1 THEN 1 ELSE 0 END,
+                                CASE 
+                                    WHEN subD.[Size] LIKE '[A-Za-z]%' THEN 1
+                                    WHEN ISNUMERIC(subD.[Size]) = 1 THEN 2
+                                    ELSE 3
+                                END,
                                 CASE WHEN ISNUMERIC(subD.[Size]) = 1 THEN CAST(subD.[Size] AS DECIMAL(18,2)) ELSE 0 END,
                                 subD.[Size]
                             FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 3, N'') AS [size_qty_text],
