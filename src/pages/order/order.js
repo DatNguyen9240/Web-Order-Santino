@@ -1343,10 +1343,10 @@ var OrderPage = (function () {
       dien_giai: document.getElementById('o-remarks')?.value || document.getElementById('o-notes')?.value || '',
       lines: _buildLines()
     };
-    if (typeof OrderPrintService !== 'undefined' && typeof OrderPrintService.printBrowser === 'function') {
-      OrderPrintService.printBrowser(order);
+    if (typeof OrderPrintService !== 'undefined' && typeof OrderPrintService.generate === 'function') {
+      OrderPrintService.generate(order);
     } else {
-      showToast('Không tìm thấy chức năng in OrderPrintService.printBrowser', false);
+      showToast('Không tìm thấy chức năng in OrderPrintService.generate', false);
     }
   }
 
