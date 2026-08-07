@@ -75,7 +75,7 @@ var OrderPrintService = (function () {
       var kho = line.kho || line.Kho || line.BranchName || order.chi_nhanh || order.BranchID || '';
       var discount = line.chiet_khau || line.ChietKhau || 0;
 
-      // Extract size breakdown and populate sz<size> variables
+      // Extract size breakdown and populate sz<size> variables and sz_nameN / sz_qtyN dynamically (unlimited)
       var sizeValues = {
         sz38: '', sz39: '', sz40: '', sz41: '', sz42: '', sz43: '', sz44: '', sz45: '', sz46: '', sz47: '', sz48: '',
         szS: '', szM: '', szL: '', szXL: '', 'sz2XL': '', szXXL: '', 'sz3XL': '', szXXXL: '', 'sz4XL': '', 'sz5XL': ''
@@ -92,13 +92,19 @@ var OrderPrintService = (function () {
         sizesArr = line.chi_tiet_size;
       }
       
+      var sizePos = 1;
       var sizeText = '';
+      var formattedSizesList = [];
       if (Array.isArray(sizesArr) && sizesArr.length > 0) {
         sizeText = ' (Size: ' + sizesArr.map(function (s) {
           var sz = String(s.size || s.Size || s.ten_size || '').trim();
           var q = Number(s.qty || s.Qty || s.so_luong || 0);
           if (sz && q > 0) {
             sizeValues['sz' + sz] = q;
+            sizeValues['sz_name' + sizePos] = sz;
+            sizeValues['sz_qty' + sizePos] = q;
+            sizePos++;
+            formattedSizesList.push({ sz: sz, q: q, size: sz, qty: q, Size: sz, Quantity: q });
           }
           return sz + '(' + q + ')';
         }).join(', ') + ')';
@@ -108,7 +114,9 @@ var OrderPrintService = (function () {
       var color = line.mau || line.MauSac || line.Mau || '';
 
       return Object.assign({
-        mau: color
+        mau: color,
+        MauSac: color,
+        Mau: color
       }, line, sizeValues, {
         STT: stt,
         stt: stt,
@@ -118,6 +126,11 @@ var OrderPrintService = (function () {
         ma_hang: itemCode,
         TenHang: finalItemName,
         ten_hang: finalItemName,
+        ten_hang_goc: itemName,
+        chi_tiet_size_text: sizeText,
+        SizeText: sizeText,
+        sizes_list: formattedSizesList,
+        chi_tiet_size_list: formattedSizesList,
         DVT: unit,
         dvt: unit,
         don_vi_tinh: unit,
