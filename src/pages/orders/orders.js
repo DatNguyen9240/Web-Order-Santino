@@ -42,19 +42,68 @@ var OrdersPage = (function () {
     });
   }
 
+  function _isMoneyField(field) {
+    if (!field) return false;
+    var renderRule = String(field.renderRule || field.FormatID || field.formatID || '').toUpperCase();
+    var fieldName = String(field.name || '').toLowerCase();
+    var fieldLabel = String(field.label || '').toLowerCase();
+
+    return renderRule === 'B' 
+      || fieldName === 'basetotal' 
+      || fieldName === 'totalamount'
+      || fieldName === 'khachdua'
+      || fieldName === 'tralai'
+      || fieldName === 'unitprice'
+      || fieldName === 'amount'
+      || fieldName.indexOf('tien') >= 0 
+      || fieldName.indexOf('amount') >= 0 
+      || fieldName.indexOf('total') >= 0 
+      || fieldName.indexOf('price') >= 0
+      || fieldName.indexOf('gia') >= 0
+      || fieldLabel.indexOf('tiền') >= 0
+      || fieldLabel.indexOf('thanh toán') >= 0;
+  }
+
   function _applyMetadataFormat(column, field) {
-    var renderRule = String(field.renderRule || '').toUpperCase();
-    if (renderRule === 'B') {
+    var renderRule = String(field.renderRule || field.FormatID || field.formatID || '').toUpperCase();
+    var fieldName = String(field.name || '').toLowerCase();
+
+    if (_isMoneyField(field)) {
       column.valueFormatter = function (params) {
+        if (params.value == null || params.value === '') return '';
+        var num = Number(params.value);
+        if (isNaN(num)) return params.value;
         return typeof Utils !== 'undefined' && Utils.formatMoney
-          ? Utils.formatMoney(params.value || 0)
-          : params.value;
+          ? Utils.formatMoney(num)
+          : num.toLocaleString('vi-VN') + ' đ';
       };
-    } else if (renderRule === 'D') {
+      column.cellStyle = function (params) {
+        if (params.node && params.node.rowPinned === 'bottom') {
+          return { textAlign: 'right', fontWeight: '700', color: 'var(--danger, #ef4444)', fontSize: '15px' };
+        }
+        return { textAlign: 'right' };
+      };
+      column.type = 'numericColumn';
+    } else if (renderRule === 'D' || fieldName.indexOf('ngay') >= 0 || fieldName.indexOf('date') >= 0) {
       column.valueFormatter = function (params) {
+        if (params.node && params.node.rowPinned === 'bottom') return '';
         return params.value && typeof Utils !== 'undefined' && Utils.formatDate
           ? Utils.formatDate(params.value)
           : params.value;
+      };
+    } else {
+      var origFormatter = column.valueFormatter;
+      column.valueFormatter = function (params) {
+        if (params.node && params.node.rowPinned === 'bottom') {
+          return params.value || '';
+        }
+        return origFormatter ? origFormatter(params) : params.value;
+      };
+      column.cellStyle = function (params) {
+        if (params.node && params.node.rowPinned === 'bottom') {
+          return { fontWeight: '700', color: 'var(--text, #1e293b)', fontSize: '15px' };
+        }
+        return null;
       };
     }
     return column;
@@ -76,6 +125,9 @@ var OrdersPage = (function () {
       floatingFilter: false,
       width: 150,
       cellRenderer: function (params) {
+        if (params.node && params.node.rowPinned === 'bottom') {
+          return '';
+        }
         var o = params.data;
         var primaryKey = metadata && metadata.config && metadata.config.primaryKey;
         var rowId = primaryKey && o ? o[primaryKey] : '';
@@ -102,6 +154,44 @@ var OrdersPage = (function () {
     });
 
     return columns;
+  }
+
+  function _parseNumeric(val) {
+    if (val == null || val === '') return 0;
+    if (typeof val === 'number') return isNaN(val) ? 0 : val;
+    var cleanStr = String(val).replace(/,/g, '').trim();
+    var num = parseFloat(cleanStr);
+    return isNaN(num) ? 0 : num;
+  }
+
+  function _calculateSummaryRow(orders, metadata) {
+    if (!Array.isArray(orders) || orders.length === 0) return [];
+    
+    var fields = _configuredFields(metadata);
+    if (!fields || fields.length === 0) {
+      fields = Object.keys(orders[0] || {}).map(function (key) {
+        return { name: key, label: key };
+      });
+    }
+
+    var firstFieldName = fields.length > 0 ? fields[0].name : 'DocumentID';
+    var summaryRow = {};
+
+    summaryRow[firstFieldName] = 'Σ';
+
+    fields.forEach(function (field) {
+      if (_isMoneyField(field)) {
+        var sum = 0;
+        orders.forEach(function (o) {
+          if (o && o[field.name] != null) {
+            sum += _parseNumeric(o[field.name]);
+          }
+        });
+        summaryRow[field.name] = Math.round((sum + Number.EPSILON) * 100) / 100;
+      }
+    });
+
+    return [summaryRow];
   }
 
   function render($el) {
@@ -196,14 +286,15 @@ var OrdersPage = (function () {
     }
   }
 
-  function _initGrid(orders, metadata) {
+  function _initGrid(orders, metadata, summaryData) {
     const container = document.getElementById('orders-grid-container');
     if (!container) return;
 
     const gridOptions = {
       pagination: false, // Dung pagination ngoai nhu cu
       columnDefs: _buildListColumnDefs(metadata),
-      rowData: orders
+      rowData: orders,
+      pinnedBottomRowData: summaryData || []
     };
 
     gridApi = AppGrid.create(container, gridOptions);
@@ -284,10 +375,13 @@ var OrdersPage = (function () {
     var paginationContainer = document.getElementById('orders-pagination');
     if (paginationContainer) paginationContainer.innerHTML = '';
 
+    var summaryData = _calculateSummaryRow(orders, orderMetadata);
+
     if (!gridApi) {
-      _initGrid(orders, orderMetadata);
+      _initGrid(orders, orderMetadata, summaryData);
     } else {
       gridApi.setGridOption('rowData', orders);
+      gridApi.setGridOption('pinnedBottomRowData', summaryData);
       if (orders.length === 0) {
         gridApi.showNoRowsOverlay();
       } else {
