@@ -123,7 +123,9 @@ var OrdersPage = (function () {
       sortable: false,
       filter: false,
       floatingFilter: false,
-      width: 150,
+      width: 185,
+      minWidth: 185,
+      suppressSizeToFit: true,
       cellRenderer: function (params) {
         if (params.node && params.node.rowPinned === 'bottom') {
           return '';
@@ -134,12 +136,20 @@ var OrdersPage = (function () {
         var detailText = (typeof t !== 'undefined') ? t('btn.detail') : 'Chi tiết';
         var wrapper = document.createElement('div');
         wrapper.style.display = 'flex';
-        wrapper.style.gap = '6px';
+        wrapper.style.gap = '4px';
         wrapper.style.alignItems = 'center';
+        wrapper.style.justifyContent = 'center';
+        wrapper.style.height = '100%';
+        wrapper.style.whiteSpace = 'nowrap';
 
         var detailButton = document.createElement('button');
         detailButton.className = 'btn btn-ghost btn-sm';
         detailButton.textContent = detailText;
+        detailButton.style.padding = '2px 8px';
+        detailButton.style.height = '26px';
+        detailButton.style.fontSize = '12px';
+        detailButton.style.whiteSpace = 'nowrap';
+        detailButton.style.flexShrink = '0';
         detailButton.onclick = function () { view(rowId); };
 
         var editButton = document.createElement('button');
@@ -148,11 +158,22 @@ var OrdersPage = (function () {
         editButton.style.padding = '2px 8px';
         editButton.style.height = '26px';
         editButton.style.fontSize = '12px';
+        editButton.style.whiteSpace = 'nowrap';
+        editButton.style.flexShrink = '0';
+        editButton.style.display = 'inline-flex';
+        editButton.style.alignItems = 'center';
+        editButton.style.gap = '2px';
         editButton.innerHTML = '<span class="material-symbols-outlined" style="font-size: 14px">edit</span><span>Sửa</span>';
         editButton.onclick = function () { edit(rowId); };
 
         var deleteButton = document.createElement('button');
         deleteButton.className = 'btn-icon';
+        deleteButton.title = 'Xóa đơn hàng';
+        deleteButton.style.padding = '2px 4px';
+        deleteButton.style.flexShrink = '0';
+        deleteButton.style.display = 'inline-flex';
+        deleteButton.style.alignItems = 'center';
+        deleteButton.style.justifyContent = 'center';
         deleteButton.innerHTML = '<span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1));color:var(--danger)">delete</span>';
         deleteButton.onclick = function () { del(rowId); };
 

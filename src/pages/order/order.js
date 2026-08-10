@@ -221,6 +221,7 @@ var OrderPage = (function () {
 
     _isEditMode = false;
     _editDocId = '';
+    _updateSubmitButtonText();
 
     renderMatrix();
 
@@ -1353,6 +1354,7 @@ var OrderPage = (function () {
     _loadCompanyHeaderSetup();
  
     openModal('modal-preview');
+    _updateSubmitButtonText();
   }
 
   async function _loadCompanyHeaderSetup() {
@@ -1578,16 +1580,32 @@ var OrderPage = (function () {
       renderMatrix();
       updateInfoSummary();
 
-      // Update Preview Modal submit button text
-      var btnSubmitModal = document.querySelector('#modal-preview .btn-primary');
-      if (btnSubmitModal) {
-        btnSubmitModal.innerHTML = '<span class="material-symbols-outlined">update</span> Cập nhật đơn hàng';
-      }
+      _updateSubmitButtonText();
 
       if (typeof showToast === 'function') showToast('Đã nạp xong đơn hàng ' + docId, true);
     } catch (err) {
       console.error('[OrderPage] Lỗi loadOrderForEdit:', err);
       if (typeof showToast === 'function') showToast('Lỗi khi nạp đơn hàng: ' + err.message, false);
+    }
+  }
+
+  function _updateSubmitButtonText() {
+    var btnPreviewSubmit = document.getElementById('btn-preview-submit') || document.querySelector('#modal-preview .btn-accent') || document.querySelector('#modal-preview .btn-primary');
+    if (btnPreviewSubmit) {
+      if (_isEditMode) {
+        btnPreviewSubmit.innerHTML = '<span class="material-symbols-outlined" style="font-size: 16px;">edit</span><span>Sửa đơn hàng</span>';
+      } else {
+        btnPreviewSubmit.innerHTML = '<span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span><span>Gửi đơn hàng</span>';
+      }
+    }
+
+    var btnTopSubmit = document.getElementById('btn-top-submit') || document.querySelector('.page-hdr .btn-accent');
+    if (btnTopSubmit) {
+      if (_isEditMode) {
+        btnTopSubmit.innerHTML = '<span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">edit</span><span>Sửa đơn hàng</span>';
+      } else {
+        btnTopSubmit.innerHTML = '<span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1))">save</span><span>Lưu đơn</span>';
+      }
     }
   }
 

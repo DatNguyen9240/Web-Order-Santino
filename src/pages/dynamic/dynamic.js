@@ -933,6 +933,9 @@ var DynamicPage = (function () {
       sortable: false,
       filter: false,
       floatingFilter: false,
+      width: 140,
+      minWidth: 140,
+      suppressSizeToFit: true,
       cellRenderer: function (params) {
         var p = params.data;
         var val = _getRowPrimaryKeyValue(p);
