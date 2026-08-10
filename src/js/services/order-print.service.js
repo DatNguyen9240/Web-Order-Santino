@@ -207,7 +207,10 @@ var OrderPrintService = (function () {
     });
   }
 
-  function generate(order) {
+  function generate(order, options) {
+    var opts = options || {};
+    var convertToPdf = opts.convertToPdf !== undefined ? !!opts.convertToPdf : true;
+
     var config = _documentConfig();
     var baseApi = config && config.BASE_API;
     var template = config && config.ORDER_TEMPLATE;
@@ -233,7 +236,7 @@ var OrderPrintService = (function () {
           templateType: template,
           outputFileName: 'Phieu_dat_hang_' + _safeFilePart(finalPayload.SoPhieu || docId),
           rowData: finalPayload,
-          convertToPdf: false
+          convertToPdf: convertToPdf
         })
       });
     })
@@ -277,15 +280,15 @@ var OrderPrintService = (function () {
         anchor.href = downloadUrl;
         anchor.target = '_blank';
         anchor.rel = 'noopener';
-        anchor.download = fileName || 'Phieu_dat_hang.docx';
+        anchor.download = fileName || (convertToPdf ? 'Phieu_dat_hang.pdf' : 'Phieu_dat_hang.docx');
         document.body.appendChild(anchor);
         anchor.click();
         anchor.remove();
-        _message('success', 'Đã tạo phiếu đặt hàng', 'File DOCX đang được tải xuống.');
+        _message('success', 'Đã tạo phiếu đặt hàng', (convertToPdf ? 'File PDF' : 'File DOCX') + ' đang được tải xuống.');
         return result;
       })
       .catch(function (err) {
-        _message('error', 'Không thể tạo file Word DOCX', err.message || 'Không kết nối được Document Server.');
+        _message('error', convertToPdf ? 'Không thể tạo file PDF' : 'Không thể tạo file Word DOCX', err.message || 'Không kết nối được Document Server.');
         throw err;
       });
   }

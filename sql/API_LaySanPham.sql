@@ -34,7 +34,8 @@ BEGIN
     INTO #TempSizes
     FROM dbo.CF_ItemTbl ci WITH (NOLOCK)
     LEFT JOIN dbo.CF_NhomSizeTbl ns WITH (NOLOCK) ON ci.Size = ns.Size
-    WHERE ci.isDisable = 0 OR ci.isDisable IS NULL
+    WHERE (ci.isDisable = 0 OR ci.isDisable IS NULL)
+      AND ISNULL(ci.isWeb, 1) = 1
     GROUP BY ci.ItemName2;
 
     -- Truy vấn chính
@@ -53,7 +54,9 @@ BEGIN
         B.ItemKhacName,
         (
             SELECT DISTINCT Size FROM dbo.CF_ItemTbl ci WITH (NOLOCK)
-            WHERE ci.ItemName2 = t2.ItemName2 AND (ci.isDisable = 0 OR ci.isDisable IS NULL)
+            WHERE ci.ItemName2 = t2.ItemName2 
+              AND (ci.isDisable = 0 OR ci.isDisable IS NULL)
+              AND ISNULL(ci.isWeb, 1) = 1
             FOR JSON PATH
         ) AS SizesJson
     FROM dbo.CF_TenHang2Tbl t2 WITH (NOLOCK)
