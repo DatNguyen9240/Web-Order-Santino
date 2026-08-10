@@ -1127,11 +1127,19 @@ var OrderPage = (function () {
   }
 
   function updateQty(ri, size, inputEl) {
-    var val = parseInt(inputEl.value) || 0;
+    var rawVal = inputEl.value || '';
+    var cleaned = rawVal.replace(/^0+(?=\d)/, '');
+    var val = parseInt(cleaned, 10) || 0;
     orderRows[ri].quantities[size] = val;
     if (val > 0) {
+      if (inputEl.value !== String(val)) {
+        inputEl.value = String(val);
+      }
       inputEl.parentElement.classList.add('filled');
     } else {
+      if (inputEl.value !== '') {
+        inputEl.value = '';
+      }
       inputEl.parentElement.classList.remove('filled');
     }
     _updateTotal();
