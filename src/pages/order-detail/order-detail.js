@@ -490,6 +490,7 @@ var OrderDetailPage = (function () {
         itemName: line.TenHang || line.ItemName || line.ten_hang || '',
         color: line.MauSac || line.mau_sac || line.Mau || line.mau || '',
         sizeText: _formatSizeQtyMultiplier(line.Size || line.size || line.chi_tiet_size || line.sizes),
+        chi_tiet_size: line.chi_tiet_size || line.Size || line.size || line.sizes,
         qty: Number(line.Quantity || line.SoLuong || line.so_luong || 0),
         price: Number(line.UnitPrice || line.DonGia || line.don_gia || 0),
         amount: Number(line.Amount || line.ThanhTien || line.thanh_tien || (line.Quantity * line.UnitPrice))
@@ -506,6 +507,7 @@ var OrderDetailPage = (function () {
         custPhone: o.Phone || o.SDT || '—',
         remarks: o.Notes || o.DienGiai || '—',
         lines: formattedLines,
+        rawLines: allLines,
         overallSizeText: overallSizeText,
         companyInfo: companyInfo
       });
