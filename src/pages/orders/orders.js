@@ -142,12 +142,22 @@ var OrdersPage = (function () {
         detailButton.textContent = detailText;
         detailButton.onclick = function () { view(rowId); };
 
+        var editButton = document.createElement('button');
+        editButton.className = 'btn btn-outline btn-sm';
+        editButton.title = 'Chỉnh sửa đơn hàng';
+        editButton.style.padding = '2px 8px';
+        editButton.style.height = '26px';
+        editButton.style.fontSize = '12px';
+        editButton.innerHTML = '<span class="material-symbols-outlined" style="font-size: 14px">edit</span><span>Sửa</span>';
+        editButton.onclick = function () { edit(rowId); };
+
         var deleteButton = document.createElement('button');
         deleteButton.className = 'btn-icon';
         deleteButton.innerHTML = '<span class="material-symbols-outlined" style="font-size: calc(16px * var(--text-scale, 1));color:var(--danger)">delete</span>';
         deleteButton.onclick = function () { del(rowId); };
 
         wrapper.appendChild(detailButton);
+        wrapper.appendChild(editButton);
         wrapper.appendChild(deleteButton);
         return wrapper;
       }
@@ -457,5 +467,11 @@ var OrdersPage = (function () {
     window._viewOrderId = id;
     Router.go('/order-detail?id=' + id);
   }
-  return { render: render, filter: filter, del: del, view: view };
+
+  function edit(id) {
+    if (!id) return;
+    Router.go('/order?id=' + id);
+  }
+
+  return { render: render, filter: filter, del: del, view: view, edit: edit };
 })();

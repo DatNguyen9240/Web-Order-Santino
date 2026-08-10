@@ -307,6 +307,11 @@ var OrderDetailPage = (function () {
     currentOrder = o;
     await bindPrintButton();
 
+    var editBtn = document.getElementById('btn-edit-order');
+    if (editBtn) {
+      editBtn.hidden = (o.isLock === 1 || o.isLock === true);
+    }
+
     var titleEl = document.getElementById('detail-title');
     if (titleEl) titleEl.textContent = t('btn.detail') + ': ' + o.DocumentID;
 
@@ -685,10 +690,25 @@ var OrderDetailPage = (function () {
     }
   }
 
+  function editOrder() {
+    var o = currentOrderData || {};
+    var docId = o.DocumentID || o.so_ct || o.SoPhieu || window._viewOrderId;
+    if (!docId) {
+      if (typeof showToast === 'function') showToast('Không tìm thấy mã đơn hàng!', false);
+      return;
+    }
+    if (o.isLock === 1 || o.isLock === true) {
+      if (typeof showToast === 'function') showToast('Đơn hàng đã bị khóa, không thể chỉnh sửa!', false);
+      return;
+    }
+    Router.go('/order?id=' + encodeURIComponent(docId));
+  }
+
   return {
     render: render,
     printOrder: printOrder,
-    exportExcel: exportExcel
+    exportExcel: exportExcel,
+    editOrder: editOrder
   };
 })();
 

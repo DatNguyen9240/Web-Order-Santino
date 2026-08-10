@@ -9,6 +9,8 @@ var OrderPage = (function () {
   var _cachedObjectGroups = [];
   var _userPerm = { isAdmin: false, isManager: false, isAgent: false };
   var _canAddCustomer = false;
+  var _isEditMode = false;
+  var _editDocId = '';
 
   var _catValues = {
     khach_hang: { id: '', name: '' },
@@ -217,7 +219,18 @@ var OrderPage = (function () {
       sel.value = '';
     }
 
+    _isEditMode = false;
+    _editDocId = '';
+
     renderMatrix();
+
+    var searchParams = new URLSearchParams(window.location.hash.split('?')[1] || window.location.search || '');
+    var editDocId = searchParams.get('id') || searchParams.get('editId') || window._editOrderId;
+    if (editDocId) {
+      window._editOrderId = null;
+      await _loadOrderForEdit(editDocId);
+    }
+
     document.addEventListener('click', function (e) {
       var list = document.getElementById('ac-list');
       var wrap = document.querySelector('.autocomplete-wrap');
@@ -1437,6 +1450,147 @@ var OrderPage = (function () {
     }
   }
 
+  async function _loadOrderForEdit(docId) {
+    try {
+      if (typeof showToast === 'function') showToast('Đang nạp đơn hàng ' + docId + '...', true);
+      var detail = null;
+      if (typeof OrderService !== 'undefined' && typeof OrderService.getOrderDetail === 'function') {
+        detail = await OrderService.getOrderDetail(docId).catch(function () { return null; });
+      }
+      if (!detail && typeof OrderPrintService !== 'undefined' && typeof OrderPrintService._resolvePrintData === 'function') {
+        detail = await OrderPrintService._resolvePrintData(docId).catch(function () { return null; });
+      }
+      if (!detail) {
+        if (typeof showToast === 'function') showToast('Không thể lấy chi tiết đơn hàng ' + docId, false);
+        return;
+      }
+
+      _isEditMode = true;
+      _editDocId = docId;
+
+      // Lock So CT field
+      var soCtEl = document.getElementById('o-so-ct');
+      if (soCtEl) {
+        soCtEl.value = docId;
+        soCtEl.readOnly = true;
+        soCtEl.classList.add('readonly-input');
+      }
+
+      // Populate Header Info
+      var maKH = detail.ObjectID || detail.MaKH || detail.ma_kh || '';
+      var tenKH = detail.ObjectName || detail.TenKhachHang || detail.kh_ten || '';
+      var dcKH = detail.Address || detail.DiaChi || detail.kh_dc || '';
+      var sdtKH = detail.Phone || detail.SDT || detail.kh_sdt || '';
+
+      if (document.getElementById('o-ma-kh')) document.getElementById('o-ma-kh').value = maKH;
+      if (document.getElementById('o-kh-ten')) document.getElementById('o-kh-ten').value = tenKH;
+      if (document.getElementById('o-kh-dc')) document.getElementById('o-kh-dc').value = dcKH;
+      if (document.getElementById('o-kh-sdt')) document.getElementById('o-kh-sdt').value = sdtKH;
+
+      _catValues.khach_hang = { id: maKH, name: tenKH, phone: sdtKH };
+      if (_combos.kh && _combos.kh.querySelector('input')) {
+        _combos.kh.querySelector('input').value = tenKH || maKH;
+      }
+
+      var branchId = detail.BranchID || detail.chi_nhanh || '';
+      var branchName = detail.BranchName || branchId;
+      _catValues.chi_nhanh = { id: branchId, name: branchName };
+      if (_combos.branch && _combos.branch.querySelector('input')) {
+        _combos.branch.querySelector('input').value = branchName;
+      }
+
+      var empId = detail.EmployeeID || detail.nvkd || '';
+      var empName = detail.EmployeeName || empId;
+      _catValues.nvkd = { id: empId, name: empName };
+      if (_combos.nvkd && _combos.nvkd.querySelector('input')) {
+        _combos.nvkd.querySelector('input').value = empName;
+      }
+
+      var ctkm = detail.CTKM || detail.ma_ctbh || '';
+      if (document.getElementById('o-ctbh')) document.getElementById('o-ctbh').value = ctkm;
+      if (_combos.ctkm && _combos.ctkm.querySelector('input')) {
+        _combos.ctkm.querySelector('input').value = ctkm;
+      }
+
+      var notes = detail.Notes || detail.ghi_chu || '';
+      if (document.getElementById('o-notes')) document.getElementById('o-notes').value = notes;
+      if (_combos.note && _combos.note.querySelector('input')) _combos.note.querySelector('input').value = notes;
+
+      var remarks = detail.Memo || detail.DienGiai || detail.dien_giai || '';
+      if (document.getElementById('o-remarks')) document.getElementById('o-remarks').value = remarks;
+      if (_combos.remark && _combos.remark.querySelector('input')) _combos.remark.querySelector('input').value = remarks;
+
+      var docDate = detail.DocumentDate || detail.ngay_ct || detail.NgayLap || '';
+      if (docDate && document.getElementById('o-ngay')) {
+        var dObj = new Date(docDate);
+        if (!isNaN(dObj.getTime())) {
+          document.getElementById('o-ngay').value = dObj.toISOString().split('T')[0];
+        }
+      }
+
+      // Populate Order Rows
+      var rawLines = detail.Lines || detail.lines || detail.ChiTietDonHang || [];
+      orderRows = [];
+
+      rawLines.forEach(function (line) {
+        var itemCode = line.MaHang || line.ItemID || line.ma_hang || line.ten_hang_2 || '';
+        var itemName = line.TenHang || line.ItemName || line.ten_hang || '';
+        var color = line.MauSac || line.mau_sac || line.Mau || line.mau || '';
+        var price = Number(line.UnitPrice || line.DonGia || line.don_gia || 0);
+
+        var sizeMap = {};
+        var sizesArr = line.chi_tiet_size || line.Size || line.size || line.sizes;
+        if (typeof sizesArr === 'string') {
+          try { sizesArr = JSON.parse(sizesArr); } catch (e) { sizesArr = []; }
+        }
+        if (Array.isArray(sizesArr)) {
+          sizesArr.forEach(function (s) {
+            if (!s) return;
+            var sz = s.Size !== undefined ? s.Size : (s.size !== undefined ? s.size : s.ten_size);
+            var q = Number(s.Quantity !== undefined ? s.Quantity : (s.Qty !== undefined ? s.Qty : (s.qty !== undefined ? s.qty : s.so_luong)));
+            if (sz && q > 0) sizeMap[String(sz).trim()] = q;
+          });
+        }
+
+        var sizesList = Object.keys(sizeMap).map(function (sz, idx) {
+          return { size: sz, ten_size: sz, stt: idx + 1 };
+        });
+
+        var prodObj = {
+          ItemName2: itemCode,
+          ten_hang_2: itemCode,
+          ItemName: itemName,
+          ten_hang_hoa: itemName,
+          MauSac: color,
+          mau: color,
+          UnitPrice: price,
+          don_gia: price
+        };
+
+        orderRows.push({
+          ten_hang_2: itemCode,
+          product: prodObj,
+          sizes: sizesList.length ? sizesList : cachedSizes,
+          quantities: sizeMap
+        });
+      });
+
+      renderMatrix();
+      updateInfoSummary();
+
+      // Update Preview Modal submit button text
+      var btnSubmitModal = document.querySelector('#modal-preview .btn-primary');
+      if (btnSubmitModal) {
+        btnSubmitModal.innerHTML = '<span class="material-symbols-outlined">update</span> Cập nhật đơn hàng';
+      }
+
+      if (typeof showToast === 'function') showToast('Đã nạp xong đơn hàng ' + docId, true);
+    } catch (err) {
+      console.error('[OrderPage] Lỗi loadOrderForEdit:', err);
+      if (typeof showToast === 'function') showToast('Lỗi khi nạp đơn hàng: ' + err.message, false);
+    }
+  }
+
   async function saveOrder() {
     var lines = _buildLines();
     if (!lines || lines.length === 0) {
@@ -1452,7 +1606,7 @@ var OrderPage = (function () {
 
     var order = {
       id: Utils.uuid(),
-      so_ct: (document.getElementById('o-so-ct') ? document.getElementById('o-so-ct').value : ''),
+      so_ct: (document.getElementById('o-so-ct') ? document.getElementById('o-so-ct').value : '') || _editDocId,
       ngay_ct: (document.getElementById('o-ngay') ? document.getElementById('o-ngay').value : ''),
       chi_nhanh: (_catValues && _catValues.chi_nhanh ? (_catValues.chi_nhanh.id || _catValues.chi_nhanh.name || '') : ''),
       nvkd: (_catValues && _catValues.nvkd ? (_catValues.nvkd.id || _catValues.nvkd.name || '') : ''),
@@ -1482,12 +1636,11 @@ var OrderPage = (function () {
     }
 
     try {
-      const res = await OrderService.createOrder(order);
-
+      const res = _isEditMode ? await OrderService.updateOrder(order) : await OrderService.createOrder(order);
 
       // Kiểm tra kết quả trả về từ SQL Server
       let isSuccess = true;
-      let actualSoCT = order.so_ct;
+      let actualSoCT = order.so_ct || _editDocId;
       let msg = '';
 
       if (res && res.records && res.records[0]) {
@@ -1496,7 +1649,7 @@ var OrderPage = (function () {
           msg = res.records[0].Message || 'Lỗi từ CSDL';
         } else {
           actualSoCT = res.records[0].DocumentID || actualSoCT;
-          msg = 'Đã lưu đơn: ' + actualSoCT;
+          msg = _isEditMode ? ('Đã cập nhật đơn: ' + actualSoCT) : ('Đã lưu đơn: ' + actualSoCT);
         }
       } else if (res && res[0]) {
         if (res[0].Success !== 1 && res[0].Success !== '1') {
@@ -1504,10 +1657,10 @@ var OrderPage = (function () {
           msg = res[0].Message || 'Lỗi từ CSDL';
         } else {
           actualSoCT = res[0].DocumentID || actualSoCT;
-          msg = 'Đã lưu đơn: ' + actualSoCT;
+          msg = _isEditMode ? ('Đã cập nhật đơn: ' + actualSoCT) : ('Đã lưu đơn: ' + actualSoCT);
         }
       } else {
-        msg = 'Đã lưu đơn: ' + actualSoCT;
+        msg = _isEditMode ? ('Đã cập nhật đơn: ' + actualSoCT) : ('Đã lưu đơn: ' + actualSoCT);
       }
 
       if (!isSuccess) {
@@ -1518,11 +1671,10 @@ var OrderPage = (function () {
 
       var actionBtn = '<a href="#/order-detail?id=' + encodeURIComponent(actualSoCT) + '" style="color:#000; background:var(--accent); padding:4px 10px; border-radius:4px; font-weight:600; text-decoration:none; display:inline-block;">Xem đơn</a>';
       showToast(msg, true, actionBtn, 8000);
-      render(document.getElementById('app-content'));
+      Router.go('/order-detail?id=' + encodeURIComponent(actualSoCT));
     } catch (err) {
-      console.warn('[OrderService] Lỗi tạo đơn qua API:', err);
-
-      showToast(err.message || 'Lỗi tạo đơn qua API. Vui lòng thử lại.', false);
+      console.warn('[OrderService] Lỗi lưu đơn qua API:', err);
+      showToast(err.message || 'Lỗi xử lý đơn hàng qua API. Vui lòng thử lại.', false);
     }
   }
 
