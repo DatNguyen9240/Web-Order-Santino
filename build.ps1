@@ -34,6 +34,7 @@ $jsFiles = @(
   "js\services\permission.js",
   "js\services\permissions.service.js",
   "js\services\order-print.service.js",
+  "js\services\order-excel.service.js",
   "js\services\menus.service.js",
   "js\utils.js",
   "components\ui-utils\UIUtils.js",

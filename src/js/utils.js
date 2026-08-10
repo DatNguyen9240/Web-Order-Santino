@@ -75,5 +75,49 @@ const Utils = (function () {
     }
   }
 
-  return { formatMoney, buildSKU, genOrderNo, today, escHtml, uuid, getUserInitials, toggleRow };
+  function numberToVietnameseWords(num) {
+    if (!num || isNaN(num) || num <= 0) return '';
+    var dv = ['', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
+    var ty = Math.floor(num / 1000000000);
+    var trieu = Math.floor((num % 1000000000) / 1000000);
+    var ngan = Math.floor((num % 1000000) / 1000);
+    var dong = Math.floor(num % 1000);
+
+    function readBlock3(n, hasHigher) {
+      if (n === 0) return '';
+      var tram = Math.floor(n / 100);
+      var chuc = Math.floor((n % 100) / 10);
+      var donvi = n % 10;
+      var str = '';
+
+      if (tram > 0 || hasHigher) {
+        str += dv[tram] + ' trăm ';
+      }
+      if (chuc > 1) {
+        str += dv[chuc] + ' mươi ';
+        if (donvi === 1) str += 'mốt';
+        else if (donvi === 5) str += 'lăm';
+        else if (donvi > 0) str += dv[donvi];
+      } else if (chuc === 1) {
+        str += 'mười ';
+        if (donvi === 5) str += 'lăm';
+        else if (donvi > 0) str += dv[donvi];
+      } else if (chuc === 0 && donvi > 0) {
+        if (tram > 0 || hasHigher) str += 'lẻ ';
+        str += dv[donvi];
+      }
+      return str.trim();
+    }
+
+    var res = '';
+    if (ty > 0) res += readBlock3(ty, false) + ' tỷ ';
+    if (trieu > 0) res += readBlock3(trieu, ty > 0) + ' triệu ';
+    if (ngan > 0) res += readBlock3(ngan, ty > 0 || trieu > 0) + ' nghìn ';
+    if (dong > 0) res += readBlock3(dong, ty > 0 || trieu > 0 || ngan > 0);
+
+    res = res.trim() + ' đồng';
+    return res.charAt(0).toUpperCase() + res.slice(1);
+  }
+
+  return { formatMoney, buildSKU, genOrderNo, today, escHtml, uuid, getUserInitials, toggleRow, numberToVietnameseWords };
 })();

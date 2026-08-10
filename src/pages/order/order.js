@@ -1328,8 +1328,29 @@ var OrderPage = (function () {
     document.getElementById('invoice-cust-addr').textContent = document.getElementById('o-kh-dc')?.value || '—';
     document.getElementById('invoice-cust-phone').textContent = document.getElementById('o-kh-sdt')?.value || '—';
     document.getElementById('invoice-remarks').textContent = document.getElementById('o-remarks')?.value || document.getElementById('o-notes')?.value || '—';
+
+    _loadCompanyHeaderSetup();
  
     openModal('modal-preview');
+  }
+
+  async function _loadCompanyHeaderSetup() {
+    try {
+      if (typeof Http !== 'undefined') {
+        var res = await Http.get('/API_LayThongTinCongTy', { _t: Date.now() });
+        var record = Array.isArray(res) ? res[0] : (res && res.records ? res.records[0] : res);
+        if (record) {
+          var elName = document.getElementById('company-header-name');
+          var elAddr = document.getElementById('company-header-address');
+          var elPhone = document.getElementById('company-header-phone');
+          if (elName && record.TenCongTy) elName.textContent = record.TenCongTy;
+          if (elAddr && record.DiaChi) elAddr.textContent = record.DiaChi;
+          if (elPhone && record.DienThoaiFax) elPhone.textContent = record.DienThoaiFax;
+        }
+      }
+    } catch (e) {
+      console.warn('Lỗi tải thông tin công ty từ API_LayThongTinCongTy:', e);
+    }
   }
 
   function printPreviewInvoice() {
@@ -1347,6 +1368,64 @@ var OrderPage = (function () {
       OrderPrintService.generate(order);
     } else {
       showToast('Không tìm thấy chức năng in OrderPrintService.generate', false);
+    }
+  }
+
+  async function exportPreviewExcel() {
+    if (!orderRows.length) {
+      if (typeof showToast === 'function') showToast('Vui lòng chọn sản phẩm và nhập số lượng', false);
+      return;
+    }
+
+    var docId = document.getElementById('o-so-ct')?.value || 'VT-DH...';
+    var dateFormattedText = document.getElementById('invoice-date')?.textContent || 'Ngày ... tháng ... năm ...';
+    var custName = document.getElementById('o-kh-ten')?.value || '—';
+    var custCode = document.getElementById('o-ma-kh')?.value || '—';
+    var custAddr = document.getElementById('o-kh-dc')?.value || '—';
+    var custPhone = document.getElementById('o-kh-sdt')?.value || '—';
+    var remarks = document.getElementById('o-remarks')?.value || document.getElementById('o-notes')?.value || '—';
+
+    var formattedLines = [];
+    orderRows.forEach(function (row) {
+      var rowQty = 0;
+      var sizeParts = [];
+      Object.entries(row.quantities).forEach(function (e) {
+        var sz = e[0], q = parseInt(e[1]) || 0;
+        if (q > 0) {
+          rowQty += q;
+          sizeParts.push(sz + '×' + q);
+        }
+      });
+      if (rowQty > 0) {
+        var donGia = row.product.UnitPrice != null ? parseFloat(row.product.UnitPrice) : (row.product.GiaBan != null ? parseFloat(row.product.GiaBan) : (row.product.don_gia || 0));
+        formattedLines.push({
+          itemCode: row.ten_hang_2,
+          itemName: row.product.TenHangHoa || row.product.ten_hang_hoa || '',
+          color: row.product.MauSac || row.product.mau || '',
+          sizeText: sizeParts.join(' · '),
+          qty: rowQty,
+          price: donGia,
+          amount: rowQty * donGia
+        });
+      }
+    });
+
+    if (!formattedLines.length) {
+      if (typeof showToast === 'function') showToast('Không có dữ liệu số lượng để xuất Excel', false);
+      return;
+    }
+
+    if (typeof OrderExcelService !== 'undefined') {
+      await OrderExcelService.exportOrder({
+        docId: docId,
+        dateFormattedText: dateFormattedText,
+        custName: custName,
+        custCode: custCode,
+        custAddr: custAddr,
+        custPhone: custPhone,
+        remarks: remarks,
+        lines: formattedLines
+      });
     }
   }
 
@@ -1461,7 +1540,7 @@ var OrderPage = (function () {
     render: render, acSearch: acSearch, toggleAcSelect: toggleAcSelect, closeAc: closeAc,
     addSelectedProds: addSelectedProds, addProductRow: addProductRow, selectAcSingle: selectAcSingle,
     updateQty: updateQty, removeRow: removeRow, previewOrder: previewOrder,
-    printPreviewInvoice: printPreviewInvoice,
+    printPreviewInvoice: printPreviewInvoice, exportPreviewExcel: exportPreviewExcel,
     saveOrder: saveOrder, clearOrder: clearOrder, clearSearch: clearSearch,
     updateInfoSummary: updateInfoSummary, calcChange: calcChange,
     createNewCustomer: createNewCustomer, finishOrderInfo: finishOrderInfo
