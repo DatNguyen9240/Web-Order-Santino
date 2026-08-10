@@ -136,6 +136,12 @@ var OrderDetailPage = (function () {
       gridApi.setGridOption('rowData', pageLines);
     }
 
+    if (gridApi && typeof gridApi.sizeColumnsToFit === 'function') {
+      setTimeout(function () {
+        gridApi.sizeColumnsToFit();
+      }, 50);
+    }
+
     // Render custom Pagination
     var paginationContainer = document.getElementById('detail-pagination');
     if (paginationContainer) {

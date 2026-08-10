@@ -43,10 +43,10 @@ BEGIN TRY
         ('Z', 'ObjectName',     'WEB_OrderFrm', N'Tên khách hàng',      'L', 200, 500),
         ('Z', 'EmployeeID',     'WEB_OrderFrm', N'Nhân viên bán hàng',  'L', 160, 300),
         ('Z', 'CTKM',           'WEB_OrderFrm', N'Chương trình KM',     'L', 150, 300),
-        ('Z', 'BaseTotal',      'WEB_OrderFrm', N'Tổng tiền hàng',      'R', 140, 250),
-        ('Z', 'TotalAmount',    'WEB_OrderFrm', N'Tổng thanh toán',     'R', 150, 250),
-        ('Z', 'KhachDua',       'WEB_OrderFrm', N'Tiền khách đưa',      'R', 140, 250),
-        ('Z', 'TraLai',         'WEB_OrderFrm', N'Tiền trả lại',       'R', 140, 250),
+        ('B', 'BaseTotal',      'WEB_OrderFrm', N'Tổng tiền hàng',      'R', 140, 250),
+        ('B', 'TotalAmount',    'WEB_OrderFrm', N'Tổng thanh toán',     'R', 150, 250),
+        ('B', 'KhachDua',       'WEB_OrderFrm', N'Tiền khách đưa',      'R', 140, 250),
+        ('B', 'TraLai',         'WEB_OrderFrm', N'Tiền trả lại',       'R', 140, 250),
         ('Z', 'Memo',           'WEB_OrderFrm', N'Diễn giải',           'L', 200, 500),
         ('Z', 'Notes',          'WEB_OrderFrm', N'Ghi chú',             'L', 200, 500),
         ('Z', 'Status',         'WEB_OrderFrm', N'Trạng thái đơn',      'C', 120, 200),
@@ -56,8 +56,8 @@ BEGIN TRY
         ('Z', 'ItemName',       'WEB_OrderDetailFrm', N'Tên hàng hóa',  'L', 200, 500),
         ('Z', 'Size',           'WEB_OrderDetailFrm', N'Size / Kích cỡ','C', 100, 200),
         ('Z', 'Quantity',       'WEB_OrderDetailFrm', N'Số lượng',      'R', 100, 200),
-        ('Z', 'UnitPrice',      'WEB_OrderDetailFrm', N'Đơn giá',       'R', 130, 250),
-        ('Z', 'Amount',         'WEB_OrderDetailFrm', N'Thành tiền',    'R', 140, 250);
+        ('B', 'UnitPrice',      'WEB_OrderDetailFrm', N'Đơn giá',       'R', 130, 250),
+        ('B', 'Amount',         'WEB_OrderDetailFrm', N'Thành tiền',    'R', 140, 250);
 
     COMMIT TRANSACTION;
     PRINT N'=== NẠP TIÊU ĐỀ TIẾNG VIỆT CHO ĐƠN HÀNG THÀNH CÔNG ===';
