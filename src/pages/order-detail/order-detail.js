@@ -658,18 +658,12 @@ var OrderDetailPage = (function () {
 
         <table border="0" cellpadding="2" cellspacing="0" style="width: 100%; font-family: 'Times New Roman', Arial, sans-serif; font-size: 12px; text-align: center;">
           <tr style="font-weight: bold;">
-            <td style="width: 20%;">Người nhận</td>
-            <td style="width: 20%;">Người giao</td>
-            <td style="width: 20%;">Thủ kho</td>
-            <td style="width: 20%;">Kế toán</td>
-            <td style="width: 20%;">Thủ trưởng</td>
+            <td colspan="4" style="width: 80%;"></td>
+            <td style="width: 20%; text-align: center;">Kế toán</td>
           </tr>
           <tr style="font-style: italic; color: #64748b;">
-            <td>(Ký / họ tên)</td>
-            <td>(Ký / họ tên)</td>
-            <td>(Ký / họ tên)</td>
-            <td>(Ký / họ tên)</td>
-            <td>(Ký / họ tên)</td>
+            <td colspan="4"></td>
+            <td style="text-align: center;">(Ký / họ tên)</td>
           </tr>
         </table>
       </body>

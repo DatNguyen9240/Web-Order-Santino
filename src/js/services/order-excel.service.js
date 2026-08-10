@@ -130,27 +130,32 @@ var OrderExcelService = (function () {
     worksheet.getCell('C2').alignment = { horizontal: 'right' };
 
     worksheet.mergeCells('C3:E3');
-    worksheet.getCell('C3').value = companyInfo.DienThoaiFax || 'Tel: (024) 3204 9988 | Fax: (024) 3215 1142';
+    worksheet.getCell('C3').value = companyInfo.DienThoaiFax || 'Tel: (024) 3204 9988, Fax: (024) 3215 1142';
     worksheet.getCell('C3').font = { name: 'Times New Roman', size: 10 };
     worksheet.getCell('C3').alignment = { horizontal: 'right' };
 
-    // Title Row 5
-    worksheet.mergeCells('A5:E5');
-    worksheet.getCell('A5').value = 'PHIẾU ĐẶT HÀNG';
-    worksheet.getCell('A5').font = { name: 'Times New Roman', size: 18, bold: true };
-    worksheet.getCell('A5').alignment = { horizontal: 'center', vertical: 'middle' };
+    worksheet.mergeCells('C4:E4');
+    worksheet.getCell('C4').value = companyInfo.EmailWeb || 'Email: info@santino.com.vn | Web: www.santino.com.vn';
+    worksheet.getCell('C4').font = { name: 'Times New Roman', size: 10 };
+    worksheet.getCell('C4').alignment = { horizontal: 'right' };
 
-    // Date & Order No Row 6
-    worksheet.mergeCells('A6:C6');
-    worksheet.getCell('A6').value = dateFormattedText;
-    worksheet.getCell('A6').font = { name: 'Times New Roman', size: 11, italic: true };
+    // Title Row 6
+    worksheet.mergeCells('A6:E6');
+    worksheet.getCell('A6').value = 'PHIẾU ĐẶT HÀNG';
+    worksheet.getCell('A6').font = { name: 'Times New Roman', size: 18, bold: true };
+    worksheet.getCell('A6').alignment = { horizontal: 'center', vertical: 'middle' };
 
-    worksheet.mergeCells('D6:E6');
-    worksheet.getCell('D6').value = 'Số: ' + docId;
-    worksheet.getCell('D6').font = { name: 'Times New Roman', size: 11, bold: true };
-    worksheet.getCell('D6').alignment = { horizontal: 'right' };
+    // Date & Order No Row 7
+    worksheet.mergeCells('A7:C7');
+    worksheet.getCell('A7').value = dateFormattedText;
+    worksheet.getCell('A7').font = { name: 'Times New Roman', size: 11, italic: true };
 
-    // Customer Box Table (Rows 8 to 10)
+    worksheet.mergeCells('D7:E7');
+    worksheet.getCell('D7').value = 'Số: ' + docId;
+    worksheet.getCell('D7').font = { name: 'Times New Roman', size: 11, bold: true };
+    worksheet.getCell('D7').alignment = { horizontal: 'right' };
+
+    // Customer Box Table (Rows 9 to 11)
     var thinBorder = {
       top: { style: 'thin' },
       left: { style: 'thin' },
@@ -158,33 +163,33 @@ var OrderExcelService = (function () {
       right: { style: 'thin' }
     };
 
-    worksheet.mergeCells('A8:C8');
-    worksheet.getCell('A8').value = 'KHÁCH HÀNG: ' + custName;
-    worksheet.getCell('A8').font = { name: 'Times New Roman', size: 11, bold: true };
-
-    worksheet.mergeCells('D8:E8');
-    worksheet.getCell('D8').value = 'MÃ KHÁCH HÀNG: ' + custCode;
-    worksheet.getCell('D8').font = { name: 'Times New Roman', size: 11, bold: true };
-
     worksheet.mergeCells('A9:C9');
-    worksheet.getCell('A9').value = 'ĐỊA CHỈ: ' + custAddr;
-    worksheet.getCell('A9').font = { name: 'Times New Roman', size: 11 };
+    worksheet.getCell('A9').value = 'KHÁCH HÀNG: ' + custName;
+    worksheet.getCell('A9').font = { name: 'Times New Roman', size: 11, bold: true };
 
     worksheet.mergeCells('D9:E9');
-    worksheet.getCell('D9').value = 'SỐ ĐIỆN THOẠI: ' + custPhone;
-    worksheet.getCell('D9').font = { name: 'Times New Roman', size: 11 };
+    worksheet.getCell('D9').value = 'MÃ KHÁCH HÀNG: ' + custCode;
+    worksheet.getCell('D9').font = { name: 'Times New Roman', size: 11, bold: true };
 
-    worksheet.mergeCells('A10:E10');
-    worksheet.getCell('A10').value = 'DIỄN GIẢI: ' + remarks;
+    worksheet.mergeCells('A10:C10');
+    worksheet.getCell('A10').value = 'ĐỊA CHỈ: ' + custAddr;
     worksheet.getCell('A10').font = { name: 'Times New Roman', size: 11 };
 
-    ['A8','B8','C8','D8','E8','A9','B9','C9','D9','E9','A10','B10','C10','D10','E10'].forEach(function(cellRef) {
+    worksheet.mergeCells('D10:E10');
+    worksheet.getCell('D10').value = 'SỐ ĐIỆN THOẠI: ' + custPhone;
+    worksheet.getCell('D10').font = { name: 'Times New Roman', size: 11 };
+
+    worksheet.mergeCells('A11:E11');
+    worksheet.getCell('A11').value = 'DIỄN GIẢI: ' + remarks;
+    worksheet.getCell('A11').font = { name: 'Times New Roman', size: 11 };
+
+    ['A9','B9','C9','D9','E9','A10','B10','C10','D10','E10','A11','B11','C11','D11','E11'].forEach(function(cellRef) {
       worksheet.getCell(cellRef).border = thinBorder;
     });
 
-    // Product Table Header Row 12
+    // Product Table Header Row 13
     var headers = ['STT', 'SẢN PHẨM', 'SIZE × SỐ LƯỢNG', 'TỔNG', 'THÀNH TIỀN'];
-    var headerRow = worksheet.getRow(12);
+    var headerRow = worksheet.getRow(13);
     headers.forEach(function(h, idx) {
       var cell = headerRow.getCell(idx + 1);
       cell.value = h;
@@ -194,7 +199,7 @@ var OrderExcelService = (function () {
       cell.border = thinBorder;
     });
 
-    var currentRowIndex = 13;
+    var currentRowIndex = 14;
     var totalQty = 0;
     var totalAmount = 0;
 
@@ -297,26 +302,20 @@ var OrderExcelService = (function () {
 
     currentRowIndex += 2;
 
-    // 5-Column Signatures
-    var signatureTitles = ['Người nhận', 'Người giao', 'Thủ kho', 'Kế toán', 'Thủ trưởng'];
-
+    // Signature: Only Kế toán at column E
     var sigTitleRow = worksheet.getRow(currentRowIndex);
-    signatureTitles.forEach(function(title, i) {
-      var cell = sigTitleRow.getCell(i + 1);
-      cell.value = title;
-      cell.font = { name: 'Times New Roman', size: 11, bold: true };
-      cell.alignment = { horizontal: 'center' };
-    });
+    var cellTitle = sigTitleRow.getCell(5);
+    cellTitle.value = 'Kế toán';
+    cellTitle.font = { name: 'Times New Roman', size: 11, bold: true };
+    cellTitle.alignment = { horizontal: 'center' };
 
     currentRowIndex++;
 
     var sigSubRow = worksheet.getRow(currentRowIndex);
-    signatureTitles.forEach(function(_, i) {
-      var cell = sigSubRow.getCell(i + 1);
-      cell.value = '(Ký / họ tên)';
-      cell.font = { name: 'Times New Roman', size: 10, italic: true, color: { argb: '64748B' } };
-      cell.alignment = { horizontal: 'center' };
-    });
+    var cellSub = sigSubRow.getCell(5);
+    cellSub.value = '(Ký / họ tên)';
+    cellSub.font = { name: 'Times New Roman', size: 10, italic: true, color: { argb: '64748B' } };
+    cellSub.alignment = { horizontal: 'center' };
 
     var buffer = await workbook.xlsx.writeBuffer();
     var blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
