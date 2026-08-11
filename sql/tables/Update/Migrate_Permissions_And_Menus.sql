@@ -18,6 +18,7 @@ BEGIN
         [UserGroupName] AS [name]
     FROM [SY_UserGroup]
     WHERE COALESCE([IsDisable], 0) = 0 -- Bỏ qua các nhóm đã bị khóa (IsDisable = 1)
+      AND [UserGroupID] LIKE 'WEB_%'
     ORDER BY [UserGroupID];
 END;
 GO
@@ -124,9 +125,9 @@ BEGIN
 
     -- =======================================================
     -- BƯỚC 1: CẢNH VỆ HỆ THỐNG - CHỈ SUPER ADMIN MỚI ĐƯỢC CHẠY
-    -- Khoá cứng điều kiện: Mã nhóm thao tác bắt buộc phải là 'Admin'
+    -- Khoá cứng điều kiện: Mã nhóm thao tác bắt buộc phải là 'Admin' hoặc 'WEB_ADMIN'
     -- =======================================================
-    IF (@NhomNguoiDangThaoTac != 'Admin')
+    IF (@NhomNguoiDangThaoTac NOT IN ('Admin', 'WEB_ADMIN'))
     BEGIN
         RAISERROR (N'Lỗi Bảo Mật: Bạn không phải Giám đốc Server, cấm sửa Phân Quyền!', 16, 1);
         RETURN; 
@@ -206,7 +207,8 @@ BEGIN
             CASE WHEN G.UserGroupID = 'Admin' THEN 1 ELSE 0 END
         FROM SY_UserGroup G
         CROSS JOIN WA_Menu M
-        WHERE NOT EXISTS (
+        WHERE (G.UserGroupID LIKE 'WEB_%' OR G.UserGroupID = 'Admin') -- Chỉ bơm quyền cho nhóm Web và Admin
+          AND NOT EXISTS (
             SELECT 1 FROM WA_UserGroupPermisstion P
             WHERE P.UserGroupID = G.UserGroupID
               AND P.MenuID = M.MenuID
@@ -366,6 +368,13 @@ CREATE PROCEDURE [dbo].[API_XoaMenu]
 AS
 BEGIN
     SET NOCOUNT ON;
+
+    -- Kiểm tra quyền: Chỉ Admin hoặc WEB_ADMIN mới được xóa menu
+    IF (@NhomNguoiDangThaoTac NOT IN ('Admin', 'WEB_ADMIN'))
+    BEGIN
+        RAISERROR (N'Lỗi Bảo Mật: Bạn không có quyền xóa Menu!', 16, 1);
+        RETURN;
+    END;
 
     -- 1. Xóa phân quyền của các menu con
     DELETE FROM WA_UserGroupPermisstion WHERE MenuID IN (SELECT MenuID FROM WA_Menu WHERE Parent = @MenuID);

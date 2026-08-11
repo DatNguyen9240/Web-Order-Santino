@@ -1374,7 +1374,7 @@ var DynamicPage = (function () {
           const userData = {
             UserName: finalUsername,
             HoTen: name,
-            UserGroupID: 'DL',
+            UserGroupID: 'WEB_DL',
             ObjectID: finalId,
             Disable: 0
           };

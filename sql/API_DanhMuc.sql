@@ -146,7 +146,8 @@ BEGIN
             [UserGroupID]   AS [id],
             [UserGroupName] AS [name]
         FROM [dbo].[SY_UserGroup]
-        WHERE (@TimKiem = '' OR [UserGroupName] LIKE N'%' + @TimKiem + N'%'
+        WHERE [UserGroupID] LIKE 'WEB_%'
+          AND (@TimKiem = '' OR [UserGroupName] LIKE N'%' + @TimKiem + N'%'
                              OR [UserGroupID]   LIKE N'%' + @TimKiem + N'%')
         ORDER BY [UserGroupName];
         RETURN;
@@ -160,7 +161,7 @@ BEGIN
         FROM [dbo].[CF_ObjectTbl]
         WHERE ([isDisable] = 0 OR [isDisable] IS NULL)
           AND ISNULL([isWeb], 0) = 1 AND ObjectGroupID <> 'CC'
-          AND [ObjectID] IN (SELECT DISTINCT [ObjectID] FROM [dbo].[SY_User] WHERE [UserGroupID] IN ('DL', 'Ban dai ly'))
+          AND [ObjectID] IN (SELECT DISTINCT [ObjectID] FROM [dbo].[SY_User] WHERE [UserGroupID] IN ('WEB_DL', 'WEB_NPP'))
           AND (@TimKiem = '' OR [ObjectName] LIKE N'%' + @TimKiem + N'%' OR [ObjectID] LIKE N'%' + @TimKiem + N'%')
         ORDER BY [ObjectName];
         RETURN;
@@ -200,7 +201,7 @@ BEGIN
             -- Check xem group có quyền manager ở chức năng Đơn hàng không
             CAST(ISNULL((SELECT TOP 1 p.[isManager] FROM [dbo].[WA_UserGroupPermisstion] p LEFT JOIN [dbo].[WA_Menu] m ON p.[MenuID] = m.[MenuID] WHERE p.[UserGroupID] = @UserRole AND m.[FormName] = 'WEB_OrderFrm'), 0) AS BIT) AS [isManager],
             -- Check xem có phải nhóm Đại lý hay không
-            CAST(CASE WHEN UPPER(@UserRole) IN ('DL', 'BAN DAI LY') THEN 1 ELSE 0 END AS BIT) AS [isAgent]
+            CAST(CASE WHEN UPPER(@UserRole) IN ('WEB_DL', 'WEB_NPP') THEN 1 ELSE 0 END AS BIT) AS [isAgent]
         RETURN;
     END
 

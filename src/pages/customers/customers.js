@@ -389,7 +389,7 @@ var CustomersPage = (function () {
 
           // Lấy user group từ database
           const userGroupEl = document.getElementById('cust-usergroup');
-          if (userGroupEl) userGroupEl.value = c.usergroup_id || 'DL';
+          if (userGroupEl) userGroupEl.value = c.usergroup_id || 'WEB_DL';
           // Ẩn trường mật khẩu khởi tạo khi edit (nếu muốn reset thì đã có modal reset riêng biệt)
           const initialPwGroup = document.getElementById('cust-initial-password-group');
           if (initialPwGroup) initialPwGroup.style.display = 'none';

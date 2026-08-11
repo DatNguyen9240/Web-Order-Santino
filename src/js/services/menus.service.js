@@ -12,7 +12,7 @@ var MenusService = (function () {
 
   function _currentGroupId() {
     var u = JSON.parse(localStorage.getItem('santino_user') || '{}');
-    return u.role || u.Group || u.GroupUser || u.GroupID || 'Admin';
+    return u.role || u.Group || u.GroupUser || u.GroupID || ''; // fallback rỗng: để SQL từ chối, không tự leo quyền Admin
   }
 
   /**
