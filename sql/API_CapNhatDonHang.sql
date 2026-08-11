@@ -109,10 +109,10 @@ BEGIN
 
         -- 5. THỰC HIỆN CẬP NHẬT HEADER ĐƠN HÀNG
         DECLARE @MaKH NVARCHAR(50)        = JSON_VALUE(@OrderJson, '$.ma_kh');
-        DECLARE @TenKH NVARCHAR(255)      = JSON_VALUE(@OrderJson, '$.ten_kh');
+        DECLARE @TenKH NVARCHAR(255)      = COALESCE(JSON_VALUE(@OrderJson, '$.kh_ten'), JSON_VALUE(@OrderJson, '$.ten_kh'));
         DECLARE @GhiChu NVARCHAR(500)     = JSON_VALUE(@OrderJson, '$.ghi_chu');
-        DECLARE @TongTien DECIMAL(18,2)   = CAST(ISNULL(JSON_VALUE(@OrderJson, '$.tong_tien'), 0) AS DECIMAL(18,2));
-        DECLARE @PTThanhToan NVARCHAR(50) = JSON_VALUE(@OrderJson, '$.payment_type');
+        DECLARE @TongTien DECIMAL(18,2)   = CAST(ISNULL(COALESCE(JSON_VALUE(@OrderJson, '$.total_money'), JSON_VALUE(@OrderJson, '$.tong_tien')), 0) AS DECIMAL(18,2));
+        DECLARE @PTThanhToan NVARCHAR(50) = COALESCE(JSON_VALUE(@OrderJson, '$.ht_thanh_toan'), JSON_VALUE(@OrderJson, '$.payment_type'));
 
         UPDATE [dbo].[WEB_OrderTbl]
         SET 
@@ -123,28 +123,62 @@ BEGIN
             [PaymentTypeID] = ISNULL(@PTThanhToan, [PaymentTypeID])
         WHERE [DocumentID] = @DocumentID;
 
-        -- 6. THỰC HIỆN CẬP NHẬT DETAIL LINES (Khớp các cột: ItemID, UnitPrice, MauSac trong WEB_OrderDetailTbl)
-        DECLARE @LinesJson NVARCHAR(MAX) = JSON_QUERY(@OrderJson, '$.Lines');
+        -- 6. THỰC HIỆN CẬP NHẬT DETAIL LINES
+        DECLARE @LinesJson NVARCHAR(MAX) = COALESCE(JSON_QUERY(@OrderJson, '$.lines'), JSON_QUERY(@OrderJson, '$.Lines'));
         IF @LinesJson IS NOT NULL AND LEN(@LinesJson) > 2
         BEGIN
             DELETE FROM [dbo].[WEB_OrderDetailTbl] WHERE [DocumentID] = @DocumentID;
 
-            INSERT INTO [dbo].[WEB_OrderDetailTbl] (
-                [UserAutoID], [DocumentID], [ItemID], [ItemName], 
-                [Quantity], [UnitPrice], [Amount], [TotalAmount], [Size], [MauSac]
-            )
-            SELECT 
-                NEWID(),
-                @DocumentID,
-                ISNULL(JSON_VALUE(value, '$.ItemID'), JSON_VALUE(value, '$.ItemCode')),
-                JSON_VALUE(value, '$.ItemName'),
-                CAST(ISNULL(JSON_VALUE(value, '$.Quantity'), 1) AS DECIMAL(18,2)),
-                CAST(ISNULL(JSON_VALUE(value, '$.UnitPrice'), ISNULL(JSON_VALUE(value, '$.Price'), 0)) AS DECIMAL(18,2)),
-                CAST(ISNULL(JSON_VALUE(value, '$.Amount'), 0) AS DECIMAL(18,2)),
-                CAST(ISNULL(JSON_VALUE(value, '$.TotalAmount'), ISNULL(JSON_VALUE(value, '$.Amount'), 0)) AS DECIMAL(18,2)),
-                JSON_VALUE(value, '$.Size'),
-                ISNULL(JSON_VALUE(value, '$.MauSac'), JSON_VALUE(value, '$.Color'))
-            FROM OPENJSON(@LinesJson);
+            -- Kiểm tra xem payload là kiểu ma trận size (chi_tiet_size) hay kiểu dẳng phẳng (flat lines)
+            IF EXISTS (SELECT 1 FROM OPENJSON(@LinesJson) l WHERE JSON_QUERY(l.[value], '$.chi_tiet_size') IS NOT NULL)
+            BEGIN
+                INSERT INTO [dbo].[WEB_OrderDetailTbl] (
+                    [UserAutoID], [DocumentID], [ItemID], [ItemName], [Size], 
+                    [MauSac], [Quantity], [UnitPrice], [Amount], [TotalAmount], [STT]
+                )
+                SELECT 
+                    NEWID(),
+                    @DocumentID,
+                    (SELECT TOP 1 ci.ItemID FROM [dbo].[CF_ItemTbl] ci
+                     WHERE ci.ItemName2 = COALESCE(JSON_VALUE(l.[value], '$.ten_hang_2'), JSON_VALUE(l.[value], '$.ItemID'))
+                       AND ci.Size     = LTRIM(RTRIM(JSON_VALUE(sz.[value], '$.size')))
+                     ORDER BY ci.ItemID),
+                    COALESCE(JSON_VALUE(l.[value], '$.ten_hang'), JSON_VALUE(l.[value], '$.ItemName')),
+                    LTRIM(RTRIM(JSON_VALUE(sz.[value], '$.size'))),
+                    COALESCE(JSON_VALUE(l.[value], '$.mau'), JSON_VALUE(l.[value], '$.MauSac')),
+                    CAST(JSON_VALUE(sz.[value], '$.qty') AS DECIMAL(18,2)),
+                    CAST(COALESCE(JSON_VALUE(l.[value], '$.don_gia'), JSON_VALUE(l.[value], '$.UnitPrice'), '0') AS DECIMAL(18,2)),
+                    CAST(JSON_VALUE(sz.[value], '$.qty') AS DECIMAL(18,2)) * CAST(COALESCE(JSON_VALUE(l.[value], '$.don_gia'), JSON_VALUE(l.[value], '$.UnitPrice'), '0') AS DECIMAL(18,2)),
+                    CAST(JSON_VALUE(sz.[value], '$.qty') AS DECIMAL(18,2)) * CAST(COALESCE(JSON_VALUE(l.[value], '$.don_gia'), JSON_VALUE(l.[value], '$.UnitPrice'), '0') AS DECIMAL(18,2)),
+                    DENSE_RANK() OVER (ORDER BY COALESCE(JSON_VALUE(l.[value], '$.ten_hang_2'), JSON_VALUE(l.[value], '$.ItemID')))
+                FROM OPENJSON(@LinesJson) l
+                CROSS APPLY OPENJSON(l.[value], '$.chi_tiet_size') sz
+                WHERE ISNULL(TRY_CAST(JSON_VALUE(sz.[value], '$.qty') AS DECIMAL(18,2)), 0) > 0;
+            END
+            ELSE
+            BEGIN
+                INSERT INTO [dbo].[WEB_OrderDetailTbl] (
+                    [UserAutoID], [DocumentID], [ItemID], [ItemName], 
+                    [Quantity], [UnitPrice], [Amount], [TotalAmount], [Size], [MauSac]
+                )
+                SELECT 
+                    NEWID(),
+                    @DocumentID,
+                    COALESCE(JSON_VALUE(value, '$.ItemID'), JSON_VALUE(value, '$.ItemCode'), JSON_VALUE(value, '$.ten_hang_2')),
+                    COALESCE(JSON_VALUE(value, '$.ItemName'), JSON_VALUE(value, '$.ten_hang')),
+                    CAST(ISNULL(COALESCE(JSON_VALUE(value, '$.Quantity'), JSON_VALUE(value, '$.so_luong')), 1) AS DECIMAL(18,2)),
+                    CAST(ISNULL(COALESCE(JSON_VALUE(value, '$.UnitPrice'), JSON_VALUE(value, '$.Price'), JSON_VALUE(value, '$.don_gia')), 0) AS DECIMAL(18,2)),
+                    CAST(ISNULL(COALESCE(JSON_VALUE(value, '$.Amount'), JSON_VALUE(value, '$.thanh_tien')), 0) AS DECIMAL(18,2)),
+                    CAST(ISNULL(COALESCE(JSON_VALUE(value, '$.TotalAmount'), JSON_VALUE(value, '$.Amount'), JSON_VALUE(value, '$.thanh_tien')), 0) AS DECIMAL(18,2)),
+                    COALESCE(JSON_VALUE(value, '$.Size'), JSON_VALUE(value, '$.size')),
+                    COALESCE(JSON_VALUE(value, '$.MauSac'), JSON_VALUE(value, '$.Color'), JSON_VALUE(value, '$.mau'))
+                FROM OPENJSON(@LinesJson);
+            END
+
+            -- Tự động cập nhật lại BaseTotal trong WEB_OrderTbl theo tổng số tiền thực tế của các dòng chi tiết
+            UPDATE [dbo].[WEB_OrderTbl]
+            SET [BaseTotal] = ISNULL((SELECT SUM([Amount]) FROM [dbo].[WEB_OrderDetailTbl] WHERE [DocumentID] = @DocumentID), [BaseTotal])
+            WHERE [DocumentID] = @DocumentID;
         END
 
         COMMIT TRANSACTION;

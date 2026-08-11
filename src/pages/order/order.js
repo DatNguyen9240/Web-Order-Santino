@@ -1268,11 +1268,11 @@ var OrderPage = (function () {
     });
  
     // 3. Xây dựng Header
-    var headHtml = '<tr><th style="min-width:120px; text-align:left;">SẢN PHẨM</th><th>MÀU</th>';
+    var headHtml = '<tr><th style="min-width:110px; text-align:left;">SẢN PHẨM</th><th style="min-width:38px;">MÀU</th>';
     uniqueSizes.forEach(function (sz) {
-      headHtml += '<th class="text-center">' + sz + '</th>';
+      headHtml += '<th class="text-center" style="min-width:22px; padding:3px 1px;">' + sz + '</th>';
     });
-    headHtml += '<th class="text-center">TỔNG</th><th class="text-right">THÀNH TIỀN</th></tr>';
+    headHtml += '<th class="text-center" style="min-width:38px;">TỔNG</th><th class="text-right" style="min-width:85px; white-space:nowrap;">THÀNH TIỀN</th></tr>';
  
     // 4. Xây dựng Body
     var totalMoneyAll = 0;
@@ -1307,7 +1307,7 @@ var OrderPage = (function () {
         '<td class="text-center">' + mauStr + '</td>' +
         rowCells +
         '<td class="text-center text-bold">' + rowQty + '</td>' +
-        '<td class="text-right text-bold">' + Utils.formatMoney(rowMoney) + '</td>' +
+        '<td class="text-right text-bold" style="white-space:nowrap;">' + Utils.formatMoney(rowMoney) + '</td>' +
         '</tr>';
     }).join('');
  
@@ -1316,7 +1316,7 @@ var OrderPage = (function () {
     uniqueSizes.forEach(function (sz) {
       footHtml += '<td class="text-center orange-text">' + sizeTotals[sz] + '</td>';
     });
-    footHtml += '<td class="text-center orange-text">' + totalQtyAll + '</td><td class="text-right orange-text">' + Utils.formatMoney(totalMoneyAll) + '</td></tr>';
+    footHtml += '<td class="text-center orange-text">' + totalQtyAll + '</td><td class="text-right orange-text" style="white-space:nowrap;">' + Utils.formatMoney(totalMoneyAll) + '</td></tr>';
  
     // Cập nhật Modal
     document.getElementById('invoice-table-head').innerHTML = headHtml;
