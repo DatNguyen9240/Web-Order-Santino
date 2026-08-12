@@ -213,7 +213,7 @@ BEGIN
                 FORMAT(ISNULL(@TongTienHang, 0), '#,0')      AS [TongThanhToan],
                 
                 -- Tính tổng số lượng
-                (SELECT CAST(ISNULL(SUM([Quantity]), 0) AS INT) FROM [dbo].[WEB_OrderDetailTbl] WHERE [DocumentID] = @DocumentID) AS [TongSoLuong],
+                FORMAT(ISNULL((SELECT SUM([Quantity]) FROM [dbo].[WEB_OrderDetailTbl] WHERE [DocumentID] = @DocumentID), 0), '#,0') AS [TongSoLuong],
 
                 -- Mảng danh sách chi tiết hàng hóa (ChiTietDonHang động từ DB)
                 (
@@ -226,7 +226,7 @@ BEGIN
                         MAX(REPLACE(ISNULL(d.[ItemName], ci.[ItemName]), ':', ' -')) AS [ten_hang_goc],
                         MAX(i.[Unit])                             AS [DVT],
                         FORMAT(MAX(ISNULL(d.[UnitPrice], 0)), '#,0') AS [DonGia],
-                        CAST(SUM(d.[Quantity]) AS INT)            AS [SoLuong],
+                        FORMAT(SUM(d.[Quantity]), '#,0')          AS [SoLuong],
                         MAX(ci.[MauSac])                          AS [mau],
                         0                                         AS [ChietKhau],
                         FORMAT(SUM(ISNULL(d.[Amount], 0)), '#,0') AS [ThanhTien],

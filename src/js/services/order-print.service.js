@@ -115,7 +115,7 @@ var OrderPrintService = (function () {
         DVT: unit,
         DonGia: _money(price),
         don_gia: price,
-        SoLuong: qty,
+        SoLuong: _money(qty),
         so_luong: qty,
         mau: color,
         MauSac: color,
@@ -127,7 +127,7 @@ var OrderPrintService = (function () {
       });
     });
 
-    var totalQty = formattedLines.reduce(function (acc, l) { return acc + Number(l.SoLuong || 0); }, 0);
+    var totalQty = rawLines.reduce(function (acc, l) { return acc + _parseMoney(l.so_luong || l.Quantity || l.SoLuong || 0); }, 0);
     var totalMoney = _parseMoney(order.TongTienHang || order.total_money || order.BaseTotal || formattedLines.reduce(function (acc, l) { return acc + _parseMoney(l.ThanhTien); }, 0));
 
     var payload = Object.assign({}, order, {
@@ -146,7 +146,7 @@ var OrderPrintService = (function () {
       TienSauChietKhau: _money(order.TienSauChietKhau || totalMoney),
       ChietKhauKhac: _money(order.ChietKhauKhac || 0),
       TongThanhToan: _money(order.TongThanhToan || totalMoney),
-      TongSoLuong: totalQty,
+      TongSoLuong: _money(order.TongSoLuong || totalQty),
       TienBangChu: order.TienBangChu || order.bang_chu || '',
       tong_theo_size: order.tong_theo_size || order.tong_size_text || '',
 
