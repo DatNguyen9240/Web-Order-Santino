@@ -1306,7 +1306,7 @@ var OrderPage = (function () {
         '<td><div class="product-name-container"><span class="product-code">' + row.ten_hang_2 + '</span>' + (tenHangStr ? '<span class="product-desc">' + tenHangStr + '</span>' : '') + '</div></td>' +
         '<td class="text-center">' + mauStr + '</td>' +
         rowCells +
-        '<td class="text-center text-bold">' + rowQty + '</td>' +
+        '<td class="text-center text-bold">' + rowQty.toLocaleString('vi-VN') + '</td>' +
         '<td class="text-right text-bold" style="white-space:nowrap;">' + Utils.formatMoney(rowMoney) + '</td>' +
         '</tr>';
     }).join('');
@@ -1314,9 +1314,9 @@ var OrderPage = (function () {
     // 5. Xây dựng Footer
     var footHtml = '<tr class="total-row"><td colspan="2" class="text-right">Tổng cộng:</td>';
     uniqueSizes.forEach(function (sz) {
-      footHtml += '<td class="text-center orange-text">' + sizeTotals[sz] + '</td>';
+      footHtml += '<td class="text-center orange-text">' + (sizeTotals[sz] > 0 ? sizeTotals[sz].toLocaleString('vi-VN') : 0) + '</td>';
     });
-    footHtml += '<td class="text-center orange-text">' + totalQtyAll + '</td><td class="text-right orange-text" style="white-space:nowrap;">' + Utils.formatMoney(totalMoneyAll) + '</td></tr>';
+    footHtml += '<td class="text-center orange-text">' + totalQtyAll.toLocaleString('vi-VN') + '</td><td class="text-right orange-text" style="white-space:nowrap;">' + Utils.formatMoney(totalMoneyAll) + '</td></tr>';
  
     // Cập nhật Modal
     document.getElementById('invoice-table-head').innerHTML = headHtml;

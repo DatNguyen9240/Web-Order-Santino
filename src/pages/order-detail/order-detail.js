@@ -90,6 +90,12 @@ var OrderDetailPage = (function () {
         };
         column.type = 'numericColumn';
       } else if (renderRule === 'N' || fieldName === 'quantity' || fieldName === 'so_luong') {
+        column.valueFormatter = function (params) {
+          if (params.value == null || params.value === '') return '';
+          var num = Number(params.value);
+          if (isNaN(num)) return params.value;
+          return num.toLocaleString('vi-VN');
+        };
         column.cellStyle = function (params) {
           if (params.node && params.node.rowPinned === 'bottom') {
             return { textAlign: 'center', fontWeight: '700', color: 'var(--accent, #4F46E5)', fontSize: '15px' };
@@ -624,7 +630,7 @@ var OrderDetailPage = (function () {
             ${color ? ('Màu: ' + color) : ''}
           </td>
           <td align="left" style="border: 1px solid #000;">${sizeText}</td>
-          <td align="center" style="border: 1px solid #000; font-weight: bold;">${qty}</td>
+          <td align="center" style="border: 1px solid #000; font-weight: bold;">${qty.toLocaleString('vi-VN')}</td>
           <td align="right" style="border: 1px solid #000; font-weight: bold;">${formattedAmount}</td>
         </tr>
       `;
@@ -644,7 +650,7 @@ var OrderDetailPage = (function () {
 
         <table border="0" cellpadding="4" cellspacing="0" style="width: 100%; font-family: 'Times New Roman', Arial, sans-serif; font-size: 13px;">
           <tr>
-            <td colspan="3" style="font-weight: bold;">Tổng số lượng: ${totalQty} sản phẩm</td>
+            <td colspan="3" style="font-weight: bold;">Tổng số lượng: ${totalQty.toLocaleString('vi-VN')} sản phẩm</td>
             <td colspan="2" align="right" style="font-weight: bold;">Tổng tiền hàng: ${formattedTotalAmount}</td>
           </tr>
           <tr>
