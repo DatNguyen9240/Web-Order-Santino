@@ -37,12 +37,20 @@ var Router = (function () {
   // ── Template fetch with cache ─────────────────────────────────────────
   function fetchTemplate(url) {
     if (_templateCache[url]) return Promise.resolve(_templateCache[url]);
-    return fetch(url + '?v=' + new Date().getTime(), { cache: "no-store" })
+    var controller = new AbortController();
+    var timeoutMs = Number(API_CONFIG.NETWORK.REQUEST_TIMEOUT_MS);
+    var timeoutId = setTimeout(function () { controller.abort(); }, timeoutMs);
+
+    return fetch(url + '?v=' + new Date().getTime(), {
+      cache: "no-store",
+      signal: controller.signal
+    })
       .then(function (r) {
         if (!r.ok) throw new Error('Template not found: ' + url);
         return r.text();
       })
-      .then(function (html) { _templateCache[url] = html; return html; });
+      .then(function (html) { _templateCache[url] = html; return html; })
+      .finally(function () { clearTimeout(timeoutId); });
   }
 
   // ── Fade helpers ──────────────────────────────────────────────────────

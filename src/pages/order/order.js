@@ -11,6 +11,7 @@ var OrderPage = (function () {
   var _canAddCustomer = false;
   var _isEditMode = false;
   var _editDocId = '';
+  var _isSaving = false;
 
   var _catValues = {
     khach_hang: { id: '', name: '' },
@@ -1022,7 +1023,7 @@ var OrderPage = (function () {
       return;
     }
     var added = 0;
-    for (var i = codes.length - 1; i >= 0; i--) {
+    for (var i = 0; i < codes.length; i++) {
       var code = codes[i];
       var prod = cachedProds[code];
       if (prod && !orderRows.find(function (r) { return r.ten_hang_2 === code; })) {
@@ -1047,7 +1048,7 @@ var OrderPage = (function () {
 
         sizes.sort(function (a, b) { return (a.stt || a.STT || 0) - (b.stt || b.STT || 0); });
 
-        orderRows.unshift({ ten_hang_2: code, product: prod, sizes: sizes, quantities: {} });
+        orderRows.push({ ten_hang_2: code, product: prod, sizes: sizes, quantities: {} });
         added++;
       }
     }
@@ -1085,7 +1086,7 @@ var OrderPage = (function () {
 
     sizes.sort(function (a, b) { return (a.stt || a.STT || 0) - (b.stt || b.STT || 0); });
 
-    orderRows.unshift({ ten_hang_2: code, product: prod, sizes: sizes, quantities: {} });
+    orderRows.push({ ten_hang_2: code, product: prod, sizes: sizes, quantities: {} });
     document.getElementById('ac-input').value = '';
     acSearch('');
     renderMatrix();
@@ -1215,6 +1216,7 @@ var OrderPage = (function () {
 
       if (total_qty > 0) {
         lines.push({
+          stt: lines.length + 1,
           ten_hang_2: row.ten_hang_2,
           ten_hang: tenHangStr,
           nhom_size: nhomSizeStr,
@@ -1610,6 +1612,8 @@ var OrderPage = (function () {
   }
 
   async function saveOrder() {
+    if (_isSaving) return;
+
     var lines = _buildLines();
     if (!lines || lines.length === 0) {
       showToast('Vui lòng chọn ít nhất 1 sản phẩm', false);
@@ -1653,37 +1657,30 @@ var OrderPage = (function () {
       return;
     }
 
+    var submitButtons = [
+      document.getElementById('btn-top-submit'),
+      document.getElementById('btn-preview-submit')
+    ].filter(Boolean);
+
+    _isSaving = true;
+    submitButtons.forEach(function (button) { button.disabled = true; });
+
     try {
       const res = _isEditMode ? await OrderService.updateOrder(order) : await OrderService.createOrder(order);
 
       // Kiểm tra kết quả trả về từ SQL Server
-      let isSuccess = true;
       let actualSoCT = order.so_ct || _editDocId;
-      let msg = '';
+      var result = res && Array.isArray(res.records) ? res.records[0]
+        : (Array.isArray(res) ? res[0] : (res && res.Success !== undefined ? res : null));
 
-      if (res && res.records && res.records[0]) {
-        if (res.records[0].Success !== 1 && res.records[0].Success !== '1') {
-          isSuccess = false;
-          msg = res.records[0].Message || 'Lỗi từ CSDL';
-        } else {
-          actualSoCT = res.records[0].DocumentID || actualSoCT;
-          msg = _isEditMode ? ('Đã cập nhật đơn: ' + actualSoCT) : ('Đã lưu đơn: ' + actualSoCT);
-        }
-      } else if (res && res[0]) {
-        if (res[0].Success !== 1 && res[0].Success !== '1') {
-          isSuccess = false;
-          msg = res[0].Message || 'Lỗi từ CSDL';
-        } else {
-          actualSoCT = res[0].DocumentID || actualSoCT;
-          msg = _isEditMode ? ('Đã cập nhật đơn: ' + actualSoCT) : ('Đã lưu đơn: ' + actualSoCT);
-        }
-      } else {
-        msg = _isEditMode ? ('Đã cập nhật đơn: ' + actualSoCT) : ('Đã lưu đơn: ' + actualSoCT);
+      if (!result) throw new Error('Máy chủ trả về kết quả lưu đơn không hợp lệ.');
+      if (result.Success !== 1 && result.Success !== '1') {
+        throw new Error(result.Message || 'Lỗi từ CSDL');
       }
 
-      if (!isSuccess) {
-        throw new Error(msg);
-      }
+      actualSoCT = result.DocumentID || actualSoCT;
+      if (!actualSoCT) throw new Error('Đã lưu dữ liệu nhưng máy chủ không trả về số chứng từ.');
+      var msg = _isEditMode ? ('Đã cập nhật đơn: ' + actualSoCT) : ('Đã lưu đơn: ' + actualSoCT);
 
       closeModal('modal-preview');
 
@@ -1693,6 +1690,9 @@ var OrderPage = (function () {
     } catch (err) {
       console.warn('[OrderService] Lỗi lưu đơn qua API:', err);
       showToast(err.message || 'Lỗi xử lý đơn hàng qua API. Vui lòng thử lại.', false);
+    } finally {
+      _isSaving = false;
+      submitButtons.forEach(function (button) { button.disabled = false; });
     }
   }
 

@@ -9,6 +9,9 @@
 -- =============================================
 
 -- 1. Hàm đọc số tiền thành chữ tiếng Việt
+-- Phần định nghĩa bên dưới chỉ được giữ làm tài liệu tham chiếu. Bản cập nhật
+-- thứ tự in không thay đổi hàm dùng chung này.
+/*
 IF OBJECT_ID('[dbo].[fn_DocSoThanhChu]', 'FN') IS NOT NULL
     DROP FUNCTION [dbo].[fn_DocSoThanhChu];
 GO
@@ -103,15 +106,14 @@ BEGIN
     RETURN @Result;
 END
 GO
+*/
 
--- 2. Stored Procedure API_InDonHang
-IF OBJECT_ID('[dbo].[API_InDonHang]', 'P') IS NOT NULL
-BEGIN
-    DROP PROCEDURE [dbo].[API_InDonHang];
-END
+IF OBJECT_ID('[dbo].[fn_DocSoThanhChu]', 'FN') IS NULL
+    THROW 50000, N'Thiếu dependency dbo.fn_DocSoThanhChu. Script này không tự tạo hoặc thay đổi hàm dùng chung.', 1;
 GO
 
-CREATE PROCEDURE [dbo].[API_InDonHang]
+-- 2. Stored Procedure API_InDonHang
+ALTER PROCEDURE [dbo].[API_InDonHang]
     @DocumentID NVARCHAR(50)
 AS
 BEGIN
@@ -157,28 +159,21 @@ BEGIN
     -- Đọc số tiền thành chữ tự động từ tổng tiền thực tế
     SET @TienBangChu = dbo.fn_DocSoThanhChu(@TongTienHang);
 
-    -- Tính chuỗi tổng theo size với phân nhóm ĐỘNG 100% (Pattern Match: Starts with letter -> Numeric -> Special)
+    -- Tính chuỗi tổng theo thứ tự size được cấu hình trong CF_NhomSizeTbl.
     SELECT @TongTheoSize = STUFF((
         SELECT N' · ' + subD.[Size] + N'×' + CAST(CAST(SUM(subD.[Quantity]) AS INT) AS NVARCHAR)
         FROM [dbo].[WEB_OrderDetailTbl] subD
+        OUTER APPLY (
+            SELECT MIN(sizeConfig.[STT]) AS [SizeOrder]
+            FROM [dbo].[CF_NhomSizeTbl] sizeConfig
+            WHERE LTRIM(RTRIM(sizeConfig.[Size])) = LTRIM(RTRIM(subD.[Size]))
+        ) sizeMeta
         WHERE subD.[DocumentID] = @DocumentID
           AND ISNULL(subD.[Quantity], 0) > 0
-        GROUP BY subD.[Size]
-        ORDER BY 
-            CASE UPPER(RTRIM(LTRIM(subD.[Size])))
-                WHEN 'XXS' THEN 1  WHEN 'XS'  THEN 2
-                WHEN 'S'   THEN 3  WHEN '0S'  THEN 3
-                WHEN 'M'   THEN 4  WHEN '0M'  THEN 4
-                WHEN 'L'   THEN 5  WHEN '0L'  THEN 5
-                WHEN 'XL'  THEN 6  WHEN '0X'  THEN 6
-                WHEN '2XL' THEN 7  WHEN 'XXL' THEN 7 WHEN '2X' THEN 7
-                WHEN '3XL' THEN 8  WHEN 'XXXL' THEN 8 WHEN '3X' THEN 8
-                WHEN '4XL' THEN 9  WHEN '4X'  THEN 9
-                WHEN '5XL' THEN 10 WHEN '5X'  THEN 10
-                WHEN 'FREE' THEN 99 WHEN 'FREESIZE' THEN 99
-                ELSE 50
-            END,
-            CASE WHEN ISNUMERIC(subD.[Size]) = 1 THEN CAST(subD.[Size] AS DECIMAL(18,2)) ELSE 0 END,
+        GROUP BY subD.[Size], sizeMeta.[SizeOrder]
+        ORDER BY
+            CASE WHEN sizeMeta.[SizeOrder] IS NULL THEN 1 ELSE 0 END,
+            sizeMeta.[SizeOrder],
             subD.[Size]
         FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 3, N'');
 
@@ -218,7 +213,15 @@ BEGIN
                 -- Mảng danh sách chi tiết hàng hóa (ChiTietDonHang động từ DB)
                 (
                     SELECT 
-                        RIGHT('0' + CAST(ROW_NUMBER() OVER (ORDER BY MIN(ISNULL(NULLIF(d.[STT], 0), 999999))) AS VARCHAR(2)), 2) AS [STT],
+                        FORMAT(
+                            ROW_NUMBER() OVER (
+                                ORDER BY
+                                    CASE WHEN MIN(d.[STT]) IS NULL THEN 1 ELSE 0 END,
+                                    MIN(d.[STT]),
+                                    ci.[ItemName2]
+                            ),
+                            '00'
+                        ) AS [STT],
                         MAX(ISNULL(b.[BranchName], h.[BranchID])) AS [Kho],
                         ci.[ItemName2]                            AS [ten_hang_2],
                         ci.[ItemName2]                            AS [MaHang],
@@ -234,25 +237,18 @@ BEGIN
                             SELECT N' · ' + subD.[Size] + N'×' + CAST(CAST(SUM(subD.[Quantity]) AS INT) AS NVARCHAR)
                             FROM [dbo].[WEB_OrderDetailTbl] subD
                             LEFT JOIN [dbo].[CF_ItemTbl] subCI ON subD.[ItemID] = subCI.[ItemID]
+                            OUTER APPLY (
+                                SELECT MIN(sizeConfig.[STT]) AS [SizeOrder]
+                                FROM [dbo].[CF_NhomSizeTbl] sizeConfig
+                                WHERE LTRIM(RTRIM(sizeConfig.[Size])) = LTRIM(RTRIM(subD.[Size]))
+                            ) sizeMeta
                             WHERE subD.[DocumentID] = @DocumentID
                               AND subCI.[ItemName2] = ci.[ItemName2]
                               AND ISNULL(subD.[Quantity], 0) > 0
-                            GROUP BY subD.[Size]
-                            ORDER BY 
-                                CASE UPPER(RTRIM(LTRIM(subD.[Size])))
-                                    WHEN 'XXS' THEN 1  WHEN 'XS'  THEN 2
-                                    WHEN 'S'   THEN 3  WHEN '0S'  THEN 3
-                                    WHEN 'M'   THEN 4  WHEN '0M'  THEN 4
-                                    WHEN 'L'   THEN 5  WHEN '0L'  THEN 5
-                                    WHEN 'XL'  THEN 6  WHEN '0X'  THEN 6
-                                    WHEN '2XL' THEN 7  WHEN 'XXL' THEN 7 WHEN '2X' THEN 7
-                                    WHEN '3XL' THEN 8  WHEN 'XXXL' THEN 8 WHEN '3X' THEN 8
-                                    WHEN '4XL' THEN 9  WHEN '4X'  THEN 9
-                                    WHEN '5XL' THEN 10 WHEN '5X'  THEN 10
-                                    WHEN 'FREE' THEN 99 WHEN 'FREESIZE' THEN 99
-                                    ELSE 50
-                                END,
-                                CASE WHEN ISNUMERIC(subD.[Size]) = 1 THEN CAST(subD.[Size] AS DECIMAL(18,2)) ELSE 0 END,
+                            GROUP BY subD.[Size], sizeMeta.[SizeOrder]
+                            ORDER BY
+                                CASE WHEN sizeMeta.[SizeOrder] IS NULL THEN 1 ELSE 0 END,
+                                sizeMeta.[SizeOrder],
                                 subD.[Size]
                             FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 3, N'') AS [size_qty_text],
                         (
@@ -261,24 +257,17 @@ BEGIN
                                 CAST(SUM(subD.[Quantity]) AS INT) AS [qty]
                             FROM [dbo].[WEB_OrderDetailTbl] subD
                             LEFT JOIN [dbo].[CF_ItemTbl] subCI ON subD.[ItemID] = subCI.[ItemID]
+                            OUTER APPLY (
+                                SELECT MIN(sizeConfig.[STT]) AS [SizeOrder]
+                                FROM [dbo].[CF_NhomSizeTbl] sizeConfig
+                                WHERE LTRIM(RTRIM(sizeConfig.[Size])) = LTRIM(RTRIM(subD.[Size]))
+                            ) sizeMeta
                             WHERE subD.[DocumentID] = @DocumentID
                               AND subCI.[ItemName2] = ci.[ItemName2]
-                            GROUP BY subD.[Size]
-                            ORDER BY 
-                                CASE UPPER(RTRIM(LTRIM(subD.[Size])))
-                                    WHEN 'XXS' THEN 1  WHEN 'XS'  THEN 2
-                                    WHEN 'S'   THEN 3  WHEN '0S'  THEN 3
-                                    WHEN 'M'   THEN 4  WHEN '0M'  THEN 4
-                                    WHEN 'L'   THEN 5  WHEN '0L'  THEN 5
-                                    WHEN 'XL'  THEN 6  WHEN '0X'  THEN 6
-                                    WHEN '2XL' THEN 7  WHEN 'XXL' THEN 7 WHEN '2X' THEN 7
-                                    WHEN '3XL' THEN 8  WHEN 'XXXL' THEN 8 WHEN '3X' THEN 8
-                                    WHEN '4XL' THEN 9  WHEN '4X'  THEN 9
-                                    WHEN '5XL' THEN 10 WHEN '5X'  THEN 10
-                                    WHEN 'FREE' THEN 99 WHEN 'FREESIZE' THEN 99
-                                    ELSE 50
-                                END,
-                                CASE WHEN ISNUMERIC(subD.[Size]) = 1 THEN CAST(subD.[Size] AS DECIMAL(18,2)) ELSE 0 END,
+                            GROUP BY subD.[Size], sizeMeta.[SizeOrder]
+                            ORDER BY
+                                CASE WHEN sizeMeta.[SizeOrder] IS NULL THEN 1 ELSE 0 END,
+                                sizeMeta.[SizeOrder],
                                 subD.[Size]
                             FOR JSON PATH
                         ) AS [chi_tiet_size]
@@ -289,6 +278,10 @@ BEGIN
                     LEFT JOIN  [dbo].[CF_ItemTbl]    i ON d.[ItemID]     = i.[ItemID]
                     WHERE d.[DocumentID] = @DocumentID
                     GROUP BY ci.[ItemName2]
+                    ORDER BY
+                        CASE WHEN MIN(d.[STT]) IS NULL THEN 1 ELSE 0 END,
+                        MIN(d.[STT]),
+                        ci.[ItemName2]
                     FOR JSON PATH
                 ) AS [ChiTietDonHang]
             FOR JSON PATH, WITHOUT_ARRAY_WRAPPER

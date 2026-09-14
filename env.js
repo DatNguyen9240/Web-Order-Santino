@@ -15,6 +15,11 @@ const ENV_VARS = {
 window.API_CONFIG = {
     BASE_URL: ENV_VARS.API_BASE,
 
+    NETWORK: {
+        REQUEST_TIMEOUT_MS: 15000,
+        READ_RETRY_COUNT: 3
+    },
+
     ENDPOINTS: {
         AUTH: {
             LOGIN: '/login',
@@ -74,3 +79,4 @@ var API_CONFIG = window.API_CONFIG;
 // Đóng băng để code không vô tình ghi đè
 Object.freeze(window.API_CONFIG);
 Object.freeze(window.API_CONFIG.ENDPOINTS);
+Object.freeze(window.API_CONFIG.NETWORK);

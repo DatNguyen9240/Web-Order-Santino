@@ -152,7 +152,10 @@ BEGIN
             CAST(ISNULL(NULLIF(JSON_VALUE(l.[value], '$.don_gia'), ''), '0') AS DECIMAL(18,2)),
             CAST(ISNULL(NULLIF(JSON_VALUE(sz.[value], '$.qty'), ''), '0') AS DECIMAL(18,2)) * CAST(ISNULL(NULLIF(JSON_VALUE(l.[value], '$.don_gia'), ''), '0') AS DECIMAL(18,2)),
             CAST(ISNULL(NULLIF(JSON_VALUE(sz.[value], '$.qty'), ''), '0') AS DECIMAL(18,2)) * CAST(ISNULL(NULLIF(JSON_VALUE(l.[value], '$.don_gia'), ''), '0') AS DECIMAL(18,2)),
-            CAST(ISNULL(NULLIF(JSON_VALUE(l.[value], '$.stt'), ''), l.[key]) AS INT)
+            COALESCE(
+                TRY_CAST(NULLIF(JSON_VALUE(l.[value], '$.stt'), '') AS INT),
+                TRY_CAST(l.[key] AS INT) + 1
+            )
         FROM OPENJSON(@OrderJson, '$.lines') l
         CROSS APPLY OPENJSON(l.[value], '$.chi_tiet_size') sz;
 

@@ -3,7 +3,7 @@
 -- Create date: 2026-08-10
 -- Description: API Cập nhật Đơn hàng có phân quyền động theo DB (Khớp chuẩn schema WEB_OrderDetailTbl & WA_UserPermisstion)
 -- =============================================
-CREATE OR ALTER PROCEDURE [dbo].[API_CapNhatDonHang]
+ALTER PROCEDURE [dbo].[API_CapNhatDonHang]
     @OrderJson NVARCHAR(MAX)
 AS
 BEGIN
@@ -150,7 +150,10 @@ BEGIN
                     CAST(COALESCE(JSON_VALUE(l.[value], '$.don_gia'), JSON_VALUE(l.[value], '$.UnitPrice'), '0') AS DECIMAL(18,2)),
                     CAST(JSON_VALUE(sz.[value], '$.qty') AS DECIMAL(18,2)) * CAST(COALESCE(JSON_VALUE(l.[value], '$.don_gia'), JSON_VALUE(l.[value], '$.UnitPrice'), '0') AS DECIMAL(18,2)),
                     CAST(JSON_VALUE(sz.[value], '$.qty') AS DECIMAL(18,2)) * CAST(COALESCE(JSON_VALUE(l.[value], '$.don_gia'), JSON_VALUE(l.[value], '$.UnitPrice'), '0') AS DECIMAL(18,2)),
-                    DENSE_RANK() OVER (ORDER BY COALESCE(JSON_VALUE(l.[value], '$.ten_hang_2'), JSON_VALUE(l.[value], '$.ItemID')))
+                    COALESCE(
+                        TRY_CAST(NULLIF(JSON_VALUE(l.[value], '$.stt'), '') AS INT),
+                        TRY_CAST(l.[key] AS INT) + 1
+                    )
                 FROM OPENJSON(@LinesJson) l
                 CROSS APPLY OPENJSON(l.[value], '$.chi_tiet_size') sz
                 WHERE ISNULL(TRY_CAST(JSON_VALUE(sz.[value], '$.qty') AS DECIMAL(18,2)), 0) > 0;
@@ -159,20 +162,24 @@ BEGIN
             BEGIN
                 INSERT INTO [dbo].[WEB_OrderDetailTbl] (
                     [UserAutoID], [DocumentID], [ItemID], [ItemName], 
-                    [Quantity], [UnitPrice], [Amount], [TotalAmount], [Size], [MauSac]
+                    [Quantity], [UnitPrice], [Amount], [TotalAmount], [Size], [MauSac], [STT]
                 )
                 SELECT 
                     NEWID(),
                     @DocumentID,
-                    COALESCE(JSON_VALUE(value, '$.ItemID'), JSON_VALUE(value, '$.ItemCode'), JSON_VALUE(value, '$.ten_hang_2')),
-                    COALESCE(JSON_VALUE(value, '$.ItemName'), JSON_VALUE(value, '$.ten_hang')),
-                    CAST(ISNULL(COALESCE(JSON_VALUE(value, '$.Quantity'), JSON_VALUE(value, '$.so_luong')), 1) AS DECIMAL(18,2)),
-                    CAST(ISNULL(COALESCE(JSON_VALUE(value, '$.UnitPrice'), JSON_VALUE(value, '$.Price'), JSON_VALUE(value, '$.don_gia')), 0) AS DECIMAL(18,2)),
-                    CAST(ISNULL(COALESCE(JSON_VALUE(value, '$.Amount'), JSON_VALUE(value, '$.thanh_tien')), 0) AS DECIMAL(18,2)),
-                    CAST(ISNULL(COALESCE(JSON_VALUE(value, '$.TotalAmount'), JSON_VALUE(value, '$.Amount'), JSON_VALUE(value, '$.thanh_tien')), 0) AS DECIMAL(18,2)),
-                    COALESCE(JSON_VALUE(value, '$.Size'), JSON_VALUE(value, '$.size')),
-                    COALESCE(JSON_VALUE(value, '$.MauSac'), JSON_VALUE(value, '$.Color'), JSON_VALUE(value, '$.mau'))
-                FROM OPENJSON(@LinesJson);
+                    COALESCE(JSON_VALUE(l.[value], '$.ItemID'), JSON_VALUE(l.[value], '$.ItemCode'), JSON_VALUE(l.[value], '$.ten_hang_2')),
+                    COALESCE(JSON_VALUE(l.[value], '$.ItemName'), JSON_VALUE(l.[value], '$.ten_hang')),
+                    CAST(ISNULL(COALESCE(JSON_VALUE(l.[value], '$.Quantity'), JSON_VALUE(l.[value], '$.so_luong')), 1) AS DECIMAL(18,2)),
+                    CAST(ISNULL(COALESCE(JSON_VALUE(l.[value], '$.UnitPrice'), JSON_VALUE(l.[value], '$.Price'), JSON_VALUE(l.[value], '$.don_gia')), 0) AS DECIMAL(18,2)),
+                    CAST(ISNULL(COALESCE(JSON_VALUE(l.[value], '$.Amount'), JSON_VALUE(l.[value], '$.thanh_tien')), 0) AS DECIMAL(18,2)),
+                    CAST(ISNULL(COALESCE(JSON_VALUE(l.[value], '$.TotalAmount'), JSON_VALUE(l.[value], '$.Amount'), JSON_VALUE(l.[value], '$.thanh_tien')), 0) AS DECIMAL(18,2)),
+                    COALESCE(JSON_VALUE(l.[value], '$.Size'), JSON_VALUE(l.[value], '$.size')),
+                    COALESCE(JSON_VALUE(l.[value], '$.MauSac'), JSON_VALUE(l.[value], '$.Color'), JSON_VALUE(l.[value], '$.mau')),
+                    COALESCE(
+                        TRY_CAST(NULLIF(JSON_VALUE(l.[value], '$.stt'), '') AS INT),
+                        TRY_CAST(l.[key] AS INT) + 1
+                    )
+                FROM OPENJSON(@LinesJson) l;
             END
 
             -- Tự động cập nhật lại BaseTotal trong WEB_OrderTbl theo tổng số tiền thực tế của các dòng chi tiết

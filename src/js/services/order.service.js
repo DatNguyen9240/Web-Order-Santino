@@ -45,7 +45,10 @@ const OrderService = (() => {
         detailConfig: detail.config,
         endpoints: endpoints
       };
-    })();
+    })().catch(function (err) {
+      _metadataPromise = null;
+      throw err;
+    });
     return _metadataPromise;
   }
 

@@ -1,4 +1,4 @@
-/* --- translations.js --- */
+﻿/* --- translations.js --- */
 var TRANSLATIONS = {
   vi: {
     // --- Sidebar ---
@@ -523,7 +523,9 @@ var TRANSLATIONS = {
  * Kế thừa từ Medstand: Tự động gắn Authorization token, xử lý lỗi, caching, timeout
  */
 const Http = (() => {
-  const TIMEOUT_MS = 15000; // 15s
+  const NETWORK_CONFIG = API_CONFIG.NETWORK;
+  const TIMEOUT_MS = Number(NETWORK_CONFIG.REQUEST_TIMEOUT_MS);
+  const READ_RETRY_COUNT = Math.max(1, Number(NETWORK_CONFIG.READ_RETRY_COUNT));
   const CACHE_TTL_MS = 3 * 60 * 1000; // 3 phút
   const CACHE_PREFIX = '_api_';
 
@@ -649,22 +651,33 @@ const Http = (() => {
   }
 
   // --- Fetch with Timeout & Retry ---
-  async function _fetchWithTimeout(url, options, retries = 3) {
-    for (let attempt = 1; attempt <= retries; attempt++) {
+  async function _fetchWithTimeout(url, options, responseHandler, retries) {
+    const method = String(options?.method || 'GET').toUpperCase();
+    const maxAttempts = retries !== undefined ? retries : (method === 'GET' ? READ_RETRY_COUNT : 1);
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), TIMEOUT_MS);
+      let receivedResponse = false;
+
       try {
-        const controller = new AbortController();
-        const tid = setTimeout(() => controller.abort(), TIMEOUT_MS);
         const res = await fetch(url, { ...options, signal: controller.signal });
-        clearTimeout(tid);
-        return res;
+        receivedResponse = true;
+        return responseHandler ? await responseHandler(res) : res;
       } catch (err) {
-        if (attempt === retries) {
-          const isTimeout = err.name === 'AbortError';
+        const isTimeout = err.name === 'AbortError' || controller.signal.aborted;
+
+        // Không retry lỗi HTTP/nghiệp vụ sau khi máy chủ đã phản hồi.
+        if (receivedResponse && !isTimeout) throw err;
+
+        if (attempt === maxAttempts) {
           const msg = isTimeout ? 'Kết nối quá thời gian chờ.' : 'Không thể kết nối đến máy chủ.';
           _alert(msg, false);
           throw new Error(msg);
         }
         await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt - 1)));
+      } finally {
+        clearTimeout(tid);
       }
     }
   }
@@ -711,8 +724,11 @@ const Http = (() => {
 
     document.body.style.cursor = 'wait';
     try {
-      const res = await _fetchWithTimeout(url, { method: 'GET', headers: _headers() });
-      const data = await _handleResponse(res);
+      const data = await _fetchWithTimeout(
+        url,
+        { method: 'GET', headers: _headers() },
+        _handleResponse
+      );
       
       const hasData = !Array.isArray(data?.records) || data.records.length > 0;
       if (data && (data.code === 0 || data.code === undefined) && hasData && !isMetadataApi) {
@@ -730,12 +746,15 @@ const Http = (() => {
     try {
       clearCache();
       const url = getApiBaseUrl() + endpoint;
-      const res = await _fetchWithTimeout(url, {
-        method: 'POST',
-        headers: _headers(),
-        body: JSON.stringify(body),
-      });
-      return _handleResponse(res);
+      return await _fetchWithTimeout(
+        url,
+        {
+          method: 'POST',
+          headers: _headers(),
+          body: JSON.stringify(body),
+        },
+        _handleResponse
+      );
     } finally {
       document.body.style.cursor = '';
       if (window.LoadingSpinner) LoadingSpinner.hide();
@@ -748,12 +767,15 @@ const Http = (() => {
     try {
       clearCache();
       const url = getApiBaseUrl() + endpoint;
-      const res = await _fetchWithTimeout(url, {
-        method: 'PUT',
-        headers: _headers(),
-        body: JSON.stringify(body),
-      });
-      return _handleResponse(res);
+      return await _fetchWithTimeout(
+        url,
+        {
+          method: 'PUT',
+          headers: _headers(),
+          body: JSON.stringify(body),
+        },
+        _handleResponse
+      );
     } finally {
       document.body.style.cursor = '';
       if (window.LoadingSpinner) LoadingSpinner.hide();
@@ -766,11 +788,14 @@ const Http = (() => {
     try {
       clearCache();
       const url = getApiBaseUrl() + endpoint;
-      const res = await _fetchWithTimeout(url, {
-        method: 'DELETE',
-        headers: _headers(),
-      });
-      return _handleResponse(res);
+      return await _fetchWithTimeout(
+        url,
+        {
+          method: 'DELETE',
+          headers: _headers(),
+        },
+        _handleResponse
+      );
     } finally {
       document.body.style.cursor = '';
       if (window.LoadingSpinner) LoadingSpinner.hide();
@@ -1021,7 +1046,10 @@ const OrderService = (() => {
         detailConfig: detail.config,
         endpoints: endpoints
       };
-    })();
+    })().catch(function (err) {
+      _metadataPromise = null;
+      throw err;
+    });
     return _metadataPromise;
   }
 
@@ -7048,12 +7076,20 @@ var Router = (function () {
   // ── Template fetch with cache ─────────────────────────────────────────
   function fetchTemplate(url) {
     if (_templateCache[url]) return Promise.resolve(_templateCache[url]);
-    return fetch(url + '?v=' + new Date().getTime(), { cache: "no-store" })
+    var controller = new AbortController();
+    var timeoutMs = Number(API_CONFIG.NETWORK.REQUEST_TIMEOUT_MS);
+    var timeoutId = setTimeout(function () { controller.abort(); }, timeoutMs);
+
+    return fetch(url + '?v=' + new Date().getTime(), {
+      cache: "no-store",
+      signal: controller.signal
+    })
       .then(function (r) {
         if (!r.ok) throw new Error('Template not found: ' + url);
         return r.text();
       })
-      .then(function (html) { _templateCache[url] = html; return html; });
+      .then(function (html) { _templateCache[url] = html; return html; })
+      .finally(function () { clearTimeout(timeoutId); });
   }
 
   // ── Fade helpers ──────────────────────────────────────────────────────
