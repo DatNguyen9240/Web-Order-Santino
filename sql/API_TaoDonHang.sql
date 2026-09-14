@@ -3,7 +3,7 @@
 -- Create date: 2026-05-08
 -- Description: API tạo đơn hàng (Bản chuẩn công nghiệp)
 -- =============================================
-ALTER PROCEDURE [dbo].[API_TaoDonHang]
+CREATE OR ALTER PROCEDURE [dbo].[API_TaoDonHang]
     @OrderJson NVARCHAR(MAX)
 AS
 BEGIN

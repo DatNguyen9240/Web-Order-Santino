@@ -113,7 +113,7 @@ IF OBJECT_ID('[dbo].[fn_DocSoThanhChu]', 'FN') IS NULL
 GO
 
 -- 2. Stored Procedure API_InDonHang
-ALTER PROCEDURE [dbo].[API_InDonHang]
+CREATE OR ALTER PROCEDURE [dbo].[API_InDonHang]
     @DocumentID NVARCHAR(50)
 AS
 BEGIN

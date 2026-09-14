@@ -3,7 +3,7 @@
 --   - SSMS/FE: @Loai=... (string), @TimKiem=... (string)
 --   -> Đơn giản hóa, không parse JSON
 -- =============================================
-ALTER PROCEDURE [dbo].[API_DanhMuc]
+CREATE OR ALTER PROCEDURE [dbo].[API_DanhMuc]
     @Loai       NVARCHAR(100)  = NULL,
     @TimKiem    NVARCHAR(MAX)  = NULL,
     @chinhanh   NVARCHAR(50)   = NULL,
